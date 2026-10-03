@@ -1,0 +1,292 @@
+<title>NYC Kindergarten Zone Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Sans+Condensed:wght@500;600;700&display=swap">
+<style>
+/* Layout: full-height working map with a sidebar "zone card" (stacks below the map on phones). */
+:root{
+  --bg:#f3f4f1; --panel:#ffffff; --fg:#1d2321; --muted:#5d6763; --line:#d9ddd8;
+  --water:#cfdde3; --land:#eceee9; --accent:#f2b705; --accent-ink:#1d2321;
+  --hl:#0b4f8a; --dot:#1d2321; --warn-bg:#fff4d1; --warn-fg:#6b4d00;
+  --z0:#b9d3a8; --z1:#f0c9a0; --z2:#b7c8e6; --z3:#e8b9c4; --z4:#d8d29a; --z5:#c3b5dd;
+  --display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141917; --panel:#1c2220; --fg:#e7ebe8; --muted:#9aa5a0; --line:#2f3835;
+  --water:#0f1a20; --land:#1a201e; --accent:#f2b705; --accent-ink:#141917;
+  --hl:#7fb8ec; --dot:#e7ebe8; --warn-bg:#3a3014; --warn-fg:#f3d98a;
+  --z0:#3d5536; --z1:#5c4430; --z2:#33456a; --z3:#5e3a45; --z4:#545026; --z5:#45395e; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141917; --panel:#1c2220; --fg:#e7ebe8; --muted:#9aa5a0; --line:#2f3835;
+  --water:#0f1a20; --land:#1a201e; --accent:#f2b705; --accent-ink:#141917;
+  --hl:#7fb8ec; --dot:#e7ebe8; --warn-bg:#3a3014; --warn-fg:#f3d98a;
+  --z0:#3d5536; --z1:#5c4430; --z2:#33456a; --z3:#5e3a45; --z4:#545026; --z5:#45395e; color-scheme:dark}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.45}
+.app{height:100%;display:grid;grid-template-columns:360px 1fr;min-height:0}
+aside{background:var(--panel);border-right:1px solid var(--line);overflow-y:auto;display:flex;flex-direction:column;gap:18px;padding:18px 18px 24px;min-width:0}
+#map{background:var(--water);min-height:0}
+h1{font-family:var(--display);font-weight:700;font-size:1.55rem;line-height:1.1;margin:0;text-wrap:balance;letter-spacing:-.01em}
+.sub{color:var(--muted);font-size:.86rem;margin:4px 0 0}
+.badge{display:inline-block;background:var(--accent);color:var(--accent-ink);font-family:var(--display);font-weight:700;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border-radius:3px;margin-bottom:8px}
+label.lab{font-family:var(--display);font-weight:600;font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px}
+.field{display:flex;gap:6px}
+input[type=text],select{flex:1;min-width:0;font:inherit;font-size:.95rem;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg)}
+input:focus-visible,select:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(--hl);outline-offset:2px}
+button{font:inherit;font-family:var(--display);font-weight:600;font-size:.9rem;padding:8px 12px;border-radius:6px;border:1px solid var(--fg);background:var(--fg);color:var(--panel);cursor:pointer}
+.hint{font-size:.8rem;color:var(--muted);margin:6px 0 0}
+.msg{font-size:.82rem;color:var(--warn-fg);margin:6px 0 0}
+.results{list-style:none;margin:6px 0 0;padding:0;border:1px solid var(--line);border-radius:6px;max-height:220px;overflow:auto}
+.results li button{all:unset;box-sizing:border-box;display:block;width:100%;padding:7px 10px;cursor:pointer;font-size:.88rem;border-bottom:1px solid var(--line)}
+.results li:last-child button{border-bottom:0}
+.results li button:hover,.results li button:focus-visible{background:var(--bg)}
+.results small{color:var(--muted);font-family:var(--display)}
+.card{border:1px solid var(--line);border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:12px;background:var(--bg)}
+.card.empty{color:var(--muted);font-size:.9rem}
+.zt{font-family:var(--display);font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.school{display:flex;flex-direction:column;gap:2px}
+.school .nm{font-family:var(--display);font-weight:700;font-size:1.15rem;line-height:1.15}
+.school .meta{font-size:.85rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.school a{color:var(--hl);font-size:.85rem}
+.note{background:var(--warn-bg);color:var(--warn-fg);font-size:.85rem;padding:8px 10px;border-radius:6px}
+.seg{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label{font-family:var(--display);font-weight:600;font-size:.85rem;text-align:center;padding:7px 4px;cursor:pointer;border-right:1px solid var(--line);color:var(--muted)}
+.seg label:last-of-type{border-right:0}
+.seg input:checked+label{background:var(--fg);color:var(--panel)}
+.seg input:focus-visible+label{outline:2px solid var(--hl);outline-offset:-2px}
+.metrics{display:flex;flex-direction:column;gap:6px}
+.metrics .lab{margin-bottom:0}
+.grp{font-size:.8rem;color:var(--muted);margin-top:4px}
+.legend{margin-top:8px}
+.sw{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;font-size:.82rem}
+.sw span{display:flex;align-items:center;gap:6px}
+.sw i{width:12px;height:12px;border-radius:2px;flex:none;border:1px solid var(--line)}
+.rates{display:grid;grid-template-columns:1fr auto;gap:3px 8px;font-size:.85rem;margin-top:4px}
+.chip{display:inline-flex;align-items:center;gap:5px;font-family:var(--display);font-weight:600;font-size:.8rem;white-space:nowrap}
+.chip i{width:10px;height:10px;border-radius:2px;border:1px solid var(--line)}
+.rates .tot{font-weight:700;border-top:1px solid var(--line);padding-top:3px}
+.lbar{height:12px;border-radius:3px;background:linear-gradient(90deg,#111 0%,#111 5%,#d7301f 50%,#f2c20f 75%,#2b9a4b 95%,#2b9a4b 100%)}
+.lticks{position:relative;height:16px;font-family:var(--display);font-size:.75rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.lticks span{position:absolute;top:2px;transform:translateX(-50%)}
+.lticks span:last-child{transform:translateX(-70%)}
+.nd{display:inline-block;width:11px;height:11px;vertical-align:-1px;border:1px solid var(--muted);background:var(--land)}
+.scores{display:grid;grid-template-columns:auto 1fr auto;gap:4px 8px;align-items:center;font-size:.85rem;font-variant-numeric:tabular-nums;margin-top:4px}
+.scores .bar{height:8px;background:var(--line);border-radius:4px;overflow:hidden;min-width:0}
+.scores .bar i{display:block;height:100%}
+.scores b{font-family:var(--display)}
+.scores small{grid-column:1/-1;color:var(--muted)}
+.about{font-size:.8rem;color:var(--muted);display:flex;flex-direction:column;gap:6px;margin-top:auto}
+.about p{margin:0}
+.about a{color:var(--hl)}
+/* Leaflet essentials (inlined) */
+.leaflet-pane,.leaflet-tile,.leaflet-marker-icon,.leaflet-marker-shadow,.leaflet-tile-container,.leaflet-pane>svg,.leaflet-pane>canvas,.leaflet-zoom-box,.leaflet-image-layer,.leaflet-layer{position:absolute;left:0;top:0}
+.leaflet-container{overflow:hidden;-webkit-tap-highlight-color:transparent;font-family:var(--body);outline-offset:1px;touch-action:none}
+.leaflet-container.leaflet-touch-zoom{touch-action:pan-x pan-y}
+.leaflet-container.leaflet-touch-drag{touch-action:pinch-zoom}
+.leaflet-container.leaflet-touch-drag.leaflet-touch-zoom{touch-action:none}
+.leaflet-pane{z-index:400}.leaflet-overlay-pane{z-index:400}.leaflet-marker-pane{z-index:600}.leaflet-tooltip-pane{z-index:650}.leaflet-popup-pane{z-index:700}
+.leaflet-map-pane canvas{z-index:100}.leaflet-map-pane svg{z-index:200}
+.leaflet-control{position:relative;z-index:800;pointer-events:auto;float:left;clear:both}
+.leaflet-top,.leaflet-bottom{position:absolute;z-index:1000;pointer-events:none}
+.leaflet-top{top:0}.leaflet-right{right:0}.leaflet-bottom{bottom:0}.leaflet-left{left:0}
+.leaflet-top .leaflet-control{margin-top:10px}.leaflet-left .leaflet-control{margin-left:10px}.leaflet-right .leaflet-control{margin-right:10px;float:right}.leaflet-bottom .leaflet-control{margin-bottom:10px}
+.leaflet-zoom-animated{transform-origin:0 0}
+.leaflet-zoom-anim .leaflet-zoom-animated{transition:transform .25s cubic-bezier(0,0,.25,1)}
+.leaflet-zoom-anim .leaflet-zoom-hide{visibility:hidden}
+.leaflet-interactive{cursor:pointer}.leaflet-grab{cursor:grab}.leaflet-dragging .leaflet-grab{cursor:move}
+.leaflet-marker-icon{display:block}
+.leaflet-bar{box-shadow:0 1px 4px rgba(0,0,0,.25);border-radius:6px;overflow:hidden}
+.leaflet-bar a{display:block;width:32px;height:32px;line-height:32px;text-align:center;text-decoration:none;background:var(--panel);color:var(--fg);font:700 18px/32px var(--display);border-bottom:1px solid var(--line)}
+.leaflet-bar a:last-child{border-bottom:0}
+.leaflet-tooltip{position:absolute;padding:4px 8px;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:4px;white-space:nowrap;pointer-events:none;box-shadow:0 1px 3px rgba(0,0,0,.2);font-size:.8rem}
+.zl{font-family:var(--display);font-weight:700;font-size:11px;color:var(--fg);text-align:center;white-space:nowrap;text-shadow:0 0 3px var(--land),0 0 3px var(--land),0 0 2px var(--land);pointer-events:none;line-height:1}
+@media (max-width:760px){
+  .app{grid-template-columns:1fr;grid-template-rows:58vh auto;height:auto}
+  #map{order:-1;height:58vh}
+  aside{border-right:0;border-top:1px solid var(--line);overflow:visible;padding:16px}
+}
+@media (prefers-reduced-motion:reduce){.leaflet-zoom-anim .leaflet-zoom-animated{transition:none}}
+</style>
+
+<div class="app">
+  <aside>
+    <header>
+      <span class="badge">Kindergarten · 2024–25 zones</span>
+      <h1>NYC Elementary School Zones</h1>
+      <p class="sub">770 zone boundaries from the NYC Department of Education. Colored by the zoned school's DOE quality ratings or state test results. Click anywhere to see which school is zoned for that block.</p>
+    </header>
+
+    <section class="metrics" role="radiogroup" aria-labelledby="mlab">
+      <span class="lab" id="mlab">Color zones by</span>
+      <span class="grp">School Quality Snapshot · 2024–25</span>
+      <div class="seg">
+        <input type="radio" name="metric" id="m-comp" value="comp" checked><label for="m-comp">Overall</label>
+        <input type="radio" name="metric" id="m-ip" value="ip"><label for="m-ip">Instruction</label>
+        <input type="radio" name="metric" id="m-ss" value="ss"><label for="m-ss">Safety</label>
+        <input type="radio" name="metric" id="m-rf" value="rf"><label for="m-rf">Families</label>
+      </div>
+      <span class="grp">State tests · 2023, grades 3–5</span>
+      <div class="seg">
+        <input type="radio" name="metric" id="m-both" value="both"><label for="m-both">ELA + Math</label>
+        <input type="radio" name="metric" id="m-ela" value="ela"><label for="m-ela">ELA</label>
+        <input type="radio" name="metric" id="m-math" value="math"><label for="m-math">Math</label>
+        <input type="radio" name="metric" id="m-none" value="none"><label for="m-none">Plain</label>
+      </div>
+      <div class="legend" id="leg-rate">
+        <div class="sw"><span><i style="background:#2b9a4b"></i>Excellent (4)</span><span><i style="background:#f2c20f"></i>Good (3)</span><span><i style="background:#d7301f"></i>Fair (2)</span><span><i style="background:#111"></i>Needs Improvement (1)</span></div>
+        <p class="hint" id="rate-hint"></p>
+      </div>
+      <div class="legend" id="leg-test" hidden>
+        <div class="lbar"></div>
+        <div class="lticks"><span style="left:5%">5</span><span style="left:50%">50</span><span style="left:75%">75</span><span style="left:95%">95%</span></div>
+        <p class="hint">Share of grade 3–5 students scoring proficient (Level 3 or 4) on the 2023 New York State tests. NYC average: ELA 51%, Math 54%. <span class="nd"></span> No grades 3–5 results.</p>
+      </div>
+    </section>
+
+    <section>
+      <label class="lab" for="q">Find a school</label>
+      <input type="text" id="q" placeholder="e.g. PS 321, 15K321, Bergen" autocomplete="off">
+      <ul class="results" id="res" hidden></ul>
+    </section>
+
+    <section>
+      <label class="lab" for="ll">Check a location</label>
+      <form class="field" id="llf">
+        <input type="text" id="ll" placeholder="40.6721, -73.9779" autocomplete="off">
+        <button type="submit">Check</button>
+      </form>
+      <p class="hint">In Google Maps, right-click your address and click the coordinates to copy them, then paste here.</p>
+      <p class="msg" id="llmsg" hidden></p>
+    </section>
+
+    <section>
+      <label class="lab" for="boro">Jump to borough</label>
+      <select id="boro">
+        <option value="">All five boroughs</option>
+        <option value="M">Manhattan</option><option value="K">Brooklyn</option>
+        <option value="Q">Queens</option><option value="X">Bronx</option><option value="R">Staten Island</option>
+      </select>
+    </section>
+
+    <section class="card empty" id="card" aria-live="polite">Select a zone on the map, or search for a school, to see its zoned elementary school.</section>
+
+    <div class="about">
+      <p>Source: <a href="https://data.cityofnewyork.us/Education/School-Zones-2024-2025-Elementary-School-/cmjf-yawu" target="_blank" rel="noopener">School Zones 2024–2025 (Elementary)</a>, NYC Open Data. School names and addresses from the 2019–20 DOE location list. Test results from <a href="https://data.cityofnewyork.us/Education/English-Language-Arts-ELA-Test-Results-2013-2023/iebs-5yhr" target="_blank" rel="noopener">ELA</a> and <a href="https://data.cityofnewyork.us/Education/Math-Test-Results-2013-2023/74kb-55u9" target="_blank" rel="noopener">Math</a> Test Results 2013–2023 (2023 is the latest year published there). Ratings and current school names from the DOE <a href="https://tools.nycenet.edu/snapshot/" target="_blank" rel="noopener">2024–25 School Quality Snapshot</a>. Shared zones show the combined result of all their schools.</p>
+      <p>Zones can change year to year. Always confirm an exact address on <a href="https://schoolsearch.schools.nyc/" target="_blank" rel="noopener">schoolsearch.schools.nyc</a> before applying.</p>
+    </div>
+  </aside>
+  <div id="map" role="application" aria-label="Map of elementary school zones"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script id="zdata" type="application/json">__DATA__</script>
+<script>
+(function(){
+const D=JSON.parse(document.getElementById('zdata').textContent);
+const S=D.schools, F=D.features, T=D.T||{};
+let metric='comp';
+const R=D.R||{};
+// prefer current (2024-25) names and addresses from the School Quality Snapshot
+Object.entries(R).forEach(([d,r])=>{if(!r[0])return;S[d]=Object.assign(S[d]||{},{n:r[0],a:r[1]||(S[d]&&S[d].a)})});
+const RK={ip:2,ss:3,rf:4},RNAME={ip:'Instruction and Performance',ss:'Safety and School Climate',rf:'Relationships with Families'},RLAB={1:'Needs Improvement',2:'Fair',3:'Good',4:'Excellent'};
+const isRate=m=>m==='comp'||m in RK;
+function schoolRating(d,m){const r=R[d];if(!r)return null;if(m==='comp'){const v=[r[2],r[3],r[4]].filter(x=>x!=null);return v.length?v.reduce((a,b)=>a+b,0)/v.length:null}return r[RK[m]]??null}
+function zoneRating(dbns,m){const v=dbns.map(d=>schoolRating(d,m)).filter(x=>x!=null);return v.length?v.reduce((a,b)=>a+b,0)/v.length:null}
+// ratings share the test color ramp: 1->5%, 2->50%, 3->75%, 4->95%
+function rateColor(r){const P=[5,50,75,95];const i=Math.min(2,Math.max(0,Math.floor(r-1)));return scoreColor(P[i]+(P[i+1]-P[i])*(r-1-i))}
+const BORO={M:'Manhattan',K:'Brooklyn',Q:'Queens',X:'Bronx',R:'Staten Island'};
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const map=L.map('map',{preferCanvas:true,zoomSnap:.5,minZoom:10,maxZoom:18,attributionControl:false}).setView([40.70,-73.95],11);
+const renderer=L.canvas({padding:.3,tolerance:2});
+function short(d){const s=S[d];if(!s)return 'School '+d;return s.n}
+function psNum(f){const p=f.properties;return p.dbns.length?p.label||p.dbns[0].slice(3):''}
+// proficiency for a zone: pooled across its schools that have results
+function pct(dbns,m){let n=0,p=0;dbns.forEach(d=>{const v=T[d];if(!v)return;if(m!=='math'){n+=v[0];p+=v[1]}if(m!=='ela'){n+=v[2];p+=v[3]}});return n?100*p/n:null}
+const STOPS=[[5,[17,17,17]],[50,[215,48,31]],[75,[242,194,15]],[95,[43,154,75]]];
+function scoreColor(v){if(v<=STOPS[0][0])return rgb(STOPS[0][1]);for(let i=1;i<STOPS.length;i++){const[a,ca]=STOPS[i-1],[b,cb]=STOPS[i];if(v<=b){const t=(v-a)/(b-a);return rgb(ca.map((c,k)=>c+(cb[k]-c)*t))}}return rgb(STOPS[STOPS.length-1][1])}
+function rgb(c){return 'rgb('+c.map(Math.round).join(',')+')'}
+function fillFor(f){const p=f.properties;if(!p.dbns.length)return css('--land');if(metric==='none')return css('--z'+p.c);if(isRate(metric)){const r=zoneRating(p.dbns,metric);return r==null?css('--land'):rateColor(r)}const v=pct(p.dbns,metric);return v==null?css('--land'):scoreColor(v)}
+function style(f,sel){const sc=metric!=='none';return{renderer,color:sel?css('--hl'):css('--fg'),weight:sel?3:.6,opacity:sel?1:(sc?.3:.45),fillColor:fillFor(f),fillOpacity:sel?.95:(sc?.78:.85)}}
+let selected=null;
+const layer=L.geoJSON(F,{style:f=>style(f,false),onEachFeature:(f,l)=>{
+  l.on('click',()=>select(l,true));
+  const t=f.properties.dbns.length?f.properties.dbns.map(short).join(' / '):(f.properties.remarks||'No zoned school');
+  l.bindTooltip(t,{sticky:true,direction:'top',offset:[0,-6]});
+}}).addTo(map);
+const byLayer=[];layer.eachLayer(l=>byLayer.push(l));
+map.fitBounds(layer.getBounds(),{padding:[10,10]});
+
+// school dots
+const dots=L.layerGroup().addTo(map);
+Object.entries(S).forEach(([d,s])=>{if(s.lat)L.circleMarker([s.lat,s.lon],{renderer,radius:3.5,weight:1.5,color:css('--panel'),fillColor:css('--dot'),fillOpacity:1,interactive:false}).addTo(dots)});
+
+// zone number labels when zoomed in
+const labels=L.layerGroup().addTo(map);
+function drawLabels(){labels.clearLayers();const z=map.getZoom();if(z<13)return;const b=map.getBounds().pad(.1);
+  byLayer.forEach(l=>{const p=l.feature.properties;if(!p.dbns.length)return;if(z<14&&p.ar<1.2)return;const ll=L.latLng(p.lp);if(!b.contains(ll))return;
+    let txt=p.dbns.length>1?('PS '+(+p.dbns[0].slice(3))+' +'):('PS '+psNum(l.feature).replace(/^0+/,''));
+    if(isRate(metric)){const r=zoneRating(p.dbns,metric);if(r!=null)txt+=' · '+(metric==='comp'?r.toFixed(1):RLAB[Math.round(r)])}else if(metric!=='none'){const v=pct(p.dbns,metric);if(v!=null)txt+=' · '+Math.round(v)+'%'}
+    L.marker(ll,{interactive:false,icon:L.divIcon({className:'',html:'<div class="zl">'+txt+'</div>',iconSize:[60,12],iconAnchor:[30,6]})}).addTo(labels)})}
+map.on('zoomend moveend',drawLabels);
+
+function esc(s){return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function title(s){return s?s.replace(/\s+/g,' ').toLowerCase().replace(/\b\w/g,c=>c.toUpperCase()):''}
+function grades(g){if(!g)return '';const a=g.split(',').map(x=>x==='PK'?'Pre-K':x==='0K'?'K':String(+x));return a.length>1?a[0]+'–'+a[a.length-1]:a[0]}
+const card=document.getElementById('card');
+function row(lbl,n,p){if(!n)return '';const v=100*p/n;return '<span>'+lbl+'</span><span class="bar"><i style="width:'+v.toFixed(1)+'%;background:'+scoreColor(v)+'"></i></span><b>'+Math.round(v)+'%</b>'}
+function chip(r){return r==null?'<span class="chip">n/a</span>':'<span class="chip"><i style="background:'+rateColor(r)+'"></i>'+(Number.isInteger(r)?RLAB[r]:r.toFixed(1)+' / 4')+'</span>'}
+function rateHtml(d){const r=R[d];if(!r||r.slice(2,5).every(x=>x==null))return '<span class="meta">No 2024–25 Snapshot ratings (often K–2 or new schools).</span>';
+  const c=schoolRating(d,'comp');return '<div class="rates"><span>Instruction</span>'+chip(r[2])+'<span>Safety &amp; climate</span>'+chip(r[3])+'<span>Families</span>'+chip(r[4])+'<span class="tot">Overall</span><span class="tot">'+chip(c)+'</span></div><a href="https://tools.nycenet.edu/snapshot/2025/'+esc(d)+'/'+esc(r[5]||'EMS')+'/" target="_blank" rel="noopener">2024–25 School Quality Snapshot ↗</a>'}
+function scoreHtml(d){const v=T[d];if(!v)return '<span class="meta">No 2023 grade 3–5 state test results (K–2 or newer school).</span>';
+  const n=Math.max(v[0],v[2]);return '<div class="scores">'+row('ELA',v[0],v[1])+row('Math',v[2],v[3])+'<small>2023, grades 3–5 · '+n+' students tested'+(n<60?' · small group, read with care':'')+'</small></div>'}
+function select(l,fromClick){
+  if(selected)selected.setStyle(style(selected.feature,false));
+  selected=l;l.setStyle(style(l.feature,true));l.bringToFront();
+  const p=l.feature.properties;let h='<div class="zt">District '+esc(p.dist)+' · '+esc(BORO[p.boro]||'')+'</div>';
+  if(!p.dbns.length){h+='<div class="school"><span class="nm">No zoned school</span></div>';}
+  else{h+=p.dbns.map(d=>{const s=S[d];return '<div class="school"><span class="nm">'+esc(short(d))+'</span><span class="meta">'+esc(d)+(s?' · '+esc(title(s.a))+' · Grades '+esc(grades(s.g)):'')+'</span>'+rateHtml(d)+scoreHtml(d)+'<a href="https://www.schools.nyc.gov/schools/'+esc(d)+'" target="_blank" rel="noopener">School page on schools.nyc.gov ↗</a></div>'}).join('');}
+  if(p.remarks)h+='<div class="note">'+esc(p.remarks)+'</div>';
+  if(p.dbns.length>1&&!p.remarks)h+='<div class="note">This block is in a shared zone. Families can rank any of these schools.</div>';
+  card.className='card';card.innerHTML=h;
+  if(!fromClick)map.fitBounds(l.getBounds(),{maxZoom:15,padding:[30,30]});
+  if(window.innerWidth<=760&&fromClick)card.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+// search
+const q=document.getElementById('q'),res=document.getElementById('res');
+const idx=byLayer.filter(l=>l.feature.properties.dbns.length).map(l=>{const p=l.feature.properties;const names=p.dbns.map(d=>(S[d]?S[d].n:'')+' '+d).join(' ');const nums=p.dbns.map(d=>'ps '+(+d.slice(3))+' p.s. '+(+d.slice(3))).join(' ');return{l,txt:(names+' '+nums+' '+(p.remarks||'')).toLowerCase()}});
+q.addEventListener('input',()=>{const v=q.value.trim().toLowerCase();if(v.length<2){res.hidden=true;return}
+  const toks=v.replace(/p\.?s\.?\s*/,'ps ').split(/\s+/);
+  const hits=idx.filter(o=>{const t=o.txt.replace(/p\.s\.\s*/g,'ps ');return toks.every(k=>k==='ps'?true:t.includes(k)||(/^\d+$/.test(k)&&new RegExp('ps '+(+k)+'\\b').test(t)))}).slice(0,30);
+  res.innerHTML=hits.length?hits.map((o,i)=>{const p=o.l.feature.properties;return '<li><button type="button" data-i="'+i+'">'+esc(p.dbns.map(short).join(' / '))+'<br><small>'+esc(p.dbns.join(', '))+' · '+esc(BORO[p.boro])+'</small></button></li>'}).join(''):'<li><button type="button" disabled>No matching zone</button></li>';
+  res.hidden=false;res.querySelectorAll('button[data-i]').forEach(b=>b.onclick=()=>{select(hits[+b.dataset.i].l,false);res.hidden=true});
+});
+
+// coordinate check
+function inRing(x,y,r){let ins=false;for(let i=0,j=r.length-1;i<r.length;j=i++){const[xi,yi]=r[i],[xj,yj]=r[j];if((yi>y)!==(yj>y)&&x<(xj-xi)*(y-yi)/(yj-yi)+xi)ins=!ins}return ins}
+function inGeom(x,y,g){const ps=g.type==='MultiPolygon'?g.coordinates:[g.coordinates];return ps.some(p=>inRing(x,y,p[0])&&!p.slice(1).some(h=>inRing(x,y,h)))}
+let pin=null;const llmsg=document.getElementById('llmsg');
+document.getElementById('llf').addEventListener('submit',e=>{e.preventDefault();llmsg.hidden=true;
+  const m=document.getElementById('ll').value.match(/(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);
+  if(!m){llmsg.textContent='Enter latitude and longitude separated by a comma, like 40.6721, -73.9779.';llmsg.hidden=false;return}
+  let a=+m[1],b=+m[2];if(a<0){[a,b]=[b,a]}
+  const hit=byLayer.find(l=>inGeom(b,a,l.feature.geometry));
+  if(pin)map.removeLayer(pin);pin=L.circleMarker([a,b],{radius:8,weight:3,color:css('--accent'),fillColor:css('--fg'),fillOpacity:1}).addTo(map);
+  if(!hit){llmsg.textContent='That point is outside every elementary zone. Check the coordinates, or it may be in a park or outside NYC.';llmsg.hidden=false;map.setView([a,b],14);return}
+  select(hit,true);map.setView([a,b],15);
+});
+
+const BB={M:[[40.70,-74.02],[40.88,-73.91]],K:[[40.57,-74.04],[40.74,-73.83]],Q:[[40.54,-73.96],[40.80,-73.70]],X:[[40.79,-73.93],[40.92,-73.75]],R:[[40.49,-74.26],[40.65,-74.05]]};
+document.getElementById('boro').addEventListener('change',e=>{const v=e.target.value;v?map.fitBounds(BB[v]):map.fitBounds(layer.getBounds())});
+
+function syncLegend(){document.getElementById('leg-rate').hidden=!isRate(metric);document.getElementById('leg-test').hidden=isRate(metric)||metric==='none';
+  document.getElementById('rate-hint').innerHTML=(metric==='comp'?'Overall is the average of the three ratings, so zones blend between colors (3.3 sits between yellow and green). ':'DOE rating for '+RNAME[metric]+'. ')+'Shared zones average their schools. <span class="nd"></span> No rating.'}
+syncLegend();
+//METRIC
+document.querySelectorAll('input[name=metric]').forEach(r=>r.addEventListener('change',()=>{metric=r.value;syncLegend();restyle();drawLabels()}));
+// re-style on theme change
+const mq=matchMedia('(prefers-color-scheme: dark)');const restyle=()=>{layer.eachLayer(l=>l.setStyle(style(l.feature,l===selected)))};
+mq.addEventListener?.('change',restyle);new MutationObserver(restyle).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+})();
+</script>

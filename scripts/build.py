@@ -1,0 +1,137 @@
+#!/usr/bin/env python3
+"""Build index.html from src/template.html and the files in data/.
+
+Uses only the Python standard library. Run from the repo root:
+
+    python3 scripts/build.py
+
+Steps:
+  1. Load zone boundaries (data/elem_zones.json).
+  2. Give each zone a "neighbor color" (0-5) so adjacent zones differ in the
+     Plain view, a label point inside the zone, and an approximate area.
+  3. Attach state test results (data/state_tests.json) and
+     School Quality Snapshot ratings (data/snapshot_ratings.json).
+  4. Inline everything into the template and write index.html.
+"""
+import collections
+import json
+import os
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA = os.path.join(ROOT, "data")
+
+
+def load(name):
+    with open(os.path.join(DATA, name), encoding="utf-8") as f:
+        return json.load(f)
+
+
+def polys(geom):
+    return geom["coordinates"] if geom["type"] == "MultiPolygon" else [geom["coordinates"]]
+
+
+def area_centroid(ring):
+    a = cx = cy = 0.0
+    for i in range(len(ring) - 1):
+        x0, y0 = ring[i]
+        x1, y1 = ring[i + 1]
+        c = x0 * y1 - x1 * y0
+        a += c
+        cx += (x0 + x1) * c
+        cy += (y0 + y1) * c
+    if a == 0:
+        return 0.0, tuple(ring[0])
+    return a / 2, (cx / (3 * a), cy / (3 * a))
+
+
+def point_in_ring(pt, ring):
+    x, y = pt
+    inside = False
+    for i in range(len(ring) - 1):
+        x0, y0 = ring[i]
+        x1, y1 = ring[i + 1]
+        if (y0 > y) != (y1 > y) and x < (x1 - x0) * (y - y0) / (y1 - y0) + x0:
+            inside = not inside
+    return inside
+
+
+def prepare_zones(d):
+    feats = d["features"]
+
+    # Zones are neighbors if they share boundary vertices.
+    owner = collections.defaultdict(set)
+    for i, f in enumerate(feats):
+        for p in polys(f["geometry"]):
+            for ring in p:
+                for c in ring[::2]:
+                    owner[(round(c[0], 4), round(c[1], 4))].add(i)
+    adj = collections.defaultdict(set)
+    for s in owner.values():
+        for a in s:
+            adj[a] |= s - {a}
+
+    # Greedy coloring, most-connected zones first.
+    color = {}
+    for i in sorted(range(len(feats)), key=lambda i: -len(adj[i])):
+        used = {color[j] for j in adj[i] if j in color}
+        color[i] = next(c for c in range(10) if c not in used)
+
+    for i, f in enumerate(feats):
+        largest = max(polys(f["geometry"]), key=lambda p: abs(area_centroid(p[0])[0]))
+        _, c = area_centroid(largest[0])
+        if not point_in_ring(c, largest[0]):
+            # Centroid fell outside (odd shapes): scan across for an inside point.
+            xs = [pt[0] for pt in largest[0]]
+            found = None
+            for k in range(1, 200):
+                x = min(xs) + (max(xs) - min(xs)) * k / 200
+                if point_in_ring((x, c[1]), largest[0]):
+                    found = (x, c[1])
+                    break
+            c = found or largest[0][0]
+        props = f["properties"]
+        props["c"] = color[i]
+        props["lp"] = [round(c[1], 5), round(c[0], 5)]
+        props["ar"] = round(sum(abs(area_centroid(p[0])[0]) for p in polys(f["geometry"])) * 1e6, 1)
+    return max(color.values()) + 1
+
+
+def main():
+    d = load("elem_zones.json")
+    ncolors = prepare_zones(d)
+    zoned = {x for f in d["features"] for x in f["properties"]["dbns"]}
+
+    tests = load("state_tests.json")
+    d["T"] = {k: v for k, v in tests.items() if k in zoned and (v[0] or v[2])}
+    d["R"] = load("snapshot_ratings.json")
+
+    with open(os.path.join(ROOT, "src", "template.html"), encoding="utf-8") as f:
+        template = f.read()
+    payload = json.dumps(d, separators=(",", ":")).replace("</", "<\\/")
+    page = template.replace("__DATA__", payload)
+
+    # The template is an HTML fragment; wrap it as a full document.
+    cut = page.index("</style>") + len("</style>")
+    html = (
+        "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n"
+        "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, viewport-fit=cover\">\n"
+        + page[:cut].replace(
+            "<style>",
+            "<style>\n*,*::before,*::after{box-sizing:border-box}\nbody{margin:0}\n[hidden]{display:none!important}\n",
+            1,
+        )
+        + "\n</head>\n<body>"
+        + page[cut:]
+        + "\n</body>\n</html>\n"
+    )
+    out = os.path.join(ROOT, "index.html")
+    with open(out, "w", encoding="utf-8") as f:
+        f.write(html)
+
+    print(f"{len(d['features'])} zones, {ncolors} neighbor colors, "
+          f"{len(d['T'])} schools with test results, {len(d['R'])} with Snapshot data")
+    print(f"wrote {out} ({os.path.getsize(out) / 1e6:.2f} MB)")
+
+
+if __name__ == "__main__":
+    main()
