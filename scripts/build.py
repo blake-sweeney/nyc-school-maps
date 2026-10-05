@@ -29,7 +29,7 @@ GOATCOUNTER_CODE = "nycschoolzones"
 # Link previews (Facebook, iMessage, Reddit, Slack, X). preview.png is made by scripts/make_preview.py.
 SITE_URL = "https://nycschoolzones.com/"
 SITE_NAME = "NYC School Zones"
-SITE_DESCRIPTION = ("Every NYC elementary (kindergarten) school zone on one map, colored by DOE "
+SITE_DESCRIPTION = ("Every NYC elementary (kindergarten) and middle school zone on one map, colored by DOE "
                     "School Quality ratings and state test scores. Free for parents.")
 
 
@@ -152,6 +152,15 @@ def main():
     d["ST"] = load("streets.json") if os.path.exists(os.path.join(DATA, "streets.json")) else []
     d["LS"] = load("local_streets.json") if os.path.exists(os.path.join(DATA, "local_streets.json")) else {"n": [], "l": []}
 
+    # Middle school zones (optional): same shape as the elementary data, tests for grades 6-8
+    if os.path.exists(os.path.join(DATA, "ms_zones.json")):
+        ms = load("ms_zones.json")
+        prepare_zones(ms)
+        ms_zoned = {x for f in ms["features"] for x in f["properties"]["dbns"]}
+        ms_tests = load("ms_state_tests.json")
+        d["MS"] = {"schools": ms["schools"], "features": ms["features"],
+                   "T": {k: v for k, v in ms_tests.items() if k in ms_zoned and (v[0] or v[2])}}
+
     with open(os.path.join(ROOT, "src", "template.html"), encoding="utf-8") as f:
         template = f.read()
     payload = json.dumps(d, separators=(",", ":")).replace("</", "<\\/")
@@ -182,6 +191,8 @@ def main():
     print(f"{len(d['features'])} zones, {ncolors} neighbor colors, "
           f"{len(d['T'])} schools with test results, {len(d['R'])} with Snapshot data, "
           f"{len(d['ST'])} major street lines, {len(d['LS']['l'])} local street lines")
+    if "MS" in d:
+        print(f"middle school: {len(d['MS']['features'])} zones, {len(d['MS']['T'])} schools with test results")
     print(f"wrote {out} ({os.path.getsize(out) / 1e6:.2f} MB)")
 
 

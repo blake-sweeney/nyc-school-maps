@@ -20,6 +20,7 @@ DATA = os.path.join(ROOT, "data")
 
 OPEN_DATA = "https://data.cityofnewyork.us"
 ZONES_DATASET = "cmjf-yawu"       # School Zones 2024-2025 (Elementary School)
+MS_ZONES_DATASET = "t26j-jbq7"    # School Zones 2024-2025 (Middle School)
 LOCATIONS_DATASET = "wg9x-4ke6"   # 2019-2020 School Locations (lat/lon, grades)
 ELA_DATASET = "iebs-5yhr"         # ELA Test Results 2013-2023
 MATH_DATASET = "74kb-55u9"        # Math Test Results 2013-2023
@@ -53,7 +54,12 @@ def rnd(c):
 
 
 def fetch_zones():
-    gj = get_json(f"{OPEN_DATA}/api/geospatial/{ZONES_DATASET}?method=export&format=GeoJSON")
+    _fetch_zones(ZONES_DATASET, "elem_zones.json")
+    _fetch_zones(MS_ZONES_DATASET, "ms_zones.json")
+
+
+def _fetch_zones(dataset, outname):
+    gj = get_json(f"{OPEN_DATA}/api/geospatial/{dataset}?method=export&format=GeoJSON")
     locs = get_json(f"{OPEN_DATA}/resource/{LOCATIONS_DATASET}.json?$limit=5000")
     by_code = {s["system_code"]: s for s in locs if s.get("system_code")}
     schools, feats = {}, []
@@ -72,15 +78,22 @@ def fetch_zones():
                 }
         feats.append({
             "type": "Feature",
-            "properties": {"dbns": dbns, "label": p.get("label"), "boro": p.get("boro"),
+            # middle school data has a numeric "boro" and the letter in "boro_text"
+            "properties": {"dbns": dbns, "label": p.get("label"), "boro": p.get("boro_text") or p.get("boro"),
                            "dist": p.get("zoned_dist"), "remarks": p.get("remarks")},
             "geometry": {"type": f["geometry"]["type"], "coordinates": rnd(f["geometry"]["coordinates"])},
         })
-    save("elem_zones.json", {"type": "FeatureCollection", "schools": schools, "features": feats})
+    save(outname, {"type": "FeatureCollection", "schools": schools, "features": feats})
 
 
 def fetch_tests():
-    """Grade 3-5 totals per school: [ELA tested, ELA proficient, Math tested, Math proficient]."""
+    """Per school: [ELA tested, ELA proficient, Math tested, Math proficient].
+    Grades 3-5 for elementary (state_tests.json), 6-8 for middle school (ms_state_tests.json)."""
+    _fetch_tests(("3", "4", "5"), "state_tests.json")
+    _fetch_tests(("6", "7", "8"), "ms_state_tests.json")
+
+
+def _fetch_tests(grade_list, outname):
     out = {}
 
     def add(dbn, i, tested, prof):
@@ -92,12 +105,12 @@ def fetch_tests():
         row[i] += int(t)
         row[i + 1] += int(p)
 
-    grades = "grade in('3','4','5')"
+    grades = "grade in(" + ",".join(f"'{g}'" for g in grade_list) + ")"
     for r in soql(ELA_DATASET, f"year='{TEST_YEAR}' AND report_category='School' AND category='All Students' AND {grades}"):
         add(r.get("geographic_subdivision"), 0, r.get("number_tested"), r.get("level_3_4"))
     for r in soql(MATH_DATASET, f"year='{TEST_YEAR}' AND report_category='School' AND student_category='All Students' AND {grades}"):
         add(r.get("geographic_division"), 2, r.get("number_tested"), r.get("num_level_3_and_4"))
-    save("state_tests.json", out)
+    save(outname, out)
 
 
 def fetch_snapshot():
@@ -106,9 +119,13 @@ def fetch_snapshot():
     snapshot_extra.json:   [enrollment, attendance %, teachers with 3+ yrs %, principal years,
                             dual-language programs, ELL %, IEP %, economic need %,
                             admissions methods, median student travel distance (mi)]"""
-    with open(os.path.join(DATA, "elem_zones.json"), encoding="utf-8") as f:
-        zones = json.load(f)
-    dbns = sorted({d for f in zones["features"] for d in f["properties"]["dbns"]})
+    dbns = set()
+    for name in ("elem_zones.json", "ms_zones.json"):
+        path = os.path.join(DATA, name)
+        if os.path.exists(path):
+            with open(path, encoding="utf-8") as f:
+                dbns |= {d for feat in json.load(f)["features"] for d in feat["properties"]["dbns"]}
+    dbns = sorted(dbns)
 
     def one(dbn):
         for rt in ("EMS", "EC"):  # elementary/middle report, then early-childhood (K-2) report

@@ -88,9 +88,9 @@ def main():
     # Text on the left
     bold = font_manager.FontProperties(family="DejaVu Sans", weight="bold", stretch="condensed")
     reg = font_manager.FontProperties(family="DejaVu Sans")
-    fig.text(0.05, 0.80, "KINDERGARTEN · ELEMENTARY ZONES", color=ACCENT, fontproperties=bold, fontsize=13)
+    fig.text(0.05, 0.80, "ELEMENTARY · MIDDLE SCHOOL ZONES", color=ACCENT, fontproperties=bold, fontsize=13)
     fig.text(0.05, 0.56, "NYC School\nZones", color=PANEL_FG, fontproperties=bold, fontsize=50, linespacing=1.0)
-    fig.text(0.05, 0.46, "Every elementary zone in the\nfive boroughs, colored by DOE\nratings and state test scores.",
+    fig.text(0.05, 0.46, "Every school zone in the five\nboroughs, colored by DOE\nratings and state test scores.",
              color=MUTED, fontproperties=reg, fontsize=17, linespacing=1.35, va="top")
     fig.text(0.05, 0.08, "nycschoolzones.com", color=PANEL_FG, fontproperties=bold, fontsize=18)
 
