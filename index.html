@@ -31,7 +31,7 @@ body{margin:0}
 :root{
   --bg:#f3f4f1; --panel:#ffffff; --fg:#1d2321; --muted:#5d6763; --line:#d9ddd8;
   --water:#cfdde3; --land:#eceee9; --nodata:#a3a8a5; --accent:#f2b705; --accent-ink:#1d2321;
-  --hl:#0b4f8a; --dot:#1d2321; --road:#2c3331; --road-case:#ffffff; --warn-bg:#fff4d1; --warn-fg:#6b4d00;
+  --hl:#0b4f8a; --dot:#1d2321; --road:#2c3331; --road-case:#ffffff; --zone-line:#4a2477; --warn-bg:#fff4d1; --warn-fg:#6b4d00;
   --z0:#b9d3a8; --z1:#f0c9a0; --z2:#b7c8e6; --z3:#e8b9c4; --z4:#d8d29a; --z5:#c3b5dd;
   --display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
   --body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
@@ -39,12 +39,12 @@ body{margin:0}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#141917; --panel:#1c2220; --fg:#e7ebe8; --muted:#9aa5a0; --line:#2f3835;
   --water:#0f1a20; --land:#1a201e; --nodata:#5d6461; --accent:#f2b705; --accent-ink:#141917;
-  --hl:#7fb8ec; --dot:#e7ebe8; --road:#e3e8e5; --road-case:#0d1110; --warn-bg:#3a3014; --warn-fg:#f3d98a;
+  --hl:#7fb8ec; --dot:#e7ebe8; --road:#e3e8e5; --road-case:#0d1110; --zone-line:#d4bdff; --warn-bg:#3a3014; --warn-fg:#f3d98a;
   --z0:#3d5536; --z1:#5c4430; --z2:#33456a; --z3:#5e3a45; --z4:#545026; --z5:#45395e; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#141917; --panel:#1c2220; --fg:#e7ebe8; --muted:#9aa5a0; --line:#2f3835;
   --water:#0f1a20; --land:#1a201e; --nodata:#5d6461; --accent:#f2b705; --accent-ink:#141917;
-  --hl:#7fb8ec; --dot:#e7ebe8; --road:#e3e8e5; --road-case:#0d1110; --warn-bg:#3a3014; --warn-fg:#f3d98a;
+  --hl:#7fb8ec; --dot:#e7ebe8; --road:#e3e8e5; --road-case:#0d1110; --zone-line:#d4bdff; --warn-bg:#3a3014; --warn-fg:#f3d98a;
   --z0:#3d5536; --z1:#5c4430; --z2:#33456a; --z3:#5e3a45; --z4:#545026; --z5:#45395e; color-scheme:dark}
 html,body{height:100%}
 body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.45}
@@ -94,7 +94,7 @@ button{font:inherit;font-family:var(--display);font-weight:600;font-size:.9rem;p
 .chip{display:inline-flex;align-items:center;gap:5px;font-family:var(--display);font-weight:600;font-size:.8rem;white-space:nowrap}
 .chip i{width:10px;height:10px;border-radius:2px;border:1px solid var(--line)}
 .rates .tot{font-weight:700;border-top:1px solid var(--line);padding-top:3px}
-.lbar{height:12px;border-radius:3px;background:linear-gradient(90deg,#6b0f1a 0%,#6b0f1a 5%,#d7301f 50%,#f2c20f 75%,#2b9a4b 95%,#2b9a4b 100%)}
+.lbar{height:12px;border-radius:3px;background:linear-gradient(90deg,#d7301f 0%,#d7301f 5%,#f0861d 50%,#f2c20f 75%,#2b9a4b 95%,#2b9a4b 100%)}
 .lticks{position:relative;height:16px;font-family:var(--display);font-size:.75rem;color:var(--muted);font-variant-numeric:tabular-nums}
 .lticks span{position:absolute;top:2px;transform:translateX(-50%)}
 .lticks span:last-child{transform:translateX(-70%)}
@@ -173,7 +173,7 @@ button{font:inherit;font-family:var(--display);font-weight:600;font-size:.9rem;p
         <input type="radio" name="metric" id="m-none" value="none"><label for="m-none">Plain</label>
       </div>
       <div class="legend" id="leg-rate">
-        <div class="sw"><span><i style="background:#2b9a4b"></i>Excellent (4)</span><span><i style="background:#f2c20f"></i>Good (3)</span><span><i style="background:#d7301f"></i>Fair (2)</span><span><i style="background:#6b0f1a"></i>Needs Improvement (1)</span></div>
+        <div class="sw"><span><i style="background:#2b9a4b"></i>Excellent (4)</span><span><i style="background:#f2c20f"></i>Good (3)</span><span><i style="background:#f0861d"></i>Fair (2)</span><span><i style="background:#d7301f"></i>Needs Improvement (1)</span></div>
         <p class="hint" id="rate-hint"></p>
       </div>
       <div class="legend" id="leg-test" hidden>
@@ -246,11 +246,11 @@ function short(d){const s=S[d];if(!s)return 'School '+d;return s.n}
 function psNum(f){const p=f.properties;return p.dbns.length?p.label||p.dbns[0].slice(3):''}
 // proficiency for a zone: pooled across its schools that have results
 function pct(dbns,m){let n=0,p=0;dbns.forEach(d=>{const v=T[d];if(!v)return;if(m!=='math'){n+=v[0];p+=v[1]}if(m!=='ela'){n+=v[2];p+=v[3]}});return n?100*p/n:null}
-const STOPS=[[5,[107,15,26]],[50,[215,48,31]],[75,[242,194,15]],[95,[43,154,75]]];
+const STOPS=[[5,[215,48,31]],[50,[240,134,29]],[75,[242,194,15]],[95,[43,154,75]]];
 function scoreColor(v){if(v<=STOPS[0][0])return rgb(STOPS[0][1]);for(let i=1;i<STOPS.length;i++){const[a,ca]=STOPS[i-1],[b,cb]=STOPS[i];if(v<=b){const t=(v-a)/(b-a);return rgb(ca.map((c,k)=>c+(cb[k]-c)*t))}}return rgb(STOPS[STOPS.length-1][1])}
 function rgb(c){return 'rgb('+c.map(Math.round).join(',')+')'}
 function fillFor(f){const p=f.properties;if(!p.dbns.length)return css('--land');if(metric==='none')return css('--z'+p.c);if(isRate(metric)){const r=zoneRating(p.dbns,metric);return r==null?css('--nodata'):rateColor(r)}const v=pct(p.dbns,metric);return v==null?css('--nodata'):scoreColor(v)}
-function style(f,sel){const sc=metric!=='none';return{renderer,color:sel?css('--hl'):css('--fg'),weight:sel?3:.6,opacity:sel?1:(sc?.3:.45),fillColor:fillFor(f),fillOpacity:sel?.95:(sc?.78:.85)}}
+function style(f,sel){const sc=metric!=='none';return{renderer,stroke:false,fillColor:fillFor(f),fillOpacity:sel?.95:(sc?.78:.85)}}
 let selected=null;
 const layer=L.geoJSON(F,{style:f=>style(f,false),onEachFeature:(f,l)=>{
   l.on('click',()=>select(l,true));
@@ -258,6 +258,16 @@ const layer=L.geoJSON(F,{style:f=>style(f,false),onEachFeature:(f,l)=>{
   l.bindTooltip(t,{sticky:true,direction:'top',offset:[0,-6]});
 }}).addTo(map);
 const byLayer=[];layer.eachLayer(l=>byLayer.push(l));
+// zone boundaries: own pane above the streets, width scales with zoom
+map.createPane('zoneLines').style.zIndex=455;map.getPane('zoneLines').style.pointerEvents='none';
+map.createPane('selPane').style.zIndex=458;map.getPane('selPane').style.pointerEvents='none';
+const zlRend=L.canvas({pane:'zoneLines',padding:.3}),selRend=L.canvas({pane:'selPane',padding:.3});
+function lineStyle(){const z=map.getZoom();const [w,o]=z<11?[.5,.5]:z<12.5?[.8,.7]:z<14?[1.3,.85]:z<15.5?[2,.9]:[2.6,.95];
+  return{renderer:zlRend,interactive:false,fill:false,color:css('--zone-line'),weight:w,opacity:o,lineJoin:'round'}}
+const zoneLines=L.geoJSON(F,{style:lineStyle,interactive:false}).addTo(map);
+const restyleLines=()=>zoneLines.setStyle(lineStyle());
+map.on('zoomend',restyleLines);
+let selLine=null;
 map.fitBounds(layer.getBounds(),{padding:[10,10]});
 
 // major streets: highways (tier 1) always, major streets (2) from zoom 11.5, secondary (3) from zoom 13
@@ -344,7 +354,8 @@ function scoreHtml(d){const v=T[d];if(!v)return '<span class="meta">No 2023 grad
   const n=Math.max(v[0],v[2]);return '<div class="scores">'+row('ELA',v[0],v[1])+row('Math',v[2],v[3])+'<small>2023, grades 3–5 · '+n+' students tested'+(n<60?' · small group, read with care':'')+'</small></div>'}
 function select(l,fromClick){
   if(selected)selected.setStyle(style(selected.feature,false));
-  selected=l;l.setStyle(style(l.feature,true));l.bringToFront();
+  selected=l;l.setStyle(style(l.feature,true));
+  if(selLine)map.removeLayer(selLine);selLine=L.geoJSON(l.feature,{style:{renderer:selRend,interactive:false,fill:false,color:css('--hl'),weight:3.5,opacity:1}}).addTo(map);
   const p=l.feature.properties;let h='<div class="zt">District '+esc(p.dist)+' · '+esc(BORO[p.boro]||'')+'</div>';
   if(!p.dbns.length){h+='<div class="school"><span class="nm">No zoned school</span></div>';}
   else{h+=p.dbns.map(d=>{const s=S[d];return '<div class="school"><span class="nm">'+esc(short(d))+'</span><span class="meta">'+esc(d)+(s?' · '+esc(title(s.a))+' · Grades '+esc(grades(s.g)):'')+'</span>'+rateHtml(d)+scoreHtml(d)+'<a href="https://www.schools.nyc.gov/schools/'+esc(d)+'" target="_blank" rel="noopener">School page on schools.nyc.gov ↗</a></div>'}).join('');}
@@ -384,13 +395,13 @@ const BB={M:[[40.70,-74.02],[40.88,-73.91]],K:[[40.57,-74.04],[40.74,-73.83]],Q:
 document.getElementById('boro').addEventListener('change',e=>{const v=e.target.value;v?map.fitBounds(BB[v]):map.fitBounds(layer.getBounds())});
 
 function syncLegend(){document.getElementById('leg-rate').hidden=!isRate(metric);document.getElementById('leg-test').hidden=isRate(metric)||metric==='none';
-  document.getElementById('rate-hint').innerHTML=(metric==='comp'?'Overall is the average of the three ratings, so zones blend between colors (3.3 sits between yellow and green). ':'DOE rating for '+RNAME[metric]+'. ')+'Shared zones average their schools. <span class="nd"></span> No rating.'}
+  document.getElementById('rate-hint').innerHTML=(metric==='comp'?'Overall is the average of the three ratings, so zones blend between colors (3.3 sits between yellow and green). ':'DOE rating for '+RNAME[metric]+'. ')+'Ratings are the DOE’s own. Shared zones average their schools. <span class="nd"></span> No rating.'}
 syncLegend();
 //METRIC
 document.querySelectorAll('input[name=metric]').forEach(r=>r.addEventListener('change',()=>{metric=r.value;syncLegend();restyle();drawLabels()}));
 // re-style on theme change
 const mq=matchMedia('(prefers-color-scheme: dark)');const restyle=()=>{layer.eachLayer(l=>l.setStyle(style(l.feature,l===selected)))};
-const retheme=()=>{restyle();buildStreets();buildLocal();syncStreets()};
+const retheme=()=>{restyle();restyleLines();if(selLine)selLine.setStyle({color:css('--hl')});buildStreets();buildLocal();syncStreets()};
 mq.addEventListener?.('change',retheme);new MutationObserver(retheme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
 syncStreets();
 })();

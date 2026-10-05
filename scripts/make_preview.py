@@ -25,8 +25,8 @@ MUTED = "#9aa5a0"
 ACCENT = "#f2b705"
 NODATA = "#5d6461"
 LAND = "#1a201e"
-# Same ramp as the site: 1 -> dark red, 2 -> red, 3 -> yellow, 4 -> green
-STOPS = [(1, (107, 15, 26)), (2, (215, 48, 31)), (3, (242, 194, 15)), (4, (43, 154, 75))]
+# Same ramp as the site: 1 -> red, 2 -> orange, 3 -> yellow, 4 -> green
+STOPS = [(1, (215, 48, 31)), (2, (240, 134, 29)), (3, (242, 194, 15)), (4, (43, 154, 75))]
 
 
 def rate_color(r):
@@ -77,7 +77,7 @@ def main():
     # Map on the right
     ax = fig.add_axes([0.42, 0.0, 0.58, 1.0])
     ax.set_facecolor(BG)
-    ax.add_collection(PolyCollection(polys, facecolors=colors, edgecolors=BG, linewidths=0.25))
+    ax.add_collection(PolyCollection(polys, facecolors=colors, edgecolors=BG, linewidths=0.45))
     lines = [[proj(c) for c in s[2]] for s in streets if s[1] <= 2]
     ax.add_collection(LineCollection(lines, colors=(0.9, 0.92, 0.91, 0.55), linewidths=0.5))
     ax.set_xlim(-74.27 * k, -73.69 * k)
