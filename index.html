@@ -40,7 +40,7 @@ h1{font-family:var(--display);font-weight:700;font-size:1.55rem;line-height:1.1;
 .badge{display:inline-block;background:var(--accent);color:var(--accent-ink);font-family:var(--display);font-weight:700;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border-radius:3px;margin-bottom:8px}
 label.lab{font-family:var(--display);font-weight:600;font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px}
 .field{display:flex;gap:6px}
-input[type=text],select{flex:1;min-width:0;font:inherit;font-size:.95rem;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg)}
+input[type=text],select{flex:1;min-width:0;width:100%;font:inherit;font-size:.95rem;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg)}
 input:focus-visible,select:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(--hl);outline-offset:2px}
 button{font:inherit;font-family:var(--display);font-weight:600;font-size:.9rem;padding:8px 12px;border-radius:6px;border:1px solid var(--fg);background:var(--fg);color:var(--panel);cursor:pointer}
 .hint{font-size:.8rem;color:var(--muted);margin:6px 0 0}
@@ -299,6 +299,9 @@ map.on('zoomend moveend',syncStreets);
 // school dots
 const dots=L.layerGroup().addTo(map);
 Object.entries(S).forEach(([d,s])=>{if(s.lat)L.circleMarker([s.lat,s.lon],{renderer:dRend,radius:3.5,weight:1.5,color:css('--panel'),fillColor:css('--dot'),fillOpacity:1,interactive:false}).addTo(dots)});
+// shrink school dots when zoomed out so they don't cover the zone colors
+function sizeDots(){const z=map.getZoom(),r=z<11.5?1.4:z<13?2.2:3.5,w=z<13?.6:1.5;dots.eachLayer(m=>m.setStyle({radius:r,weight:w}))}
+map.on('zoomend',sizeDots);sizeDots();
 
 // zone number labels when zoomed in
 const labels=L.layerGroup().addTo(map);
