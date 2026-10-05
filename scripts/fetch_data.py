@@ -101,7 +101,11 @@ def fetch_tests():
 
 
 def fetch_snapshot():
-    """Per zoned school: [name, address, Instruction, Safety, Families, report type]."""
+    """Per zoned school, two files:
+    snapshot_ratings.json: [name, address, Instruction, Safety, Families, report type]
+    snapshot_extra.json:   [enrollment, attendance %, teachers with 3+ yrs %, principal years,
+                            dual-language programs, ELL %, IEP %, economic need %,
+                            admissions methods, median student travel distance (mi)]"""
     with open(os.path.join(DATA, "elem_zones.json"), encoding="utf-8") as f:
         zones = json.load(f)
     dbns = sorted({d for f in zones["features"] for d in f["properties"]["dbns"]})
@@ -117,20 +121,39 @@ def fetch_snapshot():
                 continue
             v = {r["varname"]: r["value"] for r in rows}
             num = lambda k: int(v[k]) if v.get(k) not in (None, "", "N/A") else None
-            return dbn, [v.get("location_name_long"), v.get("address"),
-                         num("rating_ip"), num("rating_ss"), num("rating_rf"), rt]
+
+            def flt(k):  # "97%", "<1%", "0.2" -> number
+                s = str(v.get(k) or "").replace("%", "").replace("<", "").strip()
+                try:
+                    return float(s)
+                except ValueError:
+                    return None
+
+            def pct_raw(k):  # 0.0089 -> 0.9
+                x = flt(k)
+                return None if x is None else round(x * 1000) / 10
+
+            ratings = [v.get("location_name_long"), v.get("address"),
+                       num("rating_ip"), num("rating_ss"), num("rating_rf"), rt]
+            enrollment = flt("enrollment")
+            extra = [int(enrollment) if enrollment is not None else None, flt("attendance_rate"),
+                     flt("teacher_3yr_exp_pct"), flt("principal_years"), v.get("dual_lang") or None,
+                     pct_raw("ell_pct_raw"), pct_raw("iep_pct_raw"), flt("eni_pct_K8"),
+                     v.get("all_es_admissionsmethods") or None, flt("median_distance")]
+            return dbn, (ratings, extra)
         return dbn, None
 
-    out, missing = {}, []
+    out, extra, missing = {}, {}, []
     with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:
         for dbn, row in pool.map(one, dbns):
             if row:
-                out[dbn] = row
+                out[dbn], extra[dbn] = row
             else:
                 missing.append(dbn)
     if missing:
         print("no Snapshot page for:", ", ".join(missing))
     save("snapshot_ratings.json", out)
+    save("snapshot_extra.json", extra)
 
 
 def fetch_streets():

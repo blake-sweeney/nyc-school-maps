@@ -148,6 +148,7 @@ def main():
     tests = load("state_tests.json")
     d["T"] = {k: v for k, v in tests.items() if k in zoned and (v[0] or v[2])}
     d["R"] = load("snapshot_ratings.json")
+    d["X"] = load("snapshot_extra.json") if os.path.exists(os.path.join(DATA, "snapshot_extra.json")) else {}
     d["ST"] = load("streets.json") if os.path.exists(os.path.join(DATA, "streets.json")) else []
     d["LS"] = load("local_streets.json") if os.path.exists(os.path.join(DATA, "local_streets.json")) else {"n": [], "l": []}
 
