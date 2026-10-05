@@ -231,6 +231,14 @@ button{font:inherit;font-family:var(--display);font-weight:600;font-size:.9rem;p
 <script id="zdata" type="application/json">__DATA__</script>
 <script>
 (function(){
+// GoatCounter "engaged" event: sent once per visit, the first time someone actually uses the map.
+// Bots load pages but rarely click, so this counts real people. No-op where GoatCounter isn't loaded.
+let engagedSent=false;
+function markEngaged(){if(engagedSent)return;engagedSent=true;
+  const send=(tries)=>{const gc=window.goatcounter;
+    if(gc&&typeof gc.count==='function'){try{gc.count({path:'engaged',title:'Used the map',event:true})}catch(e){}}
+    else if(tries>0)setTimeout(()=>send(tries-1),1000)};
+  send(10)}
 const D=JSON.parse(document.getElementById('zdata').textContent);
 const S=D.schools, F=D.features, T=D.T||{};
 let metric='comp';
@@ -328,7 +336,7 @@ function syncStreets(){const z=map.getZoom(),on=streetBox.checked,all=allBox.che
   if(showLocal&&!LS){decodeLocal();buildLocal()}
   if(showLocal&&!map.hasLayer(localGroup))localGroup.addTo(map);if(!showLocal&&map.hasLayer(localGroup))map.removeLayer(localGroup);
   drawStreetLabels()}
-document.querySelectorAll('input[name=streetmode]').forEach(r=>r.addEventListener('change',()=>{if(r.checked){streetMode=r.value;syncStreets()}}));
+document.querySelectorAll('input[name=streetmode]').forEach(r=>r.addEventListener('change',()=>{if(r.checked){markEngaged();streetMode=r.value;syncStreets()}}));
 // street names along the line when zoomed in
 const sLabels=L.layerGroup().addTo(map);
 function labelLine(s,b,placed){
@@ -377,6 +385,7 @@ function rateHtml(d){const r=R[d];if(!r||r.slice(2,5).every(x=>x==null))return '
 function scoreHtml(d){const v=T[d];if(!v)return '<span class="meta">No 2023 grade 3–5 state test results (K–2 or newer school).</span>';
   const n=Math.max(v[0],v[2]);return '<div class="scores">'+row('ELA',v[0],v[1])+row('Math',v[2],v[3])+'<small>2023, grades 3–5 · '+n+' students tested'+(n<60?' · small group, read with care':'')+'</small></div>'}
 function select(l,fromClick){
+  markEngaged();
   if(selected)selected.setStyle(style(selected.feature,false));
   selected=l;l.setStyle(style(l.feature,true));
   if(selLine)map.removeLayer(selLine);selLine=L.geoJSON(l.feature,{style:{renderer:selRend,interactive:false,fill:false,color:css('--hl'),weight:3.5,opacity:1}}).addTo(map);
@@ -405,7 +414,7 @@ q.addEventListener('input',()=>{const v=q.value.trim().toLowerCase();if(v.length
 function inRing(x,y,r){let ins=false;for(let i=0,j=r.length-1;i<r.length;j=i++){const[xi,yi]=r[i],[xj,yj]=r[j];if((yi>y)!==(yj>y)&&x<(xj-xi)*(y-yi)/(yj-yi)+xi)ins=!ins}return ins}
 function inGeom(x,y,g){const ps=g.type==='MultiPolygon'?g.coordinates:[g.coordinates];return ps.some(p=>inRing(x,y,p[0])&&!p.slice(1).some(h=>inRing(x,y,h)))}
 let pin=null;const llmsg=document.getElementById('llmsg');
-document.getElementById('llf').addEventListener('submit',e=>{e.preventDefault();llmsg.hidden=true;
+document.getElementById('llf').addEventListener('submit',e=>{e.preventDefault();markEngaged();llmsg.hidden=true;
   const m=document.getElementById('ll').value.match(/(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);
   if(!m){llmsg.textContent='Enter latitude and longitude separated by a comma, like 40.6721, -73.9779.';llmsg.hidden=false;return}
   let a=+m[1],b=+m[2];if(a<0){[a,b]=[b,a]}
@@ -416,13 +425,13 @@ document.getElementById('llf').addEventListener('submit',e=>{e.preventDefault();
 });
 
 const BB={M:[[40.70,-74.02],[40.88,-73.91]],K:[[40.57,-74.04],[40.74,-73.83]],Q:[[40.54,-73.96],[40.80,-73.70]],X:[[40.79,-73.93],[40.92,-73.75]],R:[[40.49,-74.26],[40.65,-74.05]]};
-document.getElementById('boro').addEventListener('change',e=>{const v=e.target.value;v?map.fitBounds(BB[v]):map.fitBounds(layer.getBounds())});
+document.getElementById('boro').addEventListener('change',e=>{markEngaged();const v=e.target.value;v?map.fitBounds(BB[v]):map.fitBounds(layer.getBounds())});
 
 function syncLegend(){document.getElementById('leg-rate').hidden=!isRate(metric);document.getElementById('leg-test').hidden=!['both','ela','math'].includes(metric);document.getElementById('leg-prog').hidden=!isProg(metric);document.getElementById('leg-iep').hidden=metric!=='iep';document.getElementById('prog-yes').textContent=metric==='gt'?'Zoned school has a G&T program':'Zoned school has a dual-language program';document.getElementById('prog-hint').textContent=metric==='gt'?'District Gifted & Talented programs listed for the zoned school in the 2024–25 Snapshot (73 zoned schools). G&T seats aren’t assigned by zone: families apply separately, and admission rules have changed in recent years, so check MySchools for this year’s process.':'Dual-language programs at the zoned school (151 zoned schools), from the 2024–25 Snapshot. Click a zone to see the languages. Seats are usually by application, often with priority for zoned families.';document.getElementById('leg-enr').hidden=metric!=='enr';document.getElementById('leg-none').hidden=metric!=='none';
   document.getElementById('rate-hint').innerHTML=(metric==='comp'?'Overall is the average of the three ratings, so zones blend between colors (3.3 sits between yellow and green). ':'DOE rating for '+RNAME[metric]+'. ')+'Ratings are the DOE’s own. Shared zones average their schools. <span class="nd"></span> No rating.'}
 syncLegend();
 //METRIC
-document.querySelectorAll('input[name=metric]').forEach(r=>r.addEventListener('change',()=>{metric=r.value;syncLegend();restyle();drawLabels()}));
+document.querySelectorAll('input[name=metric]').forEach(r=>r.addEventListener('change',()=>{markEngaged();metric=r.value;syncLegend();restyle();drawLabels()}));
 // re-style on theme change
 const mq=matchMedia('(prefers-color-scheme: dark)');const restyle=()=>{layer.eachLayer(l=>l.setStyle(style(l.feature,l===selected)))};
 const retheme=()=>{restyle();restyleLines();if(selLine)selLine.setStyle({color:css('--hl')});buildStreets();buildLocal();syncStreets()};
