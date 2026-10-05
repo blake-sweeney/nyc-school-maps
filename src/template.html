@@ -60,7 +60,12 @@ button{font:inherit;font-family:var(--display);font-weight:600;font-size:.9rem;p
 .seg input:focus-visible+label{outline:2px solid var(--hl);outline-offset:-2px}
 .metrics{display:flex;flex-direction:column;gap:6px}
 .metrics .lab{margin-bottom:0}
-.grp{font-size:.8rem;color:var(--muted);margin-top:4px}
+.grp{font-size:.8rem;color:var(--muted)}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--line);margin-bottom:4px}
+.tabs button{all:unset;cursor:pointer;text-align:center;font-family:var(--display);font-weight:600;font-size:.92rem;padding:8px 2px 7px;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-1px}
+.tabs button:hover{color:var(--fg)}
+.tabs button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
+.tabs button:focus-visible{outline:2px solid var(--hl);outline-offset:-2px}
 .legend{margin-top:8px}
 .seg.three{grid-template-columns:repeat(3,1fr)}
 .seg.two{grid-template-columns:repeat(2,1fr)}
@@ -136,32 +141,35 @@ button{font:inherit;font-family:var(--display);font-weight:600;font-size:.9rem;p
       <p class="note confirm-note"><strong>Zones change year to year.</strong> Always confirm an exact address on <a href="https://schoolsearch.schools.nyc/" target="_blank" rel="noopener">schoolsearch.schools.nyc</a> before applying.</p>
     </header>
 
-    <section class="metrics" role="radiogroup" aria-labelledby="mlab">
+    <section class="metrics">
       <span class="lab" id="mlab">Color zones by</span>
-      <span class="grp">School Quality Snapshot · 2024–25</span>
-      <div class="seg">
+      <div class="tabs" role="tablist" aria-labelledby="mlab">
+        <button type="button" role="tab" id="g-quality" data-g="quality" aria-selected="true">Quality</button>
+        <button type="button" role="tab" id="g-tests" data-g="tests" aria-selected="false">Tests</button>
+        <button type="button" role="tab" id="g-programs" data-g="programs" aria-selected="false">Programs</button>
+        <button type="button" role="tab" id="g-other" data-g="other" aria-selected="false">Other</button>
+      </div>
+      <div class="seg" data-g="quality" role="radiogroup" aria-label="School Quality Snapshot, 2024–25">
         <input type="radio" name="metric" id="m-comp" value="comp" checked><label for="m-comp">Overall</label>
         <input type="radio" name="metric" id="m-ip" value="ip"><label for="m-ip">Instruction</label>
         <input type="radio" name="metric" id="m-ss" value="ss"><label for="m-ss">Safety</label>
         <input type="radio" name="metric" id="m-rf" value="rf"><label for="m-rf">Families</label>
       </div>
-      <span class="grp">State tests · 2023, grades 3–5</span>
-      <div class="seg three">
+      <div class="seg three" data-g="tests" role="radiogroup" aria-label="State tests, 2023, grades 3–5" hidden>
         <input type="radio" name="metric" id="m-both" value="both"><label for="m-both">ELA + Math</label>
         <input type="radio" name="metric" id="m-ela" value="ela"><label for="m-ela">ELA</label>
         <input type="radio" name="metric" id="m-math" value="math"><label for="m-math">Math</label>
       </div>
-      <span class="grp">Programs &amp; services · 2024–25</span>
-      <div class="seg three">
+      <div class="seg three" data-g="programs" role="radiogroup" aria-label="Programs and services, 2024–25" hidden>
         <input type="radio" name="metric" id="m-gt" value="gt"><label for="m-gt">G&amp;T</label>
         <input type="radio" name="metric" id="m-dl" value="dl"><label for="m-dl">Dual language</label>
         <input type="radio" name="metric" id="m-iep" value="iep"><label for="m-iep">Special ed</label>
       </div>
-      <span class="grp">Other</span>
-      <div class="seg two">
+      <div class="seg two" data-g="other" role="radiogroup" aria-label="Other" hidden>
         <input type="radio" name="metric" id="m-enr" value="enr"><label for="m-enr">Students</label>
         <input type="radio" name="metric" id="m-none" value="none"><label for="m-none">Random</label>
       </div>
+      <span class="grp" id="grp-src">DOE School Quality Snapshot · 2024–25</span>
       <div class="legend" id="leg-rate">
         <div class="sw"><span><i style="background:#2b9a4b"></i>Excellent (4)</span><span><i style="background:#f2c20f"></i>Good (3)</span><span><i style="background:#f0861d"></i>Fair (2)</span><span><i style="background:#d7301f"></i>Needs Improvement (1)</span></div>
         <p class="hint" id="rate-hint"></p>
@@ -431,7 +439,17 @@ function syncLegend(){document.getElementById('leg-rate').hidden=!isRate(metric)
   document.getElementById('rate-hint').innerHTML=(metric==='comp'?'Overall is the average of the three ratings, so zones blend between colors (3.3 sits between yellow and green). ':'DOE rating for '+RNAME[metric]+'. ')+'Ratings are the DOE’s own. Shared zones average their schools. <span class="nd"></span> No rating.'}
 syncLegend();
 //METRIC
-document.querySelectorAll('input[name=metric]').forEach(r=>r.addEventListener('change',()=>{markEngaged();metric=r.value;syncLegend();restyle();drawLabels()}));
+// metric groups: tabs show one row of options at a time and remember the last pick in each
+const GROUP_SRC={quality:'DOE School Quality Snapshot · 2024–25',tests:'New York State tests · 2023, grades 3–5',programs:'DOE School Quality Snapshot · 2024–25',other:'Enrollment from the 2024–25 Snapshot'};
+const lastPick={};
+document.querySelectorAll('.seg[data-g]').forEach(s=>{lastPick[s.dataset.g]=s.querySelector('input').value});
+lastPick.quality='comp';
+function showGroup(g){document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.g===g)));
+  document.querySelectorAll('.seg[data-g]').forEach(s=>{s.hidden=s.dataset.g!==g});
+  document.getElementById('grp-src').textContent=GROUP_SRC[g];}
+document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{const g=b.dataset.g;showGroup(g);
+  const r=document.querySelector('input[name=metric][value="'+lastPick[g]+'"]');if(r&&!r.checked){r.checked=true;r.dispatchEvent(new Event('change'))}}));
+document.querySelectorAll('input[name=metric]').forEach(r=>r.addEventListener('change',()=>{const s=r.closest('.seg[data-g]');if(s)lastPick[s.dataset.g]=r.value;markEngaged();metric=r.value;syncLegend();restyle();drawLabels()}));
 // re-style on theme change
 const mq=matchMedia('(prefers-color-scheme: dark)');const restyle=()=>{layer.eachLayer(l=>l.setStyle(style(l.feature,l===selected)))};
 const retheme=()=>{restyle();restyleLines();if(selLine)selLine.setStyle({color:css('--hl')});buildStreets();buildLocal();syncStreets()};
