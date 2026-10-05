@@ -1,0 +1,9 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+
+# Raw downloads (only the processed files in data/ are needed)
+data/*_raw.json
