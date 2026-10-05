@@ -92,6 +92,32 @@ def process(raw, tol_m=8):
     out.sort(key=lambda r: -r[1])  # draw secondary first, highways last
     return out
 
+def process_local(raw, tol_m=5):
+    """All other streets, compact: {"n": [names], "l": [[name_idx, x0, y0, dx1, dy1, ...], ...]}
+    Coordinates are integers in 1e-5 degrees; after the first point each pair is a delta."""
+    groups = collections.defaultdict(list)
+    for name, boro, status, mls in raw:
+        if status not in (None, "2"):  # 2 = constructed; skip planned/demapped segments
+            continue
+        groups[(title_name(name), boro)].extend(mls)
+    tol = tol_m / 111320
+    names, idx, lines = [], {}, []
+    for (name, boro), segs in sorted(groups.items()):
+        for pl in chain(segs):
+            s = dp(pl, tol)
+            if len(s) < 2:
+                continue
+            if name not in idx:
+                idx[name] = len(names); names.append(name)
+            row, px, py = [idx[name]], 0, 0
+            for k, (x, y) in enumerate(s):
+                xi, yi = round(x * 1e5), round(y * 1e5)
+                row += [xi, yi] if k == 0 else [xi - px, yi - py]
+                px, py = xi, yi
+            lines.append(row)
+    return {"n": names, "l": lines}
+
+
 if __name__ == "__main__":
     # usage: python3 scripts/streets.py raw_rows.json data/streets.json
     import sys

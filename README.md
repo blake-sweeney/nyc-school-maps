@@ -5,7 +5,7 @@ An interactive map of New York City's elementary (kindergarten) school zones. Ea
 - **Zones:** 770 elementary zone boundaries for 2024–25
 - **School Quality Snapshot (2024–25):** Instruction and Performance, Safety and School Climate, and Relationships with Families, each rated 1–4, plus an Overall average of the three
 - **State tests (2023):** share of grade 3–5 students scoring proficient in ELA and Math
-- **Major streets:** highways, main roads and truck routes drawn over the zones for orientation, with names shown when you zoom in
+- **Streets:** a "Major streets" toggle (highways, main roads and truck routes) and an "All streets" toggle (every street, shown once you zoom in to street level), with names along the lines
 
 The site is one static `index.html` with all its data built in. There is no server or back end, so you can open it in a browser or host it anywhere.
 
@@ -37,6 +37,7 @@ data/
   state_tests.json      grade 3–5 ELA/Math results by school
   snapshot_ratings.json Snapshot ratings by school
   streets.json          simplified major streets for the overlay
+  local_streets.json    every other street, compactly encoded
 scripts/
   build.py              data/ + src/template.html  →  index.html
   fetch_data.py         re-downloads everything in data/ from the city

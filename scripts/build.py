@@ -11,7 +11,7 @@ Steps:
      Plain view, a label point inside the zone, and an approximate area.
   3. Attach state test results (data/state_tests.json),
      School Quality Snapshot ratings (data/snapshot_ratings.json) and
-     the major-streets overlay (data/streets.json).
+     the street overlays (data/streets.json, data/local_streets.json).
   4. Inline everything into the template and write index.html.
 """
 import collections
@@ -106,6 +106,7 @@ def main():
     d["T"] = {k: v for k, v in tests.items() if k in zoned and (v[0] or v[2])}
     d["R"] = load("snapshot_ratings.json")
     d["ST"] = load("streets.json") if os.path.exists(os.path.join(DATA, "streets.json")) else []
+    d["LS"] = load("local_streets.json") if os.path.exists(os.path.join(DATA, "local_streets.json")) else {"n": [], "l": []}
 
     with open(os.path.join(ROOT, "src", "template.html"), encoding="utf-8") as f:
         template = f.read()
@@ -132,7 +133,7 @@ def main():
 
     print(f"{len(d['features'])} zones, {ncolors} neighbor colors, "
           f"{len(d['T'])} schools with test results, {len(d['R'])} with Snapshot data, "
-          f"{len(d['ST'])} street lines")
+          f"{len(d['ST'])} major street lines, {len(d['LS']['l'])} local street lines")
     print(f"wrote {out} ({os.path.getsize(out) / 1e6:.2f} MB)")
 
 

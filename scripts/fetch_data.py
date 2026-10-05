@@ -134,8 +134,9 @@ def fetch_snapshot():
 
 
 def fetch_streets():
-    """Major streets for the map overlay: highways, the city's cartographic main
-    roads (carto_display_level 10/20/30) and truck routes, simplified."""
+    """Street overlays. streets.json: highways, the city's cartographic main roads
+    (carto_display_level 10/20/30) and truck routes. local_streets.json: every
+    other street, compactly encoded. Both simplified."""
     from streets import process  # scripts/streets.py
     where = ("rw_type in('1','2','3','4') AND "
              "(carto_display_level in('10','20','30') OR truck_route_type in('1','2','3'))")
@@ -160,6 +161,28 @@ def fetch_streets():
                     int(r["rw_type"]), int(r["truck_route_type"]) if r.get("truck_route_type") else 0,
                     r.get("boroughcode"), mls])
     save("streets.json", process(raw))
+
+    # Every other street, for the "All streets" toggle.
+    from streets import process_local
+    where = "rw_type='1' AND carto_display_level is null AND truck_route_type is null"
+    rows, offset = [], 0
+    while True:
+        q = urllib.parse.urlencode({"$select": "full_street_name,stname_label,boroughcode,status,the_geom",
+                                    "$where": where, "$order": ":id", "$limit": 50000, "$offset": offset})
+        page = get_json(f"{OPEN_DATA}/resource/{CENTERLINE_DATASET}.json?{q}")
+        rows += page
+        if len(page) < 50000:
+            break
+        offset += 50000
+    raw = []
+    for r in rows:
+        g = r.get("the_geom")
+        if not g:
+            continue
+        mls = g["coordinates"] if g["type"] == "MultiLineString" else [g["coordinates"]]
+        raw.append([r.get("stname_label") or r.get("full_street_name") or "", r.get("boroughcode"),
+                    r.get("status"), mls])
+    save("local_streets.json", process_local(raw))
 
 
 STEPS = {"zones": fetch_zones, "tests": fetch_tests, "snapshot": fetch_snapshot, "streets": fetch_streets}

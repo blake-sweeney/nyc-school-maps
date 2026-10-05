@@ -101,7 +101,9 @@ button{font:inherit;font-family:var(--display);font-weight:600;font-size:.9rem;p
 .leaflet-bar a:last-child{border-bottom:0}
 .leaflet-tooltip{position:absolute;padding:4px 8px;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:4px;white-space:nowrap;pointer-events:none;box-shadow:0 1px 3px rgba(0,0,0,.2);font-size:.8rem}
 .sl{font-family:var(--display);font-weight:600;font-size:10.5px;letter-spacing:.02em;color:var(--road);white-space:nowrap;text-shadow:0 0 2px var(--road-case),0 0 3px var(--road-case),0 0 3px var(--road-case);pointer-events:none;line-height:1;transform-origin:center;text-align:center}
-.map-toggle{background:var(--panel);color:var(--fg);border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,.25);padding:7px 10px}
+.map-toggle{background:var(--panel);color:var(--fg);border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,.25);padding:8px 10px;display:flex;flex-direction:column;gap:6px}
+.zhint{font-size:.75rem;color:var(--muted);max-width:11em}
+.sl-local{font-weight:500;font-size:10px;opacity:.85}
 .chk{display:flex;align-items:center;gap:8px;font-family:var(--display);font-weight:600;font-size:.85rem;cursor:pointer;user-select:none}
 .chk input{width:16px;height:16px;accent-color:var(--fg);margin:0;cursor:pointer}
 .zl{font-family:var(--display);font-weight:700;font-size:11px;color:var(--fg);text-align:center;white-space:nowrap;text-shadow:0 0 3px var(--land),0 0 3px var(--land),0 0 2px var(--land);pointer-events:none;line-height:1}
@@ -233,30 +235,46 @@ function buildStreets(){Object.values(tierGroups).forEach(g=>g.clearLayers());
     ST.filter(s=>s.tier===tr).forEach(s=>L.polyline(s.ll,{renderer:sRend,interactive:false,color:css('--road-case'),weight:w[0]+1.6,opacity:.55,lineCap:'round',lineJoin:'round'}).addTo(tierGroups[tr]));
     ST.filter(s=>s.tier===tr).forEach(s=>L.polyline(s.ll,{renderer:sRend,interactive:false,color:css('--road'),weight:w[1],opacity:tr===3?.7:.9,lineCap:'round',lineJoin:'round'}).addTo(tierGroups[tr]));});}
 buildStreets();
-// "Show major streets" toggle lives on the map, top right
+// all other streets: decoded on first use, drawn only at street-level zoom
+const LOCAL_MIN_Z=14;
+map.createPane('local').style.zIndex=445;map.getPane('local').style.pointerEvents='none';
+const lRend=L.canvas({pane:'local',padding:.3});
+let LS=null;const localGroup=L.layerGroup();
+function decodeLocal(){if(LS)return LS;const src=D.LS||{n:[],l:[]};
+  LS=src.l.map(r=>{const ll=[];let x=0,y=0;for(let i=1;i<r.length;i+=2){x+=r[i];y+=r[i+1];ll.push([y/1e5,x/1e5])}return{name:src.n[r[0]],ll,bounds:L.latLngBounds(ll)}});return LS}
+function buildLocal(){localGroup.clearLayers();if(!LS)return;
+  LS.forEach(s=>L.polyline(s.ll,{renderer:lRend,interactive:false,color:css('--road'),weight:.9,opacity:.5,lineCap:'round',lineJoin:'round'}).addTo(localGroup))}
+// street toggles live on the map, top right
 const StreetToggle=L.Control.extend({options:{position:'topright'},onAdd(){const d=L.DomUtil.create('div','leaflet-control map-toggle');
-  d.innerHTML='<label class="chk" for="streets"><input type="checkbox" id="streets" checked> Major streets</label>';
+  d.innerHTML='<label class="chk" for="streets"><input type="checkbox" id="streets" checked> Major streets</label>'+
+    '<label class="chk" for="allstreets"><input type="checkbox" id="allstreets"> All streets</label>'+
+    '<span class="zhint" id="zhint" hidden>Zoom in to see all streets</span>';
   L.DomEvent.disableClickPropagation(d);L.DomEvent.disableScrollPropagation(d);return d}});
 new StreetToggle().addTo(map);
-const streetBox=document.getElementById('streets');
-function syncStreets(){const z=map.getZoom(),on=streetBox.checked;
-  [[1,0],[2,11.5],[3,13]].forEach(([tr,minz])=>{const g=tierGroups[tr],show=on&&z>=minz;if(show&&!map.hasLayer(g))g.addTo(map);if(!show&&map.hasLayer(g))map.removeLayer(g)});drawStreetLabels()}
-streetBox.addEventListener('change',syncStreets);
+const streetBox=document.getElementById('streets'),allBox=document.getElementById('allstreets'),zhint=document.getElementById('zhint');
+function syncStreets(){const z=map.getZoom(),on=streetBox.checked,all=allBox.checked;
+  [[1,0],[2,11.5],[3,13]].forEach(([tr,minz])=>{const g=tierGroups[tr],show=on&&z>=minz;if(show&&!map.hasLayer(g))g.addTo(map);if(!show&&map.hasLayer(g))map.removeLayer(g)});
+  const showLocal=all&&z>=LOCAL_MIN_Z;
+  if(showLocal&&!LS){decodeLocal();buildLocal()}
+  if(showLocal&&!map.hasLayer(localGroup))localGroup.addTo(map);if(!showLocal&&map.hasLayer(localGroup))map.removeLayer(localGroup);
+  zhint.hidden=!(all&&z<LOCAL_MIN_Z);
+  drawStreetLabels()}
+streetBox.addEventListener('change',syncStreets);allBox.addEventListener('change',syncStreets);
 // street names along the line when zoomed in
 const sLabels=L.layerGroup().addTo(map);
-function drawStreetLabels(){sLabels.clearLayers();const z=map.getZoom();if(!streetBox.checked||z<13.5)return;
-  const b=map.getBounds(),placed=[];let n=0;
-  const cand=ST.filter(s=>s.tier<=(z>=14.5?3:2));
-  for(const s of cand){if(n>=60)break;
+function labelLine(s,b,placed){
     const pts=s.ll.map(ll=>map.latLngToContainerPoint(ll));
-    // longest on-screen segment run: pick the segment nearest the visible middle of the line
+    // place the label on the longest segment whose midpoint is on screen
     let best=null,bl=0;for(let i=0;i<pts.length-1;i++){const a=pts[i],c=pts[i+1];const mid=L.latLng((s.ll[i][0]+s.ll[i+1][0])/2,(s.ll[i][1]+s.ll[i+1][1])/2);if(!b.contains(mid))continue;const l=a.distanceTo(c);if(l>bl){bl=l;best=i}}
-    if(best==null||bl<s.name.length*6.5)continue;
+    if(best==null||bl<s.name.length*6.5)return false;
     const a=pts[best],c=pts[best+1],m=a.add(c).divideBy(2);
-    if(placed.some(p=>(p.name===s.name&&p.pt.distanceTo(m)<350)||p.pt.distanceTo(m)<60))continue;
+    if(placed.some(p=>(p.name===s.name&&p.pt.distanceTo(m)<350)||p.pt.distanceTo(m)<60))return false;
     let ang=Math.atan2(c.y-a.y,c.x-a.x)*180/Math.PI;if(ang>90)ang-=180;if(ang<-90)ang+=180;
-    placed.push({name:s.name,pt:m});n++;
-    L.marker(map.containerPointToLatLng(m),{interactive:false,pane:'markerPane',icon:L.divIcon({className:'',iconSize:[0,0],html:'<div class="sl" style="transform:translate(-50%,-50%) rotate('+ang.toFixed(1)+'deg)">'+esc(s.name)+'</div>'})}).addTo(sLabels)}}
+    placed.push({name:s.name,pt:m});
+    L.marker(map.containerPointToLatLng(m),{interactive:false,pane:'markerPane',icon:L.divIcon({className:'',iconSize:[0,0],html:'<div class="sl'+(s.tier?'':' sl-local')+'" style="transform:translate(-50%,-50%) rotate('+ang.toFixed(1)+'deg)">'+esc(s.name)+'</div>'})}).addTo(sLabels);return true}
+function drawStreetLabels(){sLabels.clearLayers();const z=map.getZoom();const b=map.getBounds(),placed=[];let n=0;
+  if(streetBox.checked&&z>=13.5){for(const s of ST.filter(s=>s.tier<=(z>=14.5?3:2))){if(n>=60)break;if(labelLine(s,b,placed))n++}}
+  if(allBox.checked&&z>=16&&LS){let k=0;for(const s of LS){if(k>=60)break;if(!b.intersects(s.bounds))continue;if(labelLine(s,b,placed))k++}}}
 map.on('zoomend moveend',syncStreets);
 
 // school dots
@@ -329,7 +347,7 @@ syncLegend();
 document.querySelectorAll('input[name=metric]').forEach(r=>r.addEventListener('change',()=>{metric=r.value;syncLegend();restyle();drawLabels()}));
 // re-style on theme change
 const mq=matchMedia('(prefers-color-scheme: dark)');const restyle=()=>{layer.eachLayer(l=>l.setStyle(style(l.feature,l===selected)))};
-const retheme=()=>{restyle();buildStreets();syncStreets()};
+const retheme=()=>{restyle();buildStreets();buildLocal();syncStreets()};
 mq.addEventListener?.('change',retheme);new MutationObserver(retheme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
 syncStreets();
 })();
