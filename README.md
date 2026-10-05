@@ -5,6 +5,7 @@ An interactive map of New York City's elementary (kindergarten) school zones. Ea
 - **Zones:** 770 elementary zone boundaries for 2024–25
 - **School Quality Snapshot (2024–25):** Instruction and Performance, Safety and School Climate, and Relationships with Families, each rated 1–4, plus an Overall average of the three
 - **State tests (2023):** share of grade 3–5 students scoring proficient in ELA and Math
+- **Major streets:** highways, main roads and truck routes drawn over the zones for orientation, with names shown when you zoom in
 
 The site is one static `index.html` with all its data built in. There is no server or back end, so you can open it in a browser or host it anywhere.
 
@@ -35,9 +36,11 @@ data/
   elem_zones.json       zone boundaries + school names/locations
   state_tests.json      grade 3–5 ELA/Math results by school
   snapshot_ratings.json Snapshot ratings by school
+  streets.json          simplified major streets for the overlay
 scripts/
   build.py              data/ + src/template.html  →  index.html
   fetch_data.py         re-downloads everything in data/ from the city
+  streets.py            merges and simplifies street centerlines (used by fetch_data.py)
 ```
 
 Neither script needs anything beyond Python 3.
@@ -55,7 +58,7 @@ Commit both `src/template.html` and the rebuilt `index.html`.
 ## Refresh the data
 
 ```sh
-python3 scripts/fetch_data.py      # or: fetch_data.py zones | tests | snapshot
+python3 scripts/fetch_data.py      # or: fetch_data.py zones | tests | snapshot | streets
 python3 scripts/build.py
 ```
 
@@ -67,5 +70,6 @@ When the city publishes a new year, update the dataset IDs and years at the top 
 - [2019–2020 School Locations](https://data.cityofnewyork.us/Education/2019-2020-School-Locations/wg9x-4ke6), NYC Open Data (map points and grades served)
 - [ELA Test Results 2013–2023](https://data.cityofnewyork.us/Education/English-Language-Arts-ELA-Test-Results-2013-2023/iebs-5yhr) and [Math Test Results 2013–2023](https://data.cityofnewyork.us/Education/Math-Test-Results-2013-2023/74kb-55u9), NYC Open Data
 - [School Quality Snapshot 2024–25](https://tools.nycenet.edu/snapshot/), NYC DOE (ratings and current school names)
+- [Centerline (CSCL)](https://data.cityofnewyork.us/City-Government/Centerline/inkn-q76z), NYC Open Data (major streets)
 
 Zones change from year to year. Before applying, always confirm a specific address on [schoolsearch.schools.nyc](https://schoolsearch.schools.nyc/).

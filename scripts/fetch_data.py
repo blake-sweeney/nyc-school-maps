@@ -2,7 +2,7 @@
 """Download fresh source data into data/. Standard library only.
 
     python3 scripts/fetch_data.py            # everything
-    python3 scripts/fetch_data.py zones      # just one: zones | tests | snapshot
+    python3 scripts/fetch_data.py zones      # just one: zones | tests | snapshot | streets
 
 Then rebuild the page with:  python3 scripts/build.py
 
@@ -26,6 +26,7 @@ MATH_DATASET = "74kb-55u9"        # Math Test Results 2013-2023
 TEST_YEAR = "2023"
 SNAPSHOT_API = "https://tools.nycenet.edu/api/v1/data/school/app/snapshot/all"
 SNAPSHOT_YEAR = "2025"            # 2024-25 School Quality Snapshot
+CENTERLINE_DATASET = "inkn-q76z"  # NYC Street Centerline (CSCL)
 
 
 def get_json(url):
@@ -132,7 +133,36 @@ def fetch_snapshot():
     save("snapshot_ratings.json", out)
 
 
-STEPS = {"zones": fetch_zones, "tests": fetch_tests, "snapshot": fetch_snapshot}
+def fetch_streets():
+    """Major streets for the map overlay: highways, the city's cartographic main
+    roads (carto_display_level 10/20/30) and truck routes, simplified."""
+    from streets import process  # scripts/streets.py
+    where = ("rw_type in('1','2','3','4') AND "
+             "(carto_display_level in('10','20','30') OR truck_route_type in('1','2','3'))")
+    cols = "full_street_name,stname_label,rw_type,carto_display_level,truck_route_type,boroughcode,the_geom"
+    rows, offset = [], 0
+    while True:
+        q = urllib.parse.urlencode({"$select": cols, "$where": where, "$order": ":id",
+                                    "$limit": 20000, "$offset": offset})
+        page = get_json(f"{OPEN_DATA}/resource/{CENTERLINE_DATASET}.json?{q}")
+        rows += page
+        if len(page) < 20000:
+            break
+        offset += 20000
+    raw = []
+    for r in rows:
+        g = r.get("the_geom")
+        if not g:
+            continue
+        mls = g["coordinates"] if g["type"] == "MultiLineString" else [g["coordinates"]]
+        raw.append([r.get("stname_label") or r.get("full_street_name") or "",
+                    int(r["carto_display_level"]) if r.get("carto_display_level") else 0,
+                    int(r["rw_type"]), int(r["truck_route_type"]) if r.get("truck_route_type") else 0,
+                    r.get("boroughcode"), mls])
+    save("streets.json", process(raw))
+
+
+STEPS = {"zones": fetch_zones, "tests": fetch_tests, "snapshot": fetch_snapshot, "streets": fetch_streets}
 
 if __name__ == "__main__":
     for name in sys.argv[1:] or list(STEPS):

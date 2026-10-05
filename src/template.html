@@ -6,7 +6,7 @@
 :root{
   --bg:#f3f4f1; --panel:#ffffff; --fg:#1d2321; --muted:#5d6763; --line:#d9ddd8;
   --water:#cfdde3; --land:#eceee9; --accent:#f2b705; --accent-ink:#1d2321;
-  --hl:#0b4f8a; --dot:#1d2321; --warn-bg:#fff4d1; --warn-fg:#6b4d00;
+  --hl:#0b4f8a; --dot:#1d2321; --road:#2c3331; --road-case:#ffffff; --warn-bg:#fff4d1; --warn-fg:#6b4d00;
   --z0:#b9d3a8; --z1:#f0c9a0; --z2:#b7c8e6; --z3:#e8b9c4; --z4:#d8d29a; --z5:#c3b5dd;
   --display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
   --body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
@@ -14,12 +14,12 @@
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#141917; --panel:#1c2220; --fg:#e7ebe8; --muted:#9aa5a0; --line:#2f3835;
   --water:#0f1a20; --land:#1a201e; --accent:#f2b705; --accent-ink:#141917;
-  --hl:#7fb8ec; --dot:#e7ebe8; --warn-bg:#3a3014; --warn-fg:#f3d98a;
+  --hl:#7fb8ec; --dot:#e7ebe8; --road:#e3e8e5; --road-case:#0d1110; --warn-bg:#3a3014; --warn-fg:#f3d98a;
   --z0:#3d5536; --z1:#5c4430; --z2:#33456a; --z3:#5e3a45; --z4:#545026; --z5:#45395e; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#141917; --panel:#1c2220; --fg:#e7ebe8; --muted:#9aa5a0; --line:#2f3835;
   --water:#0f1a20; --land:#1a201e; --accent:#f2b705; --accent-ink:#141917;
-  --hl:#7fb8ec; --dot:#e7ebe8; --warn-bg:#3a3014; --warn-fg:#f3d98a;
+  --hl:#7fb8ec; --dot:#e7ebe8; --road:#e3e8e5; --road-case:#0d1110; --warn-bg:#3a3014; --warn-fg:#f3d98a;
   --z0:#3d5536; --z1:#5c4430; --z2:#33456a; --z3:#5e3a45; --z4:#545026; --z5:#45395e; color-scheme:dark}
 html,body{height:100%}
 body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.45}
@@ -100,6 +100,9 @@ button{font:inherit;font-family:var(--display);font-weight:600;font-size:.9rem;p
 .leaflet-bar a{display:block;width:32px;height:32px;line-height:32px;text-align:center;text-decoration:none;background:var(--panel);color:var(--fg);font:700 18px/32px var(--display);border-bottom:1px solid var(--line)}
 .leaflet-bar a:last-child{border-bottom:0}
 .leaflet-tooltip{position:absolute;padding:4px 8px;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:4px;white-space:nowrap;pointer-events:none;box-shadow:0 1px 3px rgba(0,0,0,.2);font-size:.8rem}
+.sl{font-family:var(--display);font-weight:600;font-size:10.5px;letter-spacing:.02em;color:var(--road);white-space:nowrap;text-shadow:0 0 2px var(--road-case),0 0 3px var(--road-case),0 0 3px var(--road-case);pointer-events:none;line-height:1;transform-origin:center;text-align:center}
+.chk{display:flex;align-items:center;gap:8px;font-size:.9rem;cursor:pointer;margin-top:10px}
+.chk input{width:16px;height:16px;accent-color:var(--fg);margin:0}
 .zl{font-family:var(--display);font-weight:700;font-size:11px;color:var(--fg);text-align:center;white-space:nowrap;text-shadow:0 0 3px var(--land),0 0 3px var(--land),0 0 2px var(--land);pointer-events:none;line-height:1}
 @media (max-width:760px){
   .app{grid-template-columns:1fr;grid-template-rows:58vh auto;height:auto}
@@ -167,6 +170,7 @@ button{font:inherit;font-family:var(--display);font-weight:600;font-size:.9rem;p
         <option value="M">Manhattan</option><option value="K">Brooklyn</option>
         <option value="Q">Queens</option><option value="X">Bronx</option><option value="R">Staten Island</option>
       </select>
+      <label class="chk" for="streets"><input type="checkbox" id="streets" checked> Show major streets</label>
     </section>
 
     <section class="card empty" id="card" aria-live="polite">Select a zone on the map, or search for a school, to see its zoned elementary school.</section>
@@ -217,9 +221,42 @@ const layer=L.geoJSON(F,{style:f=>style(f,false),onEachFeature:(f,l)=>{
 const byLayer=[];layer.eachLayer(l=>byLayer.push(l));
 map.fitBounds(layer.getBounds(),{padding:[10,10]});
 
+// major streets: highways (tier 1) always, major streets (2) from zoom 11.5, secondary (3) from zoom 13
+map.createPane('streets').style.zIndex=450;map.getPane('streets').style.pointerEvents='none';
+map.createPane('dotsPane').style.zIndex=460;map.getPane('dotsPane').style.pointerEvents='none';
+const sRend=L.canvas({pane:'streets',padding:.3}),dRend=L.canvas({pane:'dotsPane',padding:.3});
+const ST=(D.ST||[]).map(r=>({name:r[0],tier:r[1],ll:r[2].map(c=>[c[1],c[0]])}));
+const WID={1:[3.2,1.8],2:[2.4,1.2],3:[1.8,.8]};
+const streetLayer=L.layerGroup();const tierGroups={1:L.layerGroup(),2:L.layerGroup(),3:L.layerGroup()};
+function buildStreets(){Object.values(tierGroups).forEach(g=>g.clearLayers());
+  [3,2,1].forEach(tr=>{const w=WID[tr];
+    ST.filter(s=>s.tier===tr).forEach(s=>L.polyline(s.ll,{renderer:sRend,interactive:false,color:css('--road-case'),weight:w[0]+1.6,opacity:.55,lineCap:'round',lineJoin:'round'}).addTo(tierGroups[tr]));
+    ST.filter(s=>s.tier===tr).forEach(s=>L.polyline(s.ll,{renderer:sRend,interactive:false,color:css('--road'),weight:w[1],opacity:tr===3?.7:.9,lineCap:'round',lineJoin:'round'}).addTo(tierGroups[tr]));});}
+buildStreets();
+const streetBox=document.getElementById('streets');
+function syncStreets(){const z=map.getZoom(),on=streetBox.checked;
+  [[1,0],[2,11.5],[3,13]].forEach(([tr,minz])=>{const g=tierGroups[tr],show=on&&z>=minz;if(show&&!map.hasLayer(g))g.addTo(map);if(!show&&map.hasLayer(g))map.removeLayer(g)});drawStreetLabels()}
+streetBox.addEventListener('change',syncStreets);
+// street names along the line when zoomed in
+const sLabels=L.layerGroup().addTo(map);
+function drawStreetLabels(){sLabels.clearLayers();const z=map.getZoom();if(!streetBox.checked||z<13.5)return;
+  const b=map.getBounds(),placed=[];let n=0;
+  const cand=ST.filter(s=>s.tier<=(z>=14.5?3:2));
+  for(const s of cand){if(n>=60)break;
+    const pts=s.ll.map(ll=>map.latLngToContainerPoint(ll));
+    // longest on-screen segment run: pick the segment nearest the visible middle of the line
+    let best=null,bl=0;for(let i=0;i<pts.length-1;i++){const a=pts[i],c=pts[i+1];const mid=L.latLng((s.ll[i][0]+s.ll[i+1][0])/2,(s.ll[i][1]+s.ll[i+1][1])/2);if(!b.contains(mid))continue;const l=a.distanceTo(c);if(l>bl){bl=l;best=i}}
+    if(best==null||bl<s.name.length*6.5)continue;
+    const a=pts[best],c=pts[best+1],m=a.add(c).divideBy(2);
+    if(placed.some(p=>(p.name===s.name&&p.pt.distanceTo(m)<350)||p.pt.distanceTo(m)<60))continue;
+    let ang=Math.atan2(c.y-a.y,c.x-a.x)*180/Math.PI;if(ang>90)ang-=180;if(ang<-90)ang+=180;
+    placed.push({name:s.name,pt:m});n++;
+    L.marker(map.containerPointToLatLng(m),{interactive:false,pane:'markerPane',icon:L.divIcon({className:'',iconSize:[0,0],html:'<div class="sl" style="transform:translate(-50%,-50%) rotate('+ang.toFixed(1)+'deg)">'+esc(s.name)+'</div>'})}).addTo(sLabels)}}
+map.on('zoomend moveend',syncStreets);
+
 // school dots
 const dots=L.layerGroup().addTo(map);
-Object.entries(S).forEach(([d,s])=>{if(s.lat)L.circleMarker([s.lat,s.lon],{renderer,radius:3.5,weight:1.5,color:css('--panel'),fillColor:css('--dot'),fillOpacity:1,interactive:false}).addTo(dots)});
+Object.entries(S).forEach(([d,s])=>{if(s.lat)L.circleMarker([s.lat,s.lon],{renderer:dRend,radius:3.5,weight:1.5,color:css('--panel'),fillColor:css('--dot'),fillOpacity:1,interactive:false}).addTo(dots)});
 
 // zone number labels when zoomed in
 const labels=L.layerGroup().addTo(map);
@@ -287,6 +324,8 @@ syncLegend();
 document.querySelectorAll('input[name=metric]').forEach(r=>r.addEventListener('change',()=>{metric=r.value;syncLegend();restyle();drawLabels()}));
 // re-style on theme change
 const mq=matchMedia('(prefers-color-scheme: dark)');const restyle=()=>{layer.eachLayer(l=>l.setStyle(style(l.feature,l===selected)))};
-mq.addEventListener?.('change',restyle);new MutationObserver(restyle).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+const retheme=()=>{restyle();buildStreets();syncStreets()};
+mq.addEventListener?.('change',retheme);new MutationObserver(retheme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+syncStreets();
 })();
 </script>
