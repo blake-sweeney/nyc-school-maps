@@ -3,7 +3,23 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>NYC Kindergarten Zone Map</title>
+<meta name="description" content="Every NYC elementary (kindergarten) school zone on one map, colored by DOE School Quality ratings and state test scores. Free for parents.">
+<link rel="canonical" href="https://nycschoolzones.com/">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="NYC School Zones">
+<meta property="og:title" content="NYC School Zones">
+<meta property="og:description" content="Every NYC elementary (kindergarten) school zone on one map, colored by DOE School Quality ratings and state test scores. Free for parents.">
+<meta property="og:url" content="https://nycschoolzones.com/">
+<meta property="og:image" content="https://nycschoolzones.com/preview.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Map of New York City elementary school zones colored from green to dark red by rating">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="NYC School Zones">
+<meta name="twitter:description" content="Every NYC elementary (kindergarten) school zone on one map, colored by DOE School Quality ratings and state test scores. Free for parents.">
+<meta name="twitter:image" content="https://nycschoolzones.com/preview.png">
+<title>NYC School Zones</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Sans+Condensed:wght@500;600;700&display=swap">
 <style>
@@ -58,6 +74,9 @@ button{font:inherit;font-family:var(--display);font-weight:600;font-size:.9rem;p
 .school .meta{font-size:.85rem;color:var(--muted);font-variant-numeric:tabular-nums}
 .school a{color:var(--hl);font-size:.85rem}
 .note{background:var(--warn-bg);color:var(--warn-fg);font-size:.85rem;padding:8px 10px;border-radius:6px}
+.confirm-note{margin:12px 0 0}
+.note a{color:inherit;font-weight:700}
+.card .confirm{font-size:.82rem;color:var(--hl)}
 .seg{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line);border-radius:6px;overflow:hidden}
 .seg input{position:absolute;opacity:0;pointer-events:none}
 .seg label{font-family:var(--display);font-weight:600;font-size:.85rem;text-align:center;padding:7px 4px;cursor:pointer;border-right:1px solid var(--line);color:var(--muted)}
@@ -134,6 +153,7 @@ button{font:inherit;font-family:var(--display);font-weight:600;font-size:.9rem;p
       <span class="badge">Kindergarten · 2024–25 zones</span>
       <h1>NYC Elementary School Zones</h1>
       <p class="sub">770 zone boundaries from the NYC Department of Education. Colored by the zoned school's DOE quality ratings or state test results. Click anywhere to see which school is zoned for that block.</p>
+      <p class="note confirm-note"><strong>Zones change year to year.</strong> Always confirm an exact address on <a href="https://schoolsearch.schools.nyc/" target="_blank" rel="noopener">schoolsearch.schools.nyc</a> before applying.</p>
     </header>
 
     <section class="metrics" role="radiogroup" aria-labelledby="mlab">
@@ -197,7 +217,6 @@ button{font:inherit;font-family:var(--display);font-weight:600;font-size:.9rem;p
       </div>
       <p>Questions, corrections or ideas? Email <a href="mailto:info@nycschoolzones.com?subject=NYC%20School%20Zones%20feedback">info@nycschoolzones.com</a></p>
       <p>Source: <a href="https://data.cityofnewyork.us/Education/School-Zones-2024-2025-Elementary-School-/cmjf-yawu" target="_blank" rel="noopener">School Zones 2024–2025 (Elementary)</a>, NYC Open Data. School names and addresses from the 2019–20 DOE location list. Test results from <a href="https://data.cityofnewyork.us/Education/English-Language-Arts-ELA-Test-Results-2013-2023/iebs-5yhr" target="_blank" rel="noopener">ELA</a> and <a href="https://data.cityofnewyork.us/Education/Math-Test-Results-2013-2023/74kb-55u9" target="_blank" rel="noopener">Math</a> Test Results 2013–2023 (2023 is the latest year published there). Ratings and current school names from the DOE <a href="https://tools.nycenet.edu/snapshot/" target="_blank" rel="noopener">2024–25 School Quality Snapshot</a>. Shared zones show the combined result of all their schools.</p>
-      <p>Zones can change year to year. Always confirm an exact address on <a href="https://schoolsearch.schools.nyc/" target="_blank" rel="noopener">schoolsearch.schools.nyc</a> before applying.</p>
     </div>
   </aside>
   <div id="map" role="application" aria-label="Map of elementary school zones"></div>
@@ -265,13 +284,13 @@ function buildLocal(){localGroup.clearLayers();if(!LS)return;
 // street toggles live on the map, top right
 const StreetToggle=L.Control.extend({options:{position:'topright'},onAdd(){const d=L.DomUtil.create('div','leaflet-control map-toggle');
   d.setAttribute('role','radiogroup');d.setAttribute('aria-label','Streets');
-  d.innerHTML='<label class="chk" for="st-all"><input type="radio" name="streetmode" id="st-all" value="all"> All streets</label>'+
-    '<label class="chk" for="st-major"><input type="radio" name="streetmode" id="st-major" value="major" checked> Major streets</label>'+
+  d.innerHTML='<label class="chk" for="st-all"><input type="radio" name="streetmode" id="st-all" value="all" checked> All streets</label>'+
+    '<label class="chk" for="st-major"><input type="radio" name="streetmode" id="st-major" value="major"> Major streets</label>'+
     '<label class="chk" for="st-none"><input type="radio" name="streetmode" id="st-none" value="none"> Hide streets</label>';
   L.DomEvent.disableClickPropagation(d);L.DomEvent.disableScrollPropagation(d);return d}});
 new StreetToggle().addTo(map);
 // street mode: 'all' = every street + major, 'major' = major only, 'none' = hidden
-let streetMode='major';
+let streetMode='all';
 const streetBox={get checked(){return streetMode!=='none'}},allBox={get checked(){return streetMode==='all'}};
 function syncStreets(){const z=map.getZoom(),on=streetBox.checked,all=allBox.checked;
   [[1,0],[2,11.5],[3,13]].forEach(([tr,minz])=>{const g=tierGroups[tr],show=on&&z>=minz;if(show&&!map.hasLayer(g))g.addTo(map);if(!show&&map.hasLayer(g))map.removeLayer(g)});
@@ -331,6 +350,7 @@ function select(l,fromClick){
   else{h+=p.dbns.map(d=>{const s=S[d];return '<div class="school"><span class="nm">'+esc(short(d))+'</span><span class="meta">'+esc(d)+(s?' · '+esc(title(s.a))+' · Grades '+esc(grades(s.g)):'')+'</span>'+rateHtml(d)+scoreHtml(d)+'<a href="https://www.schools.nyc.gov/schools/'+esc(d)+'" target="_blank" rel="noopener">School page on schools.nyc.gov ↗</a></div>'}).join('');}
   if(p.remarks)h+='<div class="note">'+esc(p.remarks)+'</div>';
   if(p.dbns.length>1&&!p.remarks)h+='<div class="note">This block is in a shared zone. Families can rank any of these schools.</div>';
+  if(p.dbns.length)h+='<a class="confirm" href="https://schoolsearch.schools.nyc/" target="_blank" rel="noopener">Confirm your exact address on schoolsearch.schools.nyc ↗</a>';
   card.className='card';card.innerHTML=h;
   if(!fromClick)map.fitBounds(l.getBounds(),{maxZoom:15,padding:[30,30]});
   if(window.innerWidth<=760&&fromClick)card.scrollIntoView({behavior:'smooth',block:'nearest'});

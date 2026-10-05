@@ -16,6 +16,7 @@ Steps:
 """
 import collections
 import json
+import re
 import os
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -24,6 +25,12 @@ DATA = os.path.join(ROOT, "data")
 # GoatCounter visitor counts (https://www.goatcounter.com). Put your site code here,
 # e.g. "nycschoolmaps" for nycschoolmaps.goatcounter.com. Leave empty to turn it off.
 GOATCOUNTER_CODE = "nycschoolzones"
+
+# Link previews (Facebook, iMessage, Reddit, Slack, X). preview.png is made by scripts/make_preview.py.
+SITE_URL = "https://nycschoolzones.com/"
+SITE_NAME = "NYC School Zones"
+SITE_DESCRIPTION = ("Every NYC elementary (kindergarten) school zone on one map, colored by DOE "
+                    "School Quality ratings and state test scores. Free for parents.")
 
 
 def load(name):
@@ -101,6 +108,30 @@ def prepare_zones(d):
     return max(color.values()) + 1
 
 
+def head_tags():
+    from html import escape
+    title, desc, url = escape(SITE_NAME), escape(SITE_DESCRIPTION), SITE_URL
+    img = SITE_URL + "preview.png"
+    return (
+        f'<meta name="description" content="{desc}">\n'
+        f'<link rel="canonical" href="{url}">\n'
+        '<link rel="icon" href="favicon.svg" type="image/svg+xml">\n'
+        '<meta property="og:type" content="website">\n'
+        f'<meta property="og:site_name" content="{title}">\n'
+        f'<meta property="og:title" content="{title}">\n'
+        f'<meta property="og:description" content="{desc}">\n'
+        f'<meta property="og:url" content="{url}">\n'
+        f'<meta property="og:image" content="{img}">\n'
+        '<meta property="og:image:width" content="1200">\n'
+        '<meta property="og:image:height" content="630">\n'
+        '<meta property="og:image:alt" content="Map of New York City elementary school zones colored from green to dark red by rating">\n'
+        '<meta name="twitter:card" content="summary_large_image">\n'
+        f'<meta name="twitter:title" content="{title}">\n'
+        f'<meta name="twitter:description" content="{desc}">\n'
+        f'<meta name="twitter:image" content="{img}">\n'
+    )
+
+
 def goatcounter_tag():
     code = GOATCOUNTER_CODE.strip()
     if not code:
@@ -130,6 +161,7 @@ def main():
     html = (
         "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n"
         "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, viewport-fit=cover\">\n"
+        + head_tags()
         + page[:cut].replace(
             "<style>",
             "<style>\n*,*::before,*::after{box-sizing:border-box}\nbody{margin:0}\n[hidden]{display:none!important}\n",
@@ -140,6 +172,8 @@ def main():
         + goatcounter_tag()
         + "\n</body>\n</html>\n"
     )
+    # The public site uses the site name as its browser-tab title.
+    html = re.sub(r"<title>.*?</title>", f"<title>{SITE_NAME}</title>", html, count=1)
     out = os.path.join(ROOT, "index.html")
     with open(out, "w", encoding="utf-8") as f:
         f.write(html)
