@@ -468,22 +468,27 @@ function locate(a,b,label,keepView){lastPoint={a,b,label};llmsg.hidden=true;
   select(hit,true);if(!keepView)map.setView([a,b],15)}
 const prettyAddr=s=>title(s.replace(/, USA$/,'').replace(/, NY$/,'')).replace(/\bNy\b/,'NY');
 let addrHits=[],addrTimer=null,addrSeq=0;
+const normAddr=s=>s.toLowerCase().replace(/[.,]/g,' ').replace(/\s+/g,' ').trim();
+function tidyHits(q,hits){const seen=new Set();hits=hits.filter(h=>{const k=normAddr(h.label);if(seen.has(k))return false;seen.add(k);return true});
+  // GeoSearch matches loosely ("220 W 93" also returns 2, 31, 69 W 93). Keep the typed house number when there is one.
+  const m=q.trim().match(/^(\d+[a-z]?(?:-\d+)?)\b/i);if(!m)return hits;
+  const same=hits.filter(h=>normAddr(h.label).startsWith(m[1].toLowerCase()+' '));return same.length?same:hits}
 async function geo(kind,text){const r=await fetch(GEO+kind+'?text='+encodeURIComponent(text));if(!r.ok)throw new Error(r.status);const j=await r.json();
-  return (j.features||[]).map(f=>({label:prettyAddr(f.properties.label||''),a:f.geometry.coordinates[1],b:f.geometry.coordinates[0]}))}
+  return tidyHits(text,(j.features||[]).map(f=>({label:prettyAddr(f.properties.label||''),a:f.geometry.coordinates[1],b:f.geometry.coordinates[0]})))}
 function showAddr(hits){addrHits=hits;
   addrRes.innerHTML=hits.length?hits.slice(0,6).map((h,i)=>'<li><button type="button" data-i="'+i+'">'+esc(h.label)+'</button></li>').join(''):'<li><button type="button" disabled>No matching NYC address</button></li>';
   addrRes.hidden=false;addrRes.querySelectorAll('button[data-i]').forEach(btn=>btn.onclick=()=>pickAddr(addrHits[+btn.dataset.i]))}
 function pickAddr(h){addrRes.hidden=true;llIn.value=h.label;markEngaged();locate(h.a,h.b,h.label)}
 const geoFail=()=>{addrRes.hidden=true;llmsg.textContent='Address lookup isn’t reachable right now. Try again in a moment, or find your school by name above.';llmsg.hidden=false};
 llIn.addEventListener('input',()=>{clearTimeout(addrTimer);const v=llIn.value.trim();
-  if(v.length<4||/^-?\d+\.\d+\s*,/.test(v)){addrRes.hidden=true;return}
+  if(v.length<4||/^-?\d+\.\d+\s*,/.test(v)||(lastPoint&&lastPoint.label&&normAddr(v)===normAddr(lastPoint.label))){addrRes.hidden=true;return}
   addrTimer=setTimeout(async()=>{const seq=++addrSeq;try{const hits=await geo('autocomplete',v);if(seq===addrSeq)showAddr(hits)}catch(e){if(seq===addrSeq)geoFail()}},250)});
 llIn.addEventListener('keydown',e=>{if(e.key==='Escape')addrRes.hidden=true});
 document.getElementById('llf').addEventListener('submit',async e=>{e.preventDefault();markEngaged();llmsg.hidden=true;clearTimeout(addrTimer);
   const v=llIn.value.trim();if(!v)return;
   const m=v.match(/^(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)$/);
   if(m){let a=+m[1],b=+m[2];if(a<0){[a,b]=[b,a]}addrRes.hidden=true;locate(a,b,null);return}
-  try{const hits=await geo('search',v);if(hits.length===1||(hits.length&&addrHits.length===0))pickAddr(hits[0]);else if(hits.length)showAddr(hits);else{addrRes.hidden=true;llmsg.textContent='We couldn’t find that address in NYC. Try adding the borough, like “Brooklyn”.';llmsg.hidden=false}}
+  try{const hits=await geo('search',v);const exact=hits.find(h=>normAddr(h.label)===normAddr(v));if(exact)pickAddr(exact);else if(hits.length===1)pickAddr(hits[0]);else if(hits.length)showAddr(hits);else{addrRes.hidden=true;llmsg.textContent='We couldn’t find that address in NYC. Try adding the borough, like “Brooklyn”.';llmsg.hidden=false}}
   catch(err){geoFail()}});
 
 const BB={M:[[40.70,-74.02],[40.88,-73.91]],K:[[40.57,-74.04],[40.74,-73.83]],Q:[[40.54,-73.96],[40.80,-73.70]],X:[[40.79,-73.93],[40.92,-73.75]],R:[[40.49,-74.26],[40.65,-74.05]]};
