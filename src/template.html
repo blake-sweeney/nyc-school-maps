@@ -5,7 +5,7 @@
 /* Layout: full-height working map with a sidebar "zone card" (stacks below the map on phones). */
 :root{
   --bg:#f3f4f1; --panel:#ffffff; --fg:#1d2321; --muted:#5d6763; --line:#d9ddd8;
-  --water:#cfdde3; --land:#eceee9; --accent:#f2b705; --accent-ink:#1d2321;
+  --water:#cfdde3; --land:#eceee9; --nodata:#a3a8a5; --accent:#f2b705; --accent-ink:#1d2321;
   --hl:#0b4f8a; --dot:#1d2321; --road:#2c3331; --road-case:#ffffff; --warn-bg:#fff4d1; --warn-fg:#6b4d00;
   --z0:#b9d3a8; --z1:#f0c9a0; --z2:#b7c8e6; --z3:#e8b9c4; --z4:#d8d29a; --z5:#c3b5dd;
   --display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
@@ -13,12 +13,12 @@
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#141917; --panel:#1c2220; --fg:#e7ebe8; --muted:#9aa5a0; --line:#2f3835;
-  --water:#0f1a20; --land:#1a201e; --accent:#f2b705; --accent-ink:#141917;
+  --water:#0f1a20; --land:#1a201e; --nodata:#5d6461; --accent:#f2b705; --accent-ink:#141917;
   --hl:#7fb8ec; --dot:#e7ebe8; --road:#e3e8e5; --road-case:#0d1110; --warn-bg:#3a3014; --warn-fg:#f3d98a;
   --z0:#3d5536; --z1:#5c4430; --z2:#33456a; --z3:#5e3a45; --z4:#545026; --z5:#45395e; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#141917; --panel:#1c2220; --fg:#e7ebe8; --muted:#9aa5a0; --line:#2f3835;
-  --water:#0f1a20; --land:#1a201e; --accent:#f2b705; --accent-ink:#141917;
+  --water:#0f1a20; --land:#1a201e; --nodata:#5d6461; --accent:#f2b705; --accent-ink:#141917;
   --hl:#7fb8ec; --dot:#e7ebe8; --road:#e3e8e5; --road-case:#0d1110; --warn-bg:#3a3014; --warn-fg:#f3d98a;
   --z0:#3d5536; --z1:#5c4430; --z2:#33456a; --z3:#5e3a45; --z4:#545026; --z5:#45395e; color-scheme:dark}
 html,body{height:100%}
@@ -66,11 +66,11 @@ button{font:inherit;font-family:var(--display);font-weight:600;font-size:.9rem;p
 .chip{display:inline-flex;align-items:center;gap:5px;font-family:var(--display);font-weight:600;font-size:.8rem;white-space:nowrap}
 .chip i{width:10px;height:10px;border-radius:2px;border:1px solid var(--line)}
 .rates .tot{font-weight:700;border-top:1px solid var(--line);padding-top:3px}
-.lbar{height:12px;border-radius:3px;background:linear-gradient(90deg,#111 0%,#111 5%,#d7301f 50%,#f2c20f 75%,#2b9a4b 95%,#2b9a4b 100%)}
+.lbar{height:12px;border-radius:3px;background:linear-gradient(90deg,#6b0f1a 0%,#6b0f1a 5%,#d7301f 50%,#f2c20f 75%,#2b9a4b 95%,#2b9a4b 100%)}
 .lticks{position:relative;height:16px;font-family:var(--display);font-size:.75rem;color:var(--muted);font-variant-numeric:tabular-nums}
 .lticks span{position:absolute;top:2px;transform:translateX(-50%)}
 .lticks span:last-child{transform:translateX(-70%)}
-.nd{display:inline-block;width:11px;height:11px;vertical-align:-1px;border:1px solid var(--muted);background:var(--land)}
+.nd{display:inline-block;width:11px;height:11px;vertical-align:-1px;border:1px solid var(--muted);background:var(--nodata)}
 .scores{display:grid;grid-template-columns:auto 1fr auto;gap:4px 8px;align-items:center;font-size:.85rem;font-variant-numeric:tabular-nums;margin-top:4px}
 .scores .bar{height:8px;background:var(--line);border-radius:4px;overflow:hidden;min-width:0}
 .scores .bar i{display:block;height:100%}
@@ -102,7 +102,6 @@ button{font:inherit;font-family:var(--display);font-weight:600;font-size:.9rem;p
 .leaflet-tooltip{position:absolute;padding:4px 8px;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:4px;white-space:nowrap;pointer-events:none;box-shadow:0 1px 3px rgba(0,0,0,.2);font-size:.8rem}
 .sl{font-family:var(--display);font-weight:600;font-size:10.5px;letter-spacing:.02em;color:var(--road);white-space:nowrap;text-shadow:0 0 2px var(--road-case),0 0 3px var(--road-case),0 0 3px var(--road-case);pointer-events:none;line-height:1;transform-origin:center;text-align:center}
 .map-toggle{background:var(--panel);color:var(--fg);border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,.25);padding:8px 10px;display:flex;flex-direction:column;gap:6px}
-.zhint{font-size:.75rem;color:var(--muted);max-width:11em}
 .sl-local{font-weight:500;font-size:10px;opacity:.85}
 .chk{display:flex;align-items:center;gap:8px;font-family:var(--display);font-weight:600;font-size:.85rem;cursor:pointer;user-select:none}
 .chk input{width:16px;height:16px;accent-color:var(--fg);margin:0;cursor:pointer}
@@ -140,7 +139,7 @@ button{font:inherit;font-family:var(--display);font-weight:600;font-size:.9rem;p
         <input type="radio" name="metric" id="m-none" value="none"><label for="m-none">Plain</label>
       </div>
       <div class="legend" id="leg-rate">
-        <div class="sw"><span><i style="background:#2b9a4b"></i>Excellent (4)</span><span><i style="background:#f2c20f"></i>Good (3)</span><span><i style="background:#d7301f"></i>Fair (2)</span><span><i style="background:#111"></i>Needs Improvement (1)</span></div>
+        <div class="sw"><span><i style="background:#2b9a4b"></i>Excellent (4)</span><span><i style="background:#f2c20f"></i>Good (3)</span><span><i style="background:#d7301f"></i>Fair (2)</span><span><i style="background:#6b0f1a"></i>Needs Improvement (1)</span></div>
         <p class="hint" id="rate-hint"></p>
       </div>
       <div class="legend" id="leg-test" hidden>
@@ -209,10 +208,10 @@ function short(d){const s=S[d];if(!s)return 'School '+d;return s.n}
 function psNum(f){const p=f.properties;return p.dbns.length?p.label||p.dbns[0].slice(3):''}
 // proficiency for a zone: pooled across its schools that have results
 function pct(dbns,m){let n=0,p=0;dbns.forEach(d=>{const v=T[d];if(!v)return;if(m!=='math'){n+=v[0];p+=v[1]}if(m!=='ela'){n+=v[2];p+=v[3]}});return n?100*p/n:null}
-const STOPS=[[5,[17,17,17]],[50,[215,48,31]],[75,[242,194,15]],[95,[43,154,75]]];
+const STOPS=[[5,[107,15,26]],[50,[215,48,31]],[75,[242,194,15]],[95,[43,154,75]]];
 function scoreColor(v){if(v<=STOPS[0][0])return rgb(STOPS[0][1]);for(let i=1;i<STOPS.length;i++){const[a,ca]=STOPS[i-1],[b,cb]=STOPS[i];if(v<=b){const t=(v-a)/(b-a);return rgb(ca.map((c,k)=>c+(cb[k]-c)*t))}}return rgb(STOPS[STOPS.length-1][1])}
 function rgb(c){return 'rgb('+c.map(Math.round).join(',')+')'}
-function fillFor(f){const p=f.properties;if(!p.dbns.length)return css('--land');if(metric==='none')return css('--z'+p.c);if(isRate(metric)){const r=zoneRating(p.dbns,metric);return r==null?css('--land'):rateColor(r)}const v=pct(p.dbns,metric);return v==null?css('--land'):scoreColor(v)}
+function fillFor(f){const p=f.properties;if(!p.dbns.length)return css('--land');if(metric==='none')return css('--z'+p.c);if(isRate(metric)){const r=zoneRating(p.dbns,metric);return r==null?css('--nodata'):rateColor(r)}const v=pct(p.dbns,metric);return v==null?css('--nodata'):scoreColor(v)}
 function style(f,sel){const sc=metric!=='none';return{renderer,color:sel?css('--hl'):css('--fg'),weight:sel?3:.6,opacity:sel?1:(sc?.3:.45),fillColor:fillFor(f),fillOpacity:sel?.95:(sc?.78:.85)}}
 let selected=null;
 const layer=L.geoJSON(F,{style:f=>style(f,false),onEachFeature:(f,l)=>{
@@ -246,20 +245,22 @@ function buildLocal(){localGroup.clearLayers();if(!LS)return;
   LS.forEach(s=>L.polyline(s.ll,{renderer:lRend,interactive:false,color:css('--road'),weight:.9,opacity:.5,lineCap:'round',lineJoin:'round'}).addTo(localGroup))}
 // street toggles live on the map, top right
 const StreetToggle=L.Control.extend({options:{position:'topright'},onAdd(){const d=L.DomUtil.create('div','leaflet-control map-toggle');
-  d.innerHTML='<label class="chk" for="streets"><input type="checkbox" id="streets" checked> Major streets</label>'+
-    '<label class="chk" for="allstreets"><input type="checkbox" id="allstreets"> All streets</label>'+
-    '<span class="zhint" id="zhint" hidden>Zoom in to see all streets</span>';
+  d.setAttribute('role','radiogroup');d.setAttribute('aria-label','Streets');
+  d.innerHTML='<label class="chk" for="st-all"><input type="radio" name="streetmode" id="st-all" value="all"> All streets</label>'+
+    '<label class="chk" for="st-major"><input type="radio" name="streetmode" id="st-major" value="major" checked> Major streets</label>'+
+    '<label class="chk" for="st-none"><input type="radio" name="streetmode" id="st-none" value="none"> Hide streets</label>';
   L.DomEvent.disableClickPropagation(d);L.DomEvent.disableScrollPropagation(d);return d}});
 new StreetToggle().addTo(map);
-const streetBox=document.getElementById('streets'),allBox=document.getElementById('allstreets'),zhint=document.getElementById('zhint');
+// street mode: 'all' = every street + major, 'major' = major only, 'none' = hidden
+let streetMode='major';
+const streetBox={get checked(){return streetMode!=='none'}},allBox={get checked(){return streetMode==='all'}};
 function syncStreets(){const z=map.getZoom(),on=streetBox.checked,all=allBox.checked;
   [[1,0],[2,11.5],[3,13]].forEach(([tr,minz])=>{const g=tierGroups[tr],show=on&&z>=minz;if(show&&!map.hasLayer(g))g.addTo(map);if(!show&&map.hasLayer(g))map.removeLayer(g)});
   const showLocal=all&&z>=LOCAL_MIN_Z;
   if(showLocal&&!LS){decodeLocal();buildLocal()}
   if(showLocal&&!map.hasLayer(localGroup))localGroup.addTo(map);if(!showLocal&&map.hasLayer(localGroup))map.removeLayer(localGroup);
-  zhint.hidden=!(all&&z<LOCAL_MIN_Z);
   drawStreetLabels()}
-streetBox.addEventListener('change',syncStreets);allBox.addEventListener('change',syncStreets);
+document.querySelectorAll('input[name=streetmode]').forEach(r=>r.addEventListener('change',()=>{if(r.checked){streetMode=r.value;syncStreets()}}));
 // street names along the line when zoomed in
 const sLabels=L.layerGroup().addTo(map);
 function labelLine(s,b,placed){
