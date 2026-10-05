@@ -86,7 +86,7 @@ button{font:inherit;font-family:var(--display);font-weight:600;font-size:.9rem;p
 .metrics{display:flex;flex-direction:column;gap:6px}
 .metrics .lab{margin-bottom:0}
 .grp{font-size:.8rem;color:var(--muted)}
-.tabs{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--line);margin-bottom:4px}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid var(--line);margin-bottom:4px}
 .tabs button{all:unset;cursor:pointer;text-align:center;font-family:var(--display);font-weight:600;font-size:.92rem;padding:8px 2px 7px;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-1px}
 .tabs button:hover{color:var(--fg)}
 .tabs button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
@@ -187,7 +187,6 @@ aside>*{flex-shrink:0}
         <button type="button" role="tab" id="g-quality" data-g="quality" aria-selected="true">Quality</button>
         <button type="button" role="tab" id="g-tests" data-g="tests" aria-selected="false">Tests</button>
         <button type="button" role="tab" id="g-programs" data-g="programs" aria-selected="false">Programs</button>
-        <button type="button" role="tab" id="g-other" data-g="other" aria-selected="false">Other</button>
       </div>
       <div class="seg" data-g="quality" role="radiogroup" aria-label="School Quality Snapshot, 2024–25">
         <input type="radio" name="metric" id="m-comp" value="comp" checked><label for="m-comp">Overall</label>
@@ -207,18 +206,10 @@ aside>*{flex-shrink:0}
         <input type="radio" name="metric" id="m-dl" value="dl"><label for="m-dl">Dual language</label>
         <input type="radio" name="metric" id="m-iep" value="iep"><label for="m-iep">Special ed</label>
       </div>
-      <div class="seg two" data-g="other" role="radiogroup" aria-label="Other" hidden>
-        <input type="radio" name="metric" id="m-enr" value="enr"><label for="m-enr">Students</label>
-        <input type="radio" name="metric" id="m-none" value="none"><label for="m-none">Random</label>
-      </div>
       <span class="grp" id="grp-src">DOE School Quality Snapshot · 2024–25</span>
       <div class="legend" id="leg-rate">
         <div class="sw"><span><i style="background:#2b9a4b"></i>Excellent (4)</span><span><i style="background:#f2c20f"></i>Good (3)</span><span><i style="background:#f0861d"></i>Fair (2)</span><span><i style="background:#d7301f"></i>Needs Improvement (1)</span></div>
         <p class="hint" id="rate-hint"></p>
-      </div>
-      <div class="legend" id="leg-enr" hidden>
-        <div class="sw"><span><i style="background:#dbe9f6"></i>Under 250</span><span><i style="background:#9ecae1"></i>250–399</span><span><i style="background:#5a9fcf"></i>400–549</span><span><i style="background:#2b6fae"></i>550–749</span><span><i style="background:#0d3d78"></i>750 or more</span></div>
-        <p class="hint">Students enrolled at the zoned school, all grades, 2024–25. Bigger isn’t better or worse, just bigger. Shared zones average their schools. <span class="nd"></span> No count.</p>
       </div>
       <div class="legend" id="leg-prog" hidden>
         <div class="sw"><span><i style="background:#1f8a8a"></i><span id="prog-yes">Has the program</span></span><span><i class="off"></i>Doesn’t</span></div>
@@ -227,9 +218,6 @@ aside>*{flex-shrink:0}
       <div class="legend" id="leg-iep" hidden>
         <div class="sw"><span><i style="background:#e0f1ee"></i>Under 17%</span><span><i style="background:#a6dbd0"></i>17–21%</span><span><i style="background:#5fb8a8"></i>22–26%</span><span><i style="background:#2a8a7e"></i>27–31%</span><span><i style="background:#0f5a54"></i>32% or more</span></div>
         <p class="hint">Share of students with an IEP (an Individualized Education Program for special education services), 2024–25. NYC schools typically range from about 15% to 30%. Higher means more students receiving services, not better or worse. Ask each school which settings it offers, like ICT (co-taught) and 12:1:1 classes. <span class="nd"></span> No data.</p>
-      </div>
-      <div class="legend" id="leg-none" hidden>
-        <p class="hint">Random colors so neighboring zones are easy to tell apart. The colors don’t mean anything.</p>
       </div>
       <div class="legend" id="leg-out" hidden>
         <div class="lbar" id="out-bar"></div>
@@ -244,19 +232,20 @@ aside>*{flex-shrink:0}
     </section>
 
     <section>
-      <label class="lab" for="q">Find a school</label>
-      <input type="text" id="q" placeholder="e.g. PS 321, 15K321, Bergen" autocomplete="off">
-      <ul class="results" id="res" hidden></ul>
+      <label class="lab" for="ll">Your address</label>
+      <form class="field" id="llf" role="search">
+        <input type="text" id="ll" placeholder="e.g. 180 7th Ave, Brooklyn" autocomplete="off" aria-autocomplete="list" aria-controls="addr-res">
+        <button type="submit">Find</button>
+      </form>
+      <ul class="results" id="addr-res" hidden></ul>
+      <p class="hint">Address lookup by NYC Planning’s GeoSearch.</p>
+      <p class="msg" id="llmsg" hidden></p>
     </section>
 
     <section>
-      <label class="lab" for="ll">Check a location</label>
-      <form class="field" id="llf">
-        <input type="text" id="ll" placeholder="40.6721, -73.9779" autocomplete="off">
-        <button type="submit">Check</button>
-      </form>
-      <p class="hint">In Google Maps, right-click your address and click the coordinates to copy them, then paste here.</p>
-      <p class="msg" id="llmsg" hidden></p>
+      <label class="lab" for="q">Find a school</label>
+      <input type="text" id="q" placeholder="e.g. PS 321, 15K321, Bergen" autocomplete="off">
+      <ul class="results" id="res" hidden></ul>
     </section>
 
     <section>
@@ -495,16 +484,34 @@ q.addEventListener('input',()=>{const v=q.value.trim().toLowerCase();if(v.length
 // coordinate check
 function inRing(x,y,r){let ins=false;for(let i=0,j=r.length-1;i<r.length;j=i++){const[xi,yi]=r[i],[xj,yj]=r[j];if((yi>y)!==(yj>y)&&x<(xj-xi)*(y-yi)/(yj-yi)+xi)ins=!ins}return ins}
 function inGeom(x,y,g){const ps=g.type==='MultiPolygon'?g.coordinates:[g.coordinates];return ps.some(p=>inRing(x,y,p[0])&&!p.slice(1).some(h=>inRing(x,y,h)))}
-let pin=null;const llmsg=document.getElementById('llmsg');
-document.getElementById('llf').addEventListener('submit',e=>{e.preventDefault();markEngaged();llmsg.hidden=true;
-  const m=document.getElementById('ll').value.match(/(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);
-  if(!m){llmsg.textContent='Enter latitude and longitude separated by a comma, like 40.6721, -73.9779.';llmsg.hidden=false;return}
-  let a=+m[1],b=+m[2];if(a<0){[a,b]=[b,a]}
+// address lookup: NYC Planning GeoSearch (free, no key). Coordinates like "40.67, -73.97" also work.
+let pin=null,lastPoint=null;const llmsg=document.getElementById('llmsg'),llIn=document.getElementById('ll'),addrRes=document.getElementById('addr-res');
+const GEO='https://geosearch.planninglabs.nyc/v2/';
+function locate(a,b,label,keepView){lastPoint={a,b,label};llmsg.hidden=true;
+  if(pin)map.removeLayer(pin);pin=L.circleMarker([a,b],{radius:8,weight:3,color:css('--accent'),fillColor:css('--fg'),fillOpacity:1,interactive:false}).addTo(map);
+  if(label)pin.bindTooltip(label,{direction:'top',offset:[0,-8]});
   const hit=byLayer.find(l=>inGeom(b,a,l.feature.geometry));
-  if(pin)map.removeLayer(pin);pin=L.circleMarker([a,b],{radius:8,weight:3,color:css('--accent'),fillColor:css('--fg'),fillOpacity:1}).addTo(map);
-  if(!hit||!hit.feature.properties.dbns.length){if(hit)select(hit,true);llmsg.textContent=LEVEL_TXT[level].miss;llmsg.hidden=false;map.setView([a,b],14);return}
-  select(hit,true);map.setView([a,b],15);
-});
+  if(!hit||!hit.feature.properties.dbns.length){if(hit)select(hit,true);llmsg.textContent=LEVEL_TXT[level].miss;llmsg.hidden=false;if(!keepView)map.setView([a,b],14);return}
+  select(hit,true);if(!keepView)map.setView([a,b],15)}
+const prettyAddr=s=>title(s.replace(/, USA$/,'').replace(/, NY$/,'')).replace(/\bNy\b/,'NY');
+let addrHits=[],addrTimer=null,addrSeq=0;
+async function geo(kind,text){const r=await fetch(GEO+kind+'?text='+encodeURIComponent(text));if(!r.ok)throw new Error(r.status);const j=await r.json();
+  return (j.features||[]).map(f=>({label:prettyAddr(f.properties.label||''),a:f.geometry.coordinates[1],b:f.geometry.coordinates[0]}))}
+function showAddr(hits){addrHits=hits;
+  addrRes.innerHTML=hits.length?hits.slice(0,6).map((h,i)=>'<li><button type="button" data-i="'+i+'">'+esc(h.label)+'</button></li>').join(''):'<li><button type="button" disabled>No matching NYC address</button></li>';
+  addrRes.hidden=false;addrRes.querySelectorAll('button[data-i]').forEach(btn=>btn.onclick=()=>pickAddr(addrHits[+btn.dataset.i]))}
+function pickAddr(h){addrRes.hidden=true;llIn.value=h.label;markEngaged();locate(h.a,h.b,h.label)}
+const geoFail=()=>{addrRes.hidden=true;llmsg.textContent='Address lookup isn’t reachable right now. Try again in a moment, or find your school by name above.';llmsg.hidden=false};
+llIn.addEventListener('input',()=>{clearTimeout(addrTimer);const v=llIn.value.trim();
+  if(v.length<4||/^-?\d+\.\d+\s*,/.test(v)){addrRes.hidden=true;return}
+  addrTimer=setTimeout(async()=>{const seq=++addrSeq;try{const hits=await geo('autocomplete',v);if(seq===addrSeq)showAddr(hits)}catch(e){if(seq===addrSeq)geoFail()}},250)});
+llIn.addEventListener('keydown',e=>{if(e.key==='Escape')addrRes.hidden=true});
+document.getElementById('llf').addEventListener('submit',async e=>{e.preventDefault();markEngaged();llmsg.hidden=true;clearTimeout(addrTimer);
+  const v=llIn.value.trim();if(!v)return;
+  const m=v.match(/^(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)$/);
+  if(m){let a=+m[1],b=+m[2];if(a<0){[a,b]=[b,a]}addrRes.hidden=true;locate(a,b,null);return}
+  try{const hits=await geo('search',v);if(hits.length===1||(hits.length&&addrHits.length===0))pickAddr(hits[0]);else if(hits.length)showAddr(hits);else{addrRes.hidden=true;llmsg.textContent='We couldn’t find that address in NYC. Try adding the borough, like “Brooklyn”.';llmsg.hidden=false}}
+  catch(err){geoFail()}});
 
 const BB={M:[[40.70,-74.02],[40.88,-73.91]],K:[[40.57,-74.04],[40.74,-73.83]],Q:[[40.54,-73.96],[40.80,-73.70]],X:[[40.79,-73.93],[40.92,-73.75]],R:[[40.49,-74.26],[40.65,-74.05]]};
 document.getElementById('boro').addEventListener('change',e=>{markEngaged();const v=e.target.value;v?map.fitBounds(BB[v]):map.fitBounds(layer.getBounds())});
@@ -514,12 +521,12 @@ function syncLegend(){const lo=document.getElementById('leg-out');lo.hidden=!isO
     document.getElementById('out-bar').style.background='linear-gradient(90deg,'+rgb(s[0][1])+' 0%,'+rgb(s[0][1])+' '+pct(s[0][0])+','+rgb(s[1][1])+' '+pct(s[1][0])+','+rgb(s[2][1])+' '+pct(s[2][0])+','+rgb(s[2][1])+' 100%)';
     document.getElementById('out-ticks').innerHTML=o.ticks.map((v,i)=>'<span style="left:'+v+'%">'+v+(i===o.ticks.length-1?'%':'')+'</span>').join('');
     document.getElementById('out-hint').innerHTML=metric==='grad'?'Share of students who graduate within 4 years, from the 2024–25 School Quality Snapshot. NYC average: 81%. The scale is narrower than for test scores because most zoned high schools graduate 75–95% of students. <span class="nd"></span> No data.':'Share of graduates who enrolled in college or a career program within 6 months, from the 2024–25 School Quality Snapshot. <span class="nd"></span> No data.'}
-  document.getElementById('leg-rate').hidden=!isRate(metric);document.getElementById('leg-test').hidden=!['both','ela','math'].includes(metric);document.getElementById('leg-prog').hidden=!isProg(metric);document.getElementById('leg-iep').hidden=metric!=='iep';document.getElementById('prog-yes').textContent=metric==='gt'?'Zoned school has a G&T program':'Zoned school has a dual-language program';document.getElementById('prog-hint').textContent=metric==='gt'?'District Gifted & Talented programs listed for the zoned school in the 2024–25 Snapshot (73 zoned schools). G&T seats aren’t assigned by zone: families apply separately, and admission rules have changed in recent years, so check MySchools for this year’s process.':'Dual-language programs at the zoned school (151 zoned schools), from the 2024–25 Snapshot. Click a zone to see the languages. Seats are usually by application, often with priority for zoned families.';document.getElementById('leg-enr').hidden=metric!=='enr';document.getElementById('leg-none').hidden=metric!=='none';
+  document.getElementById('leg-rate').hidden=!isRate(metric);document.getElementById('leg-test').hidden=!['both','ela','math'].includes(metric);document.getElementById('leg-prog').hidden=!isProg(metric);document.getElementById('leg-iep').hidden=metric!=='iep';document.getElementById('prog-yes').textContent=metric==='gt'?'Zoned school has a G&T program':'Zoned school has a dual-language program';document.getElementById('prog-hint').textContent=metric==='gt'?'District Gifted & Talented programs listed for the zoned school in the 2024–25 Snapshot (73 zoned schools). G&T seats aren’t assigned by zone: families apply separately, and admission rules have changed in recent years, so check MySchools for this year’s process.':'Dual-language programs at the zoned school (151 zoned schools), from the 2024–25 Snapshot. Click a zone to see the languages. Seats are usually by application, often with priority for zoned families.';
   document.getElementById('rate-hint').innerHTML=(metric==='comp'?'Overall is the average of the three ratings, so zones blend between colors (3.3 sits between yellow and green). ':'DOE rating for '+RNAME[metric]+'. ')+'Ratings are the DOE’s own. Shared zones average their schools. <span class="nd"></span> No rating.'}
 syncLegend();
 //METRIC
 // metric groups: tabs show one row of options at a time and remember the last pick in each
-const GROUP_SRC={quality:'DOE School Quality Snapshot · 2024–25',tests:'New York State tests · 2023, grades 3–5',programs:'DOE School Quality Snapshot · 2024–25',other:'Enrollment from the 2024–25 Snapshot'};
+const GROUP_SRC={quality:'DOE School Quality Snapshot · 2024–25',tests:'New York State tests · 2023, grades 3–5',programs:'DOE School Quality Snapshot · 2024–25'};
 const lastPick={};
 document.querySelectorAll('.seg[data-g]').forEach(s=>{lastPick[s.dataset.g]=s.querySelector('input').value});
 lastPick.quality='comp';
@@ -537,7 +544,7 @@ mq.addEventListener?.('change',retheme);new MutationObserver(retheme).observe(do
 // switch between elementary and middle school zones
 let testsPick='both',outPick='grad';
 function setLevel(lv){if(!LV[lv]||lv===level)return;level=lv;F=LV[lv].F;T=LV[lv].T;
-  if(selLine){map.removeLayer(selLine);selLine=null}if(pin){map.removeLayer(pin);pin=null}selected=null;
+  if(selLine){map.removeLayer(selLine);selLine=null}selected=null;
   map.removeLayer(layer);map.removeLayer(zoneLines);byLayer=[];
   layer=makeLayer().addTo(map);layer.eachLayer(l=>byLayer.push(l));
   zoneLines=L.geoJSON(F,{style:lineStyle,interactive:false}).addTo(map);
@@ -561,7 +568,8 @@ function setLevel(lv){if(!LV[lv]||lv===level)return;level=lv;F=LV[lv].F;T=LV[lv]
   showGroup(curGroup);
   card.className='card empty';card.textContent='Select a zone on the map, or search for a school, to see its zoned school.';
   try{history.replaceState(null,'',lv==='ms'?'#middle':lv==='hs'?'#high':location.pathname+location.search)}catch(e){}
-  syncLegend();restyle();drawLabels()}
+  syncLegend();restyle();drawLabels();
+  if(lastPoint)locate(lastPoint.a,lastPoint.b,lastPoint.label,true)}
 document.querySelectorAll('input[name=level]').forEach(r=>r.addEventListener('change',()=>{if(r.checked){markEngaged();setLevel(r.value)}}));
 if(!LV.ms&&!LV.hs)document.querySelector('.seg.level').hidden=true;
 ['ms','hs'].forEach(lv=>{if(!LV[lv]){document.getElementById('lv-'+lv).hidden=true;document.querySelector('label[for=lv-'+lv+']').hidden=true}});
