@@ -110,8 +110,9 @@ button{font:inherit;font-family:var(--display);font-weight:600;font-size:.9rem;p
 .leaflet-bar a:last-child{border-bottom:0}
 .leaflet-tooltip{position:absolute;padding:4px 8px;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:4px;white-space:nowrap;pointer-events:none;box-shadow:0 1px 3px rgba(0,0,0,.2);font-size:.8rem}
 .sl{font-family:var(--display);font-weight:600;font-size:10.5px;letter-spacing:.02em;color:var(--road);white-space:nowrap;text-shadow:0 0 2px var(--road-case),0 0 3px var(--road-case),0 0 3px var(--road-case);pointer-events:none;line-height:1;transform-origin:center;text-align:center}
-.chk{display:flex;align-items:center;gap:8px;font-size:.9rem;cursor:pointer;margin-top:10px}
-.chk input{width:16px;height:16px;accent-color:var(--fg);margin:0}
+.map-toggle{background:var(--panel);color:var(--fg);border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,.25);padding:7px 10px}
+.chk{display:flex;align-items:center;gap:8px;font-family:var(--display);font-weight:600;font-size:.85rem;cursor:pointer;user-select:none}
+.chk input{width:16px;height:16px;accent-color:var(--fg);margin:0;cursor:pointer}
 .zl{font-family:var(--display);font-weight:700;font-size:11px;color:var(--fg);text-align:center;white-space:nowrap;text-shadow:0 0 3px var(--land),0 0 3px var(--land),0 0 2px var(--land);pointer-events:none;line-height:1}
 @media (max-width:760px){
   .app{grid-template-columns:1fr;grid-template-rows:58vh auto;height:auto}
@@ -181,7 +182,6 @@ button{font:inherit;font-family:var(--display);font-weight:600;font-size:.9rem;p
         <option value="M">Manhattan</option><option value="K">Brooklyn</option>
         <option value="Q">Queens</option><option value="X">Bronx</option><option value="R">Staten Island</option>
       </select>
-      <label class="chk" for="streets"><input type="checkbox" id="streets" checked> Show major streets</label>
     </section>
 
     <section class="card empty" id="card" aria-live="polite">Select a zone on the map, or search for a school, to see its zoned elementary school.</section>
@@ -244,6 +244,11 @@ function buildStreets(){Object.values(tierGroups).forEach(g=>g.clearLayers());
     ST.filter(s=>s.tier===tr).forEach(s=>L.polyline(s.ll,{renderer:sRend,interactive:false,color:css('--road-case'),weight:w[0]+1.6,opacity:.55,lineCap:'round',lineJoin:'round'}).addTo(tierGroups[tr]));
     ST.filter(s=>s.tier===tr).forEach(s=>L.polyline(s.ll,{renderer:sRend,interactive:false,color:css('--road'),weight:w[1],opacity:tr===3?.7:.9,lineCap:'round',lineJoin:'round'}).addTo(tierGroups[tr]));});}
 buildStreets();
+// "Show major streets" toggle lives on the map, top right
+const StreetToggle=L.Control.extend({options:{position:'topright'},onAdd(){const d=L.DomUtil.create('div','leaflet-control map-toggle');
+  d.innerHTML='<label class="chk" for="streets"><input type="checkbox" id="streets" checked> Major streets</label>';
+  L.DomEvent.disableClickPropagation(d);L.DomEvent.disableScrollPropagation(d);return d}});
+new StreetToggle().addTo(map);
 const streetBox=document.getElementById('streets');
 function syncStreets(){const z=map.getZoom(),on=streetBox.checked;
   [[1,0],[2,11.5],[3,13]].forEach(([tr,minz])=>{const g=tierGroups[tr],show=on&&z>=minz;if(show&&!map.hasLayer(g))g.addTo(map);if(!show&&map.hasLayer(g))map.removeLayer(g)});drawStreetLabels()}
