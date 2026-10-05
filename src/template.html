@@ -79,6 +79,9 @@ button{font:inherit;font-family:var(--display);font-weight:600;font-size:.9rem;p
 .about{font-size:.8rem;color:var(--muted);display:flex;flex-direction:column;gap:6px;margin-top:auto}
 .about p{margin:0}
 .about a{color:var(--hl)}
+.tip{display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding-bottom:10px;margin-bottom:4px;border-bottom:1px solid var(--line);color:var(--fg)}
+.about a.tip-btn{background:var(--accent);color:var(--accent-ink);font-family:var(--display);font-weight:700;font-size:.85rem;text-decoration:none;padding:6px 12px;border-radius:6px}
+.about a.tip-btn:hover{filter:brightness(.95)}
 /* Leaflet essentials (inlined) */
 .leaflet-pane,.leaflet-tile,.leaflet-marker-icon,.leaflet-marker-shadow,.leaflet-tile-container,.leaflet-pane>svg,.leaflet-pane>canvas,.leaflet-zoom-box,.leaflet-image-layer,.leaflet-layer{position:absolute;left:0;top:0}
 .leaflet-container{overflow:hidden;-webkit-tap-highlight-color:transparent;font-family:var(--body);outline-offset:1px;touch-action:none}
@@ -177,6 +180,10 @@ button{font:inherit;font-family:var(--display);font-weight:600;font-size:.9rem;p
     <section class="card empty" id="card" aria-live="polite">Select a zone on the map, or search for a school, to see its zoned elementary school.</section>
 
     <div class="about">
+      <div class="tip">
+        <p>Free for NYC parents. If this map helped your school search, you can say thanks with a coffee.</p>
+        <a class="tip-btn" href="https://buymeacoffee.com/astromius" target="_blank" rel="noopener">Buy me a coffee ↗</a>
+      </div>
       <p>Source: <a href="https://data.cityofnewyork.us/Education/School-Zones-2024-2025-Elementary-School-/cmjf-yawu" target="_blank" rel="noopener">School Zones 2024–2025 (Elementary)</a>, NYC Open Data. School names and addresses from the 2019–20 DOE location list. Test results from <a href="https://data.cityofnewyork.us/Education/English-Language-Arts-ELA-Test-Results-2013-2023/iebs-5yhr" target="_blank" rel="noopener">ELA</a> and <a href="https://data.cityofnewyork.us/Education/Math-Test-Results-2013-2023/74kb-55u9" target="_blank" rel="noopener">Math</a> Test Results 2013–2023 (2023 is the latest year published there). Ratings and current school names from the DOE <a href="https://tools.nycenet.edu/snapshot/" target="_blank" rel="noopener">2024–25 School Quality Snapshot</a>. Shared zones show the combined result of all their schools.</p>
       <p>Zones can change year to year. Always confirm an exact address on <a href="https://schoolsearch.schools.nyc/" target="_blank" rel="noopener">schoolsearch.schools.nyc</a> before applying.</p>
     </div>

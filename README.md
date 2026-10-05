@@ -56,6 +56,10 @@ python3 scripts/build.py
 
 Commit both `src/template.html` and the rebuilt `index.html`.
 
+## Visitor counts
+
+The site can report anonymous page views to [GoatCounter](https://www.goatcounter.com). To turn it on, set `GOATCOUNTER_CODE` at the top of `scripts/build.py` to your GoatCounter site code, then rebuild. Leave it empty to turn it off.
+
 ## Refresh the data
 
 ```sh

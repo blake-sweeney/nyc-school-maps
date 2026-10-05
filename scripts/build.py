@@ -21,6 +21,10 @@ import os
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(ROOT, "data")
 
+# GoatCounter visitor counts (https://www.goatcounter.com). Put your site code here,
+# e.g. "nycschoolmaps" for nycschoolmaps.goatcounter.com. Leave empty to turn it off.
+GOATCOUNTER_CODE = "nycschoolzones"
+
 
 def load(name):
     with open(os.path.join(DATA, name), encoding="utf-8") as f:
@@ -97,6 +101,14 @@ def prepare_zones(d):
     return max(color.values()) + 1
 
 
+def goatcounter_tag():
+    code = GOATCOUNTER_CODE.strip()
+    if not code:
+        return ""
+    return (f'\n<script data-goatcounter="https://{code}.goatcounter.com/count" '
+            'async src="https://gc.zgo.at/count.js"></script>')
+
+
 def main():
     d = load("elem_zones.json")
     ncolors = prepare_zones(d)
@@ -125,6 +137,7 @@ def main():
         )
         + "\n</head>\n<body>"
         + page[cut:]
+        + goatcounter_tag()
         + "\n</body>\n</html>\n"
     )
     out = os.path.join(ROOT, "index.html")
