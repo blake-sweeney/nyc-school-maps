@@ -24,6 +24,7 @@ python3 -m http.server 8000
 2. Go to **Settings → Pages**.
 3. Under **Build and deployment**, set Source to **Deploy from a branch**, then choose `main` and `/ (root)`.
 4. After a minute or so the site is live at `https://<your-username>.github.io/nyc-school-maps/`.
+5. The custom domain is set by the `CNAME` file in the repo root (`nycschoolzones.com`).
 
 To put it on Google Sites, click **Insert → Embed → By URL** and paste the Pages link.
 
