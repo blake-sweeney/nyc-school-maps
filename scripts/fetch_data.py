@@ -21,6 +21,7 @@ DATA = os.path.join(ROOT, "data")
 OPEN_DATA = "https://data.cityofnewyork.us"
 ZONES_DATASET = "cmjf-yawu"       # School Zones 2024-2025 (Elementary School)
 MS_ZONES_DATASET = "t26j-jbq7"    # School Zones 2024-2025 (Middle School)
+HS_ZONES_DATASET = "ruu9-egea"    # School Zones 2024-2025 (High School)
 LOCATIONS_DATASET = "wg9x-4ke6"   # 2019-2020 School Locations (lat/lon, grades)
 ELA_DATASET = "iebs-5yhr"         # ELA Test Results 2013-2023
 MATH_DATASET = "74kb-55u9"        # Math Test Results 2013-2023
@@ -56,6 +57,7 @@ def rnd(c):
 def fetch_zones():
     _fetch_zones(ZONES_DATASET, "elem_zones.json")
     _fetch_zones(MS_ZONES_DATASET, "ms_zones.json")
+    _fetch_zones(HS_ZONES_DATASET, "hs_zones.json")
 
 
 def _fetch_zones(dataset, outname):
@@ -120,7 +122,12 @@ def fetch_snapshot():
                             dual-language programs, ELL %, IEP %, economic need %,
                             admissions methods, median student travel distance (mi)]"""
     dbns = set()
-    for name in ("elem_zones.json", "ms_zones.json"):
+    hs_dbns = set()
+    hs_path = os.path.join(DATA, "hs_zones.json")
+    if os.path.exists(hs_path):
+        with open(hs_path, encoding="utf-8") as f:
+            hs_dbns = {d for feat in json.load(f)["features"] for d in feat["properties"]["dbns"]}
+    for name in ("elem_zones.json", "ms_zones.json", "hs_zones.json"):
         path = os.path.join(DATA, name)
         if os.path.exists(path):
             with open(path, encoding="utf-8") as f:
@@ -128,7 +135,8 @@ def fetch_snapshot():
     dbns = sorted(dbns)
 
     def one(dbn):
-        for rt in ("EMS", "EC"):  # elementary/middle report, then early-childhood (K-2) report
+        # high school report for zoned high schools; elementary/middle, then early-childhood (K-2) otherwise
+        for rt in (("HS", "EMS") if dbn in hs_dbns else ("EMS", "EC")):
             try:
                 rows = get_json(f"{SNAPSHOT_API}/{SNAPSHOT_YEAR}/{dbn}/{rt}")
             except Exception:
@@ -155,22 +163,28 @@ def fetch_snapshot():
             enrollment = flt("enrollment")
             extra = [int(enrollment) if enrollment is not None else None, flt("attendance_rate"),
                      flt("teacher_3yr_exp_pct"), flt("principal_years"), v.get("dual_lang") or None,
-                     pct_raw("ell_pct_raw"), pct_raw("iep_pct_raw"), flt("eni_pct_K8"),
-                     v.get("all_es_admissionsmethods") or None, flt("median_distance")]
-            return dbn, (ratings, extra)
+                     pct_raw("ell_pct_raw"), pct_raw("iep_pct_raw"), flt("eni_pct_K8") if rt != "HS" else flt("eni_hs_pct_912"),
+                     (v.get("all_hs_admissionsmethods") if rt == "HS" else v.get("all_es_admissionsmethods")) or None,
+                     flt("median_distance")]
+            # high schools: [4-year graduation %, college/career within 6 months %, city 4-year graduation %]
+            outcome = [flt("val_grad_pct_4_all"), flt("val_pct_cer_6mo_all"), flt("cavg_grad_pct_4_all")] if rt == "HS" else None
+            return dbn, (ratings, extra, outcome)
         return dbn, None
 
-    out, extra, missing = {}, {}, []
+    out, extra, outcomes, missing = {}, {}, {}, []
     with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:
         for dbn, row in pool.map(one, dbns):
             if row:
-                out[dbn], extra[dbn] = row
+                out[dbn], extra[dbn], outcome = row
+                if outcome:
+                    outcomes[dbn] = outcome
             else:
                 missing.append(dbn)
     if missing:
         print("no Snapshot page for:", ", ".join(missing))
     save("snapshot_ratings.json", out)
     save("snapshot_extra.json", extra)
+    save("hs_outcomes.json", outcomes)
 
 
 def fetch_streets():

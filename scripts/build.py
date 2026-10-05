@@ -29,7 +29,7 @@ GOATCOUNTER_CODE = "nycschoolzones"
 # Link previews (Facebook, iMessage, Reddit, Slack, X). preview.png is made by scripts/make_preview.py.
 SITE_URL = "https://nycschoolzones.com/"
 SITE_NAME = "NYC School Zones"
-SITE_DESCRIPTION = ("Every NYC elementary (kindergarten) and middle school zone on one map, colored by DOE "
+SITE_DESCRIPTION = ("Every NYC elementary (kindergarten), middle and high school zone on one map, colored by DOE "
                     "School Quality ratings and state test scores. Free for parents.")
 
 
@@ -161,6 +161,13 @@ def main():
         d["MS"] = {"schools": ms["schools"], "features": ms["features"],
                    "T": {k: v for k, v in ms_tests.items() if k in ms_zoned and (v[0] or v[2])}}
 
+    # High school zones (optional): zoned-priority / zoned-guarantee programs, with Snapshot outcomes
+    if os.path.exists(os.path.join(DATA, "hs_zones.json")):
+        hs = load("hs_zones.json")
+        prepare_zones(hs)
+        outcomes = load("hs_outcomes.json") if os.path.exists(os.path.join(DATA, "hs_outcomes.json")) else {}
+        d["HS"] = {"schools": hs["schools"], "features": hs["features"], "O": outcomes}
+
     with open(os.path.join(ROOT, "src", "template.html"), encoding="utf-8") as f:
         template = f.read()
     payload = json.dumps(d, separators=(",", ":")).replace("</", "<\\/")
@@ -191,6 +198,8 @@ def main():
     print(f"{len(d['features'])} zones, {ncolors} neighbor colors, "
           f"{len(d['T'])} schools with test results, {len(d['R'])} with Snapshot data, "
           f"{len(d['ST'])} major street lines, {len(d['LS']['l'])} local street lines")
+    if "HS" in d:
+        print(f"high school: {len(d['HS']['features'])} zones, {len(d['HS']['O'])} schools with outcomes")
     if "MS" in d:
         print(f"middle school: {len(d['MS']['features'])} zones, {len(d['MS']['T'])} schools with test results")
     print(f"wrote {out} ({os.path.getsize(out) / 1e6:.2f} MB)")

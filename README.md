@@ -1,6 +1,6 @@
 # NYC School Maps
 
-An interactive map of New York City's elementary (kindergarten) and middle school zones. A switch at the top of the sidebar flips between the two. Each zone can be colored by its zoned school's ratings in the DOE School Quality Snapshot or by its results on the state tests.
+An interactive map of New York City's elementary (kindergarten), middle and high school zones. A switch at the top of the sidebar flips between the three. High school zones give priority (or a guaranteed seat) to zoned students who apply; most of the city has no zoned high school. Each zone can be colored by its zoned school's ratings in the DOE School Quality Snapshot or by its results on the state tests.
 
 - **Zones:** 770 elementary zone boundaries for 2024–25
 - **School Quality Snapshot (2024–25):** Instruction and Performance, Safety and School Climate, and Relationships with Families, each rated 1–4, plus an Overall average of the three
@@ -37,6 +37,8 @@ data/
   elem_zones.json       zone boundaries + school names/locations
   ms_zones.json         middle school zone boundaries + school names/locations
   ms_state_tests.json   grade 6–8 ELA/Math results by school
+  hs_zones.json         high school zone boundaries + school names/locations
+  hs_outcomes.json      high school graduation and college/career rates
   snapshot_extra.json   enrollment, programs and other Snapshot facts by school
   state_tests.json      grade 3–5 ELA/Math results by school
   snapshot_ratings.json Snapshot ratings by school

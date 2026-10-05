@@ -72,6 +72,8 @@ button{font:inherit;font-family:var(--display);font-weight:600;font-size:.9rem;p
 aside>*{flex-shrink:0}
 .seg.level{margin-bottom:2px}
 .seg.level label{font-size:.95rem;padding:9px 4px}
+.seg.level.three label{font-size:.9rem;line-height:1.15;padding:7px 2px}
+.seg.level.three small{display:block;margin:2px 0 0}
 .seg.level small{font-weight:500;opacity:.75;margin-left:3px}
 .ms-note{margin:10px 0 0}
 .sw i.off{background:var(--off)}
@@ -139,15 +141,16 @@ aside>*{flex-shrink:0}
 
 <div class="app">
   <aside>
-    <div class="seg two level" role="radiogroup" aria-label="School level">
+    <div class="seg three level" role="radiogroup" aria-label="School level">
       <input type="radio" name="level" id="lv-es" value="es" checked><label for="lv-es">Elementary <small>K–5</small></label>
       <input type="radio" name="level" id="lv-ms" value="ms"><label for="lv-ms">Middle <small>6–8</small></label>
+      <input type="radio" name="level" id="lv-hs" value="hs"><label for="lv-hs">High <small>9–12</small></label>
     </div>
     <header>
       <span class="badge" id="badge">Kindergarten · 2024–25 zones</span>
       <h1 id="h1">NYC Elementary School Zones</h1>
       <p class="sub" id="sub">770 zone boundaries from the NYC Department of Education. Colored by the zoned school's DOE quality ratings or state test results. Click anywhere to see which school is zoned for that block.</p>
-      <p class="note ms-note" id="ms-note" hidden>Most districts don’t zone middle schools. In the uncolored areas, students apply to middle schools through <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a>. Even in zoned districts, many students also apply to other programs.</p>
+      <p class="note ms-note" id="lvl-note">Living in a zone gives your child top priority at that school, not a guaranteed seat. List your zoned school on your <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a> kindergarten application. You can rank it anywhere; your priority is the same. Each school’s “My Chances” section on MySchools shows which priority groups got offers last year.</p>
       <p class="note confirm-note"><strong>Zones change year to year.</strong> Always confirm an exact address on <a href="https://schoolsearch.schools.nyc/" target="_blank" rel="noopener">schoolsearch.schools.nyc</a> before applying.</p>
     </header>
 
@@ -169,6 +172,8 @@ aside>*{flex-shrink:0}
         <input type="radio" name="metric" id="m-both" value="both"><label for="m-both">ELA + Math</label>
         <input type="radio" name="metric" id="m-ela" value="ela"><label for="m-ela">ELA</label>
         <input type="radio" name="metric" id="m-math" value="math"><label for="m-math">Math</label>
+        <input type="radio" name="metric" id="m-grad" value="grad" hidden><label for="m-grad" hidden>Graduation</label>
+        <input type="radio" name="metric" id="m-coll" value="coll" hidden><label for="m-coll" hidden>College &amp; career</label>
       </div>
       <div class="seg three" data-g="programs" role="radiogroup" aria-label="Programs and services, 2024–25" hidden>
         <input type="radio" name="metric" id="m-gt" value="gt"><label for="m-gt" id="lbl-gt">G&amp;T</label>
@@ -198,6 +203,11 @@ aside>*{flex-shrink:0}
       </div>
       <div class="legend" id="leg-none" hidden>
         <p class="hint">Random colors so neighboring zones are easy to tell apart. The colors don’t mean anything.</p>
+      </div>
+      <div class="legend" id="leg-out" hidden>
+        <div class="lbar" id="out-bar"></div>
+        <div class="lticks" id="out-ticks"></div>
+        <p class="hint" id="out-hint"></p>
       </div>
       <div class="legend" id="leg-test" hidden>
         <div class="lbar"></div>
@@ -239,7 +249,7 @@ aside>*{flex-shrink:0}
         <a class="tip-btn" href="https://buymeacoffee.com/astromius" target="_blank" rel="noopener">Buy me a coffee ↗</a>
       </div>
       <p>Questions, corrections or ideas? Email <a href="mailto:info@nycschoolzones.com?subject=NYC%20School%20Zones%20feedback">info@nycschoolzones.com</a></p>
-      <p>Source: <a href="https://data.cityofnewyork.us/Education/School-Zones-2024-2025-Elementary-School-/cmjf-yawu" target="_blank" rel="noopener">Elementary</a> and <a href="https://data.cityofnewyork.us/Education/School-Zones-2024-2025-Middle-School-/t26j-jbq7" target="_blank" rel="noopener">Middle School</a> Zones 2024–2025, NYC Open Data. School names and addresses from the 2019–20 DOE location list. Test results from <a href="https://data.cityofnewyork.us/Education/English-Language-Arts-ELA-Test-Results-2013-2023/iebs-5yhr" target="_blank" rel="noopener">ELA</a> and <a href="https://data.cityofnewyork.us/Education/Math-Test-Results-2013-2023/74kb-55u9" target="_blank" rel="noopener">Math</a> Test Results 2013–2023 (2023 is the latest year published there). Ratings and current school names from the DOE <a href="https://tools.nycenet.edu/snapshot/" target="_blank" rel="noopener">2024–25 School Quality Snapshot</a>. Shared zones show the combined result of all their schools.</p>
+      <p>Source: <a href="https://data.cityofnewyork.us/Education/School-Zones-2024-2025-Elementary-School-/cmjf-yawu" target="_blank" rel="noopener">Elementary</a> and <a href="https://data.cityofnewyork.us/Education/School-Zones-2024-2025-Middle-School-/t26j-jbq7" target="_blank" rel="noopener">Middle School</a> and <a href="https://data.cityofnewyork.us/Education/School-Zones-2024-2025-High-School-/ruu9-egea" target="_blank" rel="noopener">High School</a> Zones 2024–2025, NYC Open Data. School names and addresses from the 2019–20 DOE location list. Test results from <a href="https://data.cityofnewyork.us/Education/English-Language-Arts-ELA-Test-Results-2013-2023/iebs-5yhr" target="_blank" rel="noopener">ELA</a> and <a href="https://data.cityofnewyork.us/Education/Math-Test-Results-2013-2023/74kb-55u9" target="_blank" rel="noopener">Math</a> Test Results 2013–2023 (2023 is the latest year published there). Ratings and current school names from the DOE <a href="https://tools.nycenet.edu/snapshot/" target="_blank" rel="noopener">2024–25 School Quality Snapshot</a>. Shared zones show the combined result of all their schools.</p>
     </div>
   </aside>
   <div id="map" role="application" aria-label="Map of school zones"></div>
@@ -260,12 +270,17 @@ function markEngaged(){if(engagedSent)return;engagedSent=true;
 const D=JSON.parse(document.getElementById('zdata').textContent);
 // two school levels share one map; each has its own zones and test results
 const MSD=D.MS||null;
-const LV={es:{F:D.features,T:D.T||{},S:D.schools},ms:MSD?{F:MSD.features,T:MSD.T||{},S:MSD.schools}:null};
-const S=Object.assign({},MSD?MSD.schools:{},D.schools);
+const HSD=D.HS||null;
+const LV={es:{F:D.features,T:D.T||{},S:D.schools},ms:MSD?{F:MSD.features,T:MSD.T||{},S:MSD.schools}:null,hs:HSD?{F:HSD.features,T:{},S:HSD.schools}:null};
+const S=Object.assign({},HSD?HSD.schools:{},MSD?MSD.schools:{},D.schools);
+// high school outcomes from the Snapshot: [4-year graduation %, college/career enrollment within 6 months %, city 4-year graduation %]
+const O=HSD&&HSD.O||{};
 let level='es',F=LV.es.F,T=LV.es.T;
 const LEVEL_TXT={
-  es:{badge:'Kindergarten · 2024–25 zones',h1:'NYC Elementary School Zones',sub:n=>n+' zone boundaries from the NYC Department of Education. Colored by the zoned school’s DOE quality ratings or state test results. Click anywhere to see which school is zoned for that block.',grades:'3–5',avg:'ELA 51%, Math 54%',miss:'That point is outside every elementary zone. Check the coordinates, or it may be in a park or outside NYC.',noZone:'No zoned elementary school'},
-  ms:{badge:'Middle school · 2024–25 zones',h1:'NYC Middle School Zones',sub:n=>'Zones for '+n+' middle schools from the NYC Department of Education, in the districts that have them. Click anywhere to see which school is zoned for that block.',grades:'6–8',avg:'ELA 55%, Math 49%',miss:'That point isn’t in a zoned middle school area. It may be in a district without zoned middle schools, a park, or outside NYC.',noZone:'No zoned middle school'}};
+  es:{note:'Living in a zone gives your child top priority at that school, not a guaranteed seat. List your zoned school on your <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a> kindergarten application. You can rank it anywhere; your priority is the same. Each school’s “My Chances” section on MySchools shows which priority groups got offers last year.',badge:'Kindergarten · 2024–25 zones',h1:'NYC Elementary School Zones',sub:n=>n+' zone boundaries from the NYC Department of Education. Colored by the zoned school’s DOE quality ratings or state test results. Click anywhere to see which school is zoned for that block.',grades:'3–5',avg:'ELA 51%, Math 54%',miss:'That point is outside every elementary zone. Check the coordinates, or it may be in a park or outside NYC.',noZone:'No zoned elementary school'},
+  hs:{badge:'High school · 2024–25 zones',h1:'NYC Zoned High Schools',sub:n=>n+' high schools give priority to students who live in their zone. Click anywhere to see the zoned high school for that block.',grades:'9–12',avg:'',miss:'That point isn’t in a high school zone. Most of the city has no zoned high school; students apply citywide through MySchools.',noZone:'No zoned high school',
+      note:'Most of NYC has no zoned high school. Every 8th grader applies through <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a>. Living in one of these zones gives you priority, or a guaranteed seat, at that school’s zoned program, but only if you list it on your application.'},
+  ms:{note:'Most districts don’t zone middle schools. In the uncolored areas, students apply to middle schools through <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a>. Even in zoned districts, many students also apply to other programs.',badge:'Middle school · 2024–25 zones',h1:'NYC Middle School Zones',sub:n=>'Zones for '+n+' middle schools from the NYC Department of Education, in the districts that have them. Click anywhere to see which school is zoned for that block.',grades:'6–8',avg:'ELA 55%, Math 49%',miss:'That point isn’t in a zoned middle school area. It may be in a district without zoned middle schools, a park, or outside NYC.',noZone:'No zoned middle school'}};
 let metric='comp';
 const R=D.R||{};
 // prefer current (2024-25) names and addresses from the School Quality Snapshot
@@ -301,8 +316,14 @@ function rampColor(v,S){if(v<=S[0][0])return rgb(S[0][1]);for(let i=1;i<S.length
 // state tests: straight red (5%) -> yellow (50%) -> green (95%)
 const TEST_STOPS=[[5,[215,48,31]],[50,[242,194,15]],[95,[43,154,75]]];
 function scoreColor(v){return rampColor(v,TEST_STOPS)}
+// high school outcomes have their own ranges: graduation 65/80/95, college & career 40/60/80
+const OUT={grad:{i:0,stops:[[65,[215,48,31]],[80,[242,194,15]],[95,[43,154,75]]],ticks:[65,80,95],name:'4-year graduation rate'},
+           coll:{i:1,stops:[[40,[215,48,31]],[60,[242,194,15]],[80,[43,154,75]]],ticks:[40,60,80],name:'College & career'}};
+const isOut=m=>m in OUT;
+const outColor=(m,v)=>rampColor(v,OUT[m].stops);
+function zoneOut(dbns,m){const v=dbns.map(d=>O[d]&&O[d][OUT[m].i]).filter(x=>x!=null);return v.length?v.reduce((a,b)=>a+b,0)/v.length:null}
 function rgb(c){return 'rgb('+c.map(Math.round).join(',')+')'}
-function fillFor(f){const p=f.properties;if(!p.dbns.length)return css('--land');if(metric==='none')return css('--z'+p.c);if(metric==='enr'){const n=zoneEnroll(p.dbns);return n==null?css('--nodata'):enrColor(n)}if(isProg(metric)){const h=zoneProg(p.dbns,metric);return h==null?css('--nodata'):h?'#1f8a8a':css('--off')}if(metric==='iep'){const v=zoneIep(p.dbns);return v==null?css('--nodata'):iepColor(v)}if(isRate(metric)){const r=zoneRating(p.dbns,metric);return r==null?css('--nodata'):rateColor(r)}const v=pct(p.dbns,metric);return v==null?css('--nodata'):scoreColor(v)}
+function fillFor(f){const p=f.properties;if(!p.dbns.length)return css('--land');if(metric==='none')return css('--z'+p.c);if(metric==='enr'){const n=zoneEnroll(p.dbns);return n==null?css('--nodata'):enrColor(n)}if(isProg(metric)){const h=zoneProg(p.dbns,metric);return h==null?css('--nodata'):h?'#1f8a8a':css('--off')}if(metric==='iep'){const v=zoneIep(p.dbns);return v==null?css('--nodata'):iepColor(v)}if(isOut(metric)){const v=zoneOut(p.dbns,metric);return v==null?css('--nodata'):outColor(metric,v)}if(isRate(metric)){const r=zoneRating(p.dbns,metric);return r==null?css('--nodata'):rateColor(r)}const v=pct(p.dbns,metric);return v==null?css('--nodata'):scoreColor(v)}
 function style(f,sel){const sc=metric!=='none';return{renderer,stroke:false,fillColor:fillFor(f),fillOpacity:sel?.95:(sc?.78:.85)}}
 let selected=null,layer=null,byLayer=[],zoneLines=null;
 function makeLayer(){return L.geoJSON(F,{style:f=>style(f,false),onEachFeature:(f,l)=>{
@@ -391,8 +412,8 @@ map.on('zoomend',sizeDots);sizeDots();
 const labels=L.layerGroup().addTo(map);
 function drawLabels(){labels.clearLayers();const z=map.getZoom();if(z<13)return;const b=map.getBounds().pad(.1);
   byLayer.forEach(l=>{const p=l.feature.properties;if(!p.dbns.length)return;if(z<14&&p.ar<1.2)return;const ll=L.latLng(p.lp);if(!b.contains(ll))return;
-    let txt=prefixOf(p.dbns[0])+' '+(+p.dbns[0].slice(3))+(p.dbns.length>1?' +':'');
-    if(isRate(metric)){const r=zoneRating(p.dbns,metric);if(r!=null)txt+=' · '+(metric==='comp'?r.toFixed(1):RLAB[Math.round(r)])}else if(metric==='enr'){const n=zoneEnroll(p.dbns);if(n!=null)txt+=' · '+Math.round(n).toLocaleString()}else if(isProg(metric)){if(!zoneProg(p.dbns,metric))txt=''}else if(metric==='iep'){const v=zoneIep(p.dbns);if(v!=null)txt+=' · '+Math.round(v)+'% IEP'}else if(metric!=='none'){const v=pct(p.dbns,metric);if(v!=null)txt+=' · '+Math.round(v)+'%'}
+    let txt=level==='hs'?((S[p.dbns[0]]&&S[p.dbns[0]].n)||p.dbns[0]).replace(/\s*High\s*School.*$/i,'').replace(/\s*Campus$/i,''):prefixOf(p.dbns[0])+' '+(+p.dbns[0].slice(3))+(p.dbns.length>1?' +':'');
+    if(isRate(metric)){const r=zoneRating(p.dbns,metric);if(r!=null)txt+=' · '+(metric==='comp'?r.toFixed(1):RLAB[Math.round(r)])}else if(metric==='enr'){const n=zoneEnroll(p.dbns);if(n!=null)txt+=' · '+Math.round(n).toLocaleString()}else if(isProg(metric)){if(!zoneProg(p.dbns,metric))txt=''}else if(metric==='iep'){const v=zoneIep(p.dbns);if(v!=null)txt+=' · '+Math.round(v)+'% IEP'}else if(isOut(metric)){const v=zoneOut(p.dbns,metric);if(v!=null)txt+=' · '+Math.round(v)+'%'}else if(metric!=='none'){const v=pct(p.dbns,metric);if(v!=null)txt+=' · '+Math.round(v)+'%'}
     L.marker(ll,{interactive:false,icon:L.divIcon({className:'',html:'<div class="zl">'+txt+'</div>',iconSize:[60,12],iconAnchor:[30,6]})}).addTo(labels)})}
 map.on('zoomend moveend',drawLabels);
 
@@ -409,7 +430,12 @@ function factsHtml(d){const x=X[d];if(!x)return '';const tags=[];if(hasGT(d))tag
     '<div class="facts">'+row('Students with IEPs (special ed)',x[6]!=null?x[6]+'%':null)+row('English language learners',x[5]!=null?x[5]+'%':null)+row('Attendance',x[1]!=null?x[1]+'%':null)+row('Teachers with 3+ years’ experience',x[2]!=null?x[2]+'%':null)+row('Principal’s years at school',x[3]!=null?(Math.round(x[3]*10)/10):null)+'</div>'}
 function rateHtml(d){const r=R[d];if(!r||r.slice(2,5).every(x=>x==null))return '<span class="meta">No 2024–25 Snapshot ratings (often K–2 or new schools).</span>';
   const c=schoolRating(d,'comp');return '<div class="rates"><span>Instruction</span>'+chip(r[2])+'<span>Safety &amp; climate</span>'+chip(r[3])+'<span>Families</span>'+chip(r[4])+'<span class="tot">Overall</span><span class="tot">'+chip(c)+'</span></div><a href="https://tools.nycenet.edu/snapshot/2025/'+esc(d)+'/'+esc(r[5]||'EMS')+'/" target="_blank" rel="noopener">2024–25 School Quality Snapshot ↗</a>'}
-function scoreHtml(d){const g=LEVEL_TXT[level].grades,v=T[d];if(!v)return '<span class="meta">No 2023 grade '+g+' state test results'+(level==='es'?' (K–2 or newer school)':' (newer school)')+'.</span>';
+function outHtml(d){const o=O[d];if(!o)return '<span class="meta">No 2024–25 graduation data.</span>';
+  const r=(lbl,m)=>{const v=o[OUT[m].i];return v==null?'':'<span>'+lbl+'</span><span class="bar"><i style="width:'+v+'%;background:'+outColor(m,v)+'"></i></span><b>'+Math.round(v)+'%</b>'};
+  return '<div class="scores">'+r('Graduates in 4 years','grad')+r('College or career program','coll')+'<small>2024–25 School Quality Snapshot'+(o[2]!=null?' · city 4-year graduation rate '+o[2]+'%':'')+'</small></div>'}
+function zonedHtml(d){const a=X[d]&&X[d][8]||'';if(/Zoned Guarantee/i.test(a))return '<div class="tags"><span class="tag">Zoned guarantee</span></div><span class="meta">Students in this zone who apply are guaranteed a seat in the zoned program.</span>';
+  if(/Zoned Priority/i.test(a))return '<div class="tags"><span class="tag">Zoned priority</span></div><span class="meta">Students in this zone who apply get priority for the zoned program, but a seat isn’t guaranteed.</span>';return ''}
+function scoreHtml(d){if(level==='hs')return outHtml(d);const g=LEVEL_TXT[level].grades,v=T[d];if(!v)return '<span class="meta">No 2023 grade '+g+' state test results'+(level==='es'?' (K–2 or newer school)':' (newer school)')+'.</span>';
   const n=Math.max(v[0],v[2]);return '<div class="scores">'+row('ELA',v[0],v[1])+row('Math',v[2],v[3])+'<small>2023, grades '+g+' · '+n+' students tested'+(n<60?' · small group, read with care':'')+'</small></div>'}
 function select(l,fromClick){
   markEngaged();
@@ -417,8 +443,8 @@ function select(l,fromClick){
   selected=l;l.setStyle(style(l.feature,true));
   if(selLine)map.removeLayer(selLine);selLine=L.geoJSON(l.feature,{style:{renderer:selRend,interactive:false,fill:false,color:css('--hl'),weight:3.5,opacity:1}}).addTo(map);
   const p=l.feature.properties;let h='<div class="zt">District '+esc(p.dist)+' · '+esc(BORO[p.boro]||'')+'</div>';
-  if(!p.dbns.length){h+='<div class="school"><span class="nm">'+LEVEL_TXT[level].noZone+'</span></div>';if(level==='ms'&&/District/.test(p.remarks||''))h+='<div class="note">Students here apply to middle schools through <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a>.</div>';}
-  else{h+=p.dbns.map(d=>{const s=S[d];return '<div class="school"><span class="nm">'+esc(short(d))+'</span><span class="meta">'+esc(d)+(s?' · '+esc(title(s.a))+' · Grades '+esc(grades(s.g)):'')+(X[d]&&X[d][0]!=null?' · '+X[d][0].toLocaleString()+' students':'')+'</span>'+factsHtml(d)+rateHtml(d)+scoreHtml(d)+'<a href="https://www.schools.nyc.gov/schools/'+esc(d)+'" target="_blank" rel="noopener">School page on schools.nyc.gov ↗</a></div>'}).join('');}
+  if(!p.dbns.length){h+='<div class="school"><span class="nm">'+LEVEL_TXT[level].noZone+'</span></div>';if(level==='ms'&&/District/.test(p.remarks||''))h+='<div class="note">Students here apply to middle schools through <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a>.</div>';if(level==='hs')h+='<div class="note">Students here apply to high schools citywide through <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a>.</div>';}
+  else{h+=p.dbns.map(d=>{const s=S[d];return '<div class="school"><span class="nm">'+esc(short(d))+'</span><span class="meta">'+esc(d)+(s?' · '+esc(title(s.a))+' · Grades '+esc(grades(s.g)):'')+(X[d]&&X[d][0]!=null?' · '+X[d][0].toLocaleString()+' students':'')+'</span>'+(level==='hs'?zonedHtml(d):'')+factsHtml(d)+rateHtml(d)+scoreHtml(d)+'<a href="https://www.schools.nyc.gov/schools/'+esc(d)+'" target="_blank" rel="noopener">School page on schools.nyc.gov ↗</a></div>'}).join('');}
   if(p.remarks)h+='<div class="note">'+esc(p.remarks)+'</div>';
   if(p.dbns.length>1&&!p.remarks)h+='<div class="note">This block is in a shared zone. Families can rank any of these schools.</div>';
   if(p.dbns.length)h+='<a class="confirm" href="https://schoolsearch.schools.nyc/" target="_blank" rel="noopener">Confirm your exact address on schoolsearch.schools.nyc ↗</a>';
@@ -456,7 +482,12 @@ document.getElementById('llf').addEventListener('submit',e=>{e.preventDefault();
 const BB={M:[[40.70,-74.02],[40.88,-73.91]],K:[[40.57,-74.04],[40.74,-73.83]],Q:[[40.54,-73.96],[40.80,-73.70]],X:[[40.79,-73.93],[40.92,-73.75]],R:[[40.49,-74.26],[40.65,-74.05]]};
 document.getElementById('boro').addEventListener('change',e=>{markEngaged();const v=e.target.value;v?map.fitBounds(BB[v]):map.fitBounds(layer.getBounds())});
 
-function syncLegend(){document.getElementById('leg-rate').hidden=!isRate(metric);document.getElementById('leg-test').hidden=!['both','ela','math'].includes(metric);document.getElementById('leg-prog').hidden=!isProg(metric);document.getElementById('leg-iep').hidden=metric!=='iep';document.getElementById('prog-yes').textContent=metric==='gt'?'Zoned school has a G&T program':'Zoned school has a dual-language program';document.getElementById('prog-hint').textContent=metric==='gt'?'District Gifted & Talented programs listed for the zoned school in the 2024–25 Snapshot (73 zoned schools). G&T seats aren’t assigned by zone: families apply separately, and admission rules have changed in recent years, so check MySchools for this year’s process.':'Dual-language programs at the zoned school (151 zoned schools), from the 2024–25 Snapshot. Click a zone to see the languages. Seats are usually by application, often with priority for zoned families.';document.getElementById('leg-enr').hidden=metric!=='enr';document.getElementById('leg-none').hidden=metric!=='none';
+function syncLegend(){const lo=document.getElementById('leg-out');lo.hidden=!isOut(metric);
+  if(isOut(metric)){const o=OUT[metric],s=o.stops,pct=v=>v+'%';
+    document.getElementById('out-bar').style.background='linear-gradient(90deg,'+rgb(s[0][1])+' 0%,'+rgb(s[0][1])+' '+pct(s[0][0])+','+rgb(s[1][1])+' '+pct(s[1][0])+','+rgb(s[2][1])+' '+pct(s[2][0])+','+rgb(s[2][1])+' 100%)';
+    document.getElementById('out-ticks').innerHTML=o.ticks.map((v,i)=>'<span style="left:'+v+'%">'+v+(i===o.ticks.length-1?'%':'')+'</span>').join('');
+    document.getElementById('out-hint').innerHTML=metric==='grad'?'Share of students who graduate within 4 years, from the 2024–25 School Quality Snapshot. NYC average: 81%. The scale is narrower than for test scores because most zoned high schools graduate 75–95% of students. <span class="nd"></span> No data.':'Share of graduates who enrolled in college or a career program within 6 months, from the 2024–25 School Quality Snapshot. <span class="nd"></span> No data.'}
+  document.getElementById('leg-rate').hidden=!isRate(metric);document.getElementById('leg-test').hidden=!['both','ela','math'].includes(metric);document.getElementById('leg-prog').hidden=!isProg(metric);document.getElementById('leg-iep').hidden=metric!=='iep';document.getElementById('prog-yes').textContent=metric==='gt'?'Zoned school has a G&T program':'Zoned school has a dual-language program';document.getElementById('prog-hint').textContent=metric==='gt'?'District Gifted & Talented programs listed for the zoned school in the 2024–25 Snapshot (73 zoned schools). G&T seats aren’t assigned by zone: families apply separately, and admission rules have changed in recent years, so check MySchools for this year’s process.':'Dual-language programs at the zoned school (151 zoned schools), from the 2024–25 Snapshot. Click a zone to see the languages. Seats are usually by application, often with priority for zoned families.';document.getElementById('leg-enr').hidden=metric!=='enr';document.getElementById('leg-none').hidden=metric!=='none';
   document.getElementById('rate-hint').innerHTML=(metric==='comp'?'Overall is the average of the three ratings, so zones blend between colors (3.3 sits between yellow and green). ':'DOE rating for '+RNAME[metric]+'. ')+'Ratings are the DOE’s own. Shared zones average their schools. <span class="nd"></span> No rating.'}
 syncLegend();
 //METRIC
@@ -468,7 +499,7 @@ lastPick.quality='comp';
 let curGroup='quality';
 function showGroup(g){curGroup=g;document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.g===g)));
   document.querySelectorAll('.seg[data-g]').forEach(s=>{s.hidden=s.dataset.g!==g});
-  document.getElementById('grp-src').textContent=g==='tests'?'New York State tests · 2023, grades '+LEVEL_TXT[level].grades:GROUP_SRC[g];}
+  document.getElementById('grp-src').textContent=g==='tests'?(level==='hs'?'DOE School Quality Snapshot · 2024–25':'New York State tests · 2023, grades '+LEVEL_TXT[level].grades):GROUP_SRC[g];}
 document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{const g=b.dataset.g;showGroup(g);
   const r=document.querySelector('input[name=metric][value="'+lastPick[g]+'"]');if(r&&!r.checked){r.checked=true;r.dispatchEvent(new Event('change'))}}));
 document.querySelectorAll('input[name=metric]').forEach(r=>r.addEventListener('change',()=>{const s=r.closest('.seg[data-g]');if(s)lastPick[s.dataset.g]=r.value;markEngaged();metric=r.value;syncLegend();restyle();drawLabels()}));
@@ -477,6 +508,7 @@ const mq=matchMedia('(prefers-color-scheme: dark)');const restyle=()=>{layer.eac
 const retheme=()=>{restyle();restyleLines();if(selLine)selLine.setStyle({color:css('--hl')});buildStreets();buildLocal();syncStreets()};
 mq.addEventListener?.('change',retheme);new MutationObserver(retheme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
 // switch between elementary and middle school zones
+let testsPick='both',outPick='grad';
 function setLevel(lv){if(!LV[lv]||lv===level)return;level=lv;F=LV[lv].F;T=LV[lv].T;
   if(selLine){map.removeLayer(selLine);selLine=null}if(pin){map.removeLayer(pin);pin=null}selected=null;
   map.removeLayer(layer);map.removeLayer(zoneLines);byLayer=[];
@@ -485,20 +517,29 @@ function setLevel(lv){if(!LV[lv]||lv===level)return;level=lv;F=LV[lv].F;T=LV[lv]
   buildDots();sizeDots();buildIdx();res.hidden=true;llmsg.hidden=true;
   const tx=LEVEL_TXT[lv],nZ=lv==='es'?F.length:new Set(F.flatMap(f=>f.properties.dbns)).size;
   document.getElementById('badge').textContent=tx.badge;document.getElementById('h1').textContent=tx.h1;document.getElementById('sub').textContent=tx.sub(nZ);
-  document.getElementById('ms-note').hidden=lv!=='ms';
+  const ln=document.getElementById('lvl-note');ln.hidden=!tx.note;ln.innerHTML=tx.note||'';
+  // tests vs outcomes: elementary/middle use state tests, high school uses graduation and college data
+  const hs=lv==='hs';['both','ela','math'].forEach(v=>{const i=document.querySelector('input[name=metric][value='+v+']');i.hidden=hs;document.querySelector('label[for='+i.id+']').hidden=hs});
+  ['grad','coll'].forEach(v=>{const i=document.querySelector('input[name=metric][value='+v+']');i.hidden=!hs;document.querySelector('label[for='+i.id+']').hidden=!hs});
+  const ts=document.querySelector('.seg[data-g=tests]');ts.classList.toggle('two',hs);ts.classList.toggle('three',!hs);
+  document.getElementById('g-tests').textContent=hs?'Outcomes':'Tests';
+  if(hs&&['both','ela','math'].includes(lastPick.tests)){testsPick=lastPick.tests;lastPick.tests=outPick}else if(!hs&&isOut(lastPick.tests)){outPick=lastPick.tests;lastPick.tests=testsPick}
+  if(hs&&['both','ela','math'].includes(metric)||!hs&&isOut(metric)){const r=document.querySelector('input[name=metric][value='+lastPick.tests+']');r.checked=true;r.dispatchEvent(new Event('change'))}
   document.getElementById('test-hint').innerHTML='Share of grade '+tx.grades+' students scoring proficient (Level 3 or 4) on the 2023 New York State tests. NYC average: '+tx.avg+'. <span class="nd"></span> No grades '+tx.grades+' results.';
   // G&T is an elementary program; hide it for middle school
-  const gt=document.getElementById('m-gt');gt.hidden=lv==='ms';document.getElementById('lbl-gt').hidden=lv==='ms';
-  gt.closest('.seg').classList.toggle('two',lv==='ms');gt.closest('.seg').classList.toggle('three',lv!=='ms');
-  if(lv==='ms'&&metric==='gt'){const r=document.getElementById('m-dl');r.checked=true;r.dispatchEvent(new Event('change'))}
-  if(lv==='ms'&&lastPick.programs==='gt')lastPick.programs='dl';
+  const noGT=lv!=='es',gt=document.getElementById('m-gt');gt.hidden=noGT;document.getElementById('lbl-gt').hidden=noGT;
+  gt.closest('.seg').classList.toggle('two',noGT);gt.closest('.seg').classList.toggle('three',!noGT);
+  if(noGT&&metric==='gt'){const r=document.getElementById('m-dl');r.checked=true;r.dispatchEvent(new Event('change'))}
+  if(noGT&&lastPick.programs==='gt')lastPick.programs='dl';
   showGroup(curGroup);
   card.className='card empty';card.textContent='Select a zone on the map, or search for a school, to see its zoned school.';
-  try{history.replaceState(null,'',lv==='ms'?'#middle':location.pathname+location.search)}catch(e){}
+  try{history.replaceState(null,'',lv==='ms'?'#middle':lv==='hs'?'#high':location.pathname+location.search)}catch(e){}
   syncLegend();restyle();drawLabels()}
 document.querySelectorAll('input[name=level]').forEach(r=>r.addEventListener('change',()=>{if(r.checked){markEngaged();setLevel(r.value)}}));
-if(!LV.ms)document.querySelector('.seg.level').hidden=true;
+if(!LV.ms&&!LV.hs)document.querySelector('.seg.level').hidden=true;
+['ms','hs'].forEach(lv=>{if(!LV[lv]){document.getElementById('lv-'+lv).hidden=true;document.querySelector('label[for=lv-'+lv+']').hidden=true}});
 if(location.hash==='#middle'&&LV.ms){document.getElementById('lv-ms').checked=true;setLevel('ms')}
+if(location.hash==='#high'&&LV.hs){document.getElementById('lv-hs').checked=true;setLevel('hs')}
 syncStreets();
 })();
 </script>
