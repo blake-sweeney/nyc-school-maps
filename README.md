@@ -94,3 +94,11 @@ When the city publishes a new year, update the dataset IDs and years at the top 
 - [Centerline (CSCL)](https://data.cityofnewyork.us/City-Government/Centerline/inkn-q76z), NYC Open Data (major streets)
 
 Zones change from year to year. Before applying, always confirm a specific address on [schoolsearch.schools.nyc](https://schoolsearch.schools.nyc/).
+
+## License
+
+Copyright (C) 2026 Blake Sweeney
+
+The code and design in this repository (`src/`, `scripts/`, and the built `index.html` and `assets/`) are licensed under the [GNU Affero General Public License v3.0 or later](LICENSE). You can use, change and share them, but if you run a modified version as a website, you must offer its source code to its visitors under the same license.
+
+The data is not covered by this license and isn't ours to license. School zones, school locations and street centerlines come from [NYC Open Data](https://opendata.cityofnewyork.us/) under the City's [terms of use](https://www.nyc.gov/home/terms-of-use.page). Ratings, test results, graduation rates, programs and school names come from the NYC Department of Education's [School Quality Snapshot](https://tools.nycenet.edu/snapshot/). Address lookup is provided by NYC Planning's [GeoSearch](https://geosearch.planninglabs.nyc/).

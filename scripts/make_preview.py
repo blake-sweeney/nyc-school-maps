@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (C) 2026 Blake Sweeney
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Draw the link-preview image (preview.png, 1200x630) from the data in data/.
 
     python3 scripts/make_preview.py

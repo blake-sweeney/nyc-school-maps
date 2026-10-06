@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (C) 2026 Blake Sweeney
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Build index.html from src/template.html and the files in data/.
 
 Uses only the Python standard library. Run from the repo root:
