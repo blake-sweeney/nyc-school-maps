@@ -88,6 +88,13 @@ button{font:inherit;font-family:var(--display);font-weight:600;font-size:.9rem;p
 .btn-sm:hover{border-color:var(--muted)}
 .btn-sm.primary{background:var(--fg);color:var(--panel);border-color:var(--fg)}
 .to-map{display:none}
+.sheet-head,.phone-bar{display:none}
+/* phone map buttons: Search, Grades, About */
+.phone-bar{gap:8px;align-items:center}
+.pb-btn{display:flex;align-items:center;gap:6px;background:var(--panel);color:var(--fg);border:0;border-radius:999px;box-shadow:0 1px 4px rgba(0,0,0,.3);padding:8px 14px;font-family:var(--display);font-weight:600;font-size:.92rem;line-height:1.1}
+.pb-btn.icon{width:36px;height:36px;padding:0;justify-content:center;font-size:.95rem}
+.pb-btn small{font-weight:500;color:var(--muted);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase}
+.pb-btn[aria-expanded="true"]{box-shadow:0 0 0 2px var(--fg)}
 .school .links{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:.85rem}
 .seg{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line);border-radius:6px;overflow:hidden}
 .seg input{position:absolute;opacity:0;pointer-events:none}
@@ -207,19 +214,40 @@ aside>*{flex-shrink:0}
 .about details p{margin:6px 0 0}
 .zl{font-family:var(--display);font-weight:700;font-size:11px;color:var(--fg);text-align:center;white-space:nowrap;text-shadow:0 0 3px var(--land),0 0 3px var(--land),0 0 2px var(--land);pointer-events:none;line-height:1}
 @media (max-width:760px){
-  .app{grid-template-columns:1fr;grid-template-rows:58vh auto;height:auto}
-  #map{order:-1;height:58vh}
-  aside{border-right:0;border-top:1px solid var(--line);overflow:visible;padding:16px;gap:14px}
-  /* phones: what you need first sits right under the map */
-  .seg.level{order:1}
-  #search-sec{order:2}
-  #card{order:3}
+  /* phones: full-screen map; search, level and color are buttons on the map; details slide up in a sheet */
+  html,body{overflow:hidden}
+  :root{--peek:58px;--sheet:62vh}
+  /* svh = the height left when Safari/Chrome show their toolbars, so nothing sits under the address bar */
+  @supports (height:1svh){:root{--sheet:62svh}}
+  .app{display:block;position:fixed;left:0;right:0;top:0;bottom:0;height:auto}
+  #map{position:absolute;inset:0;height:auto}
+  aside{position:absolute;left:0;right:0;bottom:0;z-index:1100;height:var(--sheet);border-right:0;border-radius:16px 16px 0 0;box-shadow:0 -3px 14px rgba(0,0,0,.22);
+    overflow-y:auto;overscroll-behavior:contain;padding:0 16px calc(24px + env(safe-area-inset-bottom,0px));gap:14px;transform:translateY(calc(100% - var(--peek) - env(safe-area-inset-bottom,0px)));transition:transform .25s ease}
+  .app.sheet-open aside{transform:none}
+  .sheet-head{display:flex;order:0;position:sticky;top:0;z-index:2;align-items:center;gap:10px;margin:0 -16px -4px;padding:9px 10px 9px 16px;background:var(--panel);border-bottom:1px solid var(--line);border-radius:16px 16px 0 0;cursor:pointer}
+  .app:not(.sheet-open) .sheet-head{border-bottom-color:transparent}
+  .sh-txt{flex:1;min-width:0;display:flex;flex-direction:column}
+  #sheet-title{font-family:var(--display);font-weight:700;font-size:1rem;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #sheet-sub{font-size:.78rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sheet-x{display:flex;align-items:center;gap:4px;padding:6px 10px;font-size:.85rem;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:999px}
+  .leaflet-control-zoom{display:none}
+  input[type=text],select{font-size:16px}
+  .phone-bar{display:flex}
+  .map-pop{position:absolute;top:58px;left:10px;right:10px;z-index:1150;background:var(--panel);color:var(--fg);border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.3);padding:12px 14px 14px;font-size:15px;max-height:calc(100% - 70px);overflow:auto}
+  .map-pop[hidden]{display:none}
+  #lvl-pop{right:auto;width:min(340px,calc(100% - 20px))}
+  .map-pop .cp-head{margin-bottom:8px}
+  .leaflet-bottom{bottom:calc(var(--peek) + env(safe-area-inset-bottom,0px))}
+  #color-panel{bottom:calc(var(--peek) + env(safe-area-inset-bottom,0px))!important}
+  .leaflet-top{top:env(safe-area-inset-top,0px)}
+  #color-panel{z-index:1200}
+  /* sheet: the zone first, then the disclaimer and about info */
+  #card{order:1;border:0;background:none;padding:6px 0 0}
   #card.empty{display:none}
-  aside>header{order:4}
-  aside>section:not([id]):not(.metrics){order:7}
-  .about{order:8}
+  aside>header{order:2;border-top:1px solid var(--line);padding-top:14px}
+  .about{order:3}
   .to-map{display:inline-block}
-  #color-panel{top:auto;bottom:0;left:0;right:0;width:auto;max-width:none;max-height:78%;border-radius:14px 14px 0 0;padding-bottom:18px}
+  #color-panel{top:auto;left:0;right:0;width:auto;max-width:none;max-height:78%;border-radius:14px 14px 0 0;padding-bottom:calc(18px + env(safe-area-inset-bottom,0px))}
   #map-legend{min-width:0;max-width:calc(100vw - 90px);padding:6px 9px 7px;font-size:13px}
   #map-legend .sw{gap:2px 10px;font-size:.78rem}
   #map-legend .legend{margin-top:4px}
@@ -228,7 +256,6 @@ aside>*{flex-shrink:0}
   #map-legend:not(.open) #grp-src{display:none}
   .lg-info{width:20px;height:20px;line-height:18px}
   .map-btn{padding:5px 8px 5px 6px;font-size:.84rem}
-  #color-panel{bottom:0!important}
 }
 @media (prefers-reduced-motion:reduce){.leaflet-zoom-anim .leaflet-zoom-animated{transition:none}}
 </style>
@@ -237,6 +264,7 @@ aside>*{flex-shrink:0}
 
 <div class="app">
   <aside>
+    <div class="sheet-head" id="sheet-head"><div class="sh-txt"><span id="sheet-title">NYC Elementary School Zones</span><span id="sheet-sub">Tap any block to see its zoned school</span></div><button type="button" class="sheet-x" id="sheet-close" aria-expanded="false" aria-label="Show details"><span id="sheet-btn-txt">About</span> <svg id="sheet-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div>
     <div class="seg three level" role="radiogroup" aria-label="School level">
       <input type="radio" name="level" id="lv-es" value="es" checked><label for="lv-es">Elementary <small>K–5</small></label>
       <input type="radio" name="level" id="lv-ms" value="ms"><label for="lv-ms">Middle <small>6–8</small></label>
@@ -294,6 +322,13 @@ aside>*{flex-shrink:0}
   <div id="map" role="application" aria-label="Map of school zones"></div>
 </div>
 <div id="map-ui" hidden>
+  <div class="phone-bar" id="phone-bar">
+    <button type="button" class="pb-btn" id="pb-search" aria-expanded="false" aria-controls="search-dlg"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Search</button>
+    <button type="button" class="pb-btn" id="pb-level" aria-expanded="false" aria-controls="lvl-pop"><small>Grades</small> <span id="lvl-chip">K–5</span> <span aria-hidden="true">▾</span></button>
+    <button type="button" class="pb-btn icon" id="pb-info" aria-label="About this map">i</button>
+  </div>
+  <div class="map-pop" id="search-dlg" role="dialog" aria-labelledby="sd-lab" hidden><div class="cp-head"><span class="lab" id="sd-lab">Search</span><button type="button" class="cp-close" id="sd-close" aria-label="Close search">✕</button></div></div>
+  <div class="map-pop" id="lvl-pop" role="dialog" aria-labelledby="lp-lab" hidden><div class="cp-head"><span class="lab" id="lp-lab">School level</span><button type="button" class="cp-close" id="lp-close" aria-label="Close">✕</button></div></div>
   <div id="color-panel" role="dialog" aria-labelledby="mlab" hidden>
     <div class="cp-head"><span class="lab" id="mlab">Color zones by</span><button type="button" class="cp-close" id="cp-close" aria-label="Close">✕</button></div>
     <div class="grp-h" id="g-quality">Quality ratings</div>
@@ -419,6 +454,7 @@ function zoneRating(dbns,m){const v=dbns.map(d=>schoolRating(d,m)).filter(x=>x!=
 function rateColor(r){const P=[5,50,75,95];const i=Math.min(2,Math.max(0,Math.floor(r-1)));return rampColor(P[i]+(P[i+1]-P[i])*(r-1-i),STOPS)}
 const BORO={M:'Manhattan',K:'Brooklyn',Q:'Queens',X:'Bronx',R:'Staten Island'};
 const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const appEl=document.querySelector('.app'),aside=document.querySelector('aside');
 const map=L.map('map',{preferCanvas:true,zoomSnap:.5,minZoom:10,maxZoom:18,attributionControl:false}).setView([40.70,-73.95],11);
 const renderer=L.canvas({padding:.3,tolerance:2});
 function short(d){const s=S[d];if(!s)return 'School '+d;return s.n}
@@ -456,7 +492,8 @@ zoneLines=L.geoJSON(F,{style:lineStyle,interactive:false}).addTo(map);
 const restyleLines=()=>zoneLines.setStyle(lineStyle());
 map.on('zoomend',restyleLines);
 let selLine=null;
-map.fitBounds(layer.getBounds(),{padding:[10,10]});
+// phones: leave room for the collapsed sheet and color card at the bottom
+map.fitBounds(layer.getBounds(),matchMedia('(max-width:760px)').matches?{paddingTopLeft:[10,60],paddingBottomRight:[10,180]}:{padding:[10,10]});
 
 // major streets: highways (tier 1) always, major streets (2) from zoom 11.5, secondary (3) from zoom 13
 map.createPane('streets').style.zIndex=450;map.getPane('streets').style.pointerEvents='none';
@@ -565,7 +602,7 @@ function select(l,fromClick){
   if(selected)selected.setStyle(style(selected.feature,false));
   selected=l;l.setStyle(style(l.feature,true));
   if(selLine)map.removeLayer(selLine);selLine=L.geoJSON(l.feature,{style:{renderer:selRend,interactive:false,fill:false,color:css('--hl'),weight:3.5,opacity:1}}).addTo(map);
-  const p=l.feature.properties;let h='<div class="zt">District '+esc(p.dist)+' · '+esc(BORO[p.boro]||'')+'</div>';
+  const p=l.feature.properties;let h='<div class="zt">'+(p.dist&&+p.dist?'District '+esc(p.dist)+' · ':'')+esc(BORO[p.boro]||'')+'</div>';
   if(!p.dbns.length){h+='<div class="school"><span class="nm">'+LEVEL_TXT[level].noZone+'</span></div>';if(level==='ms'&&/District/.test(p.remarks||''))h+='<div class="note">Students here apply to middle schools through <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a>.</div>';if(level==='hs')h+='<div class="note">Students here apply to high schools citywide through <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a>.</div>';}
   else{h+=p.dbns.map(d=>{const s=S[d],n=X[d]&&X[d][0]!=null?X[d][0].toLocaleString()+' students':'',gr=s?'Grades '+esc(grades(s.g)):'';
   return '<div class="school"><span class="nm">'+esc(short(d))+' <span class="dbn">('+esc(d)+')</span></span>'+addrHtml(d)+(gr||n?'<span class="meta">'+[gr,n].filter(Boolean).join(' · ')+'</span>':'')+tagsHtml(d)+(level==='hs'?zonedHtml(d):'')+'<hr class="sep">'+rateHtml(d)+'<hr class="sep">'+scoreHtml(d)+'<hr class="sep">'+factsHtml(d)+'<hr class="sep">'+'<div class="links"><a href="'+mySchoolsUrl(d)+'" target="_blank" rel="noopener"><b>MySchools: apply &amp; see your chances ↗</b></a><a href="https://www.schools.nyc.gov/schools/'+esc(d.slice(2))+'" target="_blank" rel="noopener">School website ↗</a></div></div>'}).join('');}
@@ -576,9 +613,13 @@ function select(l,fromClick){
   card.className='card';card.innerHTML=h;
   if(p.dbns.length){setZoneHash(p.dbns[0]);
     document.getElementById('copy-link').onclick=e=>copyLink(e.currentTarget);
-    document.getElementById('to-map').onclick=()=>document.getElementById('map').scrollIntoView({behavior:'smooth',block:'start'})}
-  if(!fromClick)map.fitBounds(l.getBounds(),{maxZoom:15,padding:[30,30]});
-  if(window.innerWidth<=760&&fromClick)card.scrollIntoView({behavior:'smooth',block:'nearest'});
+    document.getElementById('to-map').onclick=()=>{if(phone.matches)setSheet(false);else document.getElementById('map').scrollIntoView({behavior:'smooth',block:'start'})}}
+  if(phone.matches){const ae=document.activeElement;if(ae&&ae.tagName==='INPUT')ae.blur();setPop('search',false);sheetLabel(p.dbns.length?short(p.dbns[0])+(p.dbns.length>1?' + '+(p.dbns.length-1)+' more':''):LEVEL_TXT[level].noZone,(p.dist&&+p.dist?'District '+p.dist+' · ':'')+(BORO[p.boro]||''));
+    setSheet(true);aside.scrollTo({top:0});
+    // keep the zone in the part of the map the open sheet doesn't cover
+    if(!fromClick)map.fitBounds(l.getBounds(),{maxZoom:15,paddingTopLeft:[30,30],paddingBottomRight:[30,aside.offsetHeight+30]});
+    else{const c=map.latLngToContainerPoint(l.getBounds().getCenter()),vis=map.getSize().y-aside.offsetHeight;if(c.y>vis-40||c.y<40)map.panBy([0,c.y-vis/2])}}
+  else if(!fromClick)map.fitBounds(l.getBounds(),{maxZoom:15,padding:[30,30]});
 }
 
 // search
@@ -615,7 +656,7 @@ function locate(a,b,label,keepView){lastPoint={a,b,label};llmsg.hidden=true;
   if(pin)map.removeLayer(pin);pin=L.circleMarker([a,b],{renderer:selRend,pane:'selPane',radius:8,weight:3,color:css('--accent'),fillColor:css('--fg'),fillOpacity:1,interactive:false}).addTo(map);
   const hit=byLayer.find(l=>inGeom(b,a,l.feature.geometry));
   if(!hit||!hit.feature.properties.dbns.length){if(hit)select(hit,true);llmsg.textContent=LEVEL_TXT[level].miss;llmsg.hidden=false;if(!keepView)map.setView([a,b],14);return}
-  select(hit,true);if(!keepView)map.setView([a,b],15)}
+  select(hit,true);if(!keepView)showLatLng([a,b],15)}
 const prettyAddr=s=>title(s.replace(/, USA$/,'').replace(/, NY$/,'')).replace(/\bNy\b/,'NY');
 let addrHits=[],addrTimer=null,addrSeq=0;
 const normAddr=s=>s.toLowerCase().replace(/[.,]/g,' ').replace(/\s+/g,' ').trim();
@@ -686,7 +727,7 @@ document.getElementById('map').appendChild(cpanel);L.DomEvent.disableClickPropag
 function placePanel(){if(cpanel.hidden)return;if(phone.matches){cpanel.style.bottom='';return}
   const m=document.getElementById('map').getBoundingClientRect(),c=document.getElementById('map-legend').getBoundingClientRect();
   cpanel.style.bottom=Math.round(m.bottom-c.top+8)+'px'}
-function setPanel(open){if(cpanel.hidden===!open)return;cpanel.hidden=!open;placePanel();const b=document.getElementById('color-btn');b.setAttribute('aria-expanded',String(open));
+function setPanel(open){if(cpanel.hidden===!open)return;if(open&&phone.matches){setSheet(false);closePops()}cpanel.hidden=!open;placePanel();const b=document.getElementById('color-btn');b.setAttribute('aria-expanded',String(open));
   if(open){markEngaged();const c=cpanel.querySelector('input[name=metric]:checked');if(c)c.focus({preventScroll:true})}}
 document.getElementById('cp-close').addEventListener('click',()=>{setPanel(false);document.getElementById('color-btn').focus()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!cpanel.hidden){setPanel(false);document.getElementById('color-btn').focus()}});
@@ -706,7 +747,7 @@ async function setLevel(lv){if(lv===level)return;if(!LV[lv]&&!(await loadLevel(l
   zoneLines=L.geoJSON(F,{style:lineStyle,interactive:false}).addTo(map);
   buildDots();sizeDots();buildIdx();res.hidden=true;llmsg.hidden=true;
   const tx=LEVEL_TXT[lv],nZ=lv==='es'?F.length:new Set(F.flatMap(f=>f.properties.dbns)).size;
-  document.getElementById('badge').textContent=tx.badge;document.getElementById('h1').textContent=tx.h1;document.getElementById('sub').textContent=tx.sub(nZ);
+  document.getElementById('badge').textContent=tx.badge;document.getElementById('lvl-chip').textContent={es:'K–5',ms:'6–8',hs:'9–12'}[lv];document.getElementById('h1').textContent=tx.h1;document.getElementById('sub').textContent=tx.sub(nZ);
   document.getElementById('lvl-sum').textContent=tx.sum;document.getElementById('lvl-note').innerHTML=tx.note||'';
   // tests vs outcomes: elementary/middle use state tests, high school uses graduation and college data
   const hs=lv==='hs';['both','ela','math'].forEach(v=>{const i=document.querySelector('input[name=metric][value='+v+']');i.hidden=hs;document.querySelector('label[for='+i.id+']').hidden=hs});
@@ -722,14 +763,15 @@ async function setLevel(lv){if(lv===level)return;if(!LV[lv]&&!(await loadLevel(l
   if(noGT&&metric==='gt'){const r=document.getElementById('m-dl');r.checked=true;r.dispatchEvent(new Event('change'))}
   if(noGT&&lastPick.programs==='gt')lastPick.programs='dl';
   showGroup(curGroup);
-  card.className='card empty';card.textContent='Select a zone on the map, or search for a school, to see its zoned school.';
+  card.className='card empty';card.textContent='Select a zone on the map, or search for a school, to see its zoned school.';sheetDefault();
   try{history.replaceState(null,'',lv==='ms'?'#middle':lv==='hs'?'#high':location.pathname+location.search)}catch(e){}  // a selected zone replaces this below
   syncLegend();restyle();drawLabels();
   if(lastPoint)locate(lastPoint.a,lastPoint.b,lastPoint.label,true)}
 document.querySelectorAll('input[name=level]').forEach(r=>r.addEventListener('change',()=>{if(r.checked){markEngaged();setLevel(r.value)}}));
-if(!hasLevel('ms')&&!hasLevel('hs'))document.querySelector('.seg.level').hidden=true;
+if(!hasLevel('ms')&&!hasLevel('hs')){document.querySelector('.seg.level').hidden=true;document.getElementById('pb-level').hidden=true}
 ['ms','hs'].forEach(lv=>{if(!hasLevel(lv)){document.getElementById('lv-'+lv).hidden=true;document.querySelector('label[for=lv-'+lv+']').hidden=true}});
 (async function openFromHash(){
+await null;  // let the rest of the page script set up first
 if(location.hash==='#middle'&&hasLevel('ms')){document.getElementById('lv-ms').checked=true;await setLevel('ms')}
 if(location.hash==='#high'&&hasLevel('hs')){document.getElementById('lv-hs').checked=true;await setLevel('hs')}
 // shared zone link: #es-15K321 / #ms-02M104 / #hs-28Q440 (a bare #15K321 means elementary)
@@ -739,6 +781,59 @@ if(m){const lv=(m[1]||'es').toLowerCase(),dbn=m[2].toUpperCase();
     const hit=byLayer.find(l=>l.feature.properties.dbns.includes(dbn));if(hit)select(hit,false)}}
 applyColorParam()})();
 syncStreets();
+// ---- phones: bottom sheet for details; Search / Grades / About buttons on the map ----
+function sheetOpen(){return appEl.classList.contains('sheet-open')}
+function setSheet(open){if(!phone.matches||sheetOpen()===open)return;appEl.classList.toggle('sheet-open',open);syncSheetBtn();
+  if(!open){aside.scrollTo({top:0});const a=document.activeElement;if(a&&aside.contains(a))a.blur()}}
+// the bar that stays visible when the sheet is down: the selected school, or the map's title and a hint
+function sheetLabel(title,sub){document.getElementById('sheet-title').textContent=title;document.getElementById('sheet-sub').textContent=sub;syncSheetBtn()}
+function sheetDefault(){sheetLabel(LEVEL_TXT[level].h1,'Tap any block to see its zoned school')}
+function syncSheetBtn(){const o=sheetOpen(),b=document.getElementById('sheet-close');
+  document.getElementById('sheet-btn-txt').textContent=o?'Hide':card.classList.contains('empty')?'About':'Details';
+  document.getElementById('sheet-chev').style.transform=o?'':'rotate(180deg)';b.setAttribute('aria-expanded',String(o));b.setAttribute('aria-label',o?'Hide details':'Show details')}
+// center a point in the part of the map the open sheet leaves visible
+function showLatLng(ll,z){const cov=phone.matches&&sheetOpen()?aside.offsetHeight:0;if(!cov){map.setView(ll,z);return}
+  const p=map.project(ll,z).add([0,cov/2]);map.setView(map.unproject(p,z),z)}
+document.getElementById('sheet-head').addEventListener('click',()=>{markEngaged();setSheet(!sheetOpen())});
+let sy=null,ss=0;
+aside.addEventListener('touchstart',e=>{sy=e.touches[0].clientY;ss=aside.scrollTop},{passive:true});
+aside.addEventListener('touchend',e=>{if(sy==null)return;const dy=e.changedTouches[0].clientY-sy;sy=null;if(!sheetOpen()&&dy<-30)setSheet(true);else if(sheetOpen()&&ss<=0&&dy>60)setSheet(false)},{passive:true});
+map.on('dragstart',()=>{setSheet(false);closePops()});
+// map buttons and their pop-ups
+const PhoneBar=L.Control.extend({options:{position:'topleft'},onAdd(){const d=document.getElementById('phone-bar');d.classList.add('leaflet-control');L.DomEvent.disableClickPropagation(d);return d}});
+new PhoneBar().addTo(map);
+const sdlg=document.getElementById('search-dlg'),lpop=document.getElementById('lvl-pop'),mapEl=document.getElementById('map');
+[sdlg,lpop].forEach(el=>{mapEl.appendChild(el);L.DomEvent.disableClickPropagation(el);L.DomEvent.disableScrollPropagation(el)});
+const POPS={search:[sdlg,'pb-search'],level:[lpop,'pb-level']};
+function setPop(name,open){const [el,bid]=POPS[name];if(el.hidden===!open)return;if(!open&&el.contains(document.activeElement))document.activeElement.blur();el.hidden=!open;document.getElementById(bid).setAttribute('aria-expanded',String(open));
+  if(!open)return;markEngaged();Object.keys(POPS).forEach(k=>{if(k!==name)setPop(k,false)});setPanel(false);
+  if(name==='search'){setSheet(false);const i=document.getElementById(document.getElementById('addr-sec').hidden?'q':'ll');setTimeout(()=>i.focus(),30)}
+  else{const c=lpop.querySelector('input[name=level]:checked');if(c)c.focus({preventScroll:true})}}
+function closePops(){Object.keys(POPS).forEach(k=>setPop(k,false))}
+document.getElementById('pb-search').addEventListener('click',()=>setPop('search',sdlg.hidden));
+document.getElementById('pb-level').addEventListener('click',()=>setPop('level',lpop.hidden));
+document.getElementById('sd-close').addEventListener('click',()=>setPop('search',false));
+document.getElementById('lp-close').addEventListener('click',()=>setPop('level',false));
+document.getElementById('pb-info').addEventListener('click',()=>{closePops();setPanel(false);
+  setSheet(true);const hd=aside.querySelector('header');setTimeout(()=>aside.scrollTo({top:card.classList.contains('empty')?0:hd.offsetTop-56,behavior:'smooth'}),50)});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closePops()});
+document.addEventListener('click',e=>{Object.values(POPS).forEach(([el,bid])=>{if(!el.hidden&&!el.contains(e.target)&&!document.getElementById(bid).contains(e.target))setPop(Object.keys(POPS).find(k=>POPS[k][0]===el),false)})});
+document.querySelectorAll('input[name=level]').forEach(r=>r.addEventListener('change',()=>{if(!r.checked)return;
+  setPop('level',false);if(phone.matches)setSheet(false)}));
+// on phones the level switch and search move into their pop-ups; they move back for desktop
+const lvlSeg=document.querySelector('.seg.level'),searchSec=document.getElementById('search-sec'),lvlHome=document.createComment('level'),searchHome=document.createComment('search');
+lvlSeg.before(lvlHome);searchSec.before(searchHome);
+function placeUI(){if(phone.matches){lpop.appendChild(lvlSeg);sdlg.appendChild(searchSec)}else{closePops();lvlHome.after(lvlSeg);searchHome.after(searchSec)}}
+placeUI();sheetDefault();
+// iPhone Safari can leave the page scrolled after the keyboard closes; put it back
+function measurePeek(){const h=document.getElementById('sheet-head').offsetHeight;if(phone.matches&&h>30)document.documentElement.style.setProperty('--peek',h+'px')}
+measurePeek();addEventListener('resize',measurePeek);document.fonts?.ready.then(measurePeek);
+// iPhone Safari can leave the page shifted after the keyboard closes; put it back once no text box is active
+function resetView(){if(!phone.matches)return;const a=document.activeElement;if(a&&a.tagName==='INPUT')return;
+  if(scrollX||scrollY)scrollTo(0,0);if(document.scrollingElement)document.scrollingElement.scrollTop=0;map.invalidateSize()}
+let rvT=null;const resetSoon=()=>{clearTimeout(rvT);rvT=setTimeout(resetView,120)};
+document.addEventListener('focusout',resetSoon);window.visualViewport?.addEventListener('resize',resetSoon);addEventListener('orientationchange',()=>setTimeout(resetView,300));
+phone.addEventListener?.('change',()=>{appEl.classList.remove('sheet-open');placeUI();setTimeout(()=>map.invalidateSize(),50)});
 })();
 </script>
 
