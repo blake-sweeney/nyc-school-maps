@@ -73,6 +73,8 @@ button{font:inherit;font-family:var(--display);font-weight:600;font-size:.9rem;p
 .tabs button:hover{color:var(--fg)}
 .tabs button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
 .tabs button:focus-visible{outline:2px solid var(--hl);outline-offset:-2px}
+.tabs.two{grid-template-columns:repeat(2,1fr);margin-bottom:10px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .legend{margin-top:8px}
 .seg.three{grid-template-columns:repeat(3,1fr)}
 .seg.two{grid-template-columns:repeat(2,1fr)}
@@ -137,6 +139,37 @@ aside>*{flex-shrink:0}
 .sl-local{font-weight:500;font-size:10px;opacity:.85}
 .chk{display:flex;align-items:center;gap:8px;font-family:var(--display);font-weight:600;font-size:.85rem;cursor:pointer;user-select:none}
 .chk input{width:16px;height:16px;accent-color:var(--fg);margin:0;cursor:pointer}
+/* map controls: "Color by" picker (top right) and the color key (bottom left) */
+.map-btn{flex:1;min-width:0;display:flex;align-items:center;gap:8px;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:6px 10px 6px 8px;font-family:var(--display);font-weight:600;font-size:.92rem;cursor:pointer;line-height:1.1;text-align:left}
+.map-btn svg{flex:none}
+.map-btn small{display:block;font-weight:600;font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:1px}
+.map-btn .car{font-size:.72rem;color:var(--muted);margin-left:auto;padding-left:6px}
+.map-btn:hover{border-color:var(--muted)}
+.map-btn[aria-expanded="true"]{border-color:var(--fg);box-shadow:0 0 0 1px var(--fg)}
+#color-panel{position:absolute;left:10px;bottom:120px;z-index:1001;width:340px;max-width:calc(100% - 20px);max-height:calc(100% - 140px);overflow:auto;touch-action:pan-y;background:var(--panel);color:var(--fg);border-radius:10px;box-shadow:0 4px 18px rgba(0,0,0,.3);padding:12px 14px 14px;display:flex;flex-direction:column;gap:6px;font-size:15px}
+#color-panel[hidden]{display:none}
+.cp-head{display:flex;justify-content:space-between;align-items:center}
+.cp-head .lab{margin:0;font-family:var(--display);font-weight:600;font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.cp-close{all:unset;cursor:pointer;font-size:1.1rem;line-height:1;padding:4px 6px;border-radius:4px;color:var(--muted)}
+.cp-close:hover{color:var(--fg)}
+.cp-close:focus-visible{outline:2px solid var(--hl)}
+.grp-h{font-family:var(--display);font-weight:600;font-size:.84rem;margin-top:6px}
+#map-legend{background:var(--panel);color:var(--fg);border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.3);padding:9px 11px 10px;width:max-content;min-width:250px;max-width:300px;font-size:15px;line-height:1.4}
+#map-legend .sw{grid-template-columns:auto auto}
+#map-legend .sw span{white-space:nowrap}
+.lg-head{display:flex;align-items:center;gap:8px}
+.lg-title{font-family:var(--display);font-weight:700;font-size:.92rem;line-height:1.15}
+#grp-src{display:block;font-size:.72rem;color:var(--muted);margin-top:6px}
+.lg-info{all:unset;cursor:pointer;flex:none;box-sizing:border-box;width:22px;height:22px;border-radius:50%;border:1px solid var(--line);text-align:center;font:700 12px/20px var(--display);color:var(--muted)}
+.lg-info:focus-visible{outline:2px solid var(--hl)}
+.lg-info[aria-expanded="true"]{background:var(--fg);color:var(--panel);border-color:var(--fg)}
+#map-legend .legend{margin-top:7px}
+#map-legend .hint{display:none;max-height:28vh;overflow:auto}
+#map-legend.open .hint{display:block}
+details.how summary{cursor:pointer;font-weight:700}
+details.how p{margin:6px 0 0}
+.about details summary{cursor:pointer;color:var(--fg);font-family:var(--display);font-weight:600}
+.about details p{margin:6px 0 0}
 .zl{font-family:var(--display);font-weight:700;font-size:11px;color:var(--fg);text-align:center;white-space:nowrap;text-shadow:0 0 3px var(--land),0 0 3px var(--land),0 0 2px var(--land);pointer-events:none;line-height:1}
 @media (max-width:760px){
   .app{grid-template-columns:1fr;grid-template-rows:58vh auto;height:auto}
@@ -144,15 +177,23 @@ aside>*{flex-shrink:0}
   aside{border-right:0;border-top:1px solid var(--line);overflow:visible;padding:16px;gap:14px}
   /* phones: what you need first sits right under the map */
   .seg.level{order:1}
-  #addr-sec{order:2}
+  #search-sec{order:2}
   #card{order:3}
   #card.empty{display:none}
   aside>header{order:4}
-  .metrics{order:5}
-  #find-sec{order:6}
   aside>section:not([id]):not(.metrics){order:7}
   .about{order:8}
   .to-map{display:inline-block}
+  #color-panel{top:auto;bottom:0;left:0;right:0;width:auto;max-width:none;max-height:78%;border-radius:14px 14px 0 0;padding-bottom:18px}
+  #map-legend{min-width:0;max-width:calc(100vw - 90px);padding:6px 9px 7px;font-size:13px}
+  #map-legend .sw{gap:2px 10px;font-size:.78rem}
+  #map-legend .legend{margin-top:4px}
+  #map-legend .sw span{white-space:normal}
+  #map-legend .lg-title{font-size:.85rem}
+  #map-legend:not(.open) #grp-src{display:none}
+  .lg-info{width:20px;height:20px;line-height:18px}
+  .map-btn{padding:5px 8px 5px 6px;font-size:.84rem}
+  #color-panel{bottom:0!important}
 }
 @media (prefers-reduced-motion:reduce){.leaflet-zoom-anim .leaflet-zoom-animated{transition:none}}
 </style>
@@ -167,38 +208,80 @@ aside>*{flex-shrink:0}
     <header>
       <span class="badge" id="badge">Kindergarten · 2024–25 zones</span>
       <h1 id="h1">NYC Elementary School Zones</h1>
-      <p class="sub" id="sub">770 zone boundaries from the NYC Department of Education. Colored by the zoned school's DOE quality ratings or state test results. Click anywhere to see which school is zoned for that block.</p>
-      <p class="note ms-note" id="lvl-note">Living in a zone gives your child top priority at that school, not a guaranteed seat. List your zoned school on your <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a> kindergarten application. You can rank it anywhere; your priority is the same. Each school’s “My Chances” section on MySchools shows which priority groups got offers last year.</p>
-      <p class="note confirm-note"><strong>Zones change year to year.</strong> Always confirm an exact address on <a href="https://schoolsearch.schools.nyc/" target="_blank" rel="noopener">schoolsearch.schools.nyc</a> before applying.</p>
-      <p class="asof">Zones: 2024–25 school year · Ratings, test scores and programs: DOE 2024–25 School Quality Snapshot · Updated __UPDATED__</p>
+      <p class="sub" id="sub">770 zones from the NYC Department of Education. Click any block, or search an address, to see its zoned school.</p>
+      <details class="note how" id="how"><summary id="lvl-sum">A zone gives priority, not a guaranteed seat</summary>
+        <p id="lvl-note">Living in a zone gives your child top priority at that school, not a guaranteed seat. List your zoned school on your <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a> kindergarten application. You can rank it anywhere; your priority is the same. Each school’s “My Chances” section on MySchools shows which priority groups got offers last year.</p>
+        <p><strong>Zones change year to year.</strong> Always confirm an exact address on <a href="https://schoolsearch.schools.nyc/" target="_blank" rel="noopener">schoolsearch.schools.nyc</a> before applying.</p>
+      </details>
     </header>
 
-    <section class="metrics">
-      <span class="lab" id="mlab">Color zones by</span>
-      <div class="tabs" role="tablist" aria-labelledby="mlab">
-        <button type="button" role="tab" id="g-quality" data-g="quality" aria-selected="true">Quality</button>
-        <button type="button" role="tab" id="g-tests" data-g="tests" aria-selected="false">Tests</button>
-        <button type="button" role="tab" id="g-programs" data-g="programs" aria-selected="false">Programs</button>
+    <section id="search-sec">
+      <div class="tabs two" role="tablist" aria-label="Search by">
+        <button type="button" role="tab" id="t-addr" data-s="addr" aria-selected="true" aria-controls="addr-sec">Your address</button>
+        <button type="button" role="tab" id="t-school" data-s="school" aria-selected="false" aria-controls="find-sec">Find a school</button>
       </div>
-      <div class="seg" data-g="quality" role="radiogroup" aria-label="School Quality Snapshot, 2024–25">
+      <div id="addr-sec" role="tabpanel" aria-labelledby="t-addr">
+      <label class="sr" for="ll">Your address</label>
+      <form class="field" id="llf" role="search">
+        <input type="text" id="ll" placeholder="e.g. 180 7th Ave, Brooklyn" autocomplete="off" aria-autocomplete="list" aria-controls="addr-res">
+        <button type="submit">Find</button>
+      </form>
+      <ul class="results" id="addr-res" hidden></ul>
+      </div>
+      <div id="find-sec" role="tabpanel" aria-labelledby="t-school" hidden>
+      <label class="sr" for="q">Find a school</label>
+      <input type="text" id="q" placeholder="School name, number or DBN, e.g. PS 321, 15K321" autocomplete="off">
+      <ul class="results" id="res" hidden></ul>
+      </div>
+      <p class="msg" id="llmsg" hidden></p>
+    </section>
+
+    <section class="card empty" id="card" aria-live="polite">Select a zone on the map, or search for a school, to see its zoned school.</section>
+
+
+
+    <div class="about">
+      <div class="tip">
+        <p>Free for NYC parents. If this map helped your school search, you can say thanks with a coffee.</p>
+        <a class="tip-btn" href="https://buymeacoffee.com/astromius" target="_blank" rel="noopener">Buy me a coffee ↗</a>
+      </div>
+      <p>Questions, corrections or ideas? Email <a href="mailto:info@nycschoolzones.com?subject=NYC%20School%20Zones%20feedback">info@nycschoolzones.com</a></p>
+      <p class="asof">Zones: 2024–25 school year · Ratings, test scores and programs: DOE 2024–25 School Quality Snapshot · Updated __UPDATED__</p>
+      <details><summary>Data sources</summary>
+        <p><a href="https://data.cityofnewyork.us/Education/School-Zones-2024-2025-Elementary-School-/cmjf-yawu" target="_blank" rel="noopener">Elementary</a> and <a href="https://data.cityofnewyork.us/Education/School-Zones-2024-2025-Middle-School-/t26j-jbq7" target="_blank" rel="noopener">Middle School</a> and <a href="https://data.cityofnewyork.us/Education/School-Zones-2024-2025-High-School-/ruu9-egea" target="_blank" rel="noopener">High School</a> Zones 2024–2025, NYC Open Data. School names and addresses from the 2019–20 DOE location list. State test results, ratings, programs and current school names from the DOE’s <a href="https://tools.nycenet.edu/snapshot/" target="_blank" rel="noopener">2024–25 School Quality Snapshot</a>. Shared zones show the combined result of all their schools. Address lookup by NYC Planning’s GeoSearch.</p>
+      </details>
+    </div>
+  </aside>
+  <div id="map" role="application" aria-label="Map of school zones"></div>
+</div>
+<div id="map-ui" hidden>
+  <div id="color-panel" role="dialog" aria-labelledby="mlab" hidden>
+    <div class="cp-head"><span class="lab" id="mlab">Color zones by</span><button type="button" class="cp-close" id="cp-close" aria-label="Close">✕</button></div>
+    <div class="grp-h" id="g-quality">Quality ratings</div>
+    <div class="seg" data-g="quality" role="radiogroup" aria-labelledby="g-quality">
         <input type="radio" name="metric" id="m-comp" value="comp" checked><label for="m-comp">Overall</label>
         <input type="radio" name="metric" id="m-ip" value="ip"><label for="m-ip">Instruction</label>
         <input type="radio" name="metric" id="m-ss" value="ss"><label for="m-ss">Safety</label>
         <input type="radio" name="metric" id="m-rf" value="rf"><label for="m-rf">Families</label>
-      </div>
-      <div class="seg three" data-g="tests" role="radiogroup" aria-label="State tests, 2024–25" hidden>
+    </div>
+    <div class="grp-h" id="g-tests">Tests</div>
+    <div class="seg three" data-g="tests" role="radiogroup" aria-labelledby="g-tests">
         <input type="radio" name="metric" id="m-both" value="both"><label for="m-both">ELA + Math</label>
         <input type="radio" name="metric" id="m-ela" value="ela"><label for="m-ela">ELA</label>
         <input type="radio" name="metric" id="m-math" value="math"><label for="m-math">Math</label>
         <input type="radio" name="metric" id="m-grad" value="grad" hidden><label for="m-grad" hidden>Graduation</label>
         <input type="radio" name="metric" id="m-coll" value="coll" hidden><label for="m-coll" hidden>College &amp; career</label>
-      </div>
-      <div class="seg three" data-g="programs" role="radiogroup" aria-label="Programs and services, 2024–25" hidden>
+    </div>
+    <div class="grp-h" id="g-programs">Programs</div>
+    <div class="seg three" data-g="programs" role="radiogroup" aria-labelledby="g-programs">
         <input type="radio" name="metric" id="m-gt" value="gt"><label for="m-gt" id="lbl-gt">G&amp;T</label>
         <input type="radio" name="metric" id="m-dl" value="dl"><label for="m-dl">Dual language</label>
         <input type="radio" name="metric" id="m-iep" value="iep"><label for="m-iep">Special ed</label>
-      </div>
-      <span class="grp" id="grp-src">DOE School Quality Snapshot · 2024–25</span>
+    </div>
+  </div>
+  <div id="map-legend">
+    <div class="lg-head"><button type="button" class="map-btn" id="color-btn" aria-expanded="false" aria-controls="color-panel"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2 8.5 12 14l10-5.5z"/><path d="m2 13 10 5.5L22 13"/><path d="m2 17.5 10 5.5 10-5.5" opacity=".5"/></svg><span><small>Color by</small><b id="color-name">Overall rating</b></span><span class="car" aria-hidden="true">▾</span></button><button type="button" class="lg-info" id="lg-info" aria-expanded="false" aria-label="About these colors">i</button></div>
+    <span id="grp-src">DOE School Quality Snapshot · 2024–25</span>
       <div class="legend" id="leg-rate">
         <div class="sw"><span><i style="background:#1f8a84"></i>Excellent (4)</span><span><i style="background:#f7cf45"></i>Good (3)</span><span><i style="background:#e8742a"></i>Fair (2)</span><span><i style="background:#b8202a"></i>Needs Improvement (1)</span></div>
         <p class="hint" id="rate-hint"></p>
@@ -221,46 +304,7 @@ aside>*{flex-shrink:0}
         <div class="lticks"><span style="left:5%">5</span><span style="left:50%">50</span><span style="left:95%">95%</span></div>
         <p class="hint" id="test-hint">Share of students who met state standards (Level 3 or 4) on the New York State ELA and math tests, from the DOE’s 2024–25 School Quality Snapshot. Covers every tested grade at the school (grades 3–8). NYC elementary schools average ELA 58%, Math 60%. <span class="nd"></span> No test results.</p>
       </div>
-    </section>
-
-    <section id="addr-sec">
-      <label class="lab" for="ll">Your address</label>
-      <form class="field" id="llf" role="search">
-        <input type="text" id="ll" placeholder="e.g. 180 7th Ave, Brooklyn" autocomplete="off" aria-autocomplete="list" aria-controls="addr-res">
-        <button type="submit">Find</button>
-      </form>
-      <ul class="results" id="addr-res" hidden></ul>
-      <p class="hint">Address lookup by NYC Planning’s GeoSearch.</p>
-      <p class="msg" id="llmsg" hidden></p>
-    </section>
-
-    <section id="find-sec">
-      <label class="lab" for="q">Find a school</label>
-      <input type="text" id="q" placeholder="e.g. PS 321, 15K321, Bergen" autocomplete="off">
-      <ul class="results" id="res" hidden></ul>
-    </section>
-
-    <section>
-      <label class="lab" for="boro">Jump to borough</label>
-      <select id="boro">
-        <option value="">All five boroughs</option>
-        <option value="M">Manhattan</option><option value="K">Brooklyn</option>
-        <option value="Q">Queens</option><option value="X">Bronx</option><option value="R">Staten Island</option>
-      </select>
-    </section>
-
-    <section class="card empty" id="card" aria-live="polite">Select a zone on the map, or search for a school, to see its zoned school.</section>
-
-    <div class="about">
-      <div class="tip">
-        <p>Free for NYC parents. If this map helped your school search, you can say thanks with a coffee.</p>
-        <a class="tip-btn" href="https://buymeacoffee.com/astromius" target="_blank" rel="noopener">Buy me a coffee ↗</a>
-      </div>
-      <p>Questions, corrections or ideas? Email <a href="mailto:info@nycschoolzones.com?subject=NYC%20School%20Zones%20feedback">info@nycschoolzones.com</a></p>
-      <p>Source: <a href="https://data.cityofnewyork.us/Education/School-Zones-2024-2025-Elementary-School-/cmjf-yawu" target="_blank" rel="noopener">Elementary</a> and <a href="https://data.cityofnewyork.us/Education/School-Zones-2024-2025-Middle-School-/t26j-jbq7" target="_blank" rel="noopener">Middle School</a> and <a href="https://data.cityofnewyork.us/Education/School-Zones-2024-2025-High-School-/ruu9-egea" target="_blank" rel="noopener">High School</a> Zones 2024–2025, NYC Open Data. School names and addresses from the 2019–20 DOE location list. State test results, ratings, programs and current school names from the DOE’s <a href="https://tools.nycenet.edu/snapshot/" target="_blank" rel="noopener">2024–25 School Quality Snapshot</a>. Shared zones show the combined result of all their schools.</p>
-    </div>
-  </aside>
-  <div id="map" role="application" aria-label="Map of school zones"></div>
+  </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
@@ -291,10 +335,10 @@ const S=Object.assign({},HSD?HSD.schools:{},MSD?MSD.schools:{},D.schools);
 const O=Object.assign({},HSD&&HSD.O||{});
 let level='es',F=LV.es.F,T=LV.es.T;
 const LEVEL_TXT={
-  es:{note:'Living in a zone gives your child top priority at that school, not a guaranteed seat. List your zoned school on your <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a> kindergarten application. You can rank it anywhere; your priority is the same. Each school’s “My Chances” section on MySchools shows which priority groups got offers last year.',badge:'Kindergarten · 2024–25 zones',h1:'NYC Elementary School Zones',sub:n=>n+' zone boundaries from the NYC Department of Education. Colored by the zoned school’s DOE quality ratings or state test results. Click anywhere to see which school is zoned for that block.',grades:'3–5',avg:'NYC elementary schools average ELA 58%, Math 60%',miss:'That point is outside every elementary zone. Check the coordinates, or it may be in a park or outside NYC.',noZone:'No zoned elementary school'},
-  hs:{badge:'High school · 2024–25 zones',h1:'NYC Zoned High Schools',sub:n=>n+' high schools give priority to students who live in their zone. Click anywhere to see the zoned high school for that block.',grades:'9–12',avg:'',miss:'That point isn’t in a high school zone. Most of the city has no zoned high school; students apply citywide through MySchools.',noZone:'No zoned high school',
+  es:{sum:'A zone gives priority, not a guaranteed seat',note:'Living in a zone gives your child top priority at that school, not a guaranteed seat. List your zoned school on your <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a> kindergarten application. You can rank it anywhere; your priority is the same. Each school’s “My Chances” section on MySchools shows which priority groups got offers last year.',badge:'Kindergarten · 2024–25 zones',h1:'NYC Elementary School Zones',sub:n=>n+' zones from the NYC Department of Education. Click any block, or search an address, to see its zoned school.',grades:'3–5',avg:'NYC elementary schools average ELA 58%, Math 60%',miss:'That point is outside every elementary zone. Check the coordinates, or it may be in a park or outside NYC.',noZone:'No zoned elementary school'},
+  hs:{sum:'Most of NYC has no zoned high school',badge:'High school · 2024–25 zones',h1:'NYC Zoned High Schools',sub:n=>n+' high schools give priority to students who live in their zone. Click any block to see its zoned high school.',grades:'9–12',avg:'',miss:'That point isn’t in a high school zone. Most of the city has no zoned high school; students apply citywide through MySchools.',noZone:'No zoned high school',
       note:'Most of NYC has no zoned high school. Every 8th grader applies through <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a>. Living in one of these zones gives you priority, or a guaranteed seat, at that school’s zoned program, but only if you list it on your application.'},
-  ms:{note:'Most districts don’t zone middle schools. In the uncolored areas, students apply to middle schools through <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a>. Even in zoned districts, many students also apply to other programs.',badge:'Middle school · 2024–25 zones',h1:'NYC Middle School Zones',sub:n=>'Zones for '+n+' middle schools from the NYC Department of Education, in the districts that have them. Click anywhere to see which school is zoned for that block.',grades:'6–8',avg:'NYC middle schools average ELA 55%, Math 53%',miss:'That point isn’t in a zoned middle school area. It may be in a district without zoned middle schools, a park, or outside NYC.',noZone:'No zoned middle school'}};
+  ms:{sum:'Most districts don’t zone middle schools',note:'Most districts don’t zone middle schools. In the uncolored areas, students apply to middle schools through <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a>. Even in zoned districts, many students also apply to other programs.',badge:'Middle school · 2024–25 zones',h1:'NYC Middle School Zones',sub:n=>'Zones for '+n+' middle schools, in the districts that have them. Click any block to see its zoned school.',grades:'6–8',avg:'NYC middle schools average ELA 55%, Math 53%',miss:'That point isn’t in a zoned middle school area. It may be in a district without zoned middle schools, a park, or outside NYC.',noZone:'No zoned middle school'}};
 let metric='comp';
 const R=D.R||{};
 // prefer current (2024-25) names and addresses from the School Quality Snapshot
@@ -397,14 +441,6 @@ function decodeLocal(){if(LS)return LS;const src=D.LS||{n:[],l:[]};
   LS=src.l.map(r=>{const ll=[];let x=0,y=0;for(let i=1;i<r.length;i+=2){x+=r[i];y+=r[i+1];ll.push([y/1e5,x/1e5])}return{name:src.n[r[0]],ll,bounds:L.latLngBounds(ll)}});return LS}
 function buildLocal(){localGroup.clearLayers();if(!LS)return;
   LS.forEach(s=>L.polyline(s.ll,{renderer:lRend,interactive:false,color:css('--road'),weight:.9,opacity:.5,lineCap:'round',lineJoin:'round'}).addTo(localGroup))}
-// street toggles live on the map, top right
-const StreetToggle=L.Control.extend({options:{position:'topright'},onAdd(){const d=L.DomUtil.create('div','leaflet-control map-toggle');
-  d.setAttribute('role','radiogroup');d.setAttribute('aria-label','Streets');
-  d.innerHTML='<label class="chk" for="st-all"><input type="radio" name="streetmode" id="st-all" value="all" checked> All streets</label>'+
-    '<label class="chk" for="st-major"><input type="radio" name="streetmode" id="st-major" value="major"> Major streets</label>'+
-    '<label class="chk" for="st-none"><input type="radio" name="streetmode" id="st-none" value="none"> Hide streets</label>';
-  L.DomEvent.disableClickPropagation(d);L.DomEvent.disableScrollPropagation(d);return d}});
-new StreetToggle().addTo(map);
 // street mode: 'all' = every street + major, 'major' = major only, 'none' = hidden
 let streetMode='all';
 const streetBox={get checked(){return streetMode!=='none'}},allBox={get checked(){return streetMode==='all'}};
@@ -414,7 +450,6 @@ function syncStreets(){const z=map.getZoom(),on=streetBox.checked,all=allBox.che
   if(showLocal&&!LS){if(D.LS||!ASSETS.ls){decodeLocal();buildLocal()}else if(!lsLoading){lsLoading=true;getAsset('ls').then(j=>{D.LS=j;decodeLocal();buildLocal();syncStreets()}).catch(()=>{lsLoading=false;alertLoad()})}}
   if(showLocal&&LS&&!map.hasLayer(localGroup))localGroup.addTo(map);if(!showLocal&&map.hasLayer(localGroup))map.removeLayer(localGroup);
   drawStreetLabels()}
-document.querySelectorAll('input[name=streetmode]').forEach(r=>r.addEventListener('change',()=>{if(r.checked){markEngaged();streetMode=r.value;syncStreets()}}));
 // street names along the line when zoomed in
 const sLabels=L.layerGroup().addTo(map);
 function labelLine(s,b,placed){
@@ -547,15 +582,20 @@ document.getElementById('llf').addEventListener('submit',async e=>{e.preventDefa
   try{const hits=await geo('search',v);const exact=hits.find(h=>normAddr(h.label)===normAddr(v));if(exact)pickAddr(exact);else if(hits.length===1)pickAddr(hits[0]);else if(hits.length)showAddr(hits);else{addrRes.hidden=true;llmsg.textContent='We couldn’t find that address in NYC. Try adding the borough, like “Brooklyn”.';llmsg.hidden=false}}
   catch(err){geoFail()}});
 
-const BB={M:[[40.70,-74.02],[40.88,-73.91]],K:[[40.57,-74.04],[40.74,-73.83]],Q:[[40.54,-73.96],[40.80,-73.70]],X:[[40.79,-73.93],[40.92,-73.75]],R:[[40.49,-74.26],[40.65,-74.05]]};
-document.getElementById('boro').addEventListener('change',e=>{markEngaged();const v=e.target.value;v?map.fitBounds(BB[v]):map.fitBounds(layer.getBounds())});
 
-function syncLegend(){const lo=document.getElementById('leg-out');lo.hidden=!isOut(metric);
+const METRIC_NAME={comp:'Overall rating',ip:'Instruction rating',ss:'Safety rating',rf:'Families rating',both:'ELA + Math scores',ela:'ELA scores',math:'Math scores',grad:'Graduation rate',coll:'College & career',gt:'G&T programs',dl:'Dual language',iep:'Special ed (IEP share)'};
+function syncName(){const n=METRIC_NAME[metric]||'';['leg-title','color-name'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=n})}
+document.querySelectorAll('#search-sec [role=tab]').forEach(b=>b.addEventListener('click',()=>{const s=b.dataset.s;
+  document.querySelectorAll('#search-sec [role=tab]').forEach(x=>x.setAttribute('aria-selected',String(x===b)));
+  document.getElementById('addr-sec').hidden=s!=='addr';document.getElementById('find-sec').hidden=s!=='school';
+  document.getElementById('addr-res').hidden=true;document.getElementById('res').hidden=true;document.getElementById('llmsg').hidden=true;
+  document.getElementById(s==='addr'?'ll':'q').focus()}));
+function syncLegend(){syncName();const lo=document.getElementById('leg-out');lo.hidden=!isOut(metric);
   if(isOut(metric)){const o=OUT[metric],s=o.stops,pct=v=>v+'%';
     document.getElementById('out-bar').style.background='linear-gradient(90deg,'+rgb(s[0][1])+' 0%,'+rgb(s[0][1])+' '+pct(s[0][0])+','+rgb(s[1][1])+' '+pct(s[1][0])+','+rgb(s[2][1])+' '+pct(s[2][0])+','+rgb(s[2][1])+' 100%)';
     document.getElementById('out-ticks').innerHTML=o.ticks.map((v,i)=>'<span style="left:'+v+'%">'+v+(i===o.ticks.length-1?'%':'')+'</span>').join('');
     document.getElementById('out-hint').innerHTML=metric==='grad'?'Share of students who graduate within 4 years, from the 2024–25 School Quality Snapshot. NYC average: 81%. The scale is narrower than for test scores because most zoned high schools graduate 75–95% of students. <span class="nd"></span> No data.':'Share of graduates who enrolled in college or a career program within 6 months, from the 2024–25 School Quality Snapshot. <span class="nd"></span> No data.'}
-  document.getElementById('leg-rate').hidden=!isRate(metric);document.getElementById('leg-test').hidden=!['both','ela','math'].includes(metric);document.getElementById('leg-prog').hidden=!isProg(metric);document.getElementById('leg-iep').hidden=metric!=='iep';document.getElementById('prog-yes').textContent=metric==='gt'?'Zoned school has a G&T program':'Zoned school has a dual-language program';document.getElementById('prog-hint').textContent=metric==='gt'?'District Gifted & Talented programs listed for the zoned school in the 2024–25 Snapshot (73 zoned schools). G&T seats aren’t assigned by zone: families apply separately, and admission rules have changed in recent years, so check MySchools for this year’s process.':'Dual-language programs at the zoned school (151 zoned schools), from the 2024–25 Snapshot. Click a zone to see the languages. Seats are usually by application, often with priority for zoned families.';
+  document.getElementById('leg-rate').hidden=!isRate(metric);document.getElementById('leg-test').hidden=!['both','ela','math'].includes(metric);document.getElementById('leg-prog').hidden=!isProg(metric);document.getElementById('leg-iep').hidden=metric!=='iep';document.getElementById('prog-yes').textContent=metric==='gt'?'Has G&T':'Has dual language';document.getElementById('prog-hint').textContent=metric==='gt'?'District Gifted & Talented programs listed for the zoned school in the 2024–25 Snapshot (73 zoned schools). G&T seats aren’t assigned by zone: families apply separately, and admission rules have changed in recent years, so check MySchools for this year’s process.':'Dual-language programs at the zoned school (151 zoned schools), from the 2024–25 Snapshot. Click a zone to see the languages. Seats are usually by application, often with priority for zoned families.';
   document.getElementById('rate-hint').innerHTML=(metric==='comp'?'Overall is the average of the three ratings, so zones blend between colors (3.3 sits between yellow and teal). ':'DOE rating for '+RNAME[metric]+'. ')+'Ratings are the DOE’s own. Shared zones average their schools. <span class="nd"></span> No rating.'}
 syncLegend();
 //METRIC
@@ -565,12 +605,35 @@ const lastPick={};
 document.querySelectorAll('.seg[data-g]').forEach(s=>{lastPick[s.dataset.g]=s.querySelector('input').value});
 lastPick.quality='comp';
 let curGroup='quality';
-function showGroup(g){curGroup=g;document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.g===g)));
-  document.querySelectorAll('.seg[data-g]').forEach(s=>{s.hidden=s.dataset.g!==g});
+function showGroup(g){curGroup=g;
   document.getElementById('grp-src').textContent=g==='tests'?(level==='hs'?'DOE School Quality Snapshot · 2024–25':'New York State tests · 2024–25 Snapshot'):GROUP_SRC[g];}
-document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{const g=b.dataset.g;showGroup(g);
-  const r=document.querySelector('input[name=metric][value="'+lastPick[g]+'"]');if(r&&!r.checked){r.checked=true;r.dispatchEvent(new Event('change'))}}));
-document.querySelectorAll('input[name=metric]').forEach(r=>r.addEventListener('change',()=>{const s=r.closest('.seg[data-g]');if(s)lastPick[s.dataset.g]=r.value;markEngaged();metric=r.value;syncLegend();restyle();drawLabels()}));
+let quietColor=false;
+document.querySelectorAll('input[name=metric]').forEach(r=>r.addEventListener('change',()=>{const s=r.closest('.seg[data-g]');if(s){lastPick[s.dataset.g]=r.value;showGroup(s.dataset.g)}
+  if(!quietColor)markEngaged();metric=r.value;syncLegend();restyle();drawLabels();setColorParam();placePanel();
+  if(!quietColor&&phone.matches)setPanel(false)}));
+// the color choice rides along in the URL (?c=ela), so a shared link opens with the same coloring
+function setColorParam(){try{const u=new URL(location.href);if(metric==='comp')u.searchParams.delete('c');else u.searchParams.set('c',metric);history.replaceState(null,'',u.pathname+u.search+u.hash)}catch(e){}}
+function applyColorParam(){let c=null;try{c=new URLSearchParams(location.search).get('c')}catch(e){}if(!c||c===metric)return;
+  const r=document.querySelector('input[name=metric][value="'+c.replace(/[^a-z]/g,'')+'"]');if(!r||r.hidden)return;
+  quietColor=true;r.checked=true;r.dispatchEvent(new Event('change'));quietColor=false}
+// "Color by" button (top right) opens the picker; the color key sits bottom left
+const phone=matchMedia('(max-width:760px)'),cpanel=document.getElementById('color-panel');
+const Legend=L.Control.extend({options:{position:'bottomleft'},onAdd(){const d=document.getElementById('map-legend');d.classList.add('leaflet-control');
+  L.DomEvent.disableClickPropagation(d);L.DomEvent.disableScrollPropagation(d);return d}});
+new Legend().addTo(map);
+document.getElementById('color-btn').addEventListener('click',()=>setPanel(cpanel.hidden));
+document.getElementById('map').appendChild(cpanel);L.DomEvent.disableClickPropagation(cpanel);L.DomEvent.disableScrollPropagation(cpanel);
+// desktop: the picker opens just above the color card; phones: a sheet from the bottom of the map (CSS)
+function placePanel(){if(cpanel.hidden)return;if(phone.matches){cpanel.style.bottom='';return}
+  const m=document.getElementById('map').getBoundingClientRect(),c=document.getElementById('map-legend').getBoundingClientRect();
+  cpanel.style.bottom=Math.round(m.bottom-c.top+8)+'px'}
+function setPanel(open){if(cpanel.hidden===!open)return;cpanel.hidden=!open;placePanel();const b=document.getElementById('color-btn');b.setAttribute('aria-expanded',String(open));
+  if(open){markEngaged();const c=cpanel.querySelector('input[name=metric]:checked');if(c)c.focus({preventScroll:true})}}
+document.getElementById('cp-close').addEventListener('click',()=>{setPanel(false);document.getElementById('color-btn').focus()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!cpanel.hidden){setPanel(false);document.getElementById('color-btn').focus()}});
+document.addEventListener('click',e=>{if(!cpanel.hidden&&!cpanel.contains(e.target)&&!document.getElementById('color-btn').contains(e.target))setPanel(false)});
+const lgInfo=document.getElementById('lg-info');lgInfo.addEventListener('click',()=>{const o=document.getElementById('map-legend').classList.toggle('open');lgInfo.setAttribute('aria-expanded',String(o));placePanel()});
+syncName();
 // re-style on theme change
 const mq=matchMedia('(prefers-color-scheme: dark)');const restyle=()=>{layer.eachLayer(l=>l.setStyle(style(l.feature,l===selected)))};
 const retheme=()=>{restyle();restyleLines();if(selLine)selLine.setStyle({color:css('--hl')});buildStreets();buildLocal();syncStreets()};
@@ -585,7 +648,7 @@ async function setLevel(lv){if(lv===level)return;if(!LV[lv]&&!(await loadLevel(l
   buildDots();sizeDots();buildIdx();res.hidden=true;llmsg.hidden=true;
   const tx=LEVEL_TXT[lv],nZ=lv==='es'?F.length:new Set(F.flatMap(f=>f.properties.dbns)).size;
   document.getElementById('badge').textContent=tx.badge;document.getElementById('h1').textContent=tx.h1;document.getElementById('sub').textContent=tx.sub(nZ);
-  const ln=document.getElementById('lvl-note');ln.hidden=!tx.note;ln.innerHTML=tx.note||'';
+  document.getElementById('lvl-sum').textContent=tx.sum;document.getElementById('lvl-note').innerHTML=tx.note||'';
   // tests vs outcomes: elementary/middle use state tests, high school uses graduation and college data
   const hs=lv==='hs';['both','ela','math'].forEach(v=>{const i=document.querySelector('input[name=metric][value='+v+']');i.hidden=hs;document.querySelector('label[for='+i.id+']').hidden=hs});
   ['grad','coll'].forEach(v=>{const i=document.querySelector('input[name=metric][value='+v+']');i.hidden=!hs;document.querySelector('label[for='+i.id+']').hidden=!hs});
@@ -611,10 +674,11 @@ if(!hasLevel('ms')&&!hasLevel('hs'))document.querySelector('.seg.level').hidden=
 if(location.hash==='#middle'&&hasLevel('ms')){document.getElementById('lv-ms').checked=true;await setLevel('ms')}
 if(location.hash==='#high'&&hasLevel('hs')){document.getElementById('lv-hs').checked=true;await setLevel('hs')}
 // shared zone link: #es-15K321 / #ms-02M104 / #hs-28Q440 (a bare #15K321 means elementary)
-const m=location.hash.match(/^#(?:(es|ms|hs)-)?(\d{2}[KMQRX]\d{3})$/i);if(!m)return;
-  const lv=(m[1]||'es').toLowerCase(),dbn=m[2].toUpperCase();if(!hasLevel(lv))return;
-  if(lv!==level){document.getElementById('lv-'+lv).checked=true;await setLevel(lv)}
-  const hit=byLayer.find(l=>l.feature.properties.dbns.includes(dbn));if(hit)select(hit,false)})();
+const m=location.hash.match(/^#(?:(es|ms|hs)-)?(\d{2}[KMQRX]\d{3})$/i);
+if(m){const lv=(m[1]||'es').toLowerCase(),dbn=m[2].toUpperCase();
+  if(hasLevel(lv)){if(lv!==level){document.getElementById('lv-'+lv).checked=true;await setLevel(lv)}
+    const hit=byLayer.find(l=>l.feature.properties.dbns.includes(dbn));if(hit)select(hit,false)}}
+applyColorParam()})();
 syncStreets();
 })();
 </script>
