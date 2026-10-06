@@ -191,6 +191,9 @@ def main(standalone_path=None):
     with open(os.path.join(ROOT, "src", "template.html"), encoding="utf-8") as f:
         template = f.read()
     template = template.replace("__UPDATED__", datetime.date.today().strftime("%b %Y"))
+    with open(os.path.join(ROOT, "VERSION"), encoding="utf-8") as f:
+        version = f.read().strip()
+    template = template.replace("__VERSION__", version)
 
     full = dict(d)
     # For the website, middle school, high school and the all-streets layer load on demand from

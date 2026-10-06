@@ -36,6 +36,9 @@ To put it on Google Sites, click **Insert → Embed → By URL** and paste the P
 
 ```
 index.html              built page (this is what GitHub Pages serves)
+VERSION                 site version, shown in the footer
+CHANGELOG.md            what changed in each version
+LICENSE                 AGPL-3.0
 assets/                 ms.js, hs.js, ls.js — built by build.py, loaded on demand
 src/template.html       page source: layout, styles and map code
 data/
@@ -67,6 +70,15 @@ python3 scripts/build.py
 ```
 
 Commit `src/template.html`, the rebuilt `index.html` and `assets/`. The build also stamps the month into the "Updated" line under the header.
+
+## Versions and releases
+
+The site's version is in `VERSION` and shows in the footer next to the "Updated" date; `CHANGELOG.md` lists what changed in each one. Bump the major number for a new kind of view, the minor number for a new feature, and the patch number for fixes.
+
+1. Work on a branch, like `git checkout -b admissions-data`.
+2. Test locally (see "Run it locally"), including on your phone.
+3. Before merging, bump `VERSION`, add a dated section to `CHANGELOG.md`, and run `python3 scripts/build.py`.
+4. Merge to `main`, tag the release (`git tag v1.1.0` then `git push --tags`), and push.
 
 ## Link previews
 
