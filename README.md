@@ -2,7 +2,7 @@
 
 An interactive map of New York City's elementary (kindergarten), middle and high school zones. A switch at the top of the sidebar flips between the three. High school zones give priority (or a guaranteed seat) to zoned students who apply; most of the city has no zoned high school. Each zone can be colored by its zoned school's ratings in the DOE School Quality Snapshot or by its results on the state tests.
 
-- **Zones:** 770 elementary zone boundaries for 2024–25
+- **Zones:** current elementary, middle and high school zones from the DOE's Find a School map
 - **School Quality Snapshot (2024–25):** Instruction and Performance, Safety and School Climate, and Relationships with Families, each rated 1–4, plus an Overall average of the three
 - **State tests (2024–25 Snapshot):** share of students scoring proficient in ELA and Math (grades 3–5 for elementary, 6–8 for middle); high schools show 4-year graduation and college/career enrollment instead
 - **Programs:** gifted & talented, dual language and special education
@@ -95,11 +95,11 @@ python3 scripts/fetch_data.py      # or: fetch_data.py zones | tests | snapshot 
 python3 scripts/build.py
 ```
 
-When the city publishes a new year, update the dataset IDs and years at the top of `scripts/fetch_data.py`, such as `ZONES_DATASET`, `TEST_YEAR` and `SNAPSHOT_YEAR`.
+Zones always come from the DOE's current Find a School map. If the DOE servers block your connection, download the three layers in a browser (the URLs are in `fetch_data.py`, `DOE_ZONES`) and run `python3 scripts/fetch_data.py zones ~/Downloads`. When the DOE publishes a new Snapshot or test year, update `TEST_YEAR` and `SNAPSHOT_YEAR` at the top of `scripts/fetch_data.py`.
 
 ## Data sources
 
-- [School Zones 2024–2025 (Elementary School)](https://data.cityofnewyork.us/Education/School-Zones-2024-2025-Elementary-School-/cmjf-yawu), NYC Open Data
+- [Find a School](https://schoolsearch.schools.nyc/), NYC DOE: current zone boundaries, from the map services at `maps.schools.nyc/giswebadaptor/rest/services/SchoolSearch` (`ElemZones3`, `MidZones3`, `HSZones`)
 - [2019–2020 School Locations](https://data.cityofnewyork.us/Education/2019-2020-School-Locations/wg9x-4ke6), NYC Open Data (map points and grades served)
 - [ELA Test Results 2013–2023](https://data.cityofnewyork.us/Education/English-Language-Arts-ELA-Test-Results-2013-2023/iebs-5yhr) and [Math Test Results 2013–2023](https://data.cityofnewyork.us/Education/Math-Test-Results-2013-2023/74kb-55u9), NYC Open Data
 - [School Quality Snapshot 2024–25](https://tools.nycenet.edu/snapshot/), NYC DOE (ratings, test scores, graduation rates, programs and current school names)

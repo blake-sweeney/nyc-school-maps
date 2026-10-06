@@ -194,6 +194,10 @@ def main(standalone_path=None):
     with open(os.path.join(ROOT, "VERSION"), encoding="utf-8") as f:
         version = f.read().strip()
     template = template.replace("__VERSION__", version)
+    # zones date: when data/elem_zones.json was last refreshed
+    zdate = datetime.date.fromtimestamp(os.path.getmtime(os.path.join(DATA, "elem_zones.json")))
+    template = template.replace("__ZONES_DATE__", zdate.strftime("%b %Y"))
+    template = template.replace("__ES_ZONES__", str(len(d["features"])))
 
     full = dict(d)
     # For the website, middle school, high school and the all-streets layer load on demand from

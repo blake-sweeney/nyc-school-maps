@@ -21,9 +21,11 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(ROOT, "data")
 
 OPEN_DATA = "https://data.cityofnewyork.us"
-ZONES_DATASET = "cmjf-yawu"       # School Zones 2024-2025 (Elementary School)
-MS_ZONES_DATASET = "t26j-jbq7"    # School Zones 2024-2025 (Middle School)
-HS_ZONES_DATASET = "ruu9-egea"    # School Zones 2024-2025 (High School)
+# Current zones come from the map services behind the DOE's Find a School site (schoolsearch.schools.nyc).
+# NYC Open Data's zone datasets lag a year or two behind.
+DOE_ZONES = "https://maps.schools.nyc/giswebadaptor/rest/services/SchoolSearch"
+ZONE_LAYERS = {"elem_zones.json": "ElemZones3", "ms_zones.json": "MidZones3", "hs_zones.json": "HSZones"}
+ZONES_SOURCE = "DOE Find a School"
 LOCATIONS_DATASET = "wg9x-4ke6"   # 2019-2020 School Locations (lat/lon, grades)
 ELA_DATASET = "iebs-5yhr"         # ELA Test Results 2013-2023
 MATH_DATASET = "74kb-55u9"        # Math Test Results 2013-2023
@@ -56,20 +58,45 @@ def rnd(c):
     return [rnd(x) for x in c] if isinstance(c[0], list) else [round(c[0], 5), round(c[1], 5)]
 
 
-def fetch_zones():
-    _fetch_zones(ZONES_DATASET, "elem_zones.json")
-    _fetch_zones(MS_ZONES_DATASET, "ms_zones.json")
-    _fetch_zones(HS_ZONES_DATASET, "hs_zones.json")
+def fetch_zones(from_dir=None):
+    """Zone boundaries for elementary, middle and high school from the DOE's Find a School map services.
+    If the DOE servers can't be reached, download the three GeoJSON files in a browser and pass the
+    folder:  python3 scripts/fetch_data.py zones ~/Downloads
+    (file names containing "elem", "middle" and "high")."""
+    try:
+        locs = get_json(f"{OPEN_DATA}/resource/{LOCATIONS_DATASET}.json?$limit=5000")
+        by_code = {s["system_code"]: s for s in locs if s.get("system_code")}
+    except Exception as e:
+        print(f"  school locations unavailable ({e}); keeping names/locations already in data/")
+        by_code = {}
+    for outname, layer in ZONE_LAYERS.items():
+        if from_dir:
+            hint = {"ElemZones3": "elem", "MidZones3": "middle", "HSZones": "high"}[layer]
+            path = next(os.path.join(from_dir, f) for f in sorted(os.listdir(from_dir))
+                        if hint in f.lower() and f.lower().endswith((".geojson", ".json")))
+            with open(path, encoding="utf-8") as f:
+                gj = json.load(f)
+        else:
+            gj = get_json(f"{DOE_ZONES}/{layer}/MapServer/0/query?where=1%3D1&outFields=*&outSR=4326&f=geojson")
+        _save_zones(gj, outname, by_code)
 
 
-def _fetch_zones(dataset, outname):
-    gj = get_json(f"{OPEN_DATA}/api/geospatial/{dataset}?method=export&format=GeoJSON")
-    locs = get_json(f"{OPEN_DATA}/resource/{LOCATIONS_DATASET}.json?$limit=5000")
-    by_code = {s["system_code"]: s for s in locs if s.get("system_code")}
+BORO_NUM = {1: "M", 2: "X", 3: "K", 4: "Q", 5: "R"}
+
+
+def _save_zones(gj, outname, by_code):
+    old = {}
+    old_path = os.path.join(DATA, outname)
+    if os.path.exists(old_path):
+        with open(old_path, encoding="utf-8") as f:
+            old = json.load(f).get("schools", {})
+    blank = lambda v: None if v is None or not str(v).strip() else str(v).strip()
     schools, feats = {}, []
     for f in gj["features"]:
+        if not f.get("geometry"):
+            continue
         p = f["properties"]
-        dbns = [x.strip() for x in (p.get("dbn") or "").split(",") if x.strip()]
+        dbns = [x.strip() for x in (p.get("DBN") or "").split(",") if x.strip()]
         for d in dbns:
             s = by_code.get(d)
             if s:
@@ -80,14 +107,39 @@ def _fetch_zones(dataset, outname):
                     "lon": float(s["longitude"]) if s.get("longitude") else None,
                     "g": s.get("grades_final_text"),
                 }
+            elif d in old:
+                schools[d] = old[d]
+        # borough: a letter in BORO (elementary) or Boro_Text (middle); a number in Boro (high school)
+        boro = blank(p.get("Boro_Text")) or blank(p.get("BORO"))
+        if boro is None or boro.isdigit():
+            boro = BORO_NUM.get(int(boro or p.get("Boro") or 0))
+        dist = blank(p.get("ZONED_DIST"))
         feats.append({
             "type": "Feature",
-            # middle school data has a numeric "boro" and the letter in "boro_text"
-            "properties": {"dbns": dbns, "label": p.get("label"), "boro": p.get("boro_text") or p.get("boro"),
-                           "dist": p.get("zoned_dist"), "remarks": p.get("remarks")},
+            "properties": {"dbns": dbns,
+                           "label": "/".join(str(int(d[3:])) for d in dbns) if len(dbns) > 1 else None,
+                           "boro": boro, "dist": str(int(dist)) if dist and dist.isdigit() else dist,
+                           "remarks": blank(p.get("REMARKS") or p.get("Remarks"))},
             "geometry": {"type": f["geometry"]["type"], "coordinates": rnd(f["geometry"]["coordinates"])},
         })
-    save(outname, {"type": "FeatureCollection", "schools": schools, "features": feats})
+    missing = sorted({d for ft in feats for d in ft["properties"]["dbns"]} - set(schools))
+    if missing:  # schools newer than the 2019-20 location list: use the DOE map's school points
+        try:
+            where = urllib.parse.quote("LOC_CODE IN (" + ",".join(f"'{d[2:]}'" for d in missing) + ")")
+            pts = get_json(f"{DOE_ZONES}/SchoolsLabels3/MapServer/0/query?where={where}"
+                           "&outFields=LOC_CODE,SCHOOLNAME,GEO_DISTRI&outSR=4326&f=json")
+            for ft in pts.get("features", []):
+                a_ = ft["attributes"]
+                d = f"{int(a_['GEO_DISTRI']):02d}{a_['LOC_CODE']}"
+                if d in missing:
+                    schools[d] = {"n": a_["SCHOOLNAME"], "a": None, "lat": round(ft["geometry"]["y"], 6),
+                                  "lon": round(ft["geometry"]["x"], 6), "g": None}
+        except Exception:
+            pass
+        missing = [d for d in missing if d not in schools]
+    if missing:
+        print(f"  {outname}: no location yet for {', '.join(missing)} (names come from the Snapshot)")
+    save(outname, {"type": "FeatureCollection", "source": ZONES_SOURCE, "schools": schools, "features": feats})
 
 
 def fetch_tests():
@@ -252,6 +304,11 @@ def fetch_streets():
 STEPS = {"zones": fetch_zones, "tests": fetch_tests, "snapshot": fetch_snapshot, "streets": fetch_streets}
 
 if __name__ == "__main__":
-    for name in sys.argv[1:] or list(STEPS):
+    args = sys.argv[1:]
+    if args[:1] == ["zones"] and len(args) == 2:  # zones from downloaded files: fetch_data.py zones ~/Downloads
+        print("-- zones (from files)")
+        fetch_zones(os.path.expanduser(args[1]))
+        sys.exit()
+    for name in args or list(STEPS):
         print(f"-- {name}")
         STEPS[name]()
