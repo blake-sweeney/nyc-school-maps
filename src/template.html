@@ -167,7 +167,7 @@ aside>*{flex-shrink:0}
         <input type="radio" name="metric" id="m-ss" value="ss"><label for="m-ss">Safety</label>
         <input type="radio" name="metric" id="m-rf" value="rf"><label for="m-rf">Families</label>
       </div>
-      <div class="seg three" data-g="tests" role="radiogroup" aria-label="State tests, 2023, grades 3–5" hidden>
+      <div class="seg three" data-g="tests" role="radiogroup" aria-label="State tests, 2024–25" hidden>
         <input type="radio" name="metric" id="m-both" value="both"><label for="m-both">ELA + Math</label>
         <input type="radio" name="metric" id="m-ela" value="ela"><label for="m-ela">ELA</label>
         <input type="radio" name="metric" id="m-math" value="math"><label for="m-math">Math</label>
@@ -200,7 +200,7 @@ aside>*{flex-shrink:0}
       <div class="legend" id="leg-test" hidden>
         <div class="lbar"></div>
         <div class="lticks"><span style="left:5%">5</span><span style="left:50%">50</span><span style="left:95%">95%</span></div>
-        <p class="hint" id="test-hint">Share of grade 3–5 students scoring proficient (Level 3 or 4) on the 2023 New York State tests. NYC average: ELA 51%, Math 54%. <span class="nd"></span> No grades 3–5 results.</p>
+        <p class="hint" id="test-hint">Share of students who met state standards (Level 3 or 4) on the New York State ELA and math tests, from the DOE’s 2024–25 School Quality Snapshot. Covers every tested grade at the school (grades 3–8). NYC elementary schools average ELA 58%, Math 60%. <span class="nd"></span> No test results.</p>
       </div>
     </section>
 
@@ -238,7 +238,7 @@ aside>*{flex-shrink:0}
         <a class="tip-btn" href="https://buymeacoffee.com/astromius" target="_blank" rel="noopener">Buy me a coffee ↗</a>
       </div>
       <p>Questions, corrections or ideas? Email <a href="mailto:info@nycschoolzones.com?subject=NYC%20School%20Zones%20feedback">info@nycschoolzones.com</a></p>
-      <p>Source: <a href="https://data.cityofnewyork.us/Education/School-Zones-2024-2025-Elementary-School-/cmjf-yawu" target="_blank" rel="noopener">Elementary</a> and <a href="https://data.cityofnewyork.us/Education/School-Zones-2024-2025-Middle-School-/t26j-jbq7" target="_blank" rel="noopener">Middle School</a> and <a href="https://data.cityofnewyork.us/Education/School-Zones-2024-2025-High-School-/ruu9-egea" target="_blank" rel="noopener">High School</a> Zones 2024–2025, NYC Open Data. School names and addresses from the 2019–20 DOE location list. Test results from <a href="https://data.cityofnewyork.us/Education/English-Language-Arts-ELA-Test-Results-2013-2023/iebs-5yhr" target="_blank" rel="noopener">ELA</a> and <a href="https://data.cityofnewyork.us/Education/Math-Test-Results-2013-2023/74kb-55u9" target="_blank" rel="noopener">Math</a> Test Results 2013–2023 (2023 is the latest year published there). Ratings and current school names from the DOE <a href="https://tools.nycenet.edu/snapshot/" target="_blank" rel="noopener">2024–25 School Quality Snapshot</a>. Shared zones show the combined result of all their schools.</p>
+      <p>Source: <a href="https://data.cityofnewyork.us/Education/School-Zones-2024-2025-Elementary-School-/cmjf-yawu" target="_blank" rel="noopener">Elementary</a> and <a href="https://data.cityofnewyork.us/Education/School-Zones-2024-2025-Middle-School-/t26j-jbq7" target="_blank" rel="noopener">Middle School</a> and <a href="https://data.cityofnewyork.us/Education/School-Zones-2024-2025-High-School-/ruu9-egea" target="_blank" rel="noopener">High School</a> Zones 2024–2025, NYC Open Data. School names and addresses from the 2019–20 DOE location list. State test results, ratings, programs and current school names from the DOE’s <a href="https://tools.nycenet.edu/snapshot/" target="_blank" rel="noopener">2024–25 School Quality Snapshot</a>. Shared zones show the combined result of all their schools.</p>
     </div>
   </aside>
   <div id="map" role="application" aria-label="Map of school zones"></div>
@@ -266,10 +266,10 @@ const S=Object.assign({},HSD?HSD.schools:{},MSD?MSD.schools:{},D.schools);
 const O=HSD&&HSD.O||{};
 let level='es',F=LV.es.F,T=LV.es.T;
 const LEVEL_TXT={
-  es:{note:'Living in a zone gives your child top priority at that school, not a guaranteed seat. List your zoned school on your <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a> kindergarten application. You can rank it anywhere; your priority is the same. Each school’s “My Chances” section on MySchools shows which priority groups got offers last year.',badge:'Kindergarten · 2024–25 zones',h1:'NYC Elementary School Zones',sub:n=>n+' zone boundaries from the NYC Department of Education. Colored by the zoned school’s DOE quality ratings or state test results. Click anywhere to see which school is zoned for that block.',grades:'3–5',avg:'ELA 51%, Math 54%',miss:'That point is outside every elementary zone. Check the coordinates, or it may be in a park or outside NYC.',noZone:'No zoned elementary school'},
+  es:{note:'Living in a zone gives your child top priority at that school, not a guaranteed seat. List your zoned school on your <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a> kindergarten application. You can rank it anywhere; your priority is the same. Each school’s “My Chances” section on MySchools shows which priority groups got offers last year.',badge:'Kindergarten · 2024–25 zones',h1:'NYC Elementary School Zones',sub:n=>n+' zone boundaries from the NYC Department of Education. Colored by the zoned school’s DOE quality ratings or state test results. Click anywhere to see which school is zoned for that block.',grades:'3–5',avg:'NYC elementary schools average ELA 58%, Math 60%',miss:'That point is outside every elementary zone. Check the coordinates, or it may be in a park or outside NYC.',noZone:'No zoned elementary school'},
   hs:{badge:'High school · 2024–25 zones',h1:'NYC Zoned High Schools',sub:n=>n+' high schools give priority to students who live in their zone. Click anywhere to see the zoned high school for that block.',grades:'9–12',avg:'',miss:'That point isn’t in a high school zone. Most of the city has no zoned high school; students apply citywide through MySchools.',noZone:'No zoned high school',
       note:'Most of NYC has no zoned high school. Every 8th grader applies through <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a>. Living in one of these zones gives you priority, or a guaranteed seat, at that school’s zoned program, but only if you list it on your application.'},
-  ms:{note:'Most districts don’t zone middle schools. In the uncolored areas, students apply to middle schools through <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a>. Even in zoned districts, many students also apply to other programs.',badge:'Middle school · 2024–25 zones',h1:'NYC Middle School Zones',sub:n=>'Zones for '+n+' middle schools from the NYC Department of Education, in the districts that have them. Click anywhere to see which school is zoned for that block.',grades:'6–8',avg:'ELA 55%, Math 49%',miss:'That point isn’t in a zoned middle school area. It may be in a district without zoned middle schools, a park, or outside NYC.',noZone:'No zoned middle school'}};
+  ms:{note:'Most districts don’t zone middle schools. In the uncolored areas, students apply to middle schools through <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a>. Even in zoned districts, many students also apply to other programs.',badge:'Middle school · 2024–25 zones',h1:'NYC Middle School Zones',sub:n=>'Zones for '+n+' middle schools from the NYC Department of Education, in the districts that have them. Click anywhere to see which school is zoned for that block.',grades:'6–8',avg:'NYC middle schools average ELA 55%, Math 53%',miss:'That point isn’t in a zoned middle school area. It may be in a district without zoned middle schools, a park, or outside NYC.',noZone:'No zoned middle school'}};
 let metric='comp';
 const R=D.R||{};
 // prefer current (2024-25) names and addresses from the School Quality Snapshot
@@ -424,8 +424,8 @@ function outHtml(d){const o=O[d];if(!o)return '<span class="meta">No 2024–25 g
   return '<div class="scores">'+r('Graduates in 4 years','grad')+r('College or career program','coll')+'<small>2024–25 School Quality Snapshot'+(o[2]!=null?' · city 4-year graduation rate '+o[2]+'%':'')+'</small></div>'}
 function zonedHtml(d){const a=X[d]&&X[d][8]||'';if(/Zoned Guarantee/i.test(a))return '<div class="tags"><span class="tag">Zoned guarantee</span></div><span class="meta">Students in this zone who apply are guaranteed a seat in the zoned program.</span>';
   if(/Zoned Priority/i.test(a))return '<div class="tags"><span class="tag">Zoned priority</span></div><span class="meta">Students in this zone who apply get priority for the zoned program, but a seat isn’t guaranteed.</span>';return ''}
-function scoreHtml(d){if(level==='hs')return outHtml(d);const g=LEVEL_TXT[level].grades,v=T[d];if(!v)return '<span class="meta">No 2023 grade '+g+' state test results'+(level==='es'?' (K–2 or newer school)':' (newer school)')+'.</span>';
-  const n=Math.max(v[0],v[2]);return '<div class="scores">'+row('ELA',v[0],v[1])+row('Math',v[2],v[3])+'<small>2023, grades '+g+' · '+n+' students tested'+(n<60?' · small group, read with care':'')+'</small></div>'}
+function scoreHtml(d){if(level==='hs')return outHtml(d);const g=LEVEL_TXT[level].grades,v=T[d];if(!v)return '<span class="meta">No 2024–25 state test results'+(level==='es'?' (K–2 or newer school)':' (newer school)')+'.</span>';
+  const n=Math.max(v[0],v[2]);return '<div class="scores">'+row('ELA',v[0],v[1])+row('Math',v[2],v[3])+'<small>2024–25 School Quality Snapshot · '+n+' test takers'+(n<60?' · small group, read with care':'')+'</small></div>'}
 function select(l,fromClick){
   markEngaged();
   if(selected)selected.setStyle(style(selected.feature,false));
@@ -504,14 +504,14 @@ function syncLegend(){const lo=document.getElementById('leg-out');lo.hidden=!isO
 syncLegend();
 //METRIC
 // metric groups: tabs show one row of options at a time and remember the last pick in each
-const GROUP_SRC={quality:'DOE School Quality Snapshot · 2024–25',tests:'New York State tests · 2023, grades 3–5',programs:'DOE School Quality Snapshot · 2024–25'};
+const GROUP_SRC={quality:'DOE School Quality Snapshot · 2024–25',tests:'New York State tests · 2024–25 Snapshot',programs:'DOE School Quality Snapshot · 2024–25'};
 const lastPick={};
 document.querySelectorAll('.seg[data-g]').forEach(s=>{lastPick[s.dataset.g]=s.querySelector('input').value});
 lastPick.quality='comp';
 let curGroup='quality';
 function showGroup(g){curGroup=g;document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.g===g)));
   document.querySelectorAll('.seg[data-g]').forEach(s=>{s.hidden=s.dataset.g!==g});
-  document.getElementById('grp-src').textContent=g==='tests'?(level==='hs'?'DOE School Quality Snapshot · 2024–25':'New York State tests · 2023, grades '+LEVEL_TXT[level].grades):GROUP_SRC[g];}
+  document.getElementById('grp-src').textContent=g==='tests'?(level==='hs'?'DOE School Quality Snapshot · 2024–25':'New York State tests · 2024–25 Snapshot'):GROUP_SRC[g];}
 document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{const g=b.dataset.g;showGroup(g);
   const r=document.querySelector('input[name=metric][value="'+lastPick[g]+'"]');if(r&&!r.checked){r.checked=true;r.dispatchEvent(new Event('change'))}}));
 document.querySelectorAll('input[name=metric]').forEach(r=>r.addEventListener('change',()=>{const s=r.closest('.seg[data-g]');if(s)lastPick[s.dataset.g]=r.value;markEngaged();metric=r.value;syncLegend();restyle();drawLabels()}));
@@ -537,7 +537,7 @@ function setLevel(lv){if(!LV[lv]||lv===level)return;level=lv;F=LV[lv].F;T=LV[lv]
   document.getElementById('g-tests').textContent=hs?'Outcomes':'Tests';
   if(hs&&['both','ela','math'].includes(lastPick.tests)){testsPick=lastPick.tests;lastPick.tests=outPick}else if(!hs&&isOut(lastPick.tests)){outPick=lastPick.tests;lastPick.tests=testsPick}
   if(hs&&['both','ela','math'].includes(metric)||!hs&&isOut(metric)){const r=document.querySelector('input[name=metric][value='+lastPick.tests+']');r.checked=true;r.dispatchEvent(new Event('change'))}
-  document.getElementById('test-hint').innerHTML='Share of grade '+tx.grades+' students scoring proficient (Level 3 or 4) on the 2023 New York State tests. NYC average: '+tx.avg+'. <span class="nd"></span> No grades '+tx.grades+' results.';
+  document.getElementById('test-hint').innerHTML='Share of students who met state standards (Level 3 or 4) on the New York State ELA and math tests, from the DOE’s 2024–25 School Quality Snapshot. Covers every tested grade at the school (grades 3–8). '+tx.avg+'. <span class="nd"></span> No test results.';
   // G&T is an elementary program; hide it for middle school
   const noGT=lv!=='es',gt=document.getElementById('m-gt');gt.hidden=noGT;document.getElementById('lbl-gt').hidden=noGT;
   gt.closest('.seg').classList.toggle('two',noGT);gt.closest('.seg').classList.toggle('three',!noGT);

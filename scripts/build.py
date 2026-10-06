@@ -140,12 +140,28 @@ def goatcounter_tag():
             'async src="https://gc.zgo.at/count.js"></script>')
 
 
+def load_tests(fallback_name):
+    """State test results per school as [ELA tested, ELA proficient, Math tested, Math proficient].
+    Prefers the DOE School Quality Snapshot (data/snapshot_tests.json, newer); falls back to the
+    NYC Open Data results (2023) in fallback_name."""
+    path = os.path.join(DATA, "snapshot_tests.json")
+    if os.path.exists(path):
+        out = {}
+        for dbn, (n_ela, p_ela, n_mth, p_mth, *_rest) in load("snapshot_tests.json").items():
+            n_ela = n_ela or (20 if p_ela is not None else 0)  # tiny/suppressed counts: small weight
+            n_mth = n_mth or (20 if p_mth is not None else 0)
+            out[dbn] = [int(n_ela) if p_ela is not None else 0, round(n_ela * p_ela / 100) if p_ela is not None else 0,
+                        int(n_mth) if p_mth is not None else 0, round(n_mth * p_mth / 100) if p_mth is not None else 0]
+        return out
+    return load(fallback_name)
+
+
 def main():
     d = load("elem_zones.json")
     ncolors = prepare_zones(d)
     zoned = {x for f in d["features"] for x in f["properties"]["dbns"]}
 
-    tests = load("state_tests.json")
+    tests = load_tests("state_tests.json")
     d["T"] = {k: v for k, v in tests.items() if k in zoned and (v[0] or v[2])}
     d["R"] = load("snapshot_ratings.json")
     d["X"] = load("snapshot_extra.json") if os.path.exists(os.path.join(DATA, "snapshot_extra.json")) else {}
@@ -157,7 +173,7 @@ def main():
         ms = load("ms_zones.json")
         prepare_zones(ms)
         ms_zoned = {x for f in ms["features"] for x in f["properties"]["dbns"]}
-        ms_tests = load("ms_state_tests.json")
+        ms_tests = load_tests("ms_state_tests.json")
         d["MS"] = {"schools": ms["schools"], "features": ms["features"],
                    "T": {k: v for k, v in ms_tests.items() if k in ms_zoned and (v[0] or v[2])}}
 

@@ -166,18 +166,25 @@ def fetch_snapshot():
                      pct_raw("ell_pct_raw"), pct_raw("iep_pct_raw"), flt("eni_pct_K8") if rt != "HS" else flt("eni_hs_pct_912"),
                      (v.get("all_hs_admissionsmethods") if rt == "HS" else v.get("all_es_admissionsmethods")) or None,
                      flt("median_distance")]
+            # elementary/middle state tests: [ELA test takers, ELA % proficient, Math test takers, Math % proficient, city ELA %, city Math %]
+            tests = None
+            if rt != "HS" and (flt("val_prof_pct_ela_all") is not None or flt("val_prof_pct_mth_all") is not None):
+                tests = [flt("n_prof_pct_ela_all"), flt("val_prof_pct_ela_all"), flt("n_prof_pct_mth_all"),
+                         flt("val_prof_pct_mth_all"), flt("cavg_prof_pct_ela_all"), flt("cavg_prof_pct_mth_all")]
             # high schools: [4-year graduation %, college/career within 6 months %, city 4-year graduation %]
             outcome = [flt("val_grad_pct_4_all"), flt("val_pct_cer_6mo_all"), flt("cavg_grad_pct_4_all")] if rt == "HS" else None
-            return dbn, (ratings, extra, outcome)
+            return dbn, (ratings, extra, outcome, tests)
         return dbn, None
 
-    out, extra, outcomes, missing = {}, {}, {}, []
+    out, extra, outcomes, snap_tests, missing = {}, {}, {}, {}, []
     with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:
         for dbn, row in pool.map(one, dbns):
             if row:
-                out[dbn], extra[dbn], outcome = row
+                out[dbn], extra[dbn], outcome, tests = row
                 if outcome:
                     outcomes[dbn] = outcome
+                if tests:
+                    snap_tests[dbn] = tests
             else:
                 missing.append(dbn)
     if missing:
@@ -185,6 +192,7 @@ def fetch_snapshot():
     save("snapshot_ratings.json", out)
     save("snapshot_extra.json", extra)
     save("hs_outcomes.json", outcomes)
+    save("snapshot_tests.json", snap_tests)
 
 
 def fetch_streets():
