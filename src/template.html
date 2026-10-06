@@ -166,8 +166,11 @@ aside>*{flex-shrink:0}
 #map-legend .legend{margin-top:7px}
 #map-legend .hint{display:none;max-height:28vh;overflow:auto}
 #map-legend.open .hint{display:block}
-details.how summary{cursor:pointer;font-weight:700}
-details.how p{margin:6px 0 0}
+.how p{margin:0}
+.how .must{font-weight:700}
+.how details{margin-top:6px}
+.how summary{cursor:pointer}
+.how details p{margin:6px 0 0}
 .about details summary{cursor:pointer;color:var(--fg);font-family:var(--display);font-weight:600}
 .about details p{margin:6px 0 0}
 .zl{font-family:var(--display);font-weight:700;font-size:11px;color:var(--fg);text-align:center;white-space:nowrap;text-shadow:0 0 3px var(--land),0 0 3px var(--land),0 0 2px var(--land);pointer-events:none;line-height:1}
@@ -209,10 +212,12 @@ details.how p{margin:6px 0 0}
       <span class="badge" id="badge">Kindergarten · 2024–25 zones</span>
       <h1 id="h1">NYC Elementary School Zones</h1>
       <p class="sub" id="sub">770 zones from the NYC Department of Education. Click any block, or search an address, to see its zoned school.</p>
-      <details class="note how" id="how"><summary id="lvl-sum">A zone gives priority, not a guaranteed seat</summary>
-        <p id="lvl-note">Living in a zone gives your child top priority at that school, not a guaranteed seat. List your zoned school on your <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a> kindergarten application. You can rank it anywhere; your priority is the same. Each school’s “My Chances” section on MySchools shows which priority groups got offers last year.</p>
-        <p><strong>Zones change year to year.</strong> Always confirm an exact address on <a href="https://schoolsearch.schools.nyc/" target="_blank" rel="noopener">schoolsearch.schools.nyc</a> before applying.</p>
-      </details>
+      <div class="note how" id="how">
+        <p class="must">Always confirm an exact address on <a href="https://schoolsearch.schools.nyc/" target="_blank" rel="noopener">schoolsearch.schools.nyc</a> before applying.</p>
+        <details><summary id="lvl-sum">A zone gives priority, not a guaranteed seat</summary>
+          <p id="lvl-note">Living in a zone gives your child top priority at that school, not a guaranteed seat. List your zoned school on your <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a> kindergarten application. You can rank it anywhere; your priority is the same. Each school’s “My Chances” section on MySchools shows which priority groups got offers last year.</p>
+        </details>
+      </div>
     </header>
 
     <section id="search-sec">
@@ -536,11 +541,22 @@ function select(l,fromClick){
 // search
 const q=document.getElementById('q'),res=document.getElementById('res');
 let idx=[];
-function buildIdx(){idx=byLayer.filter(l=>l.feature.properties.dbns.length).map(l=>{const p=l.feature.properties;const names=p.dbns.map(d=>(S[d]?S[d].n:'')+' '+d).join(' ');const nums=p.dbns.map(d=>{const k=+d.slice(3);return 'ps '+k+' is '+k+' ms '+k+' jhs '+k}).join(' ');return{l,txt:(names+' '+nums+' '+(p.remarks||'')).toLowerCase()}})}
+function buildIdx(){idx=byLayer.filter(l=>l.feature.properties.dbns.length).map(l=>{const p=l.feature.properties;const names=p.dbns.map(d=>(S[d]?S[d].n:'')+' '+d).join(' ');const nums=p.dbns.map(d=>{const k=+d.slice(3);return 'ps '+k+' is '+k+' ms '+k+' jhs '+k}).join(' ');return{l,nm:names.toLowerCase(),txt:(names+' '+nums+' '+(p.remarks||'')).toLowerCase()}})}
 buildIdx();
 q.addEventListener('input',()=>{const v=q.value.trim().toLowerCase();if(v.length<2){res.hidden=true;return}
   const toks=v.replace(/\b(j\.?h\.?s|p\.?s|i\.?s|m\.?s)\.?\s*(?=\d)/g,'ps ').split(/\s+/);
-  const hits=idx.filter(o=>{const t=o.txt.replace(/\b(j\.h\.s|p\.s|i\.s|m\.s)\.\s*/g,'ps ');return toks.every(k=>k==='ps'?true:t.includes(k)||(/^\d+$/.test(k)&&new RegExp('ps '+(+k)+'\\b').test(t)))}).slice(0,30);
+  // every word must match; exact school numbers and DBNs rank first, then whole words, then partial matches (39 inside 399)
+  const esc_re=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  const tokScore=(t,k)=>{if(k==='ps')return 0;
+    if(/^\d+$/.test(k)){if(new RegExp('\\bps '+(+k)+'\\b').test(t))return 10;return t.includes(k)?1:-1}
+    if(/^\d{2}[kmqrx]\d{3}$/.test(k))return t.includes(k)?20:-1;
+    if(new RegExp('\\b'+esc_re(k)+'\\b').test(t))return 4;if(new RegExp('\\b'+esc_re(k)).test(t))return 3;return t.includes(k)?1:-1};
+  // typed "JHS 104" prefers J.H.S. 104 over P.S./I.S. 104
+  const pm=v.match(/\b(j\.?h\.?s|p\.?s|i\.?s|m\.?s)\.?\s*(\d+)/),pre=pm?new RegExp('\\b'+pm[1].replace(/\./g,'').split('').join('\\.?')+'\\.?\\s*0*'+(+pm[2])+'\\b'):null;
+  const hits=idx.map((o,i)=>{const t=o.txt.replace(/\b(j\.h\.s|p\.s|i\.s|m\.s)\.\s*/g,'ps ');let s=0;
+      for(const k of toks){const v=tokScore(t,k);if(v<0)return null;s+=v}if(pre&&pre.test(o.nm))s+=5;return{o,s,i}})
+    .filter(Boolean).sort((x,y)=>y.s-x.s||x.i-y.i).map(x=>x.o)
+    .filter((o,i,a)=>{const k=o.l.feature.properties.dbns.join();return a.findIndex(x=>x.l.feature.properties.dbns.join()===k)===i}).slice(0,30);  // a zone split into pieces shows once
   res.innerHTML=hits.length?hits.map((o,i)=>{const p=o.l.feature.properties;return '<li><button type="button" data-i="'+i+'">'+esc(p.dbns.map(short).join(' / '))+'<br><small>'+esc(p.dbns.join(', '))+' · '+esc(BORO[p.boro])+'</small></button></li>'}).join(''):'<li><button type="button" disabled>No matching zone</button></li>';
   res.hidden=false;res.querySelectorAll('button[data-i]').forEach(b=>b.onclick=()=>{select(hits[+b.dataset.i].l,false);res.hidden=true});
 });
