@@ -4,10 +4,14 @@ An interactive map of New York City's elementary (kindergarten), middle and high
 
 - **Zones:** 770 elementary zone boundaries for 2024–25
 - **School Quality Snapshot (2024–25):** Instruction and Performance, Safety and School Climate, and Relationships with Families, each rated 1–4, plus an Overall average of the three
-- **State tests (2023):** share of grade 3–5 students scoring proficient in ELA and Math
+- **State tests (2024–25 Snapshot):** share of students scoring proficient in ELA and Math (grades 3–5 for elementary, 6–8 for middle); high schools show 4-year graduation and college/career enrollment instead
+- **Programs:** gifted & talented, dual language and special education
+- **Colors:** a red → orange → yellow → teal ramp, checked against common forms of color blindness (deuteranopia, protanopia)
 - **Streets:** a "Major streets" toggle (highways, main roads and truck routes) and an "All streets" toggle (every street, shown once you zoom in to street level), with names along the lines
 
-The site is one static `index.html` with all its data built in. There is no server or back end, so you can open it in a browser or host it anywhere.
+The site is a static `index.html` plus three data files in `assets/`. The page has the elementary data built in and fetches middle school, high school and all-streets data only when someone needs them, which keeps the first load to about 1.8 MB. There is no server or back end.
+
+To get a single file with everything inline (for example, to open by double-clicking or to email), run `python3 scripts/build.py --standalone path/to/nyc-school-zones.html`.
 
 ## Run it locally
 
@@ -32,6 +36,7 @@ To put it on Google Sites, click **Insert → Embed → By URL** and paste the P
 
 ```
 index.html              built page (this is what GitHub Pages serves)
+assets/                 ms.js, hs.js, ls.js — built by build.py, loaded on demand
 src/template.html       page source: layout, styles and map code
 data/
   elem_zones.json       zone boundaries + school names/locations
@@ -48,9 +53,10 @@ scripts/
   build.py              data/ + src/template.html  →  index.html
   fetch_data.py         re-downloads everything in data/ from the city
   streets.py            merges and simplifies street centerlines (used by fetch_data.py)
+  make_preview.py       draws preview.png (needs matplotlib)
 ```
 
-Neither script needs anything beyond Python 3.
+Apart from make_preview.py, the scripts need anything beyond Python 3.
 
 ## Make changes
 
@@ -60,7 +66,7 @@ To change the page, edit `src/template.html`, then rebuild:
 python3 scripts/build.py
 ```
 
-Commit both `src/template.html` and the rebuilt `index.html`.
+Commit `src/template.html`, the rebuilt `index.html` and `assets/`. The build also stamps the month into the "Updated" line under the header.
 
 ## Link previews
 
@@ -84,7 +90,7 @@ When the city publishes a new year, update the dataset IDs and years at the top 
 - [School Zones 2024–2025 (Elementary School)](https://data.cityofnewyork.us/Education/School-Zones-2024-2025-Elementary-School-/cmjf-yawu), NYC Open Data
 - [2019–2020 School Locations](https://data.cityofnewyork.us/Education/2019-2020-School-Locations/wg9x-4ke6), NYC Open Data (map points and grades served)
 - [ELA Test Results 2013–2023](https://data.cityofnewyork.us/Education/English-Language-Arts-ELA-Test-Results-2013-2023/iebs-5yhr) and [Math Test Results 2013–2023](https://data.cityofnewyork.us/Education/Math-Test-Results-2013-2023/74kb-55u9), NYC Open Data
-- [School Quality Snapshot 2024–25](https://tools.nycenet.edu/snapshot/), NYC DOE (ratings and current school names)
+- [School Quality Snapshot 2024–25](https://tools.nycenet.edu/snapshot/), NYC DOE (ratings, test scores, graduation rates, programs and current school names)
 - [Centerline (CSCL)](https://data.cityofnewyork.us/City-Government/Centerline/inkn-q76z), NYC Open Data (major streets)
 
 Zones change from year to year. Before applying, always confirm a specific address on [schoolsearch.schools.nyc](https://schoolsearch.schools.nyc/).

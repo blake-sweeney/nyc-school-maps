@@ -25,8 +25,8 @@ MUTED = "#9aa5a0"
 ACCENT = "#f2b705"
 NODATA = "#5d6461"
 LAND = "#1a201e"
-# Same ramp as the site: 1 -> red, 2 -> orange, 3 -> yellow, 4 -> green
-STOPS = [(1, (215, 48, 31)), (2, (240, 134, 29)), (3, (242, 194, 15)), (4, (43, 154, 75))]
+# Same colorblind-friendly ramp as the site: 1 -> red, 2 -> orange, 3 -> yellow, 4 -> teal
+STOPS = [(1, (184, 32, 42)), (2, (232, 116, 42)), (3, (247, 207, 69)), (4, (31, 138, 132))]
 
 
 def rate_color(r):

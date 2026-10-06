@@ -3,7 +3,8 @@
 
 Uses only the Python standard library. Run from the repo root:
 
-    python3 scripts/build.py
+    python3 scripts/build.py                      # index.html + assets/ (what GitHub Pages serves)
+    python3 scripts/build.py --standalone out.html   # one self-contained file that also opens offline
 
 Steps:
   1. Load zone boundaries (data/elem_zones.json).
@@ -156,7 +157,8 @@ def load_tests(fallback_name):
     return load(fallback_name)
 
 
-def main():
+def main(standalone_path=None):
+    import datetime
     d = load("elem_zones.json")
     ncolors = prepare_zones(d)
     zoned = {x for f in d["features"] for x in f["properties"]["dbns"]}
@@ -186,6 +188,45 @@ def main():
 
     with open(os.path.join(ROOT, "src", "template.html"), encoding="utf-8") as f:
         template = f.read()
+    template = template.replace("__UPDATED__", datetime.date.today().strftime("%b %Y"))
+
+    full = dict(d)
+    # For the website, middle school, high school and the all-streets layer load on demand from
+    # assets/ so the first view is about half the size. The standalone file keeps everything inline.
+    split = {"ms": d.pop("MS", None), "hs": d.pop("HS", None), "ls": d.pop("LS", None)}
+    assets = {}
+    os.makedirs(os.path.join(ROOT, "assets"), exist_ok=True)
+    for key, obj in split.items():
+        if obj is None:
+            continue
+        # A .js file that sets window.NYCSZ[key], loaded with a script tag so it also works from file://
+        rel = f"assets/{key}.js"
+        with open(os.path.join(ROOT, rel), "w", encoding="utf-8") as f:
+            f.write(f"(window.NYCSZ=window.NYCSZ||{{}})[{json.dumps(key)}]=")
+            json.dump(obj, f, separators=(",", ":"))
+            f.write(";\n")
+        assets[key] = rel
+    d["ASSETS"] = assets
+
+    if standalone_path:
+        write_page(template, full, standalone_path)
+        print(f"wrote {standalone_path} ({os.path.getsize(standalone_path) / 1e6:.2f} MB, everything inline)")
+    out = os.path.join(ROOT, "index.html")
+    write_page(template, d, out)
+    d = full  # for the summary below
+
+    print(f"{len(d['features'])} zones, {ncolors} neighbor colors, "
+          f"{len(d['T'])} schools with test results, {len(d['R'])} with Snapshot data, "
+          f"{len(d['ST'])} major street lines, {len(d['LS']['l'])} local street lines")
+    if "HS" in d:
+        print(f"high school: {len(d['HS']['features'])} zones, {len(d['HS']['O'])} schools with outcomes")
+    if "MS" in d:
+        print(f"middle school: {len(d['MS']['features'])} zones, {len(d['MS']['T'])} schools with test results")
+    print(f"wrote {out} ({os.path.getsize(out) / 1e6:.2f} MB) + " +
+          ", ".join(f"{p} ({os.path.getsize(os.path.join(ROOT, p)) / 1e6:.2f} MB)" for p in assets.values()))
+
+
+def write_page(template, d, out):
     payload = json.dumps(d, separators=(",", ":")).replace("</", "<\\/")
     page = template.replace("__DATA__", payload)
 
@@ -207,19 +248,12 @@ def main():
     )
     # The public site uses the site name as its browser-tab title.
     html = re.sub(r"<title>.*?</title>", f"<title>{SITE_NAME}</title>", html, count=1)
-    out = os.path.join(ROOT, "index.html")
     with open(out, "w", encoding="utf-8") as f:
         f.write(html)
 
-    print(f"{len(d['features'])} zones, {ncolors} neighbor colors, "
-          f"{len(d['T'])} schools with test results, {len(d['R'])} with Snapshot data, "
-          f"{len(d['ST'])} major street lines, {len(d['LS']['l'])} local street lines")
-    if "HS" in d:
-        print(f"high school: {len(d['HS']['features'])} zones, {len(d['HS']['O'])} schools with outcomes")
-    if "MS" in d:
-        print(f"middle school: {len(d['MS']['features'])} zones, {len(d['MS']['T'])} schools with test results")
-    print(f"wrote {out} ({os.path.getsize(out) / 1e6:.2f} MB)")
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+    args = sys.argv[1:]
+    main(args[args.index("--standalone") + 1] if "--standalone" in args else None)

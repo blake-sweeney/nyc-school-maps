@@ -50,8 +50,15 @@ button{font:inherit;font-family:var(--display);font-weight:600;font-size:.9rem;p
 .school a{color:var(--hl);font-size:.85rem}
 .note{background:var(--warn-bg);color:var(--warn-fg);font-size:.85rem;padding:8px 10px;border-radius:6px}
 .confirm-note{margin:12px 0 0}
+.asof{font-size:.75rem;color:var(--muted);margin:8px 0 0;line-height:1.4}
 .note a{color:inherit;font-weight:700}
 .card .confirm{font-size:.82rem;color:var(--hl)}
+.card-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn-sm{font:inherit;font-family:var(--display);font-weight:600;font-size:.82rem;padding:6px 10px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer;text-decoration:none}
+.btn-sm:hover{border-color:var(--muted)}
+.btn-sm.primary{background:var(--fg);color:var(--panel);border-color:var(--fg)}
+.to-map{display:none}
+.school .links{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:.85rem}
 .seg{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line);border-radius:6px;overflow:hidden}
 .seg input{position:absolute;opacity:0;pointer-events:none}
 .seg label{font-family:var(--display);font-weight:600;font-size:.85rem;text-align:center;padding:7px 4px;cursor:pointer;border-right:1px solid var(--line);color:var(--muted)}
@@ -80,7 +87,7 @@ aside>*{flex-shrink:0}
 .facts{display:grid;grid-template-columns:1fr auto;gap:3px 8px;font-size:.85rem;margin-top:4px;font-variant-numeric:tabular-nums}
 .facts b{font-family:var(--display);font-weight:600;text-align:right}
 .tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:2px}
-.tag{font-family:var(--display);font-weight:600;font-size:.75rem;padding:2px 7px;border-radius:999px;background:#1f8a8a;color:#fff}
+.tag{font-family:var(--display);font-weight:600;font-size:.75rem;padding:2px 7px;border-radius:999px;background:#2f6db5;color:#fff}
 .sw{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;font-size:.82rem}
 .sw span{display:flex;align-items:center;gap:6px}
 .sw i{width:12px;height:12px;border-radius:2px;flex:none;border:1px solid var(--line)}
@@ -88,7 +95,7 @@ aside>*{flex-shrink:0}
 .chip{display:inline-flex;align-items:center;gap:5px;font-family:var(--display);font-weight:600;font-size:.8rem;white-space:nowrap}
 .chip i{width:10px;height:10px;border-radius:2px;border:1px solid var(--line)}
 .rates .tot{font-weight:700;border-top:1px solid var(--line);padding-top:3px}
-.lbar{height:12px;border-radius:3px;background:linear-gradient(90deg,#d7301f 0%,#d7301f 5%,#f2c20f 50%,#2b9a4b 95%,#2b9a4b 100%)}
+.lbar{height:12px;border-radius:3px;background:linear-gradient(90deg,#b8202a 0%,#b8202a 5%,#f7cf45 50%,#1f8a84 95%,#1f8a84 100%)}
 .lticks{position:relative;height:16px;font-family:var(--display);font-size:.75rem;color:var(--muted);font-variant-numeric:tabular-nums}
 .lticks span{position:absolute;top:2px;transform:translateX(-50%)}
 .lticks span:last-child{transform:translateX(-70%)}
@@ -134,7 +141,18 @@ aside>*{flex-shrink:0}
 @media (max-width:760px){
   .app{grid-template-columns:1fr;grid-template-rows:58vh auto;height:auto}
   #map{order:-1;height:58vh}
-  aside{border-right:0;border-top:1px solid var(--line);overflow:visible;padding:16px}
+  aside{border-right:0;border-top:1px solid var(--line);overflow:visible;padding:16px;gap:14px}
+  /* phones: what you need first sits right under the map */
+  .seg.level{order:1}
+  #addr-sec{order:2}
+  #card{order:3}
+  #card.empty{display:none}
+  aside>header{order:4}
+  .metrics{order:5}
+  #find-sec{order:6}
+  aside>section:not([id]):not(.metrics){order:7}
+  .about{order:8}
+  .to-map{display:inline-block}
 }
 @media (prefers-reduced-motion:reduce){.leaflet-zoom-anim .leaflet-zoom-animated{transition:none}}
 </style>
@@ -152,6 +170,7 @@ aside>*{flex-shrink:0}
       <p class="sub" id="sub">770 zone boundaries from the NYC Department of Education. Colored by the zoned school's DOE quality ratings or state test results. Click anywhere to see which school is zoned for that block.</p>
       <p class="note ms-note" id="lvl-note">Living in a zone gives your child top priority at that school, not a guaranteed seat. List your zoned school on your <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a> kindergarten application. You can rank it anywhere; your priority is the same. Each school’s “My Chances” section on MySchools shows which priority groups got offers last year.</p>
       <p class="note confirm-note"><strong>Zones change year to year.</strong> Always confirm an exact address on <a href="https://schoolsearch.schools.nyc/" target="_blank" rel="noopener">schoolsearch.schools.nyc</a> before applying.</p>
+      <p class="asof">Zones: 2024–25 school year · Ratings, test scores and programs: DOE 2024–25 School Quality Snapshot · Updated __UPDATED__</p>
     </header>
 
     <section class="metrics">
@@ -181,11 +200,11 @@ aside>*{flex-shrink:0}
       </div>
       <span class="grp" id="grp-src">DOE School Quality Snapshot · 2024–25</span>
       <div class="legend" id="leg-rate">
-        <div class="sw"><span><i style="background:#2b9a4b"></i>Excellent (4)</span><span><i style="background:#f2c20f"></i>Good (3)</span><span><i style="background:#f0861d"></i>Fair (2)</span><span><i style="background:#d7301f"></i>Needs Improvement (1)</span></div>
+        <div class="sw"><span><i style="background:#1f8a84"></i>Excellent (4)</span><span><i style="background:#f7cf45"></i>Good (3)</span><span><i style="background:#e8742a"></i>Fair (2)</span><span><i style="background:#b8202a"></i>Needs Improvement (1)</span></div>
         <p class="hint" id="rate-hint"></p>
       </div>
       <div class="legend" id="leg-prog" hidden>
-        <div class="sw"><span><i style="background:#1f8a8a"></i><span id="prog-yes">Has the program</span></span><span><i class="off"></i>Doesn’t</span></div>
+        <div class="sw"><span><i style="background:#2f6db5"></i><span id="prog-yes">Has the program</span></span><span><i class="off"></i>Doesn’t</span></div>
         <p class="hint" id="prog-hint"></p>
       </div>
       <div class="legend" id="leg-iep" hidden>
@@ -204,7 +223,7 @@ aside>*{flex-shrink:0}
       </div>
     </section>
 
-    <section>
+    <section id="addr-sec">
       <label class="lab" for="ll">Your address</label>
       <form class="field" id="llf" role="search">
         <input type="text" id="ll" placeholder="e.g. 180 7th Ave, Brooklyn" autocomplete="off" aria-autocomplete="list" aria-controls="addr-res">
@@ -215,7 +234,7 @@ aside>*{flex-shrink:0}
       <p class="msg" id="llmsg" hidden></p>
     </section>
 
-    <section>
+    <section id="find-sec">
       <label class="lab" for="q">Find a school</label>
       <input type="text" id="q" placeholder="e.g. PS 321, 15K321, Bergen" autocomplete="off">
       <ul class="results" id="res" hidden></ul>
@@ -257,13 +276,19 @@ function markEngaged(){if(engagedSent)return;engagedSent=true;
     else if(tries>0)setTimeout(()=>send(tries-1),1000)};
   send(10)}
 const D=JSON.parse(document.getElementById('zdata').textContent);
+// Firefox and Safari restore form controls on reload, which would leave a button checked that
+// doesn't match the map. Start every control from its default; the code below sets the rest.
+document.querySelectorAll('input').forEach(i=>{if(i.type==='radio'||i.type==='checkbox')i.checked=i.defaultChecked;else if(i.type==='text'||i.type==='search')i.value=i.defaultValue});
 // two school levels share one map; each has its own zones and test results
 const MSD=D.MS||null;
 const HSD=D.HS||null;
 const LV={es:{F:D.features,T:D.T||{},S:D.schools},ms:MSD?{F:MSD.features,T:MSD.T||{},S:MSD.schools}:null,hs:HSD?{F:HSD.features,T:{},S:HSD.schools}:null};
+// on the website, middle school, high school and all-streets data load on demand from assets/ (inline in the standalone file)
+const ASSETS=D.ASSETS||{};
+const hasLevel=lv=>!!(LV[lv]||ASSETS[lv]);
 const S=Object.assign({},HSD?HSD.schools:{},MSD?MSD.schools:{},D.schools);
 // high school outcomes from the Snapshot: [4-year graduation %, college/career enrollment within 6 months %, city 4-year graduation %]
-const O=HSD&&HSD.O||{};
+const O=Object.assign({},HSD&&HSD.O||{});
 let level='es',F=LV.es.F,T=LV.es.T;
 const LEVEL_TXT={
   es:{note:'Living in a zone gives your child top priority at that school, not a guaranteed seat. List your zoned school on your <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a> kindergarten application. You can rank it anywhere; your priority is the same. Each school’s “My Chances” section on MySchools shows which priority groups got offers last year.',badge:'Kindergarten · 2024–25 zones',h1:'NYC Elementary School Zones',sub:n=>n+' zone boundaries from the NYC Department of Education. Colored by the zoned school’s DOE quality ratings or state test results. Click anywhere to see which school is zoned for that block.',grades:'3–5',avg:'NYC elementary schools average ELA 58%, Math 60%',miss:'That point is outside every elementary zone. Check the coordinates, or it may be in a park or outside NYC.',noZone:'No zoned elementary school'},
@@ -273,7 +298,24 @@ const LEVEL_TXT={
 let metric='comp';
 const R=D.R||{};
 // prefer current (2024-25) names and addresses from the School Quality Snapshot
-Object.entries(R).forEach(([d,r])=>{if(!r[0])return;S[d]=Object.assign(S[d]||{},{n:r[0],a:r[1]||(S[d]&&S[d].a)})});
+function snapNames(ids){ids.forEach(d=>{const r=R[d];if(!r||!r[0])return;S[d]=Object.assign(S[d]||{},{n:r[0],a:r[1]||(S[d]&&S[d].a)})})}
+snapNames(Object.keys(R));
+// Extra data loads as a script tag (assets/*.js sets window.NYCSZ[key]). Unlike fetch, this
+// also works when index.html is opened straight from disk (file://).
+const assetP={};
+function getAsset(key){if(assetP[key])return assetP[key];
+  return assetP[key]=new Promise((res,rej)=>{const s=document.createElement('script');s.src=ASSETS[key];s.async=true;
+    s.onload=()=>{const x=(window.NYCSZ||{})[key];x?res(x):rej(new Error('empty '+key))};
+    s.onerror=()=>rej(new Error('load '+key));document.head.appendChild(s)}).catch(e=>{delete assetP[key];s_rm(key);throw e})}
+function s_rm(key){document.querySelectorAll('script[src="'+ASSETS[key]+'"]').forEach(s=>s.remove())}
+async function loadLevel(lv){if(LV[lv])return true;if(!ASSETS[lv])return false;
+  document.body.style.cursor='progress';
+  try{const x=await getAsset(lv);
+    Object.entries(x.schools).forEach(([d,s])=>{S[d]=Object.assign({},s,S[d]||{})});snapNames(Object.keys(x.schools));
+    if(x.O)Object.assign(O,x.O);
+    LV[lv]={F:x.features,T:x.T||{},S:x.schools};return true}
+  catch(e){alertLoad();return false}finally{document.body.style.cursor=''}}
+function alertLoad(){const m=document.getElementById('llmsg');if(m){m.textContent='Couldn’t load that part of the map. Check your connection and try again.';m.hidden=false}}
 const RK={ip:2,ss:3,rf:4},RNAME={ip:'Instruction and Performance',ss:'Safety and School Climate',rf:'Relationships with Families'},RLAB={1:'Needs Improvement',2:'Fair',3:'Good',4:'Excellent'};
 const isRate=m=>m==='comp'||m in RK;
 // extra Snapshot fields: [enrollment, attendance %, teachers 3+ yrs %, principal yrs, dual language, ELL %, IEP %, economic need %, admissions, median distance mi]
@@ -300,19 +342,19 @@ function short(d){const s=S[d];if(!s)return 'School '+d;return s.n}
 function psNum(f){const p=f.properties;return p.dbns.length?p.label||p.dbns[0].slice(3):''}
 // proficiency for a zone: pooled across its schools that have results
 function pct(dbns,m){let n=0,p=0;dbns.forEach(d=>{const v=T[d];if(!v)return;if(m!=='math'){n+=v[0];p+=v[1]}if(m!=='ela'){n+=v[2];p+=v[3]}});return n?100*p/n:null}
-const STOPS=[[5,[215,48,31]],[50,[240,134,29]],[75,[242,194,15]],[95,[43,154,75]]];
+const STOPS=[[5,[184,32,42]],[50,[232,116,42]],[75,[247,207,69]],[95,[31,138,132]]];
 function rampColor(v,S){if(v<=S[0][0])return rgb(S[0][1]);for(let i=1;i<S.length;i++){const[a,ca]=S[i-1],[b,cb]=S[i];if(v<=b){const t=(v-a)/(b-a);return rgb(ca.map((c,k)=>c+(cb[k]-c)*t))}}return rgb(S[S.length-1][1])}
 // state tests: straight red (5%) -> yellow (50%) -> green (95%)
-const TEST_STOPS=[[5,[215,48,31]],[50,[242,194,15]],[95,[43,154,75]]];
+const TEST_STOPS=[[5,[184,32,42]],[50,[247,207,69]],[95,[31,138,132]]];
 function scoreColor(v){return rampColor(v,TEST_STOPS)}
 // high school outcomes have their own ranges: graduation 65/80/95, college & career 40/60/80
-const OUT={grad:{i:0,stops:[[65,[215,48,31]],[80,[242,194,15]],[95,[43,154,75]]],ticks:[65,80,95],name:'4-year graduation rate'},
-           coll:{i:1,stops:[[40,[215,48,31]],[60,[242,194,15]],[80,[43,154,75]]],ticks:[40,60,80],name:'College & career'}};
+const OUT={grad:{i:0,stops:[[65,[184,32,42]],[80,[247,207,69]],[95,[31,138,132]]],ticks:[65,80,95],name:'4-year graduation rate'},
+           coll:{i:1,stops:[[40,[184,32,42]],[60,[247,207,69]],[80,[31,138,132]]],ticks:[40,60,80],name:'College & career'}};
 const isOut=m=>m in OUT;
 const outColor=(m,v)=>rampColor(v,OUT[m].stops);
 function zoneOut(dbns,m){const v=dbns.map(d=>O[d]&&O[d][OUT[m].i]).filter(x=>x!=null);return v.length?v.reduce((a,b)=>a+b,0)/v.length:null}
 function rgb(c){return 'rgb('+c.map(Math.round).join(',')+')'}
-function fillFor(f){const p=f.properties;if(!p.dbns.length)return css('--land');if(metric==='none')return css('--z'+p.c);if(metric==='enr'){const n=zoneEnroll(p.dbns);return n==null?css('--nodata'):enrColor(n)}if(isProg(metric)){const h=zoneProg(p.dbns,metric);return h==null?css('--nodata'):h?'#1f8a8a':css('--off')}if(metric==='iep'){const v=zoneIep(p.dbns);return v==null?css('--nodata'):iepColor(v)}if(isOut(metric)){const v=zoneOut(p.dbns,metric);return v==null?css('--nodata'):outColor(metric,v)}if(isRate(metric)){const r=zoneRating(p.dbns,metric);return r==null?css('--nodata'):rateColor(r)}const v=pct(p.dbns,metric);return v==null?css('--nodata'):scoreColor(v)}
+function fillFor(f){const p=f.properties;if(!p.dbns.length)return css('--land');if(metric==='none')return css('--z'+p.c);if(metric==='enr'){const n=zoneEnroll(p.dbns);return n==null?css('--nodata'):enrColor(n)}if(isProg(metric)){const h=zoneProg(p.dbns,metric);return h==null?css('--nodata'):h?'#2f6db5':css('--off')}if(metric==='iep'){const v=zoneIep(p.dbns);return v==null?css('--nodata'):iepColor(v)}if(isOut(metric)){const v=zoneOut(p.dbns,metric);return v==null?css('--nodata'):outColor(metric,v)}if(isRate(metric)){const r=zoneRating(p.dbns,metric);return r==null?css('--nodata'):rateColor(r)}const v=pct(p.dbns,metric);return v==null?css('--nodata'):scoreColor(v)}
 function style(f,sel){const sc=metric!=='none';return{renderer,stroke:false,fillColor:fillFor(f),fillOpacity:sel?.95:(sc?.78:.85)}}
 let selected=null,layer=null,byLayer=[],zoneLines=null;
 function makeLayer(){return L.geoJSON(F,{style:f=>style(f,false),onEachFeature:(f,l)=>{
@@ -350,6 +392,7 @@ const LOCAL_MIN_Z=14;
 map.createPane('local').style.zIndex=445;map.getPane('local').style.pointerEvents='none';
 const lRend=L.canvas({pane:'local',padding:.3});
 let LS=null;const localGroup=L.layerGroup();
+let lsLoading=false;
 function decodeLocal(){if(LS)return LS;const src=D.LS||{n:[],l:[]};
   LS=src.l.map(r=>{const ll=[];let x=0,y=0;for(let i=1;i<r.length;i+=2){x+=r[i];y+=r[i+1];ll.push([y/1e5,x/1e5])}return{name:src.n[r[0]],ll,bounds:L.latLngBounds(ll)}});return LS}
 function buildLocal(){localGroup.clearLayers();if(!LS)return;
@@ -368,8 +411,8 @@ const streetBox={get checked(){return streetMode!=='none'}},allBox={get checked(
 function syncStreets(){const z=map.getZoom(),on=streetBox.checked,all=allBox.checked;
   [[1,0],[2,11.5],[3,13]].forEach(([tr,minz])=>{const g=tierGroups[tr],show=on&&z>=minz;if(show&&!map.hasLayer(g))g.addTo(map);if(!show&&map.hasLayer(g))map.removeLayer(g)});
   const showLocal=all&&z>=LOCAL_MIN_Z;
-  if(showLocal&&!LS){decodeLocal();buildLocal()}
-  if(showLocal&&!map.hasLayer(localGroup))localGroup.addTo(map);if(!showLocal&&map.hasLayer(localGroup))map.removeLayer(localGroup);
+  if(showLocal&&!LS){if(D.LS||!ASSETS.ls){decodeLocal();buildLocal()}else if(!lsLoading){lsLoading=true;getAsset('ls').then(j=>{D.LS=j;decodeLocal();buildLocal();syncStreets()}).catch(()=>{lsLoading=false;alertLoad()})}}
+  if(showLocal&&LS&&!map.hasLayer(localGroup))localGroup.addTo(map);if(!showLocal&&map.hasLayer(localGroup))map.removeLayer(localGroup);
   drawStreetLabels()}
 document.querySelectorAll('input[name=streetmode]').forEach(r=>r.addEventListener('change',()=>{if(r.checked){markEngaged();streetMode=r.value;syncStreets()}}));
 // street names along the line when zoomed in
@@ -406,6 +449,15 @@ function drawLabels(){labels.clearLayers();const z=map.getZoom();if(z<13)return;
     L.marker(ll,{interactive:false,icon:L.divIcon({className:'',html:'<div class="zl">'+txt+'</div>',iconSize:[60,12],iconAnchor:[30,6]})}).addTo(labels)})}
 map.on('zoomend moveend',drawLabels);
 
+// MySchools pages for each level (same patterns the DOE Snapshot links to)
+function mySchoolsUrl(d){d=encodeURIComponent(d);return level==='ms'?'https://www.myschools.nyc/en/schools/middle-school/'+d:level==='hs'?'https://www.myschools.nyc/en/schools/high-school/?dbn='+d:'https://www.myschools.nyc/en/schools/kindergarten/?dbn='+d}
+// shareable zone links: nycschoolzones.com/#es-15K321, #ms-02M104, #hs-28Q440
+function setZoneHash(dbn){try{history.replaceState(null,'','#'+level+'-'+dbn)}catch(e){}}
+function zoneUrl(){return location.href}
+async function copyLink(btn){const url=zoneUrl();let ok=false;
+  try{await navigator.clipboard.writeText(url);ok=true}catch(e){}
+  if(!ok){const i=document.createElement('input');i.value=url;i.setAttribute('aria-label','Link to this zone');btn.replaceWith(i);i.focus();i.select();return}
+  const old=btn.textContent;btn.textContent='Link copied';setTimeout(()=>{btn.textContent=old},1800)}
 function prefixOf(d){const n=(S[d]&&S[d].n||'').toUpperCase().replace(/\s+/g,'');const m=n.match(/^(J\.?H\.?S\.?|I\.?S\.?|M\.?S\.?|P\.?S\.?)/);return m?m[1].replace(/\./g,''):(level==='ms'?'MS':'PS')}
 function esc(s){return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 function title(s){return s?s.replace(/\s+/g,' ').toLowerCase().replace(/\b\w/g,c=>c.toUpperCase()):''}
@@ -433,11 +485,15 @@ function select(l,fromClick){
   if(selLine)map.removeLayer(selLine);selLine=L.geoJSON(l.feature,{style:{renderer:selRend,interactive:false,fill:false,color:css('--hl'),weight:3.5,opacity:1}}).addTo(map);
   const p=l.feature.properties;let h='<div class="zt">District '+esc(p.dist)+' · '+esc(BORO[p.boro]||'')+'</div>';
   if(!p.dbns.length){h+='<div class="school"><span class="nm">'+LEVEL_TXT[level].noZone+'</span></div>';if(level==='ms'&&/District/.test(p.remarks||''))h+='<div class="note">Students here apply to middle schools through <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a>.</div>';if(level==='hs')h+='<div class="note">Students here apply to high schools citywide through <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a>.</div>';}
-  else{h+=p.dbns.map(d=>{const s=S[d];return '<div class="school"><span class="nm">'+esc(short(d))+'</span><span class="meta">'+esc(d)+(s?' · '+esc(title(s.a))+' · Grades '+esc(grades(s.g)):'')+(X[d]&&X[d][0]!=null?' · '+X[d][0].toLocaleString()+' students':'')+'</span>'+(level==='hs'?zonedHtml(d):'')+factsHtml(d)+rateHtml(d)+scoreHtml(d)+'<a href="https://www.schools.nyc.gov/schools/'+esc(d)+'" target="_blank" rel="noopener">School page on schools.nyc.gov ↗</a></div>'}).join('');}
+  else{h+=p.dbns.map(d=>{const s=S[d];return '<div class="school"><span class="nm">'+esc(short(d))+'</span><span class="meta">'+esc(d)+(s?' · '+esc(title(s.a))+' · Grades '+esc(grades(s.g)):'')+(X[d]&&X[d][0]!=null?' · '+X[d][0].toLocaleString()+' students':'')+'</span>'+(level==='hs'?zonedHtml(d):'')+factsHtml(d)+rateHtml(d)+scoreHtml(d)+'<div class="links"><a href="'+mySchoolsUrl(d)+'" target="_blank" rel="noopener"><b>MySchools: apply &amp; see your chances ↗</b></a><a href="https://www.schools.nyc.gov/schools/'+esc(d)+'" target="_blank" rel="noopener">School website ↗</a></div></div>'}).join('');}
   if(p.remarks)h+='<div class="note">'+esc(p.remarks)+'</div>';
   if(p.dbns.length>1&&!p.remarks)h+='<div class="note">This block is in a shared zone. Families can rank any of these schools.</div>';
   if(p.dbns.length)h+='<a class="confirm" href="https://schoolsearch.schools.nyc/" target="_blank" rel="noopener">Confirm your exact address on schoolsearch.schools.nyc ↗</a>';
+  if(p.dbns.length)h+='<div class="card-actions"><button type="button" class="btn-sm" id="copy-link">Copy link to this zone</button><button type="button" class="btn-sm to-map" id="to-map">↑ Back to map</button></div>';
   card.className='card';card.innerHTML=h;
+  if(p.dbns.length){setZoneHash(p.dbns[0]);
+    document.getElementById('copy-link').onclick=e=>copyLink(e.currentTarget);
+    document.getElementById('to-map').onclick=()=>document.getElementById('map').scrollIntoView({behavior:'smooth',block:'start'})}
   if(!fromClick)map.fitBounds(l.getBounds(),{maxZoom:15,padding:[30,30]});
   if(window.innerWidth<=760&&fromClick)card.scrollIntoView({behavior:'smooth',block:'nearest'});
 }
@@ -461,8 +517,8 @@ function inGeom(x,y,g){const ps=g.type==='MultiPolygon'?g.coordinates:[g.coordin
 let pin=null,lastPoint=null;const llmsg=document.getElementById('llmsg'),llIn=document.getElementById('ll'),addrRes=document.getElementById('addr-res');
 const GEO='https://geosearch.planninglabs.nyc/v2/';
 function locate(a,b,label,keepView){lastPoint={a,b,label};llmsg.hidden=true;
-  if(pin)map.removeLayer(pin);pin=L.circleMarker([a,b],{radius:8,weight:3,color:css('--accent'),fillColor:css('--fg'),fillOpacity:1,interactive:false}).addTo(map);
-  if(label)pin.bindTooltip(label,{direction:'top',offset:[0,-8]});
+  // the pin lives in the click-through selection pane so the zones underneath stay clickable and hoverable
+  if(pin)map.removeLayer(pin);pin=L.circleMarker([a,b],{renderer:selRend,pane:'selPane',radius:8,weight:3,color:css('--accent'),fillColor:css('--fg'),fillOpacity:1,interactive:false}).addTo(map);
   const hit=byLayer.find(l=>inGeom(b,a,l.feature.geometry));
   if(!hit||!hit.feature.properties.dbns.length){if(hit)select(hit,true);llmsg.textContent=LEVEL_TXT[level].miss;llmsg.hidden=false;if(!keepView)map.setView([a,b],14);return}
   select(hit,true);if(!keepView)map.setView([a,b],15)}
@@ -500,7 +556,7 @@ function syncLegend(){const lo=document.getElementById('leg-out');lo.hidden=!isO
     document.getElementById('out-ticks').innerHTML=o.ticks.map((v,i)=>'<span style="left:'+v+'%">'+v+(i===o.ticks.length-1?'%':'')+'</span>').join('');
     document.getElementById('out-hint').innerHTML=metric==='grad'?'Share of students who graduate within 4 years, from the 2024–25 School Quality Snapshot. NYC average: 81%. The scale is narrower than for test scores because most zoned high schools graduate 75–95% of students. <span class="nd"></span> No data.':'Share of graduates who enrolled in college or a career program within 6 months, from the 2024–25 School Quality Snapshot. <span class="nd"></span> No data.'}
   document.getElementById('leg-rate').hidden=!isRate(metric);document.getElementById('leg-test').hidden=!['both','ela','math'].includes(metric);document.getElementById('leg-prog').hidden=!isProg(metric);document.getElementById('leg-iep').hidden=metric!=='iep';document.getElementById('prog-yes').textContent=metric==='gt'?'Zoned school has a G&T program':'Zoned school has a dual-language program';document.getElementById('prog-hint').textContent=metric==='gt'?'District Gifted & Talented programs listed for the zoned school in the 2024–25 Snapshot (73 zoned schools). G&T seats aren’t assigned by zone: families apply separately, and admission rules have changed in recent years, so check MySchools for this year’s process.':'Dual-language programs at the zoned school (151 zoned schools), from the 2024–25 Snapshot. Click a zone to see the languages. Seats are usually by application, often with priority for zoned families.';
-  document.getElementById('rate-hint').innerHTML=(metric==='comp'?'Overall is the average of the three ratings, so zones blend between colors (3.3 sits between yellow and green). ':'DOE rating for '+RNAME[metric]+'. ')+'Ratings are the DOE’s own. Shared zones average their schools. <span class="nd"></span> No rating.'}
+  document.getElementById('rate-hint').innerHTML=(metric==='comp'?'Overall is the average of the three ratings, so zones blend between colors (3.3 sits between yellow and teal). ':'DOE rating for '+RNAME[metric]+'. ')+'Ratings are the DOE’s own. Shared zones average their schools. <span class="nd"></span> No rating.'}
 syncLegend();
 //METRIC
 // metric groups: tabs show one row of options at a time and remember the last pick in each
@@ -521,7 +577,7 @@ const retheme=()=>{restyle();restyleLines();if(selLine)selLine.setStyle({color:c
 mq.addEventListener?.('change',retheme);new MutationObserver(retheme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
 // switch between elementary and middle school zones
 let testsPick='both',outPick='grad';
-function setLevel(lv){if(!LV[lv]||lv===level)return;level=lv;F=LV[lv].F;T=LV[lv].T;
+async function setLevel(lv){if(lv===level)return;if(!LV[lv]&&!(await loadLevel(lv))){document.getElementById('lv-'+level).checked=true;return}if(lv===level)return;level=lv;F=LV[lv].F;T=LV[lv].T;
   if(selLine){map.removeLayer(selLine);selLine=null}selected=null;
   map.removeLayer(layer);map.removeLayer(zoneLines);byLayer=[];
   layer=makeLayer().addTo(map);layer.eachLayer(l=>byLayer.push(l));
@@ -545,14 +601,20 @@ function setLevel(lv){if(!LV[lv]||lv===level)return;level=lv;F=LV[lv].F;T=LV[lv]
   if(noGT&&lastPick.programs==='gt')lastPick.programs='dl';
   showGroup(curGroup);
   card.className='card empty';card.textContent='Select a zone on the map, or search for a school, to see its zoned school.';
-  try{history.replaceState(null,'',lv==='ms'?'#middle':lv==='hs'?'#high':location.pathname+location.search)}catch(e){}
+  try{history.replaceState(null,'',lv==='ms'?'#middle':lv==='hs'?'#high':location.pathname+location.search)}catch(e){}  // a selected zone replaces this below
   syncLegend();restyle();drawLabels();
   if(lastPoint)locate(lastPoint.a,lastPoint.b,lastPoint.label,true)}
 document.querySelectorAll('input[name=level]').forEach(r=>r.addEventListener('change',()=>{if(r.checked){markEngaged();setLevel(r.value)}}));
-if(!LV.ms&&!LV.hs)document.querySelector('.seg.level').hidden=true;
-['ms','hs'].forEach(lv=>{if(!LV[lv]){document.getElementById('lv-'+lv).hidden=true;document.querySelector('label[for=lv-'+lv+']').hidden=true}});
-if(location.hash==='#middle'&&LV.ms){document.getElementById('lv-ms').checked=true;setLevel('ms')}
-if(location.hash==='#high'&&LV.hs){document.getElementById('lv-hs').checked=true;setLevel('hs')}
+if(!hasLevel('ms')&&!hasLevel('hs'))document.querySelector('.seg.level').hidden=true;
+['ms','hs'].forEach(lv=>{if(!hasLevel(lv)){document.getElementById('lv-'+lv).hidden=true;document.querySelector('label[for=lv-'+lv+']').hidden=true}});
+(async function openFromHash(){
+if(location.hash==='#middle'&&hasLevel('ms')){document.getElementById('lv-ms').checked=true;await setLevel('ms')}
+if(location.hash==='#high'&&hasLevel('hs')){document.getElementById('lv-hs').checked=true;await setLevel('hs')}
+// shared zone link: #es-15K321 / #ms-02M104 / #hs-28Q440 (a bare #15K321 means elementary)
+const m=location.hash.match(/^#(?:(es|ms|hs)-)?(\d{2}[KMQRX]\d{3})$/i);if(!m)return;
+  const lv=(m[1]||'es').toLowerCase(),dbn=m[2].toUpperCase();if(!hasLevel(lv))return;
+  if(lv!==level){document.getElementById('lv-'+lv).checked=true;await setLevel(lv)}
+  const hit=byLayer.find(l=>l.feature.properties.dbns.includes(dbn));if(hit)select(hit,false)})();
 syncStreets();
 })();
 </script>
