@@ -71,6 +71,11 @@ button{font:inherit;font-family:var(--display);font-weight:600;font-size:.9rem;p
 .zt{font-family:var(--display);font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
 .school{display:flex;flex-direction:column;gap:2px}
 .school .nm{font-family:var(--display);font-weight:700;font-size:1.15rem;line-height:1.15}
+.school .dbn{font-weight:500;font-size:.85rem;color:var(--muted);white-space:nowrap}
+.school .addr{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;font-size:.88rem;margin-top:2px}
+.copy-addr{font:inherit;font-family:var(--display);font-weight:600;font-size:.74rem;padding:1px 8px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer;line-height:1.5}
+.copy-addr:hover{border-color:var(--muted)}
+.addr-box{font-size:.82rem;padding:3px 6px;flex:1;min-width:140px}
 .school .meta{font-size:.85rem;color:var(--muted);font-variant-numeric:tabular-nums}
 .school a{color:var(--hl);font-size:.85rem}
 .note{background:var(--warn-bg);color:var(--warn-fg);font-size:.85rem;padding:8px 10px;border-radius:6px}
@@ -121,7 +126,9 @@ aside>*{flex-shrink:0}
 .rates{display:grid;grid-template-columns:1fr auto;gap:3px 8px;font-size:.85rem;margin-top:4px}
 .chip{display:inline-flex;align-items:center;gap:5px;font-family:var(--display);font-weight:600;font-size:.8rem;white-space:nowrap}
 .chip i{width:10px;height:10px;border-radius:2px;border:1px solid var(--line)}
-.rates .tot{font-weight:700;border-top:1px solid var(--line);padding-top:3px}
+.rates .tot{font-weight:700}
+.school hr.sep{border:0;border-top:1px solid var(--line);margin:8px 0 6px;width:100%}
+.rates .sub-r{padding-left:14px;color:var(--muted)}
 .lbar{height:12px;border-radius:3px;background:linear-gradient(90deg,#b8202a 0%,#b8202a 5%,#f7cf45 50%,#1f8a84 95%,#1f8a84 100%)}
 .lticks{position:relative;height:16px;font-family:var(--display);font-size:.75rem;color:var(--muted);font-variant-numeric:tabular-nums}
 .lticks span{position:absolute;top:2px;transform:translateX(-50%)}
@@ -521,6 +528,10 @@ function mySchoolsUrl(d){d=encodeURIComponent(d);return level==='ms'?'https://ww
 // shareable zone links: nycschoolzones.com/#es-15K321, #ms-02M104, #hs-28Q440
 function setZoneHash(dbn){try{history.replaceState(null,'','#'+level+'-'+dbn)}catch(e){}}
 function zoneUrl(){return location.href}
+document.getElementById('card').addEventListener('click',async e=>{const b=e.target.closest('.copy-addr');if(!b)return;
+  const v=b.dataset.copy;let ok=false;try{await navigator.clipboard.writeText(v);ok=true}catch(err){}
+  if(!ok){const i=document.createElement('input');i.value=v;i.setAttribute('aria-label','Address');i.className='addr-box';b.replaceWith(i);i.focus();i.select();return}
+  markEngaged();b.textContent='Copied';setTimeout(()=>{b.textContent='Copy'},1500)});
 async function copyLink(btn){const url=zoneUrl();let ok=false;
   try{await navigator.clipboard.writeText(url);ok=true}catch(e){}
   if(!ok){const i=document.createElement('input');i.value=url;i.setAttribute('aria-label','Link to this zone');btn.replaceWith(i);i.focus();i.select();return}
@@ -532,12 +543,16 @@ function grades(g){if(!g)return '';const a=g.split(',').map(x=>x==='PK'?'Pre-K':
 const card=document.getElementById('card');
 function row(lbl,n,p){if(!n)return '';const v=100*p/n;return '<span>'+lbl+'</span><span class="bar"><i style="width:'+v.toFixed(1)+'%;background:'+scoreColor(v)+'"></i></span><b>'+Math.round(v)+'%</b>'}
 function chip(r){return r==null?'<span class="chip">n/a</span>':'<span class="chip"><i style="background:'+rateColor(r)+'"></i>'+(Number.isInteger(r)?RLAB[r]:r.toFixed(1)+' / 4')+'</span>'}
-function factsHtml(d){const x=X[d];if(!x)return '';const tags=[];if(hasGT(d))tags.push('Gifted &amp; Talented');if(x[4])tags.push('Dual language: '+esc(x[4]));
+function tagsHtml(d){const x=X[d];if(!x)return '';const tags=[];if(hasGT(d))tags.push('Gifted &amp; Talented');if(x[4])tags.push('Dual language: '+esc(x[4]));
+  return tags.length?'<div class="tags">'+tags.map(s=>'<span class="tag">'+s+'</span>').join('')+'</div>':''}
+function factsHtml(d){const x=X[d];if(!x)return '';
   const row=(k,v)=>v==null?'':'<span>'+k+'</span><b>'+v+'</b>';
-  return (tags.length?'<div class="tags">'+tags.map(s=>'<span class="tag">'+s+'</span>').join('')+'</div>':'')+
-    '<div class="facts">'+row('Students with IEPs (special ed)',x[6]!=null?x[6]+'%':null)+row('English language learners',x[5]!=null?x[5]+'%':null)+row('Attendance',x[1]!=null?x[1]+'%':null)+row('Teachers with 3+ years’ experience',x[2]!=null?x[2]+'%':null)+row('Principal’s years at school',x[3]!=null?(Math.round(x[3]*10)/10):null)+'</div>'}
+  return '<div class="facts">'+row('Attendance',x[1]!=null?x[1]+'%':null)+row('Teachers with 3+ years’ experience',x[2]!=null?x[2]+'%':null)+row('Principal’s years at school',x[3]!=null?(Math.round(x[3]*10)/10):null)+row('Students with IEPs (special ed)',x[6]!=null?x[6]+'%':null)+row('English language learners',x[5]!=null?x[5]+'%':null)+'</div>'}
+// street address with a copy button (for maps apps and forms)
+function addrHtml(d){const s=S[d];if(!s||!s.a)return '';const full=title(s.a)+', '+(BORO[d[2]]||'')+', NY';
+  return '<span class="addr">'+esc(title(s.a))+', '+esc(BORO[d[2]]||'')+'<button type="button" class="copy-addr" data-copy="'+esc(full)+'" aria-label="Copy address: '+esc(full)+'">Copy</button></span>'}
 function rateHtml(d){const r=R[d];if(!r||r.slice(2,5).every(x=>x==null))return '<span class="meta">No 2024–25 Snapshot ratings (often K–2 or new schools).</span>';
-  const c=schoolRating(d,'comp');return '<div class="rates"><span>Instruction</span>'+chip(r[2])+'<span>Safety &amp; climate</span>'+chip(r[3])+'<span>Families</span>'+chip(r[4])+'<span class="tot">Overall</span><span class="tot">'+chip(c)+'</span></div><a href="https://tools.nycenet.edu/snapshot/2025/'+esc(d)+'/'+esc(r[5]||'EMS')+'/" target="_blank" rel="noopener">2024–25 School Quality Snapshot ↗</a>'}
+  const c=schoolRating(d,'comp');return '<div class="rates"><span class="tot">Overall rating</span><span class="tot">'+chip(c)+'</span><span class="sub-r">Instruction</span>'+chip(r[2])+'<span class="sub-r">Safety &amp; climate</span>'+chip(r[3])+'<span class="sub-r">Families</span>'+chip(r[4])+'</div><a href="https://tools.nycenet.edu/snapshot/2025/'+esc(d)+'/'+esc(r[5]||'EMS')+'/" target="_blank" rel="noopener">2024–25 School Quality Snapshot ↗</a>'}
 function outHtml(d){const o=O[d];if(!o)return '<span class="meta">No 2024–25 graduation data.</span>';
   const r=(lbl,m)=>{const v=o[OUT[m].i];return v==null?'':'<span>'+lbl+'</span><span class="bar"><i style="width:'+v+'%;background:'+outColor(m,v)+'"></i></span><b>'+Math.round(v)+'%</b>'};
   return '<div class="scores">'+r('Graduates in 4 years','grad')+r('College or career program','coll')+'<small>2024–25 School Quality Snapshot'+(o[2]!=null?' · city 4-year graduation rate '+o[2]+'%':'')+'</small></div>'}
@@ -552,7 +567,8 @@ function select(l,fromClick){
   if(selLine)map.removeLayer(selLine);selLine=L.geoJSON(l.feature,{style:{renderer:selRend,interactive:false,fill:false,color:css('--hl'),weight:3.5,opacity:1}}).addTo(map);
   const p=l.feature.properties;let h='<div class="zt">District '+esc(p.dist)+' · '+esc(BORO[p.boro]||'')+'</div>';
   if(!p.dbns.length){h+='<div class="school"><span class="nm">'+LEVEL_TXT[level].noZone+'</span></div>';if(level==='ms'&&/District/.test(p.remarks||''))h+='<div class="note">Students here apply to middle schools through <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a>.</div>';if(level==='hs')h+='<div class="note">Students here apply to high schools citywide through <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a>.</div>';}
-  else{h+=p.dbns.map(d=>{const s=S[d];return '<div class="school"><span class="nm">'+esc(short(d))+'</span><span class="meta">'+esc(d)+(s?' · '+esc(title(s.a))+' · Grades '+esc(grades(s.g)):'')+(X[d]&&X[d][0]!=null?' · '+X[d][0].toLocaleString()+' students':'')+'</span>'+(level==='hs'?zonedHtml(d):'')+factsHtml(d)+rateHtml(d)+scoreHtml(d)+'<div class="links"><a href="'+mySchoolsUrl(d)+'" target="_blank" rel="noopener"><b>MySchools: apply &amp; see your chances ↗</b></a><a href="https://www.schools.nyc.gov/schools/'+esc(d)+'" target="_blank" rel="noopener">School website ↗</a></div></div>'}).join('');}
+  else{h+=p.dbns.map(d=>{const s=S[d],n=X[d]&&X[d][0]!=null?X[d][0].toLocaleString()+' students':'',gr=s?'Grades '+esc(grades(s.g)):'';
+  return '<div class="school"><span class="nm">'+esc(short(d))+' <span class="dbn">('+esc(d)+')</span></span>'+addrHtml(d)+(gr||n?'<span class="meta">'+[gr,n].filter(Boolean).join(' · ')+'</span>':'')+tagsHtml(d)+(level==='hs'?zonedHtml(d):'')+'<hr class="sep">'+rateHtml(d)+'<hr class="sep">'+scoreHtml(d)+'<hr class="sep">'+factsHtml(d)+'<hr class="sep">'+'<div class="links"><a href="'+mySchoolsUrl(d)+'" target="_blank" rel="noopener"><b>MySchools: apply &amp; see your chances ↗</b></a><a href="https://www.schools.nyc.gov/schools/'+esc(d.slice(2))+'" target="_blank" rel="noopener">School website ↗</a></div></div>'}).join('');}
   if(p.remarks)h+='<div class="note">'+esc(p.remarks)+'</div>';
   if(p.dbns.length>1&&!p.remarks)h+='<div class="note">This block is in a shared zone. Families can rank any of these schools.</div>';
   if(p.dbns.length)h+='<a class="confirm" href="https://schoolsearch.schools.nyc/" target="_blank" rel="noopener">Confirm your exact address on schoolsearch.schools.nyc ↗</a>';
