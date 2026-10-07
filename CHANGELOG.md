@@ -6,9 +6,10 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
-## 1.2.1 (2026-10-07)
+## 1.3.0 (2026-10-07)
 
 ### Added
+- Crowding: color zones by how full each school is (enrollment as a share of capacity), from the School Construction Authority's 2025–26 Enrollment, Capacity & Utilization Report (the "Blue Book"). Also shown in the zone card as "Building use." The Programs row is now "Programs & space."
 - Terms & privacy: a short section in the "Before you start" note, also opened from a new footer link.
 - Home-screen app: add the map to your phone's home screen (Safari: Share, then Add to Home Screen) and it opens full screen, without the browser toolbar.
 

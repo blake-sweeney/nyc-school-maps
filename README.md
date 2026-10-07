@@ -6,6 +6,7 @@ An interactive map of New York City's elementary (kindergarten), middle and high
 - **School Quality Snapshot (2024–25):** Instruction and Performance, Safety and School Climate, and Relationships with Families, each rated 1–4, plus an Overall average of the three
 - **State tests (2024–25 Snapshot):** share of students scoring proficient in ELA and Math (grades 3–5 for elementary, 6–8 for middle); high schools show 4-year graduation and college/career enrollment instead
 - **Programs:** gifted & talented, dual language and special education
+- **Crowding:** each school's enrollment as a share of its building capacity, from the SCA's Enrollment, Capacity & Utilization Report ("Blue Book")
 - **Class size (zone card):** average kindergarten, grades 1–5 and core-subject class sizes, from the DOE's class size report
 - **Colors:** a red → orange → yellow → teal ramp, checked against common forms of color blindness (deuteranopia, protanopia)
 - **Streets:** a "Major streets" toggle (highways, main roads and truck routes) and an "All streets" toggle (every street, shown once you zoom in to street level), with names along the lines
@@ -104,6 +105,7 @@ Zones always come from the DOE's current Find a School map. If the DOE servers b
 - [2019–2020 School Locations](https://data.cityofnewyork.us/Education/2019-2020-School-Locations/wg9x-4ke6), NYC Open Data (map points and grades served)
 - [ELA Test Results 2013–2023](https://data.cityofnewyork.us/Education/English-Language-Arts-ELA-Test-Results-2013-2023/iebs-5yhr) and [Math Test Results 2013–2023](https://data.cityofnewyork.us/Education/Math-Test-Results-2013-2023/74kb-55u9), NYC Open Data
 - [Class size reports](https://infohub.nyced.org/reports/government-reports/class-size-reports), NYC DOE (February 2025–26 school-level report; refresh with `python3 scripts/fetch_data.py classsize`, or pass a downloaded copy of the file)
+- [Enrollment, Capacity & Utilization Report](https://www.nycsca.org/Community/Capital-Plan-Reports-Data), NYC School Construction Authority (2025–26 "Blue Book", Classic Edition; PDF only, refresh with `python3 scripts/fetch_data.py utilization <file.pdf>`, needs `pdftotext`)
 - [School Quality Snapshot 2024–25](https://tools.nycenet.edu/snapshot/), NYC DOE (ratings, test scores, graduation rates, programs and current school names)
 - [Centerline (CSCL)](https://data.cityofnewyork.us/City-Government/Centerline/inkn-q76z), NYC Open Data (major streets)
 

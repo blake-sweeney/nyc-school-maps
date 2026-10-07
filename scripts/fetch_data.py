@@ -395,6 +395,62 @@ def fetch_class_size(path=None):
 STEPS = {"zones": fetch_zones, "tests": fetch_tests, "snapshot": fetch_snapshot, "streets": fetch_streets,
          "classsize": fetch_class_size}
 
+UTILIZATION_PAGE = "https://www.nycsca.org/Community/Capital-Plan-Reports-Data"
+
+
+def fetch_utilization(path):
+    """Building use from the SCA's Enrollment, Capacity & Utilization Report ("Blue Book").
+
+    Only published as a PDF: download the Classic Edition (Target Calculation) from UTILIZATION_PAGE
+    (Enrollment, Capacity & Utilization tab), then run: fetch_data.py utilization "Blue Book 2025-2026.pdf"
+    Needs pdftotext (poppler). Reads Part II-A, the Organizational Report: one block per school (org),
+    one row per building it uses, then a TOTAL row.
+
+    Writes utilization.json: {"K321": [util %, enrollment, capacity], ...}, keyed by borough letter +
+    school number (the DBN without its district). Utilization is enrollment over capacity across the
+    school's buildings, leaving out buildings where the school has no students (an empty minischool
+    building would otherwise make a crowded school look half empty). Students in trailers (TCUs) count
+    toward enrollment but add no capacity, same as the report.
+    """
+    import re
+    import subprocess
+    text = subprocess.run(["pdftotext", "-layout", os.path.expanduser(path), "-"],
+                          check=True, capture_output=True, text=True).stdout
+    lines = text.split("\n")
+    start = next(i for i, l in enumerate(lines) if "A. ORGANIZATIONAL REPORT" in l)
+    end = next(i for i, l in enumerate(lines) if "B. BUILDING REPORT" in l)
+    year = re.search(r"(20\d\d)\s*[–-]\s*(20\d\d)\s+SCHOOL YEAR", text)
+    num = re.compile(r"(?<![\w.])\d{1,3}(?:,\d{3})*(?![\w.])")
+    cols, orgs, cur = None, {}, None
+    for l in lines[start:end]:
+        if l.startswith("Dist") and "Enroll" in l:  # column header: numbers are right-aligned under these
+            cols = {"e": l.index("Enroll") + 6, "c": l.index("Cap ") + 3}
+            continue
+        if not cols:
+            continue
+        vals = {}
+        for t in num.finditer(l):
+            for k, c in cols.items():
+                if abs(t.end() - c) <= 3:
+                    vals[k] = int(t.group().replace(",", ""))
+        if re.search(r"TOTAL\s+[\d,]", l):
+            continue
+        m = re.match(r"^\s{0,3}(\d{1,2})\s+([MKXQR]\d{3})\s{2,}\S", l)
+        if m:
+            cur = (m.group(2), m.group(1))  # a school can repeat under several districts (D75 programs)
+            orgs.setdefault(cur, []).append(vals)
+        elif cur and re.match(r"^\s{40,}[#*]?\s*[MKXQR]\d{3}\s", l):  # another building for the same school
+            orgs[cur].append(vals)
+    out = {}
+    for (org, _), rows in orgs.items():
+        e = sum(r.get("e") or 0 for r in rows)
+        c = sum(r.get("c") or 0 for r in rows if r.get("e"))
+        if c and (org not in out or e > out[org][1]):
+            out[org] = [round(100 * e / c), e, c]
+    print(f"  {len(out)} schools" + (f", {year.group(1)}-{year.group(2)}" if year else ""))
+    save("utilization.json", out)
+
+
 if __name__ == "__main__":
     args = sys.argv[1:]
     if args[:1] == ["zones"] and len(args) == 2:  # zones from downloaded files: fetch_data.py zones ~/Downloads
@@ -404,6 +460,10 @@ if __name__ == "__main__":
     if args[:1] == ["classsize"] and len(args) == 2:  # from a downloaded report
         print("-- classsize (from file)")
         fetch_class_size(args[1])
+        sys.exit()
+    if args[:1] == ["utilization"] and len(args) == 2:  # from the downloaded Blue Book PDF
+        print("-- utilization (from file)")
+        fetch_utilization(args[1])
         sys.exit()
     for name in args or list(STEPS):
         print(f"-- {name}")

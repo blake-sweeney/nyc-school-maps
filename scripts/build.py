@@ -205,6 +205,16 @@ def main(standalone_path=None):
                 all_zoned |= {x for f in d[key]["features"] for x in f["properties"]["dbns"]}
         d["CS"] = {k: {f: x for f, x in v.items() if f != "ptr"} for k, v in load("class_size.json").items() if k in all_zoned}
 
+    # Building use (optional): SCA Blue Book, keyed by borough + school number, so match on the DBN minus its district
+    if os.path.exists(os.path.join(DATA, "utilization.json")):
+        all_zoned = set(zoned)
+        for key in ("MS", "HS"):
+            if key in d:
+                all_zoned |= {x for f in d[key]["features"] for x in f["properties"]["dbns"]}
+        util = load("utilization.json")
+        d["U"] = {k: util[k[2:]] for k in sorted(all_zoned) if k[2:] in util}
+        print(f"building use: {len(d['U'])} of {len(all_zoned)} zoned schools")
+
     with open(os.path.join(ROOT, "src", "template.html"), encoding="utf-8") as f:
         template = f.read()
     template = template.replace("__UPDATED__", datetime.date.today().strftime("%b %Y"))
