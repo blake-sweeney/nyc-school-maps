@@ -6,6 +6,14 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
+## 1.5.0 (2026-10-07)
+
+### Added
+- Kindergarten admissions in the zone card: seats, applicants and accepted (offered a seat) for fall 2025, overall and split between the school's district and other districts. Counts the DOE hides for privacy show as "—". A note flags when seats went to families from other districts, which usually means every zoned family who applied got one. From the DOE's Local Law 72 reports (2023–2025 are kept in the data).
+
+### Changed
+- The zone priority note and the "Before you start" note now quote the DOE: most zoned schools make kindergarten offers to all students in the zone who apply on time, with a link to its kindergarten page.
+
 ## 1.4.0 (2026-10-07)
 
 ### Added

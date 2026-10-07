@@ -221,6 +221,12 @@ def main(standalone_path=None):
         d["PK"] = {k: pk[k] for k in sorted(zoned) if k in pk}
         print(f"pre-K: {sum(1 for v in d['PK'].values() if v[0])} of {len(zoned)} zoned elementary schools")
 
+    # Kindergarten admissions by year (optional): elementary zoned schools only
+    if os.path.exists(os.path.join(DATA, "k_admissions.json")):
+        ka = load("k_admissions.json")
+        d["KA"] = {k: ka[k] for k in sorted(zoned) if k in ka}
+        print(f"kindergarten admissions: {len(d['KA'])} of {len(zoned)} zoned elementary schools")
+
     with open(os.path.join(ROOT, "src", "template.html"), encoding="utf-8") as f:
         template = f.read()
     template = template.replace("__UPDATED__", datetime.date.today().strftime("%b %Y"))

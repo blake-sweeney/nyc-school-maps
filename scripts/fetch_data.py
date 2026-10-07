@@ -425,6 +425,90 @@ def fetch_prek(path):
     save("prek.json", out)
 
 
+def fetch_k_admissions(paths):
+    """Kindergarten seats, "true" applicants and offers per school, from the DOE's Local Law 72 files.
+
+    Pass one or more "fall-YYYY-admissions" Local Law 72 files (2023 on; 2022 has no true applicants):
+      fetch_data.py kadmissions ~/Downloads/fall-202*-admissions*.xlsx
+    True applicants are families who listed the school and didn't get an offer they ranked higher.
+    Besides the school total, splits families into the school's own district and all other districts.
+    Small counts are hidden by the DOE: "s" is 1-5 (2025 on; 0-5 before), "s^" is hidden so the others
+    can't be worked out by subtraction. Where a count is hidden we keep the range it must fall in,
+    tightened by subtracting from the school total.
+
+    Writes k_admissions.json: {dbn: {year: [seats, true applicants, offers lo, hi,
+      own-district true lo, hi, offers lo, hi, other-districts true lo, hi, offers lo, hi]}}
+    """
+    import re
+    out = {}
+    for path in paths:
+        path = os.path.expanduser(path)
+        m = re.search(r"fall-(20\d\d)", os.path.basename(path))
+        if not m:
+            print(f"  skip {path}: no fall-YYYY in the name")
+            continue
+        year = m.group(1)
+        rows = read_xlsx(path)["School"]
+        head = rows[0]
+        if "Kindergarten True Applicants" not in head:
+            print(f"  skip {year}: no true applicants")
+            continue
+        col = {k: head.index("Kindergarten " + k) for k in ("Seats Available", "True Applicants", "Offers")}
+
+        def rng(v, cap=None):
+            if v in (None, "N/A"):
+                return (0, 0)
+            if v == "s":
+                return (1 if year >= "2025" else 0, 5)
+            if v == "s^":
+                return (0, cap if cap is not None else 10 ** 6)
+            x = int(float(v))
+            return (x, x)
+
+        by = {}
+        for r in rows[1:]:
+            if len(r) > 3 and r[1]:
+                by.setdefault(r[1], []).append(r)
+        for dbn, rs in by.items():
+            cell = lambda r, k: r[col[k]] if len(r) > col[k] else None
+            tot = next((r for r in rs if r[3] == "All Students"), None)
+            if not tot:
+                continue
+            t = rng(cell(tot, "True Applicants"))
+            if t[0] != t[1] or not t[1]:
+                continue
+            o = rng(cell(tot, "Offers"), t[1])
+            seats = rng(cell(tot, "Seats Available"))[0]
+            home, ot, oo = None, [0, 0], [0, 0]
+            for r in rs:
+                if not r[3].startswith("Residential District"):
+                    continue
+                rd = r[3].split()[-1]
+                rt = rng(cell(r, "True Applicants"), t[1])
+                ro = rng(cell(r, "Offers"), rt[1])  # a hidden offer count is at most the families who wanted it
+                if rd.isdigit() and r[0] and int(rd) == int(r[0]):
+                    home = (rt, ro)
+                else:
+                    ot = [ot[0] + rt[0], ot[1] + rt[1]]
+                    oo = [oo[0] + ro[0], oo[1] + ro[1]]
+            rec = [seats, t[0], *o]
+            if home:
+                ht, ho = home
+                ht = (max(ht[0], t[0] - ot[1]), min(ht[1], t[1] - ot[0]))
+                ho = (max(ho[0], o[0] - oo[1], 0), max(ho[0], min(ho[1], o[1] - oo[0])))
+                xt = (max(ot[0], t[0] - ht[1]), min(ot[1], t[1] - ht[0]))
+                # lower bound only from the district rows themselves: offers can exceed "true" applicants
+                # (the DOE also places children who didn't list the school), so subtraction could overstate it
+                xo = (oo[0], max(oo[0], min(oo[1], o[1] - ho[0])))
+                rec += [*ht, *ho, *xt, *xo]
+                # a hidden school total is at least the district rows we can see
+                rec[2] = max(rec[2], ho[0] + xo[0])
+                rec[3] = max(rec[2], min(rec[3], ho[1] + xo[1]))
+            out.setdefault(dbn, {})[year] = rec
+        print(f"  {year}: {sum(1 for v in out.values() if year in v)} schools")
+    save("k_admissions.json", out)
+
+
 UTILIZATION_PAGE = "https://www.nycsca.org/Community/Capital-Plan-Reports-Data"
 
 
@@ -494,6 +578,10 @@ if __name__ == "__main__":
     if args[:1] == ["prek"] and len(args) == 2:  # from the downloaded Local Law 72 admissions file
         print("-- prek (from file)")
         fetch_prek(args[1])
+        sys.exit()
+    if args[:1] == ["kadmissions"] and len(args) >= 2:  # from downloaded Local Law 72 files, any number of years
+        print("-- kadmissions (from files)")
+        fetch_k_admissions(args[1:])
         sys.exit()
     if args[:1] == ["utilization"] and len(args) == 2:  # from the downloaded Blue Book PDF
         print("-- utilization (from file)")

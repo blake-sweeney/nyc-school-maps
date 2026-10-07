@@ -124,6 +124,17 @@ aside>*{flex-shrink:0}
 .scores b{font-family:var(--display)}
 .scores small,.facts small{grid-column:1/-1;color:var(--muted)}
 .facts small{font-size:.75rem;margin-top:2px}
+.adm{display:flex;flex-direction:column;gap:4px;font-size:.85rem}
+.adm-h{font-weight:700}.adm-h span{display:block;font-weight:400;color:var(--muted);font-size:.78rem}
+.adm table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.adm th,.adm td{padding:4px 0 4px 8px;text-align:right;font-weight:400;white-space:nowrap}
+.adm thead th{font-family:var(--display);font-weight:600;color:var(--muted);font-size:.75rem}
+.adm tbody th{text-align:left;padding-left:0;white-space:normal}
+.adm tbody tr{border-top:1px solid var(--line)}
+.adm td{font-family:var(--display);font-weight:600}
+.adm td:last-child{color:var(--muted);font-weight:500;min-width:3.2em}
+.adm .adm-note{margin:2px 0 0;font-size:.8rem}
+.adm-about{font-size:.75rem;color:var(--muted)}.adm-about summary{cursor:pointer}.adm-about p{margin:4px 0 0}
 .about{font-size:.8rem;color:var(--muted);display:flex;flex-direction:column;gap:6px;margin-top:auto}
 .about p{margin:0}
 .about a{color:var(--hl)}
@@ -279,7 +290,7 @@ aside>*{flex-shrink:0}
       <div class="note how" id="how">
         <p class="must">Always confirm an exact address on <a href="https://schoolsearch.schools.nyc/" target="_blank" rel="noopener">schoolsearch.schools.nyc</a> before applying.</p>
         <details><summary id="lvl-sum">A zone gives priority, not a guaranteed seat</summary>
-          <p id="lvl-note">Living in a zone gives your child top priority at that school, not a guaranteed seat. List your zoned school on your <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a> kindergarten application. You can rank it anywhere; your priority is the same. Each school’s “My Chances” section on MySchools shows which priority groups got offers last year.</p>
+          <p id="lvl-note">Living in a zone gives your child top priority at that school. <a href="https://www.schools.nyc.gov/enrollment/enroll-grade-by-grade/kindergarten" target="_blank" rel="noopener">Per the DOE</a>, most zoned schools make kindergarten offers to all students living in the zone who apply on time, but a few crowded schools can’t. List your zoned school on your <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a> kindergarten application. You can rank it anywhere; your priority is the same. Each school’s “My Chances” section on MySchools shows which priority groups got offers last year.</p>
         </details>
       </div>
     </header>
@@ -327,7 +338,7 @@ aside>*{flex-shrink:0}
     <li>This is an independent map made by a NYC parent. It isn’t made by, affiliated with or endorsed by NYC Public Schools.</li>
     <li>Zone lines come from the DOE’s Find a School map (__ZONES_DATE__). Ratings, test scores and programs come from the DOE’s 2024–25 School Quality Snapshot. Data can be out of date or have errors.</li>
     <li>Zones change from year to year, and blocks near a boundary are easy to misread on a map.</li>
-    <li>Living in a zone gives your child priority at that school, not a guaranteed seat. Applications and offers go through <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a>.</li>
+    <li>Living in a zone gives your child priority at that school. <a href="https://www.schools.nyc.gov/enrollment/enroll-grade-by-grade/kindergarten" target="_blank" rel="noopener">Most zoned schools</a> make kindergarten offers to all students living in the zone who apply on time, but not every school can. Applications and offers go through <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a>.</li>
   </ul>
   <p class="must">Always confirm your exact address on <a href="https://schoolsearch.schools.nyc/" target="_blank" rel="noopener">schoolsearch.schools.nyc</a> before applying.</p>
   <details class="terms" id="intro-terms"><summary>Terms &amp; privacy</summary>
@@ -437,7 +448,7 @@ const S=Object.assign({},HSD?HSD.schools:{},MSD?MSD.schools:{},D.schools);
 const O=Object.assign({},HSD&&HSD.O||{});
 let level='es',F=LV.es.F,T=LV.es.T;
 const LEVEL_TXT={
-  es:{sum:'A zone gives priority, not a guaranteed seat',note:'Living in a zone gives your child top priority at that school, not a guaranteed seat. List your zoned school on your <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a> kindergarten application. You can rank it anywhere; your priority is the same. Each school’s “My Chances” section on MySchools shows which priority groups got offers last year.',badge:'Kindergarten zones · __ZONES_DATE__',h1:'NYC Elementary School Zones',sub:n=>n+' zones from the NYC Department of Education. Click any block, or search an address, to see its zoned school.',grades:'3–5',avg:'NYC elementary schools average ELA 58%, Math 60%',miss:'That point is outside every elementary zone. Check the coordinates, or it may be in a park or outside NYC.',noZone:'No zoned elementary school'},
+  es:{sum:'A zone gives priority, not a guaranteed seat',note:'Living in a zone gives your child top priority at that school. <a href="https://www.schools.nyc.gov/enrollment/enroll-grade-by-grade/kindergarten" target="_blank" rel="noopener">Per the DOE</a>, most zoned schools make kindergarten offers to all students living in the zone who apply on time, but a few crowded schools can’t. List your zoned school on your <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a> kindergarten application. You can rank it anywhere; your priority is the same. Each school’s “My Chances” section on MySchools shows which priority groups got offers last year.',badge:'Kindergarten zones · __ZONES_DATE__',h1:'NYC Elementary School Zones',sub:n=>n+' zones from the NYC Department of Education. Click any block, or search an address, to see its zoned school.',grades:'3–5',avg:'NYC elementary schools average ELA 58%, Math 60%',miss:'That point is outside every elementary zone. Check the coordinates, or it may be in a park or outside NYC.',noZone:'No zoned elementary school'},
   hs:{sum:'Most of NYC has no zoned high school',badge:'High school zones · __ZONES_DATE__',h1:'NYC Zoned High Schools',sub:n=>n+' high schools give priority to students who live in their zone. Click any block to see its zoned high school.',grades:'9–12',avg:'',miss:'That point isn’t in a high school zone. Most of the city has no zoned high school; students apply citywide through MySchools.',noZone:'No zoned high school',
       note:'Most of NYC has no zoned high school. Every 8th grader applies through <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a>. Living in one of these zones gives you priority, or a guaranteed seat, at that school’s zoned program, but only if you list it on your application.'},
   ms:{sum:'Most districts don’t zone middle schools',note:'Most districts don’t zone middle schools. In the uncolored areas, students apply to middle schools through <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a>. Even in zoned districts, many students also apply to other programs.',badge:'Middle school zones · __ZONES_DATE__',h1:'NYC Middle School Zones',sub:n=>'Zones for '+n+' middle schools, in the districts that have them. Click any block to see its zoned school.',grades:'6–8',avg:'NYC middle schools average ELA 55%, Math 53%',miss:'That point isn’t in a zoned middle school area. It may be in a district without zoned middle schools, a park, or outside NYC.',noZone:'No zoned middle school'}};
@@ -481,6 +492,21 @@ const isProg=m=>m==='gt'||m==='dl';
 const U=D.U||{};
 // pre-K and 3-K (Local Law 72 report, fall 2025 admissions): [pre-K seats, applicants, 3-K seats, applicants]; null = no program
 const PK=D.PK||{};
+// kindergarten admissions (Local Law 72 reports): {year: [seats, true applicants, offers lo, hi,
+//   own district applicants lo, hi, offers lo, hi, other districts applicants lo, hi, offers lo, hi]}; ranges where the DOE hid small counts
+const KA=D.KA||{};
+function admHtml(d){const k=KA[d];if(!k)return '';const y=Object.keys(k).sort().pop();const r=k[y];if(!r)return '';
+  const dist=+d.slice(0,2),fine=(a,b,t)=>b-a<=Math.max(4,.08*t);
+  // one row: accepted, applicants, share; a hidden count we can't pin to within a few shows as a dash
+  const row=(lab,o0,o1,t0,t1)=>{const ok=t1!=null&&fine(o0,o1,t1)&&fine(t0,t1,t1),ex=o0===o1&&t0===t1,
+      o=Math.round((o0+o1)/2),t=Math.round((t0+t1)/2),a=ex?'':'~';
+    return '<tr><th>'+lab+'</th>'+(ok?'<td>'+(o0===o1?'':'~')+o+'</td><td>'+(t0===t1?'':'~')+t+'</td><td>'+(!t?'':o>=t?'all':a+Math.round(100*o/t)+'%')+'</td>':'<td>—</td><td>'+(t0===t1?t:'—')+'</td><td></td>')+'</tr>'};
+  const hasD=r.length>4;
+  let h='<div class="adm"><div class="adm-h">Kindergarten admissions, fall '+y+'<span>'+r[0]+' seats</span></div><table><thead><tr><th></th><th>Accepted</th><th>Applicants</th><th></th></tr></thead><tbody>'+
+    row('All families',r[2],r[3],r[1],r[1])+
+    (hasD?row('District '+dist,r[6],r[7],r[4],r[5])+row('Other districts',r[10],r[11],r[8],r[9]):'')+'</tbody></table>';
+  if(hasD&&r[10]>0)h+='<p class="adm-note">Some seats went to families from other districts, which usually means every zoned family who applied got one.</p>';
+  return h+'<details class="adm-about"><summary>About this data</summary><p>Applicants are families who listed the school and didn’t get a choice they ranked higher. Accepted means offered a seat. Accepted can top applicants when the DOE places a child who didn’t list the school there, often at their zoned school. District '+dist+' mixes zoned and non-zoned families. “—” means the DOE hid the count for privacy. Source: <a href="https://infohub.nyced.org/reports/government-reports" target="_blank" rel="noopener">DOE Local Law 72 reports</a>.</p></details></div>'}
 const UTIL_BINS=[[69.5,'#fde0c5'],[89.5,'#f8b98b'],[99.5,'#ee8a50'],[109.5,'#d4582a'],[Infinity,'#a32f12']];
 const utilColor=v=>UTIL_BINS.find(b=>v<b[0])[1];
 function zoneUtil(dbns){let e=0,c=0;for(const d of dbns){const u=U[d];if(u){e+=u[1];c+=u[2]}}return c?100*e/c:null}
@@ -710,7 +736,7 @@ function select(l,fromClick){
   if(p.dbns.length>1)h+='<div class="kind">'+kindText(p)+'</div>';
   if(!p.dbns.length){h+='<div class="school"><span class="nm">'+LEVEL_TXT[level].noZone+'</span></div>';if(level==='ms'&&/District/.test(p.remarks||''))h+='<div class="note">Students here apply to middle schools through <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a>.</div>';if(level==='hs')h+='<div class="note">Students here apply to high schools citywide through <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a>.</div>';}
   else{h+=p.dbns.map(d=>{const s=S[d],n=X[d]&&X[d][0]!=null?X[d][0].toLocaleString()+' students':'',gr=s&&s.g?'Grades '+esc(grades(s.g,d)):'';
-  return '<div class="school"><span class="nm">'+esc(short(d))+' <span class="dbn">('+esc(d)+')</span></span>'+addrHtml(d)+(gr||n?'<span class="meta">'+[gr,n].filter(Boolean).join(' · ')+'</span>':'')+tagsHtml(d)+(level==='hs'?zonedHtml(d):'')+'<hr class="sep">'+rateHtml(d)+'<hr class="sep">'+scoreHtml(d)+'<hr class="sep">'+factsHtml(d)+'<hr class="sep">'+'<div class="links"><a href="'+mySchoolsUrl(d)+'" target="_blank" rel="noopener"><b>MySchools: apply &amp; see your chances ↗</b></a><a href="https://www.schools.nyc.gov/schools/'+esc(d.slice(2))+'" target="_blank" rel="noopener">School website ↗</a></div></div>'}).join('');}
+  return '<div class="school"><span class="nm">'+esc(short(d))+' <span class="dbn">('+esc(d)+')</span></span>'+addrHtml(d)+(gr||n?'<span class="meta">'+[gr,n].filter(Boolean).join(' · ')+'</span>':'')+tagsHtml(d)+(level==='hs'?zonedHtml(d):'')+'<hr class="sep">'+rateHtml(d)+'<hr class="sep">'+scoreHtml(d)+'<hr class="sep">'+factsHtml(d)+(level==='es'&&KA[d]?'<hr class="sep">'+admHtml(d):'')+'<hr class="sep">'+'<div class="links"><a href="'+mySchoolsUrl(d)+'" target="_blank" rel="noopener"><b>MySchools: apply &amp; see your chances ↗</b></a><a href="https://www.schools.nyc.gov/schools/'+esc(d.slice(2))+'" target="_blank" rel="noopener">School website ↗</a></div></div>'}).join('');}
   if(p.remarks)h+='<div class="note">'+esc(p.remarks)+'</div>';
 
   if(p.dbns.length)h+='<a class="confirm" href="https://schoolsearch.schools.nyc/" target="_blank" rel="noopener">Confirm your exact address on schoolsearch.schools.nyc ↗</a>';
