@@ -301,13 +301,109 @@ def fetch_streets():
     save("local_streets.json", process_local(raw))
 
 
-STEPS = {"zones": fetch_zones, "tests": fetch_tests, "snapshot": fetch_snapshot, "streets": fetch_streets}
+CLASS_SIZE_URL = ("https://infohub.nyced.org/docs/default-source/default-document-library/"
+                  "february-2025-26-class-size---school.xlsx")  # DOE class size report, school level
+
+
+def read_xlsx(path):
+    """Minimal .xlsx reader (standard library only): {sheet name: [rows of cell values]}."""
+    import zipfile
+    import xml.etree.ElementTree as ET
+    ns = {"m": "http://schemas.openxmlformats.org/spreadsheetml/2006/main",
+          "r": "http://schemas.openxmlformats.org/officeDocument/2006/relationships"}
+    z = zipfile.ZipFile(path)
+    strings = []
+    if "xl/sharedStrings.xml" in z.namelist():
+        for si in ET.fromstring(z.read("xl/sharedStrings.xml")).findall("m:si", ns):
+            strings.append("".join(x.text or "" for x in si.iter(f"{{{ns['m']}}}t")))
+    rels = {r.get("Id"): r.get("Target") for r in ET.fromstring(z.read("xl/_rels/workbook.xml.rels"))}
+    out = {}
+    for sh in ET.fromstring(z.read("xl/workbook.xml")).find("m:sheets", ns):
+        target = rels[sh.get(f"{{{ns['r']}}}id")].lstrip("/")
+        target = target if target.startswith("xl/") else "xl/" + target
+        rows = []
+        for row in ET.fromstring(z.read(target)).iter(f"{{{ns['m']}}}row"):
+            vals = {}
+            for c in row.findall("m:c", ns):
+                ref = c.get("r")
+                col = 0
+                for ch in ref:
+                    if ch.isalpha():
+                        col = col * 26 + ord(ch.upper()) - 64
+                v = c.find("m:v", ns)
+                if c.get("t") == "s" and v is not None:
+                    val = strings[int(v.text)]
+                elif c.get("t") == "inlineStr":
+                    val = "".join(x.text or "" for x in c.iter(f"{{{ns['m']}}}t"))
+                else:
+                    val = v.text if v is not None else None
+                vals[col - 1] = val
+            rows.append([vals.get(i) for i in range(max(vals) + 1)] if vals else [])
+        out[sh.get("name")] = rows
+    return out
+
+
+def fetch_class_size(path=None):
+    """Average class size per school from the DOE class size report.
+    class_size.json: {dbn: {"k": kindergarten, "e": grades 1-5, "ms": core classes 6-8, "hs": core classes 9-12,
+    "ptr": students per teacher (all teachers)}}. Self-contained special-ed classes (12:1:1 etc.) are left out
+    of the averages. Pass a downloaded copy if the DOE site is blocked:  fetch_data.py classsize ~/Downloads/file.xlsx"""
+    if not path:
+        path = os.path.join(DATA, "_class_size.xlsx")
+        req = urllib.request.Request(CLASS_SIZE_URL, headers={"User-Agent": "nyc-school-maps"})
+        with urllib.request.urlopen(req, timeout=120) as r, open(path, "wb") as f:
+            f.write(r.read())
+    wb = read_xlsx(os.path.expanduser(path))
+    num = lambda v: float(v) if v not in (None, "") and str(v).replace(".", "", 1).isdigit() else None
+    acc = {}
+
+    def add(dbn, key, students, classes):
+        s, c = num(students), num(classes)
+        if s and c:
+            a = acc.setdefault(dbn, {}).setdefault(key, [0, 0])
+            a[0] += s
+            a[1] += c
+
+    rows = wb["K-5 Average"]
+    h = rows[0]
+    i = {k: h.index(k) for k in ("DBN", "Grade Level", "Program Type", "Number of Students", "Number of Classes")}
+    for r in rows[1:]:
+        if len(r) <= i["Number of Classes"] or str(r[i["Program Type"]] or "").startswith("SC"):
+            continue
+        g = r[i["Grade Level"]]
+        key = "k" if g == "K" else "e" if g in ("01", "02", "03", "04", "05") else None
+        if key:
+            add(r[i["DBN"]], key, r[i["Number of Students"]], r[i["Number of Classes"]])
+    rows = wb["MS HS Average"]
+    h = rows[0]
+    i = {k: h.index(k) for k in ("DBN", "Grade Band", "Program Type", "Department", "Number of Students", "Number of Classes")}
+    for r in rows[1:]:
+        if len(r) <= i["Number of Classes"] or r[i["Program Type"]] == "SC":
+            continue
+        if r[i["Department"]] not in ("English", "Math", "Mathematics", "Science", "Social Studies"):
+            continue
+        band = {"MS": "ms", "HS": "hs"}.get(r[i["Grade Band"]])
+        if band:
+            add(r[i["DBN"]], band, r[i["Number of Students"]], r[i["Number of Classes"]])
+    out = {d: {k: round(s / c, 1) for k, (s, c) in v.items()} for d, v in acc.items()}
+    for r in wb["PTR"][1:]:
+        if r and num(r[2]) is not None:
+            out.setdefault(r[0], {})["ptr"] = round(float(r[2]), 1)
+    save("class_size.json", out)
+
+
+STEPS = {"zones": fetch_zones, "tests": fetch_tests, "snapshot": fetch_snapshot, "streets": fetch_streets,
+         "classsize": fetch_class_size}
 
 if __name__ == "__main__":
     args = sys.argv[1:]
     if args[:1] == ["zones"] and len(args) == 2:  # zones from downloaded files: fetch_data.py zones ~/Downloads
         print("-- zones (from files)")
         fetch_zones(os.path.expanduser(args[1]))
+        sys.exit()
+    if args[:1] == ["classsize"] and len(args) == 2:  # from a downloaded report
+        print("-- classsize (from file)")
+        fetch_class_size(args[1])
         sys.exit()
     for name in args or list(STEPS):
         print(f"-- {name}")

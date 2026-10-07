@@ -40,7 +40,8 @@ button{font:inherit;font-family:var(--display);font-weight:600;font-size:.9rem;p
 .results{list-style:none;margin:6px 0 0;padding:0;border:1px solid var(--line);border-radius:6px;max-height:220px;overflow:auto}
 .results li button{all:unset;box-sizing:border-box;display:block;width:100%;padding:7px 10px;cursor:pointer;font-size:.88rem;border-bottom:1px solid var(--line)}
 .results li:last-child button{border-bottom:0}
-.results li button:hover,.results li button:focus-visible{background:var(--bg)}
+.results li button:hover,.results li button:focus-visible,.results li button.act{background:var(--bg)}
+.results li button.act{box-shadow:inset 3px 0 0 var(--hl)}
 .results small{color:var(--muted);font-family:var(--display)}
 .card{border:1px solid var(--line);border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:12px;background:var(--bg)}
 .card.empty{color:var(--muted);font-size:.9rem}
@@ -353,10 +354,11 @@ aside>*{flex-shrink:0}
         <input type="radio" name="metric" id="m-coll" value="coll" hidden><label for="m-coll" hidden>College &amp; career</label>
     </div>
     <div class="grp-h" id="g-programs">Programs</div>
-    <div class="seg three" data-g="programs" role="radiogroup" aria-labelledby="g-programs">
+    <div class="seg" data-g="programs" role="radiogroup" aria-labelledby="g-programs">
         <input type="radio" name="metric" id="m-gt" value="gt"><label for="m-gt" id="lbl-gt">G&amp;T</label>
         <input type="radio" name="metric" id="m-dl" value="dl"><label for="m-dl">Dual language</label>
         <input type="radio" name="metric" id="m-iep" value="iep"><label for="m-iep">Special ed</label>
+        <input type="radio" name="metric" id="m-cls" value="cls"><label for="m-cls">Class size</label>
     </div>
   </div>
   <div id="map-legend">
@@ -369,6 +371,10 @@ aside>*{flex-shrink:0}
       <div class="legend" id="leg-prog" hidden>
         <div class="sw"><span><i style="background:#2f6db5"></i><span id="prog-yes">Has the program</span></span><span><i class="off"></i>Doesn’t</span></div>
         <p class="hint" id="prog-hint"></p>
+      </div>
+      <div class="legend" id="leg-cls" hidden>
+        <div class="sw"><span><i style="background:#d6c6ee"></i>18 or fewer</span><span><i style="background:#b597dc"></i>19–21</span><span><i style="background:#9d7cc9"></i>22–24</span><span><i style="background:#6f4aa6"></i>25–27</span><span><i style="background:#45266e"></i>28 or more</span></div>
+        <p class="hint" id="cls-hint"></p>
       </div>
       <div class="legend" id="leg-iep" hidden>
         <div class="sw"><span><i style="background:#e0f1ee"></i>Under 17%</span><span><i style="background:#a6dbd0"></i>17–21%</span><span><i style="background:#5fb8a8"></i>22–26%</span><span><i style="background:#2a8a7e"></i>27–31%</span><span><i style="background:#0f5a54"></i>32% or more</span></div>
@@ -445,6 +451,12 @@ const RK={ip:2,ss:3,rf:4},RNAME={ip:'Instruction and Performance',ss:'Safety and
 const isRate=m=>m==='comp'||m in RK;
 // extra Snapshot fields: [enrollment, attendance %, teachers 3+ yrs %, principal yrs, dual language, ELL %, IEP %, economic need %, admissions, median distance mi]
 const X=D.X||{};
+// class size (DOE report, Feb 2025-26): k = kindergarten, e = grades 1-5, ms / hs = core classes, ptr = students per teacher
+const CS=D.CS||{};
+const CLS_BINS=[[18.5,'#d6c6ee'],[21.5,'#b597dc'],[24.5,'#9d7cc9'],[27.5,'#6f4aa6'],[Infinity,'#45266e']];
+const clsColor=v=>CLS_BINS.find(b=>v<b[0])[1];
+function schoolCls(d){const c=CS[d];if(!c)return null;return level==='es'?(c.k??c.e??null):level==='ms'?(c.ms??null):(c.hs??null)}
+function zoneCls(dbns){const v=dbns.map(schoolCls).filter(x=>x!=null);return v.length?v.reduce((a,b)=>a+b,0)/v.length:null}
 const ENR_BINS=[[250,'#dbe9f6'],[400,'#9ecae1'],[550,'#5a9fcf'],[750,'#2b6fae'],[Infinity,'#0d3d78']];
 function zoneEnroll(dbns){const v=dbns.map(d=>X[d]&&X[d][0]).filter(x=>x!=null);return v.length?v.reduce((a,b)=>a+b,0)/v.length:null}
 const enrColor=n=>ENR_BINS.find(b=>n<b[0])[1];
@@ -484,10 +496,10 @@ map.on('zoomend',()=>{baseFade();if(useBase&&typeof restyle==='function')restyle
 const renderer=L.canvas({padding:.3,tolerance:2});
 function short(d){const s=S[d];if(!s)return 'School '+d;return s.n}
 // one school's value under the current coloring (null if none)
-function schoolVal(d){if(isRate(metric))return zoneRating([d],metric);if(metric==='enr')return zoneEnroll([d]);if(metric==='iep')return zoneIep([d]);
+function schoolVal(d){if(metric==='cls')return schoolCls(d);if(isRate(metric))return zoneRating([d],metric);if(metric==='enr')return zoneEnroll([d]);if(metric==='iep')return zoneIep([d]);
   if(isOut(metric))return zoneOut([d],metric);if(isProg(metric))return zoneProg([d],metric)?1:0;if(metric==='none')return null;return pct([d],metric)}
 function fmtVal(v,short){if(v==null)return '–';if(isRate(metric))return metric==='comp'?v.toFixed(1):(short?String(Math.round(v)):RLAB[Math.round(v)]);
-  if(metric==='enr')return Math.round(v).toLocaleString();if(metric==='iep')return Math.round(v)+'%';if(isProg(metric))return v?'yes':'no';return Math.round(v)+'%'}
+  if(metric==='cls')return String(Math.round(v));if(metric==='enr')return Math.round(v).toLocaleString();if(metric==='iep')return Math.round(v)+'%';if(isProg(metric))return v?'yes':'no';return Math.round(v)+'%'}
 function tipHtml(f){const p=f.properties;if(!p.dbns.length)return esc(p.remarks||LEVEL_TXT[level].noZone);
   const val=d=>{const v=schoolVal(d);return v==null||isProg(metric)&&!v?'':' · '+(isProg(metric)?'has '+(metric==='gt'?'G&T':'dual language'):fmtVal(v))};
   return p.dbns.map(d=>esc(short(d))+val(d)).join('<br>')}
@@ -506,7 +518,7 @@ const isOut=m=>m in OUT;
 const outColor=(m,v)=>rampColor(v,OUT[m].stops);
 function zoneOut(dbns,m){const v=dbns.map(d=>O[d]&&O[d][OUT[m].i]).filter(x=>x!=null);return v.length?v.reduce((a,b)=>a+b,0)/v.length:null}
 function rgb(c){return 'rgb('+c.map(Math.round).join(',')+')'}
-function fillFor(f){const p=f.properties;if(!p.dbns.length)return css('--land');if(metric==='none')return css('--z'+p.c);if(metric==='enr'){const n=zoneEnroll(p.dbns);return n==null?css('--nodata'):enrColor(n)}if(isProg(metric)){const h=zoneProg(p.dbns,metric);return h==null?css('--nodata'):h?'#2f6db5':css('--off')}if(metric==='iep'){const v=zoneIep(p.dbns);return v==null?css('--nodata'):iepColor(v)}if(isOut(metric)){const v=zoneOut(p.dbns,metric);return v==null?css('--nodata'):outColor(metric,v)}if(isRate(metric)){const r=zoneRating(p.dbns,metric);return r==null?css('--nodata'):rateColor(r)}const v=pct(p.dbns,metric);return v==null?css('--nodata'):scoreColor(v)}
+function fillFor(f){const p=f.properties;if(!p.dbns.length)return css('--land');if(metric==='none')return css('--z'+p.c);if(metric==='cls'){const v=zoneCls(p.dbns);return v==null?css('--nodata'):clsColor(v)}if(metric==='enr'){const n=zoneEnroll(p.dbns);return n==null?css('--nodata'):enrColor(n)}if(isProg(metric)){const h=zoneProg(p.dbns,metric);return h==null?css('--nodata'):h?'#2f6db5':css('--off')}if(metric==='iep'){const v=zoneIep(p.dbns);return v==null?css('--nodata'):iepColor(v)}if(isOut(metric)){const v=zoneOut(p.dbns,metric);return v==null?css('--nodata'):outColor(metric,v)}if(isRate(metric)){const r=zoneRating(p.dbns,metric);return r==null?css('--nodata'):rateColor(r)}const v=pct(p.dbns,metric);return v==null?css('--nodata'):scoreColor(v)}
 function style(f,sel){const a=zoneAlpha();const empty=!f.properties.dbns.length;
   if(f.properties.dbns.length>1&&metric!=='none')return{renderer,stroke:false,fillColor:fillFor(f),fillOpacity:0};  // drawn as stripes
   return{renderer,stroke:false,fillColor:fillFor(f),fillOpacity:useBase&&empty?.15:sel?Math.min(a+.15,.95):a}}
@@ -643,9 +655,10 @@ function row(lbl,n,p){if(!n)return '';const v=100*p/n;return '<span>'+lbl+'</spa
 function chip(r){return r==null?'<span class="chip">n/a</span>':'<span class="chip"><i style="background:'+rateColor(r)+'"></i>'+(Number.isInteger(r)?RLAB[r]:r.toFixed(1)+' / 4')+'</span>'}
 function tagsHtml(d){const x=X[d];if(!x)return '';const tags=[];if(hasGT(d))tags.push('Gifted &amp; Talented');if(x[4])tags.push('Dual language: '+esc(x[4]));
   return tags.length?'<div class="tags">'+tags.map(s=>'<span class="tag">'+s+'</span>').join('')+'</div>':''}
-function factsHtml(d){const x=X[d];if(!x)return '';
+function factsHtml(d){const x=X[d]||[],c=CS[d]||{};if(!X[d]&&!CS[d])return '';
+  const cs=v=>v!=null?Math.round(v)+' students':null;
   const row=(k,v)=>v==null?'':'<span>'+k+'</span><b>'+v+'</b>';
-  return '<div class="facts">'+row('Attendance',x[1]!=null?x[1]+'%':null)+row('Teachers with 3+ years’ experience',x[2]!=null?x[2]+'%':null)+row('Principal’s years at school',x[3]!=null?(Math.round(x[3]*10)/10):null)+row('Students with IEPs (special ed)',x[6]!=null?x[6]+'%':null)+row('English language learners',x[5]!=null?x[5]+'%':null)+'</div>'}
+  return '<div class="facts">'+row('Attendance',x[1]!=null?x[1]+'%':null)+row('Teachers with 3+ years’ experience',x[2]!=null?x[2]+'%':null)+row('Principal’s years at school',x[3]!=null?(Math.round(x[3]*10)/10):null)+(level==='es'?row('Kindergarten class size',cs(c.k))+row('Grades 1–5 class size',cs(c.e)):row('Core class size',cs(level==='ms'?c.ms:c.hs)))+row('Students per teacher (all teachers)',c.ptr!=null?String(c.ptr):null)+row('Students with IEPs (special ed)',x[6]!=null?x[6]+'%':null)+row('English language learners',x[5]!=null?x[5]+'%':null)+'</div>'}
 // street address with a copy button (for maps apps and forms)
 function addrHtml(d){const s=S[d];if(!s||!s.a)return '';const full=title(s.a)+', '+(BORO[d[2]]||'')+', NY';
   return '<span class="addr">'+esc(title(s.a))+', '+esc(BORO[d[2]]||'')+'<button type="button" class="copy-addr" data-copy="'+esc(full)+'" aria-label="Copy address: '+esc(full)+'">Copy</button></span>'}
@@ -697,6 +710,8 @@ const q=document.getElementById('q'),res=document.getElementById('res');
 let idx=[];
 function buildIdx(){idx=byLayer.filter(l=>l.feature.properties.dbns.length).map(l=>{const p=l.feature.properties;const names=p.dbns.map(d=>(S[d]?S[d].n:'')+' '+d).join(' ');const nums=p.dbns.map(d=>{const k=+d.slice(3);return 'ps '+k+' is '+k+' ms '+k+' jhs '+k}).join(' ');return{l,nm:names.toLowerCase(),txt:(names+' '+nums+' '+(p.remarks||'')).toLowerCase()}})}
 buildIdx();
+q.addEventListener('keydown',e=>{if(e.key==='Escape'){res.hidden=true;return}if(listKeys(e,res))return;
+  if(e.key==='Enter'&&!res.hidden){const bs=listButtons(res);if(bs.length){e.preventDefault();bs[actIndex(res)].click()}}});
 q.addEventListener('input',()=>{const v=q.value.trim().toLowerCase();if(v.length<2){res.hidden=true;return}
   const toks=v.replace(/\b(j\.?h\.?s|p\.?s|i\.?s|m\.?s)\.?\s*(?=\d)/g,'ps ').split(/\s+/);
   // every word must match; exact school numbers and DBNs rank first, then whole words, then partial matches (39 inside 399)
@@ -712,7 +727,7 @@ q.addEventListener('input',()=>{const v=q.value.trim().toLowerCase();if(v.length
     .filter(Boolean).sort((x,y)=>y.s-x.s||x.i-y.i).map(x=>x.o)
     .filter((o,i,a)=>{const k=o.l.feature.properties.dbns.join();return a.findIndex(x=>x.l.feature.properties.dbns.join()===k)===i}).slice(0,30);  // a zone split into pieces shows once
   res.innerHTML=hits.length?hits.map((o,i)=>{const p=o.l.feature.properties;return '<li><button type="button" data-i="'+i+'">'+esc(p.dbns.map(short).join(' / '))+'<br><small>'+esc(p.dbns.join(', '))+' · '+esc(BORO[p.boro])+'</small></button></li>'}).join(''):'<li><button type="button" disabled>No matching zone</button></li>';
-  res.hidden=false;res.querySelectorAll('button[data-i]').forEach(b=>b.onclick=()=>{select(hits[+b.dataset.i].l,false);res.hidden=true});
+  res.hidden=false;res.querySelectorAll('button[data-i]').forEach(b=>b.onclick=()=>{select(hits[+b.dataset.i].l,false);res.hidden=true});setAct(res,0);
 });
 
 // coordinate check
@@ -729,6 +744,13 @@ function locate(a,b,label,keepView){lastPoint={a,b,label};llmsg.hidden=true;
   select(hit,true);if(!keepView)showLatLng([a,b],15)}
 const prettyAddr=s=>title(s.replace(/, USA$/,'').replace(/, NY$/,'')).replace(/\bNy\b/,'NY');
 let addrHits=[],addrTimer=null,addrSeq=0;
+// result lists: the highlighted row (first by default) is what Enter / Find picks; arrow keys move it
+function listButtons(ul){return [...ul.querySelectorAll('button[data-i]')]}
+function setAct(ul,i){const bs=listButtons(ul);bs.forEach((b,k)=>{b.classList.toggle('act',k===i);b.setAttribute('aria-selected',String(k===i))});if(bs[i])bs[i].scrollIntoView({block:'nearest'})}
+function actIndex(ul){return Math.max(0,listButtons(ul).findIndex(b=>b.classList.contains('act')))}
+function listKeys(e,ul){if(ul.hidden)return false;const bs=listButtons(ul);if(!bs.length)return false;
+  if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();const i=actIndex(ul)+(e.key==='ArrowDown'?1:-1);setAct(ul,(i+bs.length)%bs.length);return true}
+  return false}
 const normAddr=s=>s.toLowerCase().replace(/[.,]/g,' ').replace(/\s+/g,' ').trim();
 function tidyHits(q,hits){const seen=new Set();hits=hits.filter(h=>{const k=normAddr(h.label);if(seen.has(k))return false;seen.add(k);return true});
   // GeoSearch matches loosely ("220 W 93" also returns 2, 31, 69 W 93). Keep the typed house number when there is one.
@@ -738,22 +760,23 @@ async function geo(kind,text){const r=await fetch(GEO+kind+'?text='+encodeURICom
   return tidyHits(text,(j.features||[]).map(f=>({label:prettyAddr(f.properties.label||''),a:f.geometry.coordinates[1],b:f.geometry.coordinates[0]})))}
 function showAddr(hits){addrHits=hits;
   addrRes.innerHTML=hits.length?hits.slice(0,6).map((h,i)=>'<li><button type="button" data-i="'+i+'">'+esc(h.label)+'</button></li>').join(''):'<li><button type="button" disabled>No matching NYC address</button></li>';
-  addrRes.hidden=false;addrRes.querySelectorAll('button[data-i]').forEach(btn=>btn.onclick=()=>pickAddr(addrHits[+btn.dataset.i]))}
+  addrRes.hidden=false;addrRes.querySelectorAll('button[data-i]').forEach(btn=>btn.onclick=()=>pickAddr(addrHits[+btn.dataset.i]));setAct(addrRes,0)}
 function pickAddr(h){addrRes.hidden=true;llIn.value=h.label;markEngaged();locate(h.a,h.b,h.label)}
 const geoFail=()=>{addrRes.hidden=true;llmsg.textContent='Address lookup isn’t reachable right now. Try again in a moment, or find your school by name above.';llmsg.hidden=false};
 llIn.addEventListener('input',()=>{clearTimeout(addrTimer);const v=llIn.value.trim();
   if(v.length<4||/^-?\d+\.\d+\s*,/.test(v)||(lastPoint&&lastPoint.label&&normAddr(v)===normAddr(lastPoint.label))){addrRes.hidden=true;return}
   addrTimer=setTimeout(async()=>{const seq=++addrSeq;try{const hits=await geo('autocomplete',v);if(seq===addrSeq)showAddr(hits)}catch(e){if(seq===addrSeq)geoFail()}},250)});
-llIn.addEventListener('keydown',e=>{if(e.key==='Escape')addrRes.hidden=true});
-document.getElementById('llf').addEventListener('submit',async e=>{e.preventDefault();markEngaged();llmsg.hidden=true;clearTimeout(addrTimer);
+llIn.addEventListener('keydown',e=>{if(e.key==='Escape')addrRes.hidden=true;else listKeys(e,addrRes)});
+document.getElementById('llf').addEventListener('submit',async e=>{e.preventDefault();markEngaged();llmsg.hidden=true;clearTimeout(addrTimer);addrSeq++;
   const v=llIn.value.trim();if(!v)return;
+  if(!addrRes.hidden&&addrHits.length&&listButtons(addrRes).length){pickAddr(addrHits[actIndex(addrRes)]);return}
   const m=v.match(/^(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)$/);
   if(m){let a=+m[1],b=+m[2];if(a<0){[a,b]=[b,a]}addrRes.hidden=true;locate(a,b,null);return}
-  try{const hits=await geo('search',v);const exact=hits.find(h=>normAddr(h.label)===normAddr(v));if(exact)pickAddr(exact);else if(hits.length===1)pickAddr(hits[0]);else if(hits.length)showAddr(hits);else{addrRes.hidden=true;llmsg.textContent='We couldn’t find that address in NYC. Try adding the borough, like “Brooklyn”.';llmsg.hidden=false}}
+  try{const hits=await geo('search',v);const exact=hits.find(h=>normAddr(h.label)===normAddr(v));if(exact)pickAddr(exact);else if(hits.length)pickAddr(hits[0]);else{addrRes.hidden=true;llmsg.textContent='We couldn’t find that address in NYC. Try adding the borough, like “Brooklyn”.';llmsg.hidden=false}}
   catch(err){geoFail()}});
 
 
-const METRIC_NAME={comp:'Overall rating',ip:'Instruction rating',ss:'Safety rating',rf:'Families rating',both:'ELA + Math scores',ela:'ELA scores',math:'Math scores',grad:'Graduation rate',coll:'College & career',gt:'G&T programs',dl:'Dual language',iep:'Special ed (IEP share)'};
+const METRIC_NAME={cls:'Class size',comp:'Overall rating',ip:'Instruction rating',ss:'Safety rating',rf:'Families rating',both:'ELA + Math scores',ela:'ELA scores',math:'Math scores',grad:'Graduation rate',coll:'College & career',gt:'G&T programs',dl:'Dual language',iep:'Special ed (IEP share)'};
 function syncName(){const n=METRIC_NAME[metric]||'';['leg-title','color-name'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=n})}
 document.querySelectorAll('#search-sec [role=tab]').forEach(b=>b.addEventListener('click',()=>{const s=b.dataset.s;
   document.querySelectorAll('#search-sec [role=tab]').forEach(x=>x.setAttribute('aria-selected',String(x===b)));
@@ -765,6 +788,10 @@ function syncLegend(){syncName();const lo=document.getElementById('leg-out');lo.
     document.getElementById('out-bar').style.background='linear-gradient(90deg,'+rgb(s[0][1])+' 0%,'+rgb(s[0][1])+' '+pct(s[0][0])+','+rgb(s[1][1])+' '+pct(s[1][0])+','+rgb(s[2][1])+' '+pct(s[2][0])+','+rgb(s[2][1])+' 100%)';
     document.getElementById('out-ticks').innerHTML=o.ticks.map((v,i)=>'<span style="left:'+v+'%">'+v+(i===o.ticks.length-1?'%':'')+'</span>').join('');
     document.getElementById('out-hint').innerHTML=metric==='grad'?'Share of students who graduate within 4 years, from the 2024–25 School Quality Snapshot. NYC average: 81%. The scale is narrower than for test scores because most zoned high schools graduate 75–95% of students. <span class="nd"></span> No data.':'Share of graduates who enrolled in college or a career program within 6 months, from the 2024–25 School Quality Snapshot. <span class="nd"></span> No data.'}
+  document.getElementById('leg-cls').hidden=metric!=='cls';
+  if(metric==='cls'){document.getElementById('cls-hint').innerHTML=(level==='es'?'Average number of students in a kindergarten class':level==='ms'?'Average number of students in core classes (English, math, science, social studies), grades 6–8':'Average number of students in core classes (English, math, science, social studies), grades 9–12')+
+    ', from the DOE’s February 2025–26 class size report. Small special-education classes (like 12:1:1) are left out. NYC’s class size law is phasing in caps of 20 students in K–3, 23 in grades 4–8 and 25 in high school. <span class="nd"></span> No data.';
+    const gs=document.getElementById('grp-src');if(gs)gs.textContent='DOE class size report · Feb 2025–26'}
   document.getElementById('leg-rate').hidden=!isRate(metric);document.getElementById('leg-test').hidden=!['both','ela','math'].includes(metric);document.getElementById('leg-prog').hidden=!isProg(metric);document.getElementById('leg-iep').hidden=metric!=='iep';document.getElementById('prog-yes').textContent=metric==='gt'?'Has G&T':'Has dual language';document.getElementById('prog-hint').textContent=metric==='gt'?'District Gifted & Talented programs listed for the zoned school in the 2024–25 Snapshot (73 zoned schools). G&T seats aren’t assigned by zone: families apply separately, and admission rules have changed in recent years, so check MySchools for this year’s process.':'Dual-language programs at the zoned school (151 zoned schools), from the 2024–25 Snapshot. Click a zone to see the languages. Seats are usually by application, often with priority for zoned families.';
   document.getElementById('rate-hint').innerHTML=(metric==='comp'?'Overall is the average of the three ratings, so zones blend between colors (3.3 sits between yellow and teal). ':'DOE rating for '+RNAME[metric]+'. ')+'Ratings are the DOE’s own. Shared zones average their schools. <span class="nd"></span> No rating.'}
 syncLegend();
@@ -829,7 +856,7 @@ async function setLevel(lv){if(lv===level)return;if(!LV[lv]&&!(await loadLevel(l
   document.getElementById('test-hint').innerHTML='Share of students who met state standards (Level 3 or 4) on the New York State ELA and math tests, from the DOE’s 2024–25 School Quality Snapshot. Covers every tested grade at the school (grades 3–8). '+tx.avg+'. <span class="nd"></span> No test results.';
   // G&T is an elementary program; hide it for middle school
   const noGT=lv!=='es',gt=document.getElementById('m-gt');gt.hidden=noGT;document.getElementById('lbl-gt').hidden=noGT;
-  gt.closest('.seg').classList.toggle('two',noGT);gt.closest('.seg').classList.toggle('three',!noGT);
+  gt.closest('.seg').classList.toggle('three',noGT);
   if(noGT&&metric==='gt'){const r=document.getElementById('m-dl');r.checked=true;r.dispatchEvent(new Event('change'))}
   if(noGT&&lastPick.programs==='gt')lastPick.programs='dl';
   showGroup(curGroup);

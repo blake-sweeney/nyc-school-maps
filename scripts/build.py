@@ -188,6 +188,14 @@ def main(standalone_path=None):
         outcomes = load("hs_outcomes.json") if os.path.exists(os.path.join(DATA, "hs_outcomes.json")) else {}
         d["HS"] = {"schools": hs["schools"], "features": hs["features"], "O": outcomes}
 
+    # Class size (optional): keep only zoned schools at any level
+    if os.path.exists(os.path.join(DATA, "class_size.json")):
+        all_zoned = set(zoned)
+        for key in ("MS", "HS"):
+            if key in d:
+                all_zoned |= {x for f in d[key]["features"] for x in f["properties"]["dbns"]}
+        d["CS"] = {k: v for k, v in load("class_size.json").items() if k in all_zoned}
+
     with open(os.path.join(ROOT, "src", "template.html"), encoding="utf-8") as f:
         template = f.read()
     template = template.replace("__UPDATED__", datetime.date.today().strftime("%b %Y"))

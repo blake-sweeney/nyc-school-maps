@@ -6,6 +6,16 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
+## 1.2.0 (2026-10-07)
+
+### Added
+- Class size, from the DOE's February 2025–26 class size report:
+  - Each school's card shows kindergarten and grades 1–5 class sizes (or core class size for middle and high schools), plus students per teacher
+  - "Class size" is a new way to color the map, under Programs
+
+### Changed
+- Address and school search: Enter or Find now goes straight to the top suggestion (highlighted), and the arrow keys pick a different one. No need to click a suggestion first
+
 ## 1.1.2 (2026-10-07)
 
 ### Changed
