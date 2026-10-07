@@ -119,6 +119,15 @@ def head_tags():
         f'<meta name="description" content="{desc}">\n'
         f'<link rel="canonical" href="{url}">\n'
         '<link rel="icon" href="favicon.svg" type="image/svg+xml">\n'
+        # Home-screen app: opens full screen when added from Safari's Share menu or Chrome's Install
+        '<link rel="manifest" href="site.webmanifest">\n'
+        '<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">\n'
+        '<meta name="apple-mobile-web-app-capable" content="yes">\n'
+        '<meta name="mobile-web-app-capable" content="yes">\n'
+        '<meta name="apple-mobile-web-app-title" content="School Zones">\n'
+        '<meta name="apple-mobile-web-app-status-bar-style" content="default">\n'
+        '<meta name="theme-color" content="#f3f4f1" media="(prefers-color-scheme: light)">\n'
+        '<meta name="theme-color" content="#141917" media="(prefers-color-scheme: dark)">\n'
         '<meta property="og:type" content="website">\n'
         f'<meta property="og:site_name" content="{title}">\n'
         f'<meta property="og:title" content="{title}">\n'
@@ -194,7 +203,7 @@ def main(standalone_path=None):
         for key in ("MS", "HS"):
             if key in d:
                 all_zoned |= {x for f in d[key]["features"] for x in f["properties"]["dbns"]}
-        d["CS"] = {k: v for k, v in load("class_size.json").items() if k in all_zoned}
+        d["CS"] = {k: {f: x for f, x in v.items() if f != "ptr"} for k, v in load("class_size.json").items() if k in all_zoned}
 
     with open(os.path.join(ROOT, "src", "template.html"), encoding="utf-8") as f:
         template = f.read()

@@ -6,7 +6,7 @@ An interactive map of New York City's elementary (kindergarten), middle and high
 - **School Quality Snapshot (2024–25):** Instruction and Performance, Safety and School Climate, and Relationships with Families, each rated 1–4, plus an Overall average of the three
 - **State tests (2024–25 Snapshot):** share of students scoring proficient in ELA and Math (grades 3–5 for elementary, 6–8 for middle); high schools show 4-year graduation and college/career enrollment instead
 - **Programs:** gifted & talented, dual language and special education
-- **Class size:** average kindergarten, grades 1–5 and core-subject class sizes, and students per teacher, from the DOE's class size report
+- **Class size (zone card):** average kindergarten, grades 1–5 and core-subject class sizes, from the DOE's class size report
 - **Colors:** a red → orange → yellow → teal ramp, checked against common forms of color blindness (deuteranopia, protanopia)
 - **Streets:** a "Major streets" toggle (highways, main roads and truck routes) and an "All streets" toggle (every street, shown once you zoom in to street level), with names along the lines
 

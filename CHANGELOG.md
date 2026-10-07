@@ -10,9 +10,14 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 
 ### Added
 - Terms & privacy: a short section in the "Before you start" note, also opened from a new footer link.
+- Home-screen app: add the map to your phone's home screen (Safari: Share, then Add to Home Screen) and it opens full screen, without the browser toolbar.
 
 ### Changed
 - New link preview image, with the current zones and colors.
+
+### Removed
+- Class size as a "Color by" option. Class size reflects funding and enrollment more than school quality, so it now shows only in the zone card.
+- Students per teacher, which counts specialists and support staff and says little about class experience.
 
 ## 1.2.0 (2026-10-07)
 
