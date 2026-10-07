@@ -92,7 +92,7 @@ def main():
     reg = font_manager.FontProperties(family="DejaVu Sans")
     fig.text(0.05, 0.80, "ELEMENTARY · MIDDLE · HIGH SCHOOL ZONES", color=ACCENT, fontproperties=bold, fontsize=13)
     fig.text(0.05, 0.56, "NYC School\nZones", color=PANEL_FG, fontproperties=bold, fontsize=50, linespacing=1.0)
-    fig.text(0.05, 0.46, "Every school zone in the five\nboroughs, colored by DOE\nratings and state test scores.",
+    fig.text(0.05, 0.46, "Every school zone in the five\nboroughs, with DOE ratings,\ntest scores and class sizes.",
              color=MUTED, fontproperties=reg, fontsize=17, linespacing=1.35, va="top")
     fig.text(0.05, 0.08, "nycschoolzones.com", color=PANEL_FG, fontproperties=bold, fontsize=18)
 
