@@ -6,6 +6,11 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
+## 1.1.2 (2026-10-07)
+
+### Changed
+- Data sources now thank schoolzones.nyc for pointing the way to the DOE's current zone data
+
 ## 1.1.1 (2026-10-07)
 
 ### Removed
