@@ -6,6 +6,16 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
+## 1.6.0 (2026-10-07)
+
+### Added
+- Non-zoned elementary schools: 116 schools with no zone (they give priority by district) show as small diamonds on the map, colored like the zones. Click one for its full card: ratings, test scores, school facts, kindergarten admissions, and who gets priority. A "Show non-zoned schools" checkbox in the Color by panel hides them.
+- Zone cards list the non-zoned schools that give that district priority, with last year's kindergarten seats and applicants.
+- The five citywide Gifted & Talented schools (Anderson, NEST+m, TAG Young Scholars, Brooklyn School of Inquiry, The 30th Avenue School) show as stars. Their cards explain that seats are open to children found eligible for G&T citywide and link to the DOE's G&T page. They aren't listed as district options.
+- Map layers: a layers button (under the zoom buttons; in the top bar on phones) turns zones, school district lines, non-zoned schools, citywide G&T schools and street & place names on and off. Choices are remembered in your browser.
+- School district lines: bold district boundaries with large district numbers when zoomed out, from NYC Open Data. With zones turned off, districts get a soft fill in a few colors (no two neighbors alike). Zone labels and hover tips start with the district (e.g., "D15"), so it's clear when you cross into another district.
+- "Find a school" search includes non-zoned and citywide G&T schools, and links like #es-15K146 open them.
+
 ## 1.5.0 (2026-10-07)
 
 ### Added

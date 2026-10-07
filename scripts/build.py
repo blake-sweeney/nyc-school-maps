@@ -152,6 +152,28 @@ def goatcounter_tag():
             'async src="https://gc.zgo.at/count.js"></script>')
 
 
+def color_districts(dist):
+    """Give each district a color index (0-4) so no two neighbors match. Neighbors: districts with
+    boundary points within ~40 m of each other (the simplified outlines don't share exact vertices)."""
+    tol = 0.0004
+    cells = {}
+    for k, v in dist.items():
+        for r in v["r"]:
+            for x, y in r:
+                cells.setdefault((round(x / tol), round(y / tol)), set()).add(k)
+    nb = {k: set() for k in dist}
+    for (cx, cy), ks in cells.items():
+        near = set(ks)
+        for dx in (-1, 0, 1):
+            for dy in (-1, 0, 1):
+                near |= cells.get((cx + dx, cy + dy), set())
+        for k in ks:
+            nb[k] |= near - {k}
+    for k in sorted(dist, key=lambda k: -len(nb[k])):  # most-connected first
+        used = {dist[n].get("c") for n in nb[k]}
+        dist[k]["c"] = next(i for i in range(6) if i not in used)
+
+
 def load_tests(fallback_name):
     """State test results per school as [ELA tested, ELA proficient, Math tested, Math proficient].
     Prefers the DOE School Quality Snapshot (data/snapshot_tests.json, newer); falls back to the
@@ -178,6 +200,38 @@ def main(standalone_path=None):
     d["T"] = {k: v for k, v in tests.items() if k in zoned and (v[0] or v[2])}
     d["R"] = load("snapshot_ratings.json")
     d["X"] = load("snapshot_extra.json") if os.path.exists(os.path.join(DATA, "snapshot_extra.json")) else {}
+
+    # Non-zoned elementary schools (optional): MySchools kindergarten directory + their Snapshot pages.
+    # NZ rows: [dbn, name, address, lat, lon, priority districts, district residents only (1/0),
+    #           programs [[code, dual language (1/0), seats, applicants, all seats filled (1/0/None)]], citywide G&T (1/0)]
+    nz_dbns = set()
+    if os.path.exists(os.path.join(DATA, "nonzoned_k.json")):
+        snap = load("nonzoned_snapshot.json") if os.path.exists(os.path.join(DATA, "nonzoned_snapshot.json")) else {}
+        d["NZ"] = []
+        # citywide G&T schools ride along, marked with a trailing 1 (no zone, open to eligible children citywide)
+        gt_rows = load("citywide_gt_k.json") if os.path.exists(os.path.join(DATA, "citywide_gt_k.json")) else []
+        for row in [r[:8] + [0] for r in load("nonzoned_k.json")] + [r[:8] + [1] for r in gt_rows]:
+            dbn = row[0]
+            if dbn in zoned or not row[3]:
+                continue
+            s = snap.get(dbn)
+            if s:
+                row = [dbn, row[1] if row[8] else (s["r"][0] or row[1]), s["r"][1] or row[2], *row[3:]]
+                d["R"][dbn] = s["r"]
+                d["X"][dbn] = s["x"]
+                t = s.get("t")
+                if t and (t[1] is not None or t[3] is not None):
+                    n_ela = t[0] or (20 if t[1] is not None else 0)
+                    n_mth = t[2] or (20 if t[3] is not None else 0)
+                    d["T"][dbn] = [int(n_ela) if t[1] is not None else 0, round(n_ela * t[1] / 100) if t[1] is not None else 0,
+                                   int(n_mth) if t[3] is not None else 0, round(n_mth * t[3] / 100) if t[3] is not None else 0]
+            d["NZ"].append(row)
+            nz_dbns.add(dbn)
+        print(f"non-zoned elementary schools: {sum(1 for x in d['NZ'] if not x[8])}, citywide G&T: {sum(1 for x in d['NZ'] if x[8])}, "
+              f"{sum(1 for x in d['NZ'] if x[0] in snap)} with Snapshot data")
+    es_all = zoned | nz_dbns
+    d["DIST"] = load("districts.json") if os.path.exists(os.path.join(DATA, "districts.json")) else {}
+    color_districts(d["DIST"])
     d["ST"] = load("streets.json") if os.path.exists(os.path.join(DATA, "streets.json")) else []
     d["LS"] = load("local_streets.json") if os.path.exists(os.path.join(DATA, "local_streets.json")) else {"n": [], "l": []}
 
@@ -199,7 +253,7 @@ def main(standalone_path=None):
 
     # Class size (optional): keep only zoned schools at any level
     if os.path.exists(os.path.join(DATA, "class_size.json")):
-        all_zoned = set(zoned)
+        all_zoned = set(es_all)
         for key in ("MS", "HS"):
             if key in d:
                 all_zoned |= {x for f in d[key]["features"] for x in f["properties"]["dbns"]}
@@ -207,7 +261,7 @@ def main(standalone_path=None):
 
     # Building use (optional): SCA Blue Book, keyed by borough + school number, so match on the DBN minus its district
     if os.path.exists(os.path.join(DATA, "utilization.json")):
-        all_zoned = set(zoned)
+        all_zoned = set(es_all)
         for key in ("MS", "HS"):
             if key in d:
                 all_zoned |= {x for f in d[key]["features"] for x in f["properties"]["dbns"]}
@@ -218,14 +272,14 @@ def main(standalone_path=None):
     # Pre-K and 3-K seats and applicants (optional): elementary zoned schools only
     if os.path.exists(os.path.join(DATA, "prek.json")):
         pk = load("prek.json")
-        d["PK"] = {k: pk[k] for k in sorted(zoned) if k in pk}
-        print(f"pre-K: {sum(1 for v in d['PK'].values() if v[0])} of {len(zoned)} zoned elementary schools")
+        d["PK"] = {k: pk[k] for k in sorted(es_all) if k in pk}
+        print(f"pre-K: {sum(1 for v in d['PK'].values() if v[0])} of {len(es_all)} elementary schools")
 
     # Kindergarten admissions by year (optional): elementary zoned schools only
     if os.path.exists(os.path.join(DATA, "k_admissions.json")):
         ka = load("k_admissions.json")
-        d["KA"] = {k: ka[k] for k in sorted(zoned) if k in ka}
-        print(f"kindergarten admissions: {len(d['KA'])} of {len(zoned)} zoned elementary schools")
+        d["KA"] = {k: ka[k] for k in sorted(es_all) if k in ka}
+        print(f"kindergarten admissions: {len(d['KA'])} of {len(es_all)} elementary schools")
 
     with open(os.path.join(ROOT, "src", "template.html"), encoding="utf-8") as f:
         template = f.read()

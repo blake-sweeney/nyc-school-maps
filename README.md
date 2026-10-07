@@ -7,6 +7,8 @@ An interactive map of New York City's elementary (kindergarten), middle and high
 - **State tests (2024–25 Snapshot):** share of students scoring proficient in ELA and Math (grades 3–5 for elementary, 6–8 for middle); high schools show 4-year graduation and college/career enrollment instead
 - **Programs:** gifted & talented, dual language and special education
 - **Crowding:** each school's enrollment as a share of its building capacity, from the SCA's Enrollment, Capacity & Utilization Report ("Blue Book")
+- **School district lines:** [School Districts](https://data.cityofnewyork.us/d/8ugf-3d8u), NYC Open Data (GeoJSON export; refresh with `python3 scripts/fetch_data.py districts <file.geojson>`)
+- **Non-zoned schools (elementary):** the MySchools kindergarten directory (`data/nonzoned_k.json`) and their Snapshot pages (`data/nonzoned_snapshot.json`); both read through a browser, since those sites block scripts here
 - **Kindergarten admissions (zone card):** seats, true applicants and offers for fall 2023–2025, from the DOE's Local Law 72 reports; refresh with `python3 scripts/fetch_data.py kadmissions <files...>`
 - **Pre-K and 3-K (zone card):** seats and applicants at each zoned elementary school, from the DOE's Local Law 72 admissions report
 - **Class size (zone card):** average kindergarten, grades 1–5 and core-subject class sizes, from the DOE's class size report

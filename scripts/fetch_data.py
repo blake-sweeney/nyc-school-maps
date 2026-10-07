@@ -509,6 +509,96 @@ def fetch_k_admissions(paths):
     save("k_admissions.json", out)
 
 
+def fetch_districts(path):
+    """School district boundaries, simplified for drawing as lines.
+
+    Download "School Districts" from NYC Open Data (https://data.cityofnewyork.us/d/8ugf-3d8u,
+    Export > GeoJSON), then run: fetch_data.py districts <file.geojson>
+    Writes districts.json: {district: {"r": [rings as [lon, lat] lists], "lp": [lat, lon] label point}}.
+    Rings are simplified to about 10 m and tiny islands dropped; holes aren't needed for outlines.
+    """
+    import math
+    with open(os.path.expanduser(path), encoding="utf-8") as f:
+        gj = json.load(f)
+
+    def dp(pts, tol):  # Douglas-Peucker
+        keep = [False] * len(pts)
+        keep[0] = keep[-1] = True
+        stack = [(0, len(pts) - 1)]
+        while stack:
+            a, b = stack.pop()
+            (ax, ay), (bx, by) = pts[a], pts[b]
+            dx, dy = bx - ax, by - ay
+            ll = dx * dx + dy * dy
+            md, mi = 0, -1
+            for i in range(a + 1, b):
+                px, py = pts[i]
+                t = 0 if not ll else max(0, min(1, ((px - ax) * dx + (py - ay) * dy) / ll))
+                d = math.hypot(px - ax - t * dx, py - ay - t * dy)
+                if d > md:
+                    md, mi = d, i
+            if md > tol:
+                keep[mi] = True
+                stack += [(a, mi), (mi, b)]
+        return [p for p, k in zip(pts, keep) if k]
+
+    def area(r):
+        return abs(sum(r[i - 1][0] * r[i][1] - r[i][0] * r[i - 1][1] for i in range(1, len(r)))) / 2
+
+    def inside(x, y, r):
+        c = False
+        for i in range(len(r)):
+            (x1, y1), (x2, y2) = r[i - 1], r[i]
+            if (y1 > y) != (y2 > y) and x < (x2 - x1) * (y - y1) / (y2 - y1) + x1:
+                c = not c
+        return c
+
+    def seg_dist(x, y, r):
+        best = 1e9
+        for i in range(1, len(r)):
+            (ax, ay), (bx, by) = r[i - 1], r[i]
+            dx, dy = bx - ax, by - ay
+            ll = dx * dx + dy * dy
+            t = 0 if not ll else max(0, min(1, ((x - ax) * dx + (y - ay) * dy) / ll))
+            best = min(best, math.hypot(x - ax - t * dx, y - ay - t * dy))
+        return best
+
+    def label_point(r):  # the point inside the ring farthest from its edge, on a coarse grid
+        xs, ys = [p[0] for p in r], [p[1] for p in r]
+        best, bp = -1, None
+        for i in range(1, 30):
+            for j in range(1, 30):
+                x = min(xs) + (max(xs) - min(xs)) * i / 30
+                y = min(ys) + (max(ys) - min(ys)) * j / 30
+                if inside(x, y, r):
+                    d = seg_dist(x, y, r)
+                    if d > best:
+                        best, bp = d, (x, y)
+        return bp
+
+    out = {}
+    for f in gj["features"]:
+        dist = str(int(float(f["properties"]["schooldist"])))
+        g = f["geometry"]
+        polys = g["coordinates"] if g["type"] == "MultiPolygon" else [g["coordinates"]]
+        rec = out.setdefault(dist, {"r": [], "big": None})
+        for poly in polys:
+            ring = poly[0]
+            a = area(ring)
+            if a < 2e-6:
+                continue
+            simp = [[round(x, 5), round(y, 5)] for x, y in dp(ring, 0.00012)]
+            if len(simp) >= 4:
+                rec["r"].append(simp)
+                if not rec["big"] or a > rec["big"][0]:
+                    rec["big"] = (a, simp)
+    for dist, rec in out.items():
+        x, y = label_point(rec.pop("big")[1])
+        rec["lp"] = [round(y, 5), round(x, 5)]
+    print(f"  {len(out)} districts, {sum(len(r) for v in out.values() for r in v['r'])} points")
+    save("districts.json", dict(sorted(out.items(), key=lambda kv: int(kv[0]))))
+
+
 UTILIZATION_PAGE = "https://www.nycsca.org/Community/Capital-Plan-Reports-Data"
 
 
@@ -582,6 +672,10 @@ if __name__ == "__main__":
     if args[:1] == ["kadmissions"] and len(args) >= 2:  # from downloaded Local Law 72 files, any number of years
         print("-- kadmissions (from files)")
         fetch_k_admissions(args[1:])
+        sys.exit()
+    if args[:1] == ["districts"] and len(args) == 2:  # from the downloaded NYC Open Data GeoJSON
+        print("-- districts (from file)")
+        fetch_districts(args[1])
         sys.exit()
     if args[:1] == ["utilization"] and len(args) == 2:  # from the downloaded Blue Book PDF
         print("-- utilization (from file)")
