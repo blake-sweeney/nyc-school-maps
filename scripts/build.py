@@ -215,6 +215,12 @@ def main(standalone_path=None):
         d["U"] = {k: util[k[2:]] for k in sorted(all_zoned) if k[2:] in util}
         print(f"building use: {len(d['U'])} of {len(all_zoned)} zoned schools")
 
+    # Pre-K and 3-K seats and applicants (optional): elementary zoned schools only
+    if os.path.exists(os.path.join(DATA, "prek.json")):
+        pk = load("prek.json")
+        d["PK"] = {k: pk[k] for k in sorted(zoned) if k in pk}
+        print(f"pre-K: {sum(1 for v in d['PK'].values() if v[0])} of {len(zoned)} zoned elementary schools")
+
     with open(os.path.join(ROOT, "src", "template.html"), encoding="utf-8") as f:
         template = f.read()
     template = template.replace("__UPDATED__", datetime.date.today().strftime("%b %Y"))

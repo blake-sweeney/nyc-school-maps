@@ -395,6 +395,36 @@ def fetch_class_size(path=None):
 STEPS = {"zones": fetch_zones, "tests": fetch_tests, "snapshot": fetch_snapshot, "streets": fetch_streets,
          "classsize": fetch_class_size}
 
+def fetch_prek(path):
+    """Pre-K and 3-K seats and applicants per school, from the DOE's Local Law 72 admissions report.
+
+    Download the latest "fall-YYYY-admissions" Local Law 72 file (School tab) from
+    https://infohub.nyced.org/reports/government-reports, then run: fetch_data.py prek <file.xlsx>
+    Writes prek.json: {dbn: [pre-K seats, pre-K applicants, 3-K seats, 3-K applicants]}, from the
+    "All Students" row; None where the school has no program ("N/A") or the count is suppressed ("s").
+    Applicants are everyone who listed the school anywhere on their application.
+    """
+    rows = read_xlsx(os.path.expanduser(path))["School"]
+    head = rows[0]
+    col = {k: head.index(k) for k in ("Pre-K Seats Available", "Pre-K Total Applicants",
+                                       "3K Seats Available", "3K Total Applicants")}
+
+    def num(r, k):
+        v = r[col[k]] if len(r) > col[k] else None
+        try:
+            return int(float(v))
+        except (TypeError, ValueError):
+            return None
+
+    out = {}
+    for r in rows[1:]:
+        if len(r) > 3 and r[3] == "All Students" and r[1]:
+            out[r[1]] = [num(r, "Pre-K Seats Available"), num(r, "Pre-K Total Applicants"),
+                         num(r, "3K Seats Available"), num(r, "3K Total Applicants")]
+    print(f"  {len(out)} schools, {sum(1 for v in out.values() if v[0])} with pre-K")
+    save("prek.json", out)
+
+
 UTILIZATION_PAGE = "https://www.nycsca.org/Community/Capital-Plan-Reports-Data"
 
 
@@ -460,6 +490,10 @@ if __name__ == "__main__":
     if args[:1] == ["classsize"] and len(args) == 2:  # from a downloaded report
         print("-- classsize (from file)")
         fetch_class_size(args[1])
+        sys.exit()
+    if args[:1] == ["prek"] and len(args) == 2:  # from the downloaded Local Law 72 admissions file
+        print("-- prek (from file)")
+        fetch_prek(args[1])
         sys.exit()
     if args[:1] == ["utilization"] and len(args) == 2:  # from the downloaded Blue Book PDF
         print("-- utilization (from file)")

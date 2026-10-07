@@ -122,7 +122,8 @@ aside>*{flex-shrink:0}
 .scores .bar{height:8px;background:var(--line);border-radius:4px;overflow:hidden;min-width:0}
 .scores .bar i{display:block;height:100%}
 .scores b{font-family:var(--display)}
-.scores small{grid-column:1/-1;color:var(--muted)}
+.scores small,.facts small{grid-column:1/-1;color:var(--muted)}
+.facts small{font-size:.75rem;margin-top:2px}
 .about{font-size:.8rem;color:var(--muted);display:flex;flex-direction:column;gap:6px;margin-top:auto}
 .about p{margin:0}
 .about a{color:var(--hl)}
@@ -478,6 +479,8 @@ function zoneIep(dbns){const v=dbns.map(d=>X[d]&&X[d][6]).filter(x=>x!=null);ret
 const isProg=m=>m==='gt'||m==='dl';
 // building use (SCA Blue Book 2025-26): [utilization %, enrollment, capacity] per school
 const U=D.U||{};
+// pre-K and 3-K (Local Law 72 report, fall 2025 admissions): [pre-K seats, applicants, 3-K seats, applicants]; null = no program
+const PK=D.PK||{};
 const UTIL_BINS=[[69.5,'#fde0c5'],[89.5,'#f8b98b'],[99.5,'#ee8a50'],[109.5,'#d4582a'],[Infinity,'#a32f12']];
 const utilColor=v=>UTIL_BINS.find(b=>v<b[0])[1];
 function zoneUtil(dbns){let e=0,c=0;for(const d of dbns){const u=U[d];if(u){e+=u[1];c+=u[2]}}return c?100*e/c:null}
@@ -664,16 +667,20 @@ async function copyLink(btn){const url=zoneUrl();let ok=false;
 function prefixOf(d){const n=(S[d]&&S[d].n||'').toUpperCase().replace(/\s+/g,'');const m=n.match(/^(J\.?H\.?S\.?|I\.?S\.?|M\.?S\.?|P\.?S\.?)/);return m?m[1].replace(/\./g,''):(level==='ms'?'MS':'PS')}
 function esc(s){return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 function title(s){return s?s.replace(/\s+/g,' ').toLowerCase().replace(/\b\w/g,c=>c.toUpperCase()):''}
-function grades(g){if(!g)return '';const a=g.split(',').map(x=>x==='PK'?'Pre-K':x==='0K'?'K':String(+x));return a.length>1?a[0]+'–'+a[a.length-1]:a[0]}
+function grades(g,d){if(!g)return '';let l=g.split(',').filter(x=>x!=='3K'&&x!=='SE');
+  // the grade list is from the 2019-20 location file; pre-K and 3-K come from this year's admissions report when we have it
+  const pk=d&&PK[d];if(pk){l=l.filter(x=>x!=='PK');if(pk[0])l.unshift('PK');if(pk[2])l.unshift('3K')}
+  const a=l.map(x=>x==='3K'?'3-K':x==='PK'?'Pre-K':x==='0K'?'K':String(+x));return a.length>1?a[0]+'–'+a[a.length-1]:a[0]}
 const card=document.getElementById('card');
 function row(lbl,n,p){if(!n)return '';const v=100*p/n;return '<span>'+lbl+'</span><span class="bar"><i style="width:'+v.toFixed(1)+'%;background:'+scoreColor(v)+'"></i></span><b>'+Math.round(v)+'%</b>'}
 function chip(r){return r==null?'<span class="chip">n/a</span>':'<span class="chip"><i style="background:'+rateColor(r)+'"></i>'+(Number.isInteger(r)?RLAB[r]:r.toFixed(1)+' / 4')+'</span>'}
 function tagsHtml(d){const x=X[d];if(!x)return '';const tags=[];if(hasGT(d))tags.push('Gifted &amp; Talented');if(x[4])tags.push('Dual language: '+esc(x[4]));
   return tags.length?'<div class="tags">'+tags.map(s=>'<span class="tag">'+s+'</span>').join('')+'</div>':''}
-function factsHtml(d){const x=X[d]||[],c=CS[d]||{},u=U[d];if(!X[d]&&!CS[d]&&!u)return '';
+function factsHtml(d){const x=X[d]||[],c=CS[d]||{},u=U[d],pk=level==='es'?PK[d]:null;if(!X[d]&&!CS[d]&&!u&&!pk)return '';
+  const seats=(n,a)=>n?n+' seats'+(a!=null?', '+a.toLocaleString()+' applied':''):'Not offered';
   const cs=v=>v!=null?Math.round(v)+' students':null;
   const row=(k,v)=>v==null?'':'<span>'+k+'</span><b>'+v+'</b>';
-  return '<div class="facts">'+row('Attendance',x[1]!=null?x[1]+'%':null)+row('Teachers with 3+ years’ experience',x[2]!=null?x[2]+'%':null)+row('Principal’s years at school',x[3]!=null?(Math.round(x[3]*10)/10):null)+(level==='es'?row('Kindergarten class size',cs(c.k))+row('Grades 1–5 class size',cs(c.e)):row('Core class size',cs(level==='ms'?c.ms:c.hs)))+row('Building use (how full)',u?u[0]+'% of capacity':null)+row('Students with IEPs (special ed)',x[6]!=null?x[6]+'%':null)+row('English language learners',x[5]!=null?x[5]+'%':null)+'</div>'}
+  return '<div class="facts">'+row('Attendance',x[1]!=null?x[1]+'%':null)+row('Teachers with 3+ years’ experience',x[2]!=null?x[2]+'%':null)+row('Principal’s years at school',x[3]!=null?(Math.round(x[3]*10)/10):null)+(level==='es'?row('Kindergarten class size',cs(c.k))+row('Grades 1–5 class size',cs(c.e)):row('Core class size',cs(level==='ms'?c.ms:c.hs)))+row('Building use (how full)',u?u[0]+'% of capacity':null)+(pk?(pk[0]||pk[2]?row('Pre-K',seats(pk[0],pk[1]))+row('3-K',seats(pk[2],pk[3])):row('Pre-K and 3-K','Not offered')):'')+row('Students with IEPs (special ed)',x[6]!=null?x[6]+'%':null)+row('English language learners',x[5]!=null?x[5]+'%':null)+(pk&&(pk[0]||pk[2])?'<small>Pre-K and 3-K: fall 2025 admissions. “Applied” counts every family who listed the school anywhere on their application.</small>':'')+'</div>'}
 // street address with a copy button (for maps apps and forms)
 function addrHtml(d){const s=S[d];if(!s||!s.a)return '';const full=title(s.a)+', '+(BORO[d[2]]||'')+', NY';
   return '<span class="addr">'+esc(title(s.a))+', '+esc(BORO[d[2]]||'')+'<button type="button" class="copy-addr" data-copy="'+esc(full)+'" aria-label="Copy address: '+esc(full)+'">Copy</button></span>'}
@@ -702,7 +709,7 @@ function select(l,fromClick){
   const p=l.feature.properties;let h='<div class="zt">'+(p.dist&&+p.dist?'District '+esc(p.dist)+' · ':'')+esc(BORO[p.boro]||'')+'</div>';
   if(p.dbns.length>1)h+='<div class="kind">'+kindText(p)+'</div>';
   if(!p.dbns.length){h+='<div class="school"><span class="nm">'+LEVEL_TXT[level].noZone+'</span></div>';if(level==='ms'&&/District/.test(p.remarks||''))h+='<div class="note">Students here apply to middle schools through <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a>.</div>';if(level==='hs')h+='<div class="note">Students here apply to high schools citywide through <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a>.</div>';}
-  else{h+=p.dbns.map(d=>{const s=S[d],n=X[d]&&X[d][0]!=null?X[d][0].toLocaleString()+' students':'',gr=s&&s.g?'Grades '+esc(grades(s.g)):'';
+  else{h+=p.dbns.map(d=>{const s=S[d],n=X[d]&&X[d][0]!=null?X[d][0].toLocaleString()+' students':'',gr=s&&s.g?'Grades '+esc(grades(s.g,d)):'';
   return '<div class="school"><span class="nm">'+esc(short(d))+' <span class="dbn">('+esc(d)+')</span></span>'+addrHtml(d)+(gr||n?'<span class="meta">'+[gr,n].filter(Boolean).join(' · ')+'</span>':'')+tagsHtml(d)+(level==='hs'?zonedHtml(d):'')+'<hr class="sep">'+rateHtml(d)+'<hr class="sep">'+scoreHtml(d)+'<hr class="sep">'+factsHtml(d)+'<hr class="sep">'+'<div class="links"><a href="'+mySchoolsUrl(d)+'" target="_blank" rel="noopener"><b>MySchools: apply &amp; see your chances ↗</b></a><a href="https://www.schools.nyc.gov/schools/'+esc(d.slice(2))+'" target="_blank" rel="noopener">School website ↗</a></div></div>'}).join('');}
   if(p.remarks)h+='<div class="note">'+esc(p.remarks)+'</div>';
 

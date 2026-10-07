@@ -6,6 +6,14 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
+## 1.4.0 (2026-10-07)
+
+### Added
+- Pre-K and 3-K: seats and applicants at each zoned elementary school, from the DOE's fall 2025 admissions report (Local Law 72), in the zone card.
+
+### Fixed
+- The grades line (like "Grades Pre-K–5") came from the 2019–20 school list. Pre-K and 3-K now come from this year's admissions report, and stray special-ed codes no longer show up.
+
 ## 1.3.0 (2026-10-07)
 
 ### Added
