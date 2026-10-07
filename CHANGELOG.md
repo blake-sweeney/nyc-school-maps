@@ -11,6 +11,9 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 ### Changed
 - Data sources now thank schoolzones.nyc for pointing the way to the DOE's current zone data
 
+### Fixed
+- Clicking or tapping a school's name on the map now selects its zone (the label used to block the click)
+
 ## 1.1.1 (2026-10-07)
 
 ### Removed

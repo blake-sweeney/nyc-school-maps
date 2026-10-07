@@ -167,6 +167,8 @@ aside>*{flex-shrink:0}
 .leaflet-zoom-anim .leaflet-zoom-hide{visibility:hidden}
 .leaflet-interactive{cursor:pointer}.leaflet-grab{cursor:grab}.leaflet-dragging .leaflet-grab{cursor:move}
 .leaflet-marker-icon{display:block}
+/* labels (school and street names) let clicks and hovers through to the zone underneath */
+.leaflet-marker-icon:not(.leaflet-interactive){pointer-events:none}
 .leaflet-bar{box-shadow:0 1px 4px rgba(0,0,0,.25);border-radius:6px;overflow:hidden}
 .leaflet-bar a{display:block;width:32px;height:32px;line-height:32px;text-align:center;text-decoration:none;background:var(--panel);color:var(--fg);font:700 18px/32px var(--display);border-bottom:1px solid var(--line)}
 .leaflet-bar a:last-child{border-bottom:0}
