@@ -198,6 +198,19 @@ aside>*{flex-shrink:0}
 .about .link-btn{all:unset;cursor:pointer;color:var(--hl);text-decoration:underline}
 .about details summary{cursor:pointer;color:var(--fg);font-family:var(--display);font-weight:600}
 .about details p{margin:6px 0 0}
+.sw i.stripes{background:repeating-linear-gradient(45deg,#1f8a84 0 3px,#e8742a 3px 6px)}
+#map-legend .multi-key{order:9}
+.kind{font-size:.85rem;border-left:3px solid var(--hl);padding:2px 0 2px 9px;line-height:1.4}
+.kind a{color:var(--hl)}
+.nyc-base{filter:grayscale(1) contrast(.85) brightness(1.06)}
+.nyc-labels{filter:grayscale(1)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .nyc-base{filter:grayscale(1) invert(1) brightness(.78) contrast(.9)}:root:not([data-theme="light"]) .nyc-labels{filter:grayscale(1) invert(1) brightness(1.15)}}
+:root[data-theme="dark"] .nyc-base{filter:grayscale(1) invert(1) brightness(.78) contrast(.9)}
+:root[data-theme="dark"] .nyc-labels{filter:grayscale(1) invert(1) brightness(1.15)}
+.leaflet-tile{visibility:hidden}.leaflet-tile-loaded{visibility:inherit}
+.leaflet-tile-container{pointer-events:none}
+.leaflet-control-attribution{font-size:10px;line-height:1.4;padding:1px 6px;margin:0!important;background:color-mix(in srgb,var(--panel) 75%,transparent);color:var(--muted);border-radius:4px 0 0 0}
+.leaflet-control-attribution a{color:inherit}
 .zl{font-family:var(--display);font-weight:700;font-size:11px;color:var(--fg);text-align:center;white-space:nowrap;text-shadow:0 0 3px var(--land),0 0 3px var(--land),0 0 2px var(--land);pointer-events:none;line-height:1}
 @media (max-width:760px){
   /* phones: full-screen map; search, level and color are buttons on the map; details slide up in a sheet */
@@ -371,6 +384,7 @@ aside>*{flex-shrink:0}
         <div class="lticks" id="out-ticks"></div>
         <p class="hint" id="out-hint"></p>
       </div>
+      <div class="legend multi-key"><div class="sw"><span><i class="stripes"></i>More than one school (a stripe for each)</span></div></div>
       <div class="legend" id="leg-test" hidden>
         <div class="lbar"></div>
         <div class="lticks"><span style="left:5%">5</span><span style="left:50%">50</span><span style="left:95%">95%</span></div>
@@ -454,8 +468,34 @@ const BORO={M:'Manhattan',K:'Brooklyn',Q:'Queens',X:'Bronx',R:'Staten Island'};
 const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const appEl=document.querySelector('.app'),aside=document.querySelector('aside');
 const map=L.map('map',{preferCanvas:true,zoomSnap:.5,minZoom:10,maxZoom:18,attributionControl:false}).setView([40.70,-73.95],11);
+// NYC's official basemap (City of New York, CC BY 4.0), shown in muted grays under see-through zone colors.
+// Its street and place labels draw above the zones. If the tiles don't load, the map falls back to its own streets.
+let useBase=true,tileOk=0,tileErr=0;
+map.createPane('nycLabels').style.zIndex=456;map.getPane('nycLabels').style.pointerEvents='none';
+const NYC_TILES='https://maps.nyc.gov/xyz/1.0.0/carto/';
+const baseTiles=L.tileLayer(NYC_TILES+'basemap/{z}/{x}/{y}.jpg',{minZoom:10,maxZoom:18,className:'nyc-base'}).addTo(map);
+const labelTiles=L.tileLayer(NYC_TILES+'label/{z}/{x}/{y}.png8',{pane:'nycLabels',minZoom:10,maxZoom:18,className:'nyc-labels'}).addTo(map);
+L.control.attribution({prefix:false,position:'bottomright'}).addAttribution('Basemap © <a href="https://maps.nyc.gov/tiles/" target="_blank" rel="noopener">City of New York</a> (CC BY 4.0)').addTo(map);
+baseTiles.on('tileload',()=>{tileOk++});
+baseTiles.on('tileerror',()=>{if(++tileErr>=6&&!tileOk)dropBase()});
+function dropBase(){if(!useBase)return;useBase=false;map.removeLayer(baseTiles);map.removeLayer(labelTiles);
+  document.querySelector('.leaflet-control-attribution')?.remove();if(typeof restyle==='function'){restyle();syncStreets()}}
+// the basemap fades in as you zoom in; zone colors get more see-through so streets and parks show
+function baseFade(){const z=map.getZoom();baseTiles.setOpacity(z<11.5?.45:z<12.5?.7:1);labelTiles.setOpacity(z<12?.75:1)}
+function isDark(){const th=document.documentElement.dataset.theme;return th==='dark'||(th!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)}
+// a bit more solid in dark mode, where see-through colors over the dark basemap look muddy
+function zoneAlpha(){if(!useBase)return .78;const z=map.getZoom();const a=z<11.5?.8:z<12.5?.7:z<13.5?.6:.5;return isDark()?Math.min(a+.15,.9):a}
+map.on('zoomend',()=>{baseFade();if(useBase&&typeof restyle==='function')restyle()});baseFade();
 const renderer=L.canvas({padding:.3,tolerance:2});
 function short(d){const s=S[d];if(!s)return 'School '+d;return s.n}
+// one school's value under the current coloring (null if none)
+function schoolVal(d){if(isRate(metric))return zoneRating([d],metric);if(metric==='enr')return zoneEnroll([d]);if(metric==='iep')return zoneIep([d]);
+  if(isOut(metric))return zoneOut([d],metric);if(isProg(metric))return zoneProg([d],metric)?1:0;if(metric==='none')return null;return pct([d],metric)}
+function fmtVal(v,short){if(v==null)return '–';if(isRate(metric))return metric==='comp'?v.toFixed(1):(short?String(Math.round(v)):RLAB[Math.round(v)]);
+  if(metric==='enr')return Math.round(v).toLocaleString();if(metric==='iep')return Math.round(v)+'%';if(isProg(metric))return v?'yes':'no';return Math.round(v)+'%'}
+function tipHtml(f){const p=f.properties;if(!p.dbns.length)return esc(p.remarks||LEVEL_TXT[level].noZone);
+  const val=d=>{const v=schoolVal(d);return v==null||isProg(metric)&&!v?'':' · '+(isProg(metric)?'has '+(metric==='gt'?'G&T':'dual language'):fmtVal(v))};
+  return p.dbns.map(d=>esc(short(d))+val(d)).join('<br>')}
 function psNum(f){const p=f.properties;return p.dbns.length?p.label||p.dbns[0].slice(3):''}
 // proficiency for a zone: pooled across its schools that have results
 function pct(dbns,m){let n=0,p=0;dbns.forEach(d=>{const v=T[d];if(!v)return;if(m!=='math'){n+=v[0];p+=v[1]}if(m!=='ela'){n+=v[2];p+=v[3]}});return n?100*p/n:null}
@@ -472,12 +512,27 @@ const outColor=(m,v)=>rampColor(v,OUT[m].stops);
 function zoneOut(dbns,m){const v=dbns.map(d=>O[d]&&O[d][OUT[m].i]).filter(x=>x!=null);return v.length?v.reduce((a,b)=>a+b,0)/v.length:null}
 function rgb(c){return 'rgb('+c.map(Math.round).join(',')+')'}
 function fillFor(f){const p=f.properties;if(!p.dbns.length)return css('--land');if(metric==='none')return css('--z'+p.c);if(metric==='enr'){const n=zoneEnroll(p.dbns);return n==null?css('--nodata'):enrColor(n)}if(isProg(metric)){const h=zoneProg(p.dbns,metric);return h==null?css('--nodata'):h?'#2f6db5':css('--off')}if(metric==='iep'){const v=zoneIep(p.dbns);return v==null?css('--nodata'):iepColor(v)}if(isOut(metric)){const v=zoneOut(p.dbns,metric);return v==null?css('--nodata'):outColor(metric,v)}if(isRate(metric)){const r=zoneRating(p.dbns,metric);return r==null?css('--nodata'):rateColor(r)}const v=pct(p.dbns,metric);return v==null?css('--nodata'):scoreColor(v)}
-function style(f,sel){const sc=metric!=='none';return{renderer,stroke:false,fillColor:fillFor(f),fillOpacity:sel?.95:(sc?.78:.85)}}
+function style(f,sel){const a=zoneAlpha();const empty=!f.properties.dbns.length;
+  if(f.properties.dbns.length>1&&metric!=='none')return{renderer,stroke:false,fillColor:fillFor(f),fillOpacity:0};  // drawn as stripes
+  return{renderer,stroke:false,fillColor:fillFor(f),fillOpacity:useBase&&empty?.15:sel?Math.min(a+.15,.95):a}}
 let selected=null,layer=null,byLayer=[],zoneLines=null;
+// zones with more than one school: diagonal stripes, one band in each school's color
+map.createPane('stripes').style.zIndex=401;map.getPane('stripes').style.pointerEvents='none';
+const stripeRend=L.svg({pane:'stripes',padding:.5}),stripeGroup=L.layerGroup().addTo(map);
+function buildStripes(){stripeGroup.clearLayers();if(metric==='none'||!byLayer.length)return;
+  const a=zoneAlpha();let defs=null,i=0;
+  byLayer.forEach(l=>{const p=l.feature.properties;if(p.dbns.length<2)return;
+    const cols=p.dbns.map(d=>fillFor({properties:Object.assign({},p,{dbns:[d]})}));
+    const g=L.geoJSON(l.feature,{style:{renderer:stripeRend,stroke:false,fill:true,fillColor:cols[0],fillOpacity:l===selected?Math.min(a+.15,.95):a,interactive:false}}).addTo(stripeGroup);
+    const svg=stripeRend._container;if(!svg)return;
+    if(!defs){defs=svg.querySelector('defs');if(!defs){defs=document.createElementNS('http://www.w3.org/2000/svg','defs');svg.insertBefore(defs,svg.firstChild)}defs.innerHTML=''}
+    const id='zs'+(i++),bw=6,W=bw*cols.length;
+    defs.insertAdjacentHTML('beforeend','<pattern id="'+id+'" patternUnits="userSpaceOnUse" width="'+W+'" height="'+W+'" patternTransform="rotate(45)">'+
+      cols.map((c,k)=>'<rect x="'+k*bw+'" y="0" width="'+bw+'" height="'+W+'" fill="'+c+'"/>').join('')+'</pattern>');
+    g.eachLayer(x=>{if(x._path)x._path.setAttribute('fill','url(#'+id+')')})})}
 function makeLayer(){return L.geoJSON(F,{style:f=>style(f,false),onEachFeature:(f,l)=>{
   l.on('click',()=>select(l,true));
-  const t=f.properties.dbns.length?f.properties.dbns.map(short).join(' / '):(f.properties.remarks||LEVEL_TXT[level].noZone);
-  l.bindTooltip(t,{sticky:true,direction:'top',offset:[0,-6]});
+  l.bindTooltip(()=>tipHtml(f),{sticky:true,direction:'top',offset:[0,-6]});
 }})}
 layer=makeLayer().addTo(map);layer.eachLayer(l=>byLayer.push(l));
 // zone boundaries: own pane above the streets, width scales with zoom
@@ -490,6 +545,13 @@ zoneLines=L.geoJSON(F,{style:lineStyle,interactive:false}).addTo(map);
 const restyleLines=()=>zoneLines.setStyle(lineStyle());
 map.on('zoomend',restyleLines);
 let selLine=null;
+// selected zone: a thick outline over a contrasting halo, so it stands out by width as well as color
+function selWidth(){const z=map.getZoom();return z<11?3.5:z<12.5?4.5:z<14?5.5:z<15.5?6.5:7.5}
+function selStyles(){const w=selWidth();return[{renderer:selRend,interactive:false,fill:false,color:css('--panel'),weight:w+3,opacity:.9,lineJoin:'round'},
+  {renderer:selRend,interactive:false,fill:false,color:css('--hl'),weight:w,opacity:1,lineJoin:'round'}]}
+function makeSel(feature){const [h,l]=selStyles();return L.featureGroup([L.geoJSON(feature,{style:h}),L.geoJSON(feature,{style:l})])}
+function restyleSel(){if(!selLine)return;const s=selStyles();selLine.getLayers().forEach((g,i)=>g.setStyle(s[i]))}
+map.on('zoomend',restyleSel);
 // phones: leave room for the collapsed sheet and color card at the bottom
 map.fitBounds(layer.getBounds(),matchMedia('(max-width:760px)').matches?{paddingTopLeft:[10,60],paddingBottomRight:[10,180]}:{padding:[10,10]});
 
@@ -517,7 +579,7 @@ function buildLocal(){localGroup.clearLayers();if(!LS)return;
   LS.forEach(s=>L.polyline(s.ll,{renderer:lRend,interactive:false,color:css('--road'),weight:.9,opacity:.5,lineCap:'round',lineJoin:'round'}).addTo(localGroup))}
 // street mode: 'all' = every street + major, 'major' = major only, 'none' = hidden
 let streetMode='all';
-const streetBox={get checked(){return streetMode!=='none'}},allBox={get checked(){return streetMode==='all'}};
+const streetBox={get checked(){return streetMode!=='none'&&!useBase}},allBox={get checked(){return streetMode==='all'&&!useBase}};
 function syncStreets(){const z=map.getZoom(),on=streetBox.checked,all=allBox.checked;
   [[1,0],[2,11.5],[3,13]].forEach(([tr,minz])=>{const g=tierGroups[tr],show=on&&z>=minz;if(show&&!map.hasLayer(g))g.addTo(map);if(!show&&map.hasLayer(g))map.removeLayer(g)});
   const showLocal=all&&z>=LOCAL_MIN_Z;
@@ -553,8 +615,14 @@ map.on('zoomend',sizeDots);sizeDots();
 const labels=L.layerGroup().addTo(map);
 function drawLabels(){labels.clearLayers();const z=map.getZoom();if(z<13)return;const b=map.getBounds().pad(.1);
   byLayer.forEach(l=>{const p=l.feature.properties;if(!p.dbns.length)return;if(z<14&&p.ar<1.2)return;const ll=L.latLng(p.lp);if(!b.contains(ll))return;
-    let txt=level==='hs'?((S[p.dbns[0]]&&S[p.dbns[0]].n)||p.dbns[0]).replace(/\s*High\s*School.*$/i,'').replace(/\s*Campus$/i,''):prefixOf(p.dbns[0])+' '+(+p.dbns[0].slice(3))+(p.dbns.length>1?' +':'');
-    if(isRate(metric)){const r=zoneRating(p.dbns,metric);if(r!=null)txt+=' · '+(metric==='comp'?r.toFixed(1):RLAB[Math.round(r)])}else if(metric==='enr'){const n=zoneEnroll(p.dbns);if(n!=null)txt+=' · '+Math.round(n).toLocaleString()}else if(isProg(metric)){if(!zoneProg(p.dbns,metric))txt=''}else if(metric==='iep'){const v=zoneIep(p.dbns);if(v!=null)txt+=' · '+Math.round(v)+'% IEP'}else if(isOut(metric)){const v=zoneOut(p.dbns,metric);if(v!=null)txt+=' · '+Math.round(v)+'%'}else if(metric!=='none'){const v=pct(p.dbns,metric);if(v!=null)txt+=' · '+Math.round(v)+'%'}
+    const n=p.dbns.length,d0=p.dbns[0];
+    let txt=level==='hs'?((S[d0]&&S[d0].n)||d0).replace(/\s*High\s*School.*$/i,'').replace(/\s*Campus$/i,'')
+      :n===1?prefixOf(d0)+' '+(+d0.slice(3)):n<=3?prefixOf(d0)+' '+p.dbns.map(d=>+d.slice(3)).join(' / '):n+' schools';
+    if(isProg(metric)){if(!p.dbns.some(d=>schoolVal(d)))txt=''}
+    else if(metric!=='none'){const vs=p.dbns.map(schoolVal);
+      if(n===1){if(vs[0]!=null)txt+=' · '+fmtVal(vs[0])}
+      else if(n<=3){if(vs.some(v=>v!=null))txt+=' · '+vs.map(v=>fmtVal(v,true)).join(' / ')}
+      else{const ok=vs.filter(v=>v!=null);if(ok.length){const lo=Math.min(...ok),hi=Math.max(...ok);txt+=' · '+(lo===hi?fmtVal(lo):fmtVal(lo,true)+'–'+fmtVal(hi,true))}}}
     L.marker(ll,{interactive:false,icon:L.divIcon({className:'',html:'<div class="zl">'+txt+'</div>',iconSize:[60,12],iconAnchor:[30,6]})}).addTo(labels)})}
 map.on('zoomend moveend',drawLabels);
 
@@ -595,17 +663,26 @@ function zonedHtml(d){const a=X[d]&&X[d][8]||'';if(/Zoned Guarantee/i.test(a))re
   if(/Zoned Priority/i.test(a))return '<div class="tags"><span class="tag">Zoned priority</span></div><span class="meta">Students in this zone who apply get priority for the zoned program, but a seat isn’t guaranteed.</span>';return ''}
 function scoreHtml(d){if(level==='hs')return outHtml(d);const g=LEVEL_TXT[level].grades,v=T[d];if(!v)return '<span class="meta">No 2024–25 state test results'+(level==='es'?' (K–2 or newer school)':' (newer school)')+'.</span>';
   const n=Math.max(v[0],v[2]);return '<div class="scores">'+row('ELA',v[0],v[1])+row('Math',v[2],v[3])+'<small>2024–25 School Quality Snapshot · '+n+' test takers'+(n<60?' · small group, read with care':'')+'</small></div>'}
+// how a zone with several schools works, from the DOE's note
+function zoneKind(p){const r=p.remarks||'';if(/zoned by address/i.test(r))return 'address';
+  if(/grades?\s*K\s*-\s*[12]\b.*zoned|zoned to.*grades?|grades?\s*\d\s*-\s*\d\s*(are|is)?\s*zoned/i.test(r)&&!/^shared zone/i.test(r))return 'grade';
+  if(/\(grades?\s*K\s*-\s*[12]\)/i.test(r)&&/\(grades?\s*[2-6]\s*-\s*\d\)/i.test(r))return 'grade';return 'shared'}
+function kindText(p){const n=p.dbns.length,k=zoneKind(p);
+  if(k==='address')return '<b>Zoned by address:</b> your exact address decides which of these '+n+' schools. Confirm it on <a href="https://schoolsearch.schools.nyc/" target="_blank" rel="noopener">schoolsearch.schools.nyc</a>.';
+  if(k==='grade')return '<b>Split by grade:</b> which school depends on your child’s grade. See the note below.';
+  return '<b>Shared zone:</b> families here get zoned priority at all '+n+' schools below and can rank any of them.'}
 function select(l,fromClick){
   markEngaged();
   if(selected)selected.setStyle(style(selected.feature,false));
   selected=l;l.setStyle(style(l.feature,true));
-  if(selLine)map.removeLayer(selLine);selLine=L.geoJSON(l.feature,{style:{renderer:selRend,interactive:false,fill:false,color:css('--hl'),weight:3.5,opacity:1}}).addTo(map);
+  if(selLine)map.removeLayer(selLine);selLine=makeSel(l.feature).addTo(map);
   const p=l.feature.properties;let h='<div class="zt">'+(p.dist&&+p.dist?'District '+esc(p.dist)+' · ':'')+esc(BORO[p.boro]||'')+'</div>';
+  if(p.dbns.length>1)h+='<div class="kind">'+kindText(p)+'</div>';
   if(!p.dbns.length){h+='<div class="school"><span class="nm">'+LEVEL_TXT[level].noZone+'</span></div>';if(level==='ms'&&/District/.test(p.remarks||''))h+='<div class="note">Students here apply to middle schools through <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a>.</div>';if(level==='hs')h+='<div class="note">Students here apply to high schools citywide through <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a>.</div>';}
   else{h+=p.dbns.map(d=>{const s=S[d],n=X[d]&&X[d][0]!=null?X[d][0].toLocaleString()+' students':'',gr=s&&s.g?'Grades '+esc(grades(s.g)):'';
   return '<div class="school"><span class="nm">'+esc(short(d))+' <span class="dbn">('+esc(d)+')</span></span>'+addrHtml(d)+(gr||n?'<span class="meta">'+[gr,n].filter(Boolean).join(' · ')+'</span>':'')+tagsHtml(d)+(level==='hs'?zonedHtml(d):'')+'<hr class="sep">'+rateHtml(d)+'<hr class="sep">'+scoreHtml(d)+'<hr class="sep">'+factsHtml(d)+'<hr class="sep">'+'<div class="links"><a href="'+mySchoolsUrl(d)+'" target="_blank" rel="noopener"><b>MySchools: apply &amp; see your chances ↗</b></a><a href="https://www.schools.nyc.gov/schools/'+esc(d.slice(2))+'" target="_blank" rel="noopener">School website ↗</a></div></div>'}).join('');}
   if(p.remarks)h+='<div class="note">'+esc(p.remarks)+'</div>';
-  if(p.dbns.length>1&&!p.remarks)h+='<div class="note">This block is in a shared zone. Families can rank any of these schools.</div>';
+
   if(p.dbns.length)h+='<a class="confirm" href="https://schoolsearch.schools.nyc/" target="_blank" rel="noopener">Confirm your exact address on schoolsearch.schools.nyc ↗</a>';
   if(p.dbns.length)h+='<div class="card-actions"><button type="button" class="btn-sm" id="copy-link">Copy link to this zone</button><button type="button" class="btn-sm to-map" id="to-map">↑ Back to map</button></div>';
   card.className='card';card.innerHTML=h;
@@ -733,8 +810,8 @@ document.addEventListener('click',e=>{if(!cpanel.hidden&&!cpanel.contains(e.targ
 const lgInfo=document.getElementById('lg-info');lgInfo.addEventListener('click',()=>{const o=document.getElementById('map-legend').classList.toggle('open');lgInfo.setAttribute('aria-expanded',String(o));placePanel()});
 syncName();
 // re-style on theme change
-const mq=matchMedia('(prefers-color-scheme: dark)');const restyle=()=>{layer.eachLayer(l=>l.setStyle(style(l.feature,l===selected)))};
-const retheme=()=>{restyle();restyleLines();if(selLine)selLine.setStyle({color:css('--hl')});buildStreets();buildLocal();syncStreets()};
+const mq=matchMedia('(prefers-color-scheme: dark)');const restyle=()=>{layer.eachLayer(l=>l.setStyle(style(l.feature,l===selected)));buildStripes()};buildStripes();
+const retheme=()=>{restyle();restyleLines();restyleSel();buildStreets();buildLocal();syncStreets()};
 mq.addEventListener?.('change',retheme);new MutationObserver(retheme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
 // switch between elementary and middle school zones
 let testsPick='both',outPick='grad';

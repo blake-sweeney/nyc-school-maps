@@ -6,6 +6,19 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
+## 1.1.0 (2026-10-07)
+
+### Added
+- A real map underneath the zones: NYC's official basemap, with street, park and neighborhood names. It's faint when you see the whole city and clearer as you zoom in, and the zone colors become a little see-through so blocks and parks show beneath them
+- Zones with more than one school are striped in each school's color, instead of showing one color for the group
+- Map labels and hover tips for those zones list every school and its rating or score
+- The zone card says what kind of multi-school zone it is: shared (you have priority at all of them), split by grade, or zoned by address
+- A "Before you start" notice on your first visit, with what the map is (and isn't) and where the data comes from. Reopen it any time from "About this map"
+
+### Changed
+- The selected zone has a thicker outline, so it stands out by width as well as color
+- If the city's map tiles can't load, the map falls back to its own street lines
+
 ## 1.0.1 (2026-10-06)
 
 ### Changed
