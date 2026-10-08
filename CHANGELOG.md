@@ -6,6 +6,12 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
+## Unreleased
+
+### Added
+- "Pre-K" in Color by (elementary): zones and schools colored by whether the school has pre-K and 3-K (dark blue), pre-K only (light blue) or neither (gray), from the DOE's Local Law 72 report for fall 2025. Of the 677 zoned elementary schools with data, 335 have both, 231 have pre-K only and 111 have neither.
+- Pre-K and 3-K get their own section on elementary school cards and school pages (seats, applicants and applicants per seat, with a link to MySchools), instead of two lines in School facts.
+
 ## 1.13.0 (2026-10-08)
 
 ### Changed

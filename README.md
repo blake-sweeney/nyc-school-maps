@@ -91,10 +91,15 @@ Commit `src/template.html`, the rebuilt `index.html` and `assets/`. The build al
 
 The site's version is in `VERSION` and shows in the footer next to the "Updated" date; `CHANGELOG.md` lists what changed in each one. Bump the major number for a new kind of view, the minor number for a new feature, and the patch number for fixes.
 
-1. Work on a branch, like `git checkout -b admissions-data`.
-2. Test locally (see "Run it locally"), including on your phone.
-3. Before merging, bump `VERSION`, add a dated section to `CHANGELOG.md`, and run `python3 scripts/build.py`.
-4. Merge to `main`, tag the release (`git tag v1.1.0` then `git push --tags`), and push.
+1. Work on a branch, like `git checkout -b admissions-data`, and test locally (see "Run it locally"), including on your phone.
+2. As you go, describe the changes under a `## Unreleased` heading at the top of `CHANGELOG.md`. Leave `VERSION` alone.
+3. Merge to `main`, then release:
+
+```sh
+scripts/release.sh minor     # or patch, or major
+```
+
+The script checks that everything is committed and up to date with GitHub, bumps `VERSION`, renames `## Unreleased` to the new version and today's date, rebuilds the site (the footer shows the version), commits, tags (`v1.14.0`) and pushes the commit and tag. It shows the changelog and asks before pushing; add `--dry-run` to only preview, or `--yes` to skip the question.
 
 ## Link previews
 

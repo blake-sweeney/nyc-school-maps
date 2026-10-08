@@ -516,16 +516,24 @@ def page_html(d, dbn, streets, site_url, goat):
         ("Grades 1–5 class size", f"{round(cs['e'])} students" if cs.get("e") else None),
         ("Core class size", f"{round(cs[lv])} students" if lv in ("ms", "hs") and cs.get(lv) else None),
         ("Building use (how full)", f"{u[0]}% of capacity" if u else None),
-        ("Pre-K seats", (f"{pk[0]} ({pk[1]:,} applied)" if pk[0] else "Not offered") if pk else None),
-        ("3-K seats", (f"{pk[2]} ({pk[3]:,} applied)" if pk[2] else "Not offered") if pk else None),
         ("Students with IEPs (special ed)", pct(x[6]) if len(x) > 6 else None),
         ("English language learners", pct(x[5]) if len(x) > 5 else None),
         ("Dual-language program", e(x[4]) if len(x) > 4 and x[4] else None),
     ])
     if facts:
         sections.append("<h2>School facts</h2>" + facts + more(
-            ext("https://www.myschools.nyc/en/", "Apply for pre-K and 3-K on MySchools") if pk and (pk[0] or pk[2]) else "",
             ext(f"https://www.schools.nyc.gov/schools/{dbn[2:]}", "School page: contacts, hours, bell schedule")))
+    if lv == "es" and pk:
+        if pk[0] or pk[2]:
+            rows = [(lab, f"{n} seats · {a:,} applied" if n else "Not offered") for lab, n, a in (("Pre-K", pk[0], pk[1]), ("3-K", pk[2], pk[3]))]
+            body = facts_rows(rows)
+        else:
+            body = "<p>This school doesn’t offer pre-K or 3-K. Many seats are at nearby early childhood centers; MySchools lists every program.</p>"
+        sections.append("<h2>Pre-K and 3-K, fall 2025</h2>" + body +
+                        ('<p class="src">Seats aren’t zoned: families apply through MySchools, and zoned families often get priority. '
+                         '“Applied” counts every family who listed the school anywhere on their application. DOE Local Law 72 report.</p>'
+                         if pk[0] or pk[2] else "")
+                        + more(ext("https://www.myschools.nyc/en/", "Find pre-K and 3-K programs on MySchools")))
     if lv == "es":
         ka = k_adm_html(d.get("KA", {}).get(dbn), "es", dist)
         sections.append(ka + more(ext(ms_url, "See your chances on MySchools"), ext(LL72_URL, "DOE admissions reports")) if ka else "")
