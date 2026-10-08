@@ -28,7 +28,7 @@
 <meta name="twitter:description" content="Every NYC elementary (kindergarten), middle and high school zone on one map, colored by DOE School Quality ratings and state test scores. Free for parents.">
 <meta name="twitter:image" content="https://nycschoolzones.com/preview.png">
 <!-- NYC School Zones · Copyright (C) 2026 Blake Sweeney · SPDX-License-Identifier: AGPL-3.0-or-later · v1.14.0 · https://github.com/blake-sweeney/nyc-school-maps -->
-<title>NYC School Zones</title>
+<title>NYC School Zone Map: Elementary, Middle &amp; High School Zones</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Sans+Condensed:wght@500;600;700&display=swap">
 <style>
@@ -62,6 +62,7 @@ aside{background:var(--panel);border-right:1px solid var(--line);overflow-y:auto
 #map{background:var(--water);min-height:0}
 h1{font-family:var(--display);font-weight:700;font-size:1.55rem;line-height:1.1;margin:0;text-wrap:balance;letter-spacing:-.01em}
 .sub{color:var(--muted);font-size:.86rem;margin:4px 0 0}
+.browse{font-size:.9rem;margin:8px 0 0}.browse a{color:var(--hl);display:inline-block;padding:2px 0}
 .badge{display:inline-block;background:var(--accent);color:var(--accent-ink);font-family:var(--display);font-weight:700;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border-radius:3px;margin-bottom:8px}
 label.lab{font-family:var(--display);font-weight:600;font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px}
 .field{display:flex;gap:6px}
@@ -387,6 +388,7 @@ aside>*{flex-shrink:0}
       <span class="badge" id="badge">Kindergarten zones · Oct 2026</span>
       <h1 id="h1">NYC Elementary School Zones</h1>
       <p class="sub" id="sub">759 zones from the NYC Department of Education. Click any block, or search an address, to see its zoned school.</p>
+      <p class="browse">Browse schools <a href="districts/" id="dist-link">by district</a> · <a href="neighborhoods/">by neighborhood</a></p>
       <div class="note how" id="how">
         <p class="must">Always confirm an exact address on <a href="https://schoolsearch.schools.nyc/" target="_blank" rel="noopener">schoolsearch.schools.nyc</a> before applying.</p>
         <details><summary id="lvl-sum">A zone gives priority, not a guaranteed seat</summary>
@@ -423,7 +425,6 @@ aside>*{flex-shrink:0}
     <div class="about">
       <p>Questions, corrections or ideas? Email <a href="mailto:info@nycschoolzones.com?subject=NYC%20School%20Zones%20feedback">info@nycschoolzones.com</a></p>
       <p><button type="button" class="link-btn" id="about-open">About this map</button> · <button type="button" class="link-btn" id="terms-open">Terms &amp; privacy</button></p>
-      <p><a href="districts/" id="dist-link">Browse schools by district</a></p>
       <p><a href="https://github.com/blake-sweeney/nyc-school-maps" target="_blank" rel="noopener">Source code</a> (AGPL-3.0)</p>
       <p class="asof">Zones: NYC DOE Find a School, Oct 2026 · Ratings, test scores and programs: DOE 2024–25 School Quality Snapshot · Updated Oct 2026 · <a href="https://github.com/blake-sweeney/nyc-school-maps/blob/main/CHANGELOG.md" target="_blank" rel="noopener">v1.14.0</a></p>
       <details><summary>Data sources</summary>
@@ -962,7 +963,7 @@ function zoneUrl(){return location.href}
 const LOCAL=location.protocol==='file:';
 function pageUrl(d){return 'schools/'+encodeURIComponent(d)+'/'+(LOCAL?'index.html':'')}
 function pageLink(d){return LOCAL?pageUrl(d):new URL(pageUrl(d),location.href).href}
-if(LOCAL){const dl=document.getElementById('dist-link');if(dl)dl.href='districts/index.html'}
+if(LOCAL)document.querySelectorAll('aside a[href^="districts/"],aside a[href^="neighborhoods/"]').forEach(a=>{a.href=a.getAttribute('href')+'index.html'})
 document.getElementById('card').addEventListener('click',async e=>{const b=e.target.closest('.copy-addr');if(!b)return;
   const v=b.dataset.copy;let ok=false;try{await navigator.clipboard.writeText(v);ok=true}catch(err){}
   if(!ok){const i=document.createElement('input');i.value=v;i.setAttribute('aria-label','Address');i.className='addr-box';b.replaceWith(i);i.focus();i.select();return}
@@ -1256,7 +1257,7 @@ const introTerms=document.getElementById('intro-terms');
 document.getElementById('terms-open').addEventListener('click',()=>{introTerms.open=true;openIntro();
   requestAnimationFrame(()=>introTerms.scrollIntoView({block:'start'}))});
 intro.addEventListener('close',()=>{introTerms.open=false});
-if(!seenIntro())setTimeout(openIntro,400);
+if(!seenIntro()&&!LOCAL)setTimeout(openIntro,400);  // not when opened from disk, where some browsers keep a separate "seen" per file
 // ---- phones: bottom sheet for details; Search / Grades / About buttons on the map ----
 function sheetOpen(){return appEl.classList.contains('sheet-open')}
 function setSheet(open){if(!phone.matches||sheetOpen()===open)return;appEl.classList.toggle('sheet-open',open);syncSheetBtn();

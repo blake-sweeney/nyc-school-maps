@@ -192,10 +192,42 @@ LOCAL_FIX = ("<script>if(location.protocol==='file:')document.querySelectorAll('
 
 
 def relative(html, up):
-    """Root-relative links (href="/x") -> relative ones ("../../x"), plus the fix-up script for pages opened from disk."""
+    """Root-relative links (href="/x") -> relative ones ("../../x"), plus the fix-up script for pages opened from disk
+    and the "Before you start" notice."""
     pre = "../" * up
     html = re.sub(r'(href|src)="/(?!/)', lambda m: f'{m.group(1)}="{pre or "./"}', html)
-    return html.replace("</body>", LOCAL_FIX + "\n</body>", 1)
+    return html.replace("</body>", INTRO["html"] + INTRO_JS + LOCAL_FIX + "\n</body>", 1)
+
+
+# ---------- the "Before you start" notice ----------
+
+# The map's first-visit notice (the <dialog> and its .intro styles, copied from src/template.html by build.py via
+# set_intro). It opens on the first visit to any page, the map or this one: both remember it under the same key.
+# Not when opened from disk (file://), where Firefox and Safari keep a separate "seen" for each file.
+INTRO = {"html": "", "css": ""}
+INTRO_JS = """<script>(function(){var d=document.getElementById('intro'),K='nsz-intro-seen-v1';if(!d)return;
+function open(){if(d.open)return;try{d.showModal()}catch(e){d.setAttribute('open','')}}
+d.addEventListener('close',function(){try{localStorage.setItem(K,'1')}catch(e){}});
+document.getElementById('intro-ok').addEventListener('click',function(){d.close()});
+d.addEventListener('click',function(e){if(e.target===d)d.close()});
+document.querySelectorAll('[data-intro]').forEach(function(b){b.addEventListener('click',open)});
+var seen=location.protocol==='file:';try{seen=seen||localStorage.getItem(K)==='1'}catch(e){}if(!seen)setTimeout(open,400)})()</script>"""
+INTRO_PAGE_CSS = """
+.intro .row button{font:inherit;font-family:var(--display);font-weight:600;font-size:.9rem;padding:8px 12px;border-radius:6px;border:1px solid var(--fg);background:var(--fg);color:var(--panel);cursor:pointer}
+footer .disc{margin:0 0 8px}
+footer .link-btn{all:unset;cursor:pointer;color:var(--hl);text-decoration:underline}
+footer .link-btn:focus-visible{outline:2px solid var(--hl)}
+"""
+# the same points in short, at the foot of every page
+DISCLAIMER = ('<p class="disc">NYC School Zones is an independent site made by a NYC parent. It isn’t made by, affiliated '
+              'with or endorsed by NYC Public Schools. Data can be out of date or have errors, and zones change from year to '
+              'year: always confirm your exact address on <a href="https://schoolsearch.schools.nyc/" target="_blank" '
+              'rel="noopener">schoolsearch.schools.nyc</a> before applying. <button type="button" class="link-btn" data-intro>'
+              'About this site, terms &amp; privacy</button></p>')
+
+
+def set_intro(html, css):
+    INTRO["html"], INTRO["css"] = html, css
 
 def myschools_url(dbn, lv):
     return {"ms": f"https://www.myschools.nyc/en/schools/middle-school/{dbn}",
@@ -360,6 +392,7 @@ a{color:var(--hl)}
 a:focus-visible,.go:focus-visible{outline:2px solid var(--hl);outline-offset:2px}
 .top{background:var(--panel);border-bottom:1px solid var(--line)}
 .top .in{max-width:760px;margin:0 auto;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.top .nav{display:flex;gap:16px}
 .brand{font-family:var(--display);font-weight:700;color:var(--fg);text-decoration:none}
 main{max-width:760px;margin:0 auto;padding:22px 16px 48px;display:flex;flex-direction:column;gap:22px}
 .kicker{font-family:var(--display);font-weight:600;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
@@ -415,7 +448,7 @@ def school_levels(d, dbn):
     return out
 
 
-def page_html(d, dbn, streets, site_url, goat):
+def page_html(d, dbn, streets, site_url, goat, nbi=None):
     levels = school_levels(d, dbn)
     if not levels:
         return None
@@ -463,6 +496,11 @@ def page_html(d, dbn, streets, site_url, goat):
             lede.append("This zone is shared with " + ", ".join(
                 f'<a href="/schools/{e(m)}/">{e(nice_name(S.get(m, {}).get("n", m)))}</a>' for m in mates) +
                 ". Families who live here get zoned priority at each of these schools.")
+        nb_codes = (nbi or {}).get("by_school", {}).get(dbn, [])
+        if nb_codes:
+            nl = [f'<a href="/neighborhoods/{e(nbi["nbs"][c]["slug"])}/">{e(nbi["nbs"][c]["name"])}</a>' for c in nb_codes[:4]]
+            lede.append("The zone covers " + ("part of " if len(nl) == 1 else "parts of ")
+                        + (nl[0] if len(nl) == 1 else ", ".join(nl[:-1]) + " and " + nl[-1]) + ".")
         if st:
             lede.append("Streets in the zone include " + e(", ".join(st[:-1]) + (" and " + st[-1] if len(st) > 1 else st[0])) + ".")
         zone_lede = "".join(f"<p>{x2}</p>" for x2 in lede)
@@ -627,6 +665,8 @@ def page_html(d, dbn, streets, site_url, goat):
     from urllib.parse import quote
     addr_q = quote(f"{name}, {addr}, {boro}, NY")
     meta = " · ".join(x2 for x2 in [kind, f"District {dist}", boro, grades_txt] if x2)
+    hn = (nbi or {}).get("home", {}).get(dbn)
+    home_nb = f' · in <a href="/neighborhoods/{e(nbi["nbs"][hn]["slug"])}/">{e(nbi["nbs"][hn]["name"])}</a>' if hn else ""
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -655,7 +695,7 @@ def page_html(d, dbn, streets, site_url, goat):
 <div>
 <div class="kicker">{e(meta)}</div>
 <h1>{e(name)}</h1>
-<p class="lede">{e(addr)}{", " + e(boro) if addr else e(boro)} · DBN {e(dbn)}</p>
+<p class="lede">{e(addr)}{", " + e(boro) if addr else e(boro)}{home_nb} · DBN {e(dbn)}</p>
 </div>
 <div class="actions"><a class="go" href="{e(map_url)}">Open on the map <span aria-hidden="true">→</span></a>
 <nav class="quick" aria-label="Links for this school">{ext(ms_url, "MySchools: apply & see your chances")}{ext(f"https://www.schools.nyc.gov/schools/{dbn[2:]}", "School website")}{ext(f"https://insideschools.org/school/{dbn}", "InsideSchools")}{ext(f"https://www.google.com/maps/dir/?api=1&destination={addr_q}", "Directions")}</nav></div>
@@ -664,13 +704,13 @@ def page_html(d, dbn, streets, site_url, goat):
 {near_html}
 <section class="card"><h2>Apply</h2><p>Applications for NYC public schools go through MySchools, which lists this year’s programs, dates and admissions rules, and shows your chances at each school.</p>{more(ext(ms_url, "This school on MySchools"), ext("https://schoolsearch.schools.nyc/", "Find your zoned school"), ext(f"https://www.schools.nyc.gov/schools/{dbn[2:]}", "School website"))}</section>
 </main>
-<footer>NYC School Zones is free and independent. Data: NYC Department of Education (zones, School Quality Snapshot, MySchools, Local Law 72 reports), NYC School Construction Authority. Questions or corrections: <a href="mailto:info@nycschoolzones.com">info@nycschoolzones.com</a></footer>{goat}
+<footer>{DISCLAIMER}NYC School Zones is free and independent. Data: NYC Department of Education (zones, School Quality Snapshot, MySchools, Local Law 72 reports), NYC School Construction Authority. Questions or corrections: <a href="mailto:info@nycschoolzones.com">info@nycschoolzones.com</a></footer>{goat}
 </body>
 </html>
 """
 
 
-def write_pages(d, root, only=None, site_url="https://nycschoolzones.com/", goat=""):
+def write_pages(d, root, only=None, site_url="https://nycschoolzones.com/", goat="", nbi=None):
     """Write /schools/<DBN>/index.html for each school (or only the DBNs in `only`). Returns the count."""
     dbns = set(d.get("schools", {})) | {r[0] for r in d.get("NZ", [])}
     for key in ("MS", "HS"):
@@ -681,10 +721,10 @@ def write_pages(d, root, only=None, site_url="https://nycschoolzones.com/", goat
     streets = street_index(d)
     os.makedirs(os.path.join(root, "schools"), exist_ok=True)
     with open(os.path.join(root, "schools", "style.css"), "w", encoding="utf-8") as f:
-        f.write(CSS.strip() + "\n")
+        f.write(CSS.strip() + "\n" + INTRO["css"] + "\n" + INTRO_PAGE_CSS.strip() + "\n")
     n = 0
     for dbn in sorted(dbns):
-        html = page_html(d, dbn, streets, site_url, goat)
+        html = page_html(d, dbn, streets, site_url, goat, nbi)
         if not html:
             continue
         out = os.path.join(root, "schools", dbn)
@@ -719,11 +759,11 @@ def shell(title, desc, canon, body, goat, site_url):
 <link rel="stylesheet" href="/schools/style.css">
 </head>
 <body>
-<header class="top"><div class="in"><a class="brand" href="/">NYC School Zones</a><a href="/districts/">All districts</a></div></header>
+<header class="top"><div class="in"><a class="brand" href="/">NYC School Zones</a><nav class="nav"><a href="/districts/">Districts</a><a href="/neighborhoods/">Neighborhoods</a></nav></div></header>
 <main>
 {body}
 </main>
-<footer>NYC School Zones is free and independent. Data: NYC Department of Education and NYC School Construction Authority. Questions or corrections: <a href="mailto:info@nycschoolzones.com">info@nycschoolzones.com</a></footer>{goat}
+<footer>{DISCLAIMER}NYC School Zones is free and independent. Data: NYC Department of Education and NYC School Construction Authority. Questions or corrections: <a href="mailto:info@nycschoolzones.com">info@nycschoolzones.com</a></footer>{goat}
 </body>
 </html>
 """
@@ -871,7 +911,7 @@ table.sort td small{color:var(--muted);font-size:.78rem}
 """
 
 
-def write_districts(d, root, site_url, goat):
+def write_districts(d, root, site_url, goat, nbi=None):
     info, names, R = all_schools(d)
     MS, HS = d.get("MS") or {}, d.get("HS") or {}
     def tp(T):  # ELA and math together, % meeting standards (pooled, like "ELA + Math" on the map)
@@ -944,6 +984,10 @@ def write_districts(d, root, site_url, goat):
                 f'<div class="lvtabs" role="tablist" aria-label="School level">{tabs}</div>'
                 + "".join(f'<div class="lvpanel" role="tabpanel" id="p-{lv}" aria-labelledby="tab-{lv}">'
                           f'<h2 class="lvh">{w} schools</h2>{html}</div>' for lv, w, _, html in panels))
+        nbl = sorted((nb for nb in (nbi or {}).get("nbs", {}).values() if k in nb["dists"]), key=lambda nb: nb["name"])
+        if nbl:
+            body += ('<section class="card"><h2>Neighborhoods in District ' + e(k) + '</h2><p>'
+                     + " · ".join(f'<a href="/neighborhoods/{e(nb["slug"])}/">{e(nb["name"])}</a>' for nb in nbl) + "</p></section>")
         title = f"District {k} Schools ({boro}): Zones, Ratings & Admissions | NYC School Zones"
         desc = (f"All {len(dbns)} public schools in NYC school District {k}, {boro}: zoned and non-zoned elementary and middle "
                 "schools and high schools, with DOE ratings, test scores and admissions.")
@@ -971,12 +1015,33 @@ def write_districts(d, root, site_url, goat):
 
 
 def write_sitemap(root, site_url, urls):
+    """lastmod is the day a page last changed: pages this build left identical to the last commit keep
+    the date from the old sitemap, and the rest get today. Without git, every page gets today."""
     import datetime
+    import subprocess
     today = datetime.date.today().isoformat()
-    with open(os.path.join(root, "sitemap.xml"), "w", encoding="utf-8") as f:
+    path = os.path.join(root, "sitemap.xml")
+    old = {}
+    if os.path.exists(path):
+        with open(path, encoding="utf-8") as f:
+            old = dict(re.findall(r"<loc>([^<]*)</loc><lastmod>([^<]*)</lastmod>", f.read()))
+    try:
+        out = subprocess.run(["git", "status", "--porcelain", "--untracked-files=all", "--", "index.html", "assets",
+                              "schools", "districts", "neighborhoods"], cwd=root, capture_output=True, text=True, check=True).stdout
+        changed = {line[3:].strip('"').split(" -> ")[-1] for line in out.splitlines()}
+    except (OSError, subprocess.CalledProcessError):
+        changed = None
+
+    def lastmod(u):
+        rel = u[len(site_url):]
+        files = ("index.html", "assets/") if rel == "" else (rel + "index.html",)
+        if changed is None or any(c.startswith(fl) for c in changed for fl in files):
+            return today
+        return old.get(escape(u), today)
+    with open(path, "w", encoding="utf-8") as f:
         f.write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n')
         for u in [site_url] + urls:
-            f.write(f"<url><loc>{escape(u)}</loc><lastmod>{today}</lastmod></url>\n")
+            f.write(f"<url><loc>{escape(u)}</loc><lastmod>{lastmod(u)}</lastmod></url>\n")
         f.write("</urlset>\n")
     with open(os.path.join(root, "robots.txt"), "w", encoding="utf-8") as f:
         f.write(f"User-agent: *\nAllow: /\n\nSitemap: {site_url}sitemap.xml\n")
