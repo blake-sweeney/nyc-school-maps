@@ -6,6 +6,11 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
+## 1.13.0 (2026-10-08)
+
+### Changed
+- Map markers (bullseyes, diamonds and stars) grow over one more zoom step: smaller in the in-between views, full size once you're zoomed in to a few blocks.
+
 ## 1.12.0 (2026-10-08)
 
 ### Added
