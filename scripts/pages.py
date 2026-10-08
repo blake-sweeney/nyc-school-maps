@@ -639,7 +639,12 @@ def page_html(d, dbn, streets, site_url, goat, nbi=None):
     grades_txt = ""
     if s.get("g"):
         g = [x2 for x2 in s["g"].split(",") if x2 not in ("3K", "SE")]
-        lab = ["Pre-K" if x2 == "PK" else "K" if x2 == "0K" else str(int(x2)) for x2 in g]
+        # the grade list is from the 2019-20 location file; pre-K and 3-K come from this year's admissions report
+        # when we have it (like grades() on the map)
+        pkr = (d.get("PK") or {}).get(dbn)
+        if pkr:
+            g = (["3K"] if pkr[2] else []) + (["PK"] if pkr[0] else []) + [x2 for x2 in g if x2 != "PK"]
+        lab = ["3-K" if x2 == "3K" else "Pre-K" if x2 == "PK" else "K" if x2 == "0K" else str(int(x2)) for x2 in g]
         grades_txt = f"Grades {lab[0]}–{lab[-1]}" if len(lab) > 1 else f"Grade {lab[0]}" if lab else ""
     what = {"es": "zone map, ratings, test scores and kindergarten admissions",
             "ms": "zone, ratings, test scores and programs",
