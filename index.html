@@ -27,7 +27,7 @@
 <meta name="twitter:title" content="NYC School Zones">
 <meta name="twitter:description" content="Every NYC elementary (kindergarten), middle and high school zone on one map, colored by DOE School Quality ratings and state test scores. Free for parents.">
 <meta name="twitter:image" content="https://nycschoolzones.com/preview.png">
-<!-- NYC School Zones · Copyright (C) 2026 Blake Sweeney · SPDX-License-Identifier: AGPL-3.0-or-later · v1.8.0 · https://github.com/blake-sweeney/nyc-school-maps -->
+<!-- NYC School Zones · Copyright (C) 2026 Blake Sweeney · SPDX-License-Identifier: AGPL-3.0-or-later · v1.8.1 · https://github.com/blake-sweeney/nyc-school-maps -->
 <title>NYC School Zones</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Sans+Condensed:wght@500;600;700&display=swap">
@@ -287,6 +287,8 @@ aside>*{flex-shrink:0}
 .gtk{display:inline-block;width:12px;height:12px;flex:none;background:var(--fg);clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)}
 
 .nzm{width:100%;height:100%;box-sizing:border-box;transform:rotate(45deg) scale(.72);background:var(--c);border:2px solid var(--panel);box-shadow:0 0 0 1.2px var(--dot),0 1px 3px rgba(0,0,0,.35);cursor:pointer}
+/* fingers need a bigger target than the drawn marker: an invisible ring around each one on touch screens */
+@media (pointer:coarse){.leaflet-nz-pane .leaflet-marker-icon::after{content:"";position:absolute;inset:-14px;border-radius:50%}}
 .nzm.sel{box-shadow:0 0 0 2px var(--panel),0 0 0 4.5px var(--hl)}
 .nz-small .nzm{border-width:1.5px}
 .zl.nzl{font-weight:600;font-style:italic}
@@ -413,7 +415,7 @@ aside>*{flex-shrink:0}
       <p>Questions, corrections or ideas? Email <a href="mailto:info@nycschoolzones.com?subject=NYC%20School%20Zones%20feedback">info@nycschoolzones.com</a></p>
       <p><button type="button" class="link-btn" id="about-open">About this map</button> · <button type="button" class="link-btn" id="terms-open">Terms &amp; privacy</button></p>
       <p><a href="https://github.com/blake-sweeney/nyc-school-maps" target="_blank" rel="noopener">Source code</a> (AGPL-3.0)</p>
-      <p class="asof">Zones: NYC DOE Find a School, Oct 2026 · Ratings, test scores and programs: DOE 2024–25 School Quality Snapshot · Updated Oct 2026 · <a href="https://github.com/blake-sweeney/nyc-school-maps/blob/main/CHANGELOG.md" target="_blank" rel="noopener">v1.8.0</a></p>
+      <p class="asof">Zones: NYC DOE Find a School, Oct 2026 · Ratings, test scores and programs: DOE 2024–25 School Quality Snapshot · Updated Oct 2026 · <a href="https://github.com/blake-sweeney/nyc-school-maps/blob/main/CHANGELOG.md" target="_blank" rel="noopener">v1.8.1</a></p>
       <details><summary>Data sources</summary>
         <p>School zones from the DOE’s <a href="https://schoolsearch.schools.nyc/" target="_blank" rel="noopener">Find a School</a> map. Thanks to Jimmy Chion’s <a href="https://schoolzones.nyc/" target="_blank" rel="noopener">schoolzones.nyc</a> for pointing the way to the DOE’s current zone data. School names and addresses from the 2019–20 DOE location list. State test results, ratings, programs and current school names from the DOE’s <a href="https://tools.nycenet.edu/snapshot/" target="_blank" rel="noopener">2024–25 School Quality Snapshot</a>. Shared zones show the combined result of all their schools. Address lookup by NYC Planning’s GeoSearch.</p>
       </details>
@@ -821,8 +823,20 @@ map.on('zoomend',sizeDots);sizeDots();
 
 // zone number labels when zoomed in
 const labels=L.layerGroup().addTo(map);
-function drawLabels(){labels.clearLayers();const z=map.getZoom();if(z<13)return;const b=map.getBounds().pad(.1);
-  if(LAY.zones)byLayer.forEach(l=>{const p=l.feature.properties;if(!p.dbns.length)return;if(z<14&&p.ar<1.2)return;const ll=L.latLng(p.lp);if(!b.contains(ll))return;
+// labels: school-marker names first, then zone labels (bigger zones first); a label that would overlap one
+// already placed is skipped, so crowded areas stay readable on phones
+function drawLabels(){labels.clearLayers();const z=map.getZoom();if(z<12)return;const b=map.getBounds().pad(.1);
+  const placed=[],wOf=h=>h.replace(/<[^>]+>/g,'').replace(/&amp;/g,'&').length*6.2+8;
+  const put=(ll,html,cls,dy)=>{const pt=map.latLngToContainerPoint(ll),w=wOf(html),r={x:pt.x,y:pt.y-dy,w,h:15};
+    if(placed.some(q=>Math.abs(q.x-r.x)<(q.w+r.w)/2&&Math.abs(q.y-r.y)<(q.h+r.h)/2))return;placed.push(r);
+    L.marker(ll,{interactive:false,icon:L.divIcon({className:'',html:'<div class="'+cls+'">'+html+'</div>',iconSize:[60,12],iconAnchor:[30,6+dy]})}).addTo(labels)};
+  if(typeof nzOn==='function'&&nzOn()){const lift=o=>Math.round(o.gt?nzSize()+6:nzSize()/2+12),seen={};NZ.forEach(o=>{if(!nzShown(o))return;const ll=L.latLng(o.lat,o.lon);if(!b.contains(ll))return;
+    const k=nzSpot(o);if(seen[k])return;seen[k]=1;const grp=nzAt(k);
+    if(grp.length>1){put(ll,grp.length+' schools','zl nzl',lift(o)+nzSize()*.75+grp.length*1.5-6);return}
+    const v=metric!=='none'&&!isProg(metric)?schoolVal(o.d):null;
+    const nm=/^(P\.?S\.?|I\.?S\.?|M\.?S\.?|J\.?H\.?S\.?)(\s*\/\s*(I|M)\.?S\.?)?\s*[KMQRX]?\d/i.test(o.n)?prefixOf(o.d)+' '+(+o.d.slice(3)):shortName(o.n);
+    put(ll,esc(nm)+(v!=null?' · '+fmtVal(v):''),'zl nzl',lift(o)-6)})}
+  if(LAY.zones&&z>=13)byLayer.filter(l=>l.feature.properties.dbns.length).sort((a,c)=>(c.feature.properties.ar||0)-(a.feature.properties.ar||0)).forEach(l=>{const p=l.feature.properties;if(z<14&&p.ar<1.2)return;const ll=L.latLng(p.lp);if(!b.contains(ll))return;
     const n=p.dbns.length,d0=p.dbns[0];
     let txt=level==='hs'?((S[d0]&&S[d0].n)||d0).replace(/\s*High\s*School.*$/i,'').replace(/\s*Campus$/i,'')
       :n===1?prefixOf(d0)+' '+(+d0.slice(3)):n<=3?prefixOf(d0)+' '+p.dbns.map(d=>+d.slice(3)).join(' / '):n+' schools';
@@ -831,15 +845,9 @@ function drawLabels(){labels.clearLayers();const z=map.getZoom();if(z<13)return;
       if(n===1){if(vs[0]!=null)txt+=' · '+fmtVal(vs[0])}
       else if(n<=3){if(vs.some(v=>v!=null))txt+=' · '+vs.map(v=>fmtVal(v,true)).join(' / ')}
       else{const ok=vs.filter(v=>v!=null);if(ok.length){const lo=Math.min(...ok),hi=Math.max(...ok);txt+=' · '+(lo===hi?fmtVal(lo):fmtVal(lo,true)+'–'+fmtVal(hi,true))}}}
+    if(!txt)return;
     const dn=p.dist&&String(p.dist).split(',').map(Number).filter(Boolean);if(dn&&dn.length)txt='<span class="zd">D'+dn.join('/')+'</span> '+txt;
-    L.marker(ll,{interactive:false,icon:L.divIcon({className:'',html:'<div class="zl">'+txt+'</div>',iconSize:[60,12],iconAnchor:[30,6]})}).addTo(labels)});
-  if(typeof nzOn==='function'&&nzOn()&&z>=14){const taken=[],seen={};NZ.forEach(o=>{if(!nzShown(o))return;const ll=L.latLng(o.lat,o.lon);if(!b.contains(ll))return;
-    const k=nzSpot(o);if(seen[k])return;seen[k]=1;const grp=nzAt(k),pt=map.latLngToContainerPoint(ll);
-    if(taken.some(q=>Math.abs(q.x-pt.x)<90&&Math.abs(q.y-pt.y)<16))return;taken.push(pt);
-    if(grp.length>1){L.marker(ll,{interactive:false,icon:L.divIcon({className:'',html:'<div class="zl nzl">'+grp.length+' schools</div>',iconSize:[60,12],iconAnchor:[30,26]})}).addTo(labels);return}
-    const v=metric!=='none'&&!isProg(metric)?schoolVal(o.d):null;
-    const nm=/^(P\.?S\.?|I\.?S\.?|M\.?S\.?|J\.?H\.?S\.?)(\s*\/\s*(I|M)\.?S\.?)?\s*[KMQRX]?\d/i.test(o.n)?prefixOf(o.d)+' '+(+o.d.slice(3)):o.n.replace(/^The\s+/i,'').split(/\s+/).slice(0,3).join(' ').replace(/[,.;:-]+$/,'');
-    L.marker(ll,{interactive:false,icon:L.divIcon({className:'',html:'<div class="zl nzl">'+esc(nm)+(v!=null?' · '+fmtVal(v):'')+'</div>',iconSize:[60,12],iconAnchor:[30,22]})}).addTo(labels)})}}
+    put(ll,txt,'zl',0)})}
 map.on('zoomend moveend',drawLabels);
 
 // school district lines (dashed) with big district numbers when zoomed out
@@ -873,13 +881,16 @@ function gtStar(c,sel){return '<svg class="gtm" viewBox="-16 -16 132 132" aria-h
   (sel?'<polygon points="'+STAR+'" fill="none" stroke="var(--hl)" stroke-width="30" stroke-linejoin="round"/><polygon points="'+STAR+'" fill="none" stroke="var(--panel)" stroke-width="20" stroke-linejoin="round"/>':'')+
   '<polygon points="'+STAR+'" fill="var(--panel)" stroke="var(--dot)" stroke-width="'+(sel?12:16)+'" stroke-linejoin="round"/>'+
   '<polygon points="'+STAR+'" fill="'+c+'" stroke="var(--panel)" stroke-width="8" stroke-linejoin="round"/></svg>'}
+// a marker label: up to ~24 characters of the name, with "High School" shortened to "HS"
+function shortName(n){n=n.replace(/^The\s+/i,'').replace(/,\s*The$/i,'').replace(/\bHigh School\b/gi,'HS');
+  const w=n.split(/\s+/);let t=w[0];for(let i=1;i<w.length&&(t+' '+w[i]).length<=24;i++)t+=' '+w[i];return t.replace(/\s+(of|for|and|the|at|in|&)$/i,'').replace(/[,.;:-]+$/,'')}
 function nzSpot(o){return o.lat.toFixed(4)+','+o.lon.toFixed(4)}
 function nzAt(k){return NZ.filter(o=>nzShown(o)&&nzSpot(o)===k)}
-function nzSize(){const z=map.getZoom();return z<11.5?9:z<13?12:15}
+function nzSize(){const z=map.getZoom();return z<11.5?14:z<13?18:22}
 function buildNZ(){nzGroup.clearLayers();document.getElementById('nz-key').hidden=!nzOn();document.querySelectorAll('#nz-key .sw>span').forEach((e,i)=>e.hidden=!(i?LAY.gt&&NZ.some(o=>o.gt):LAY[level==='hs'?'hsnz':'nz']));if(!nzOn())return;const sz=nzSize();
   const groups={};NZ.forEach(o=>{if(nzShown(o))(groups[nzSpot(o)]=groups[nzSpot(o)]||[]).push(o)});
   NZ.forEach(o=>{if(!nzShown(o))return;const sz=o.gt?Math.round(nzSize()*(nzSel===o.d?2.3:2)):nzSize();
-    const g=groups[nzSpot(o)],i=g.indexOf(o),r=g.length>1&&map.getZoom()>=13?nzSize()*.75+g.length*1.5:0,ang=2*Math.PI*i/g.length-Math.PI/2,dx=r*Math.cos(ang),dy=r*Math.sin(ang);
+    const g=groups[nzSpot(o)],i=g.indexOf(o),r=g.length>1&&map.getZoom()>=12?nzSize()*.75+g.length*1.5:0,ang=2*Math.PI*i/g.length-Math.PI/2,dx=r*Math.cos(ang),dy=r*Math.sin(ang);
     const m=L.marker([o.lat,o.lon],{pane:'nzPane',keyboard:false,zIndexOffset:nzSel===o.d?1000:0,
       icon:L.divIcon({className:'',html:o.gt?gtStar(nzFill(o.d),nzSel===o.d):'<div class="nzm'+(nzSel===o.d?' sel':'')+'" style="--c:'+nzFill(o.d)+'"></div>',iconSize:[sz,sz],iconAnchor:[sz/2-dx,sz/2-dy]})});
     m.bindTooltip(()=>nzTip(o),{direction:'top',offset:[0,-sz/2]});m.on('click',()=>selectNZ(o.d,true));m.addTo(nzGroup)})}
@@ -1202,9 +1213,13 @@ new LayersCtl().addTo(map);
 document.getElementById('pb-layers').addEventListener('click',()=>setPop('layers',lypop.hidden));
 document.getElementById('ly-close').addEventListener('click',()=>{if(phone.matches)setPop('layers',false);else{lypop.hidden=true;document.getElementById('layers-btn').setAttribute('aria-expanded','false')}});
 function syncLayerBoxes(){Object.keys(LAY).forEach(k=>{const b=document.getElementById('ly-'+k);if(b)b.checked=!!LAY[k]});document.querySelectorAll('.ly-es').forEach(e=>e.hidden=!NZ.some(o=>o.gt));document.getElementById('ly-gt-lab').textContent=level==='hs'?'Specialized high schools':level==='ms'?'Citywide middle schools':'Citywide G&T schools';{const g=document.querySelectorAll('#nz-key .sw>span')[1];if(g)g.lastChild.textContent=level==='hs'?'Specialized high school':level==='ms'?'Citywide middle school':'Citywide G&T school'}document.querySelectorAll('.ly-nzrow').forEach(e=>e.hidden=level==='hs'||!NZ.length);document.querySelectorAll('.ly-hsrow').forEach(e=>e.hidden=level!=='hs'||!NZ.some(o=>!o.gt));document.getElementById('ly-nz-lab').textContent=level==='ms'?'Middle schools without zones':'Non-zoned schools';const k=document.querySelector('#nz-key .sw>span');if(k)k.lastChild.textContent=level==='hs'?'High school, no zone':level==='ms'?'Middle school, no zone':'Non-zoned school'}
-function syncZoneLines(){if(!zoneLines)return;if(LAY.zones&&!map.hasLayer(zoneLines))zoneLines.addTo(map);if(!LAY.zones&&map.hasLayer(zoneLines))map.removeLayer(zoneLines)}
+function syncZoneLines(){byLayer.forEach(l=>{l.options.interactive=!!LAY.zones;if(!LAY.zones)l.closeTooltip()});if(!zoneLines)return;if(LAY.zones&&!map.hasLayer(zoneLines))zoneLines.addTo(map);if(!LAY.zones&&map.hasLayer(zoneLines))map.removeLayer(zoneLines)}
 function applyLayers(){syncZoneLines();document.querySelector('#map-legend .multi-key').hidden=!LAY.zones;restyle();if(typeof syncDistricts==='function')syncDistricts();buildNZ();drawLabels();syncNames();if(typeof syncDistricts==='function')syncDistricts()}
-Object.keys(LAY).forEach(k=>{const b=document.getElementById('ly-'+k);if(b)b.addEventListener('change',()=>{LAY[k]=b.checked;saveLay();markEngaged();applyLayers()})});
+// hiding zones also drops a selected zone (its outline and card); a selected school marker stays
+function clearZoneSel(){if(!selected)return;selected.setStyle(style(selected.feature,false));selected=null;if(selLine){map.removeLayer(selLine);selLine=null}
+  card.className='card empty';card.textContent='Select a zone on the map, or search for a school, to see its zoned school.';sheetDefault();
+  try{history.replaceState(null,'',level==='ms'?'#middle':level==='hs'?'#high':location.pathname+location.search)}catch(e){}}
+Object.keys(LAY).forEach(k=>{const b=document.getElementById('ly-'+k);if(b)b.addEventListener('change',()=>{LAY[k]=b.checked;saveLay();markEngaged();if(k==='zones'&&!b.checked)clearZoneSel();applyLayers()})});
 syncLayerBoxes();applyLayers();
 function setPop(name,open){const [el,bid]=POPS[name];if(el.hidden===!open)return;if(name==='layers'){const lb=document.getElementById('layers-btn');if(lb)lb.setAttribute('aria-expanded',String(open))}if(!open&&el.contains(document.activeElement))document.activeElement.blur();el.hidden=!open;document.getElementById(bid).setAttribute('aria-expanded',String(open));
   if(!open)return;markEngaged();Object.keys(POPS).forEach(k=>{if(k!==name)setPop(k,false)});setPanel(false);

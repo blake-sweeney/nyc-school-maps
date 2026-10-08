@@ -6,6 +6,16 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
+## 1.8.1 (2026-10-08)
+
+### Changed
+- Diamonds and stars are 50% bigger.
+- School marker names show one zoom level sooner. Labels no longer pile up: marker names come first, then zone labels, and any label that would overlap another is skipped. "High School" is shortened to "HS" in marker labels.
+
+### Fixed
+- Turning Zones off also turns off zone hover tips and clicks, and clears a selected zone.
+- On phones, the small diamonds and stars were hard to tap; they now have a finger-sized tap area.
+
 ## 1.8.0 (2026-10-07)
 
 ### Added
