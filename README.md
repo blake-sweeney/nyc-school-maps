@@ -71,6 +71,7 @@ data/
   neighborhoods.json    residential neighborhood boundaries (NYC Planning NTAs)
 scripts/
   build.py              data/ + src/template.html  →  index.html
+  settings.py           data years, citywide averages and color scales, shared by the map, the pages and fetch_data.py
   pages.py              school pages, district pages and the sitemap (called by build.py)
   neighborhoods.py      matches zones to neighborhoods and writes the neighborhood pages (called by build.py)
   fetch_data.py         re-downloads everything in data/ from the city
@@ -140,12 +141,12 @@ This writes `nonzoned_k.json`, `citywide_gt_k.json`, `ms_directory.json` and `hs
 
 Ratings, test scores, graduation, SAT, college readiness, where graduates went, and school facts, for every school on the map.
 
-1. Set `SNAPSHOT_YEAR` at the top of `scripts/fetch_data.py` to the new year (2025 means 2024–25).
+1. Set `SNAPSHOT_YEAR` in `scripts/settings.py` to the new year (2025 means 2024–25). Every "2024–25" label on the map and the pages follows it. Also update `CITY_GRAD` and `CITY_READINESS` there, the citywide averages from the new Snapshot.
 2. `python3 scripts/fetch_data.py snapshot-job` writes `~/Downloads/snapshot_job.js`, with the list of schools from steps 1–2 filled in.
 3. Open [tools.nycenet.edu/snapshot](https://tools.nycenet.edu/snapshot/), open the console, paste all of `snapshot_job.js` and press Enter. It takes a few minutes and downloads `snapshot_raw.json`.
 4. `python3 scripts/fetch_data.py snapshot-raw ~/Downloads/snapshot_raw.json`
 
-This writes `snapshot_ratings.json`, `snapshot_extra.json`, `snapshot_tests.json`, `hs_outcomes.json`, `nonzoned_snapshot.json`, `ms_snapshot.json` and `hs_snapshot.json`. If your connection isn't blocked, `python3 scripts/fetch_data.py snapshot` still fetches the zoned schools directly. Then update the "2024–25" labels in `src/template.html` and `scripts/pages.py`.
+This writes `snapshot_ratings.json`, `snapshot_extra.json`, `snapshot_tests.json`, `hs_outcomes.json`, `nonzoned_snapshot.json`, `ms_snapshot.json` and `hs_snapshot.json`. If your connection isn't blocked, `python3 scripts/fetch_data.py snapshot` still fetches the zoned schools directly.
 
 ### 4. Admissions: kindergarten, grade 6, grade 9, pre-K and 3-K (each fall or winter, for the previous fall)
 
@@ -155,6 +156,8 @@ Download the newest "fall-YYYY-admissions" Local Law 72 file from [DOE governmen
 python3 scripts/fetch_data.py admissions ~/Downloads/fall-202*-admissions*.xlsx
 python3 scripts/fetch_data.py prek ~/Downloads/fall-YYYY-admissions_72_suppressed.xlsx   # the newest one
 ```
+
+After the pre-K step, set `PREK_LABEL` in `scripts/settings.py` to that report's year ("fall 2025").
 
 ### 5. Class size (spring, for February of the school year)
 
@@ -166,7 +169,7 @@ If the DOE site is blocked, download the school-level report from [class size re
 
 ### 6. Building use, the SCA "Blue Book" (once a year)
 
-Download the Classic Edition PDF from the [SCA](https://www.nycsca.org/Community/Capital-Plan-Reports-Data), then `python3 scripts/fetch_data.py utilization <file.pdf>` (needs `pdftotext`).
+Download the Classic Edition PDF from the [SCA](https://www.nycsca.org/Community/Capital-Plan-Reports-Data), then `python3 scripts/fetch_data.py utilization <file.pdf>` (needs `pdftotext`), and set `BLUE_BOOK_LABEL` in `scripts/settings.py`.
 
 ### 7. Hand-checked lists (each fall, a few minutes each)
 

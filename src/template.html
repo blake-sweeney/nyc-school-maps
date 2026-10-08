@@ -119,7 +119,7 @@ aside>*{flex-shrink:0}
 .rates .tot{font-weight:700}
 .school hr.sep{border:0;border-top:1px solid var(--line);margin:8px 0 6px;width:100%}
 .rates .sub-r{padding-left:14px;color:var(--muted)}
-.lbar{height:12px;border-radius:3px;background:linear-gradient(90deg,#b8202a 0%,#b8202a 5%,#f7cf45 50%,#1f8a84 95%,#1f8a84 100%)}
+.lbar{height:12px;border-radius:3px;background:__TEST_GRADIENT__}
 .lticks{position:relative;height:16px;font-family:var(--display);font-size:.75rem;color:var(--muted);font-variant-numeric:tabular-nums}
 .lticks span{position:absolute;top:2px;transform:translateX(-50%)}
 .lticks span:last-child{transform:translateX(-70%)}
@@ -235,7 +235,7 @@ aside>*{flex-shrink:0}
 .about .link-btn{all:unset;cursor:pointer;color:var(--hl);text-decoration:underline}
 .about details summary{cursor:pointer;color:var(--fg);font-family:var(--display);font-weight:600}
 .about details p{margin:6px 0 0}
-.sw i.stripes{background:repeating-linear-gradient(45deg,#1f8a84 0 3px,#e8742a 3px 6px)}
+.sw i.stripes{background:repeating-linear-gradient(45deg,__GREEN__ 0 3px,__ORANGE__ 3px 6px)}
 #map-legend .nz-key{order:10}
 #map-legend .dist-key{order:11}
 #map-legend .nozone-key{order:9}
@@ -391,9 +391,9 @@ aside>*{flex-shrink:0}
       <p>Questions, corrections or ideas? Email <a href="mailto:info@nycschoolzones.com?subject=NYC%20School%20Zones%20feedback">info@nycschoolzones.com</a></p>
       <p><button type="button" class="link-btn" id="about-open">About this map</button> · <button type="button" class="link-btn" id="terms-open">Terms &amp; privacy</button></p>
       <p><a href="https://github.com/blake-sweeney/nyc-school-maps" target="_blank" rel="noopener">Source code</a> (AGPL-3.0)</p>
-      <p class="asof">Zones: NYC DOE Find a School, __ZONES_DATE__ · Ratings, test scores and programs: DOE 2024–25 School Quality Snapshot · Updated __UPDATED__ · <a href="https://github.com/blake-sweeney/nyc-school-maps/blob/main/CHANGELOG.md" target="_blank" rel="noopener">v__VERSION__</a></p>
+      <p class="asof">Zones: NYC DOE Find a School, __ZONES_DATE__ · Ratings, test scores and programs: DOE __SNAPSHOT__ School Quality Snapshot · Updated __UPDATED__ · <a href="https://github.com/blake-sweeney/nyc-school-maps/blob/main/CHANGELOG.md" target="_blank" rel="noopener">v__VERSION__</a></p>
       <details><summary>Data sources</summary>
-        <p>School zones from the DOE’s <a href="https://schoolsearch.schools.nyc/" target="_blank" rel="noopener">Find a School</a> map. Thanks to Jimmy Chion’s <a href="https://schoolzones.nyc/" target="_blank" rel="noopener">schoolzones.nyc</a> for pointing the way to the DOE’s current zone data. School names and addresses from the 2019–20 DOE location list. State test results, ratings, programs and current school names from the DOE’s <a href="https://tools.nycenet.edu/snapshot/" target="_blank" rel="noopener">2024–25 School Quality Snapshot</a>. Shared zones show the combined result of all their schools. Address lookup by NYC Planning’s GeoSearch.</p>
+        <p>School zones from the DOE’s <a href="https://schoolsearch.schools.nyc/" target="_blank" rel="noopener">Find a School</a> map. Thanks to Jimmy Chion’s <a href="https://schoolzones.nyc/" target="_blank" rel="noopener">schoolzones.nyc</a> for pointing the way to the DOE’s current zone data. School names and addresses from the 2019–20 DOE location list. State test results, ratings, programs and current school names from the DOE’s <a href="https://tools.nycenet.edu/snapshot/" target="_blank" rel="noopener">__SNAPSHOT__ School Quality Snapshot</a>. Shared zones show the combined result of all their schools. Address lookup by NYC Planning’s GeoSearch.</p>
       </details>
     </div>
   </aside>
@@ -403,7 +403,7 @@ aside>*{flex-shrink:0}
   <h2 id="intro-h">Before you start</h2>
   <ul>
     <li>This is an independent map made by a NYC parent. It isn’t made by, affiliated with or endorsed by NYC Public Schools.</li>
-    <li>Zone lines come from the DOE’s Find a School map (__ZONES_DATE__). Ratings, test scores and programs come from the DOE’s 2024–25 School Quality Snapshot. Data can be out of date or have errors.</li>
+    <li>Zone lines come from the DOE’s Find a School map (__ZONES_DATE__). Ratings, test scores and programs come from the DOE’s __SNAPSHOT__ School Quality Snapshot. Data can be out of date or have errors.</li>
     <li>Zones change from year to year, and blocks near a boundary are easy to misread on a map.</li>
     <li>Living in a zone gives your child priority at that school. <a href="https://www.schools.nyc.gov/enrollment/enroll-grade-by-grade/kindergarten" target="_blank" rel="noopener">Most zoned schools</a> make kindergarten offers to all students living in the zone who apply on time, but not every school can. Applications and offers go through <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a>.</li>
   </ul>
@@ -471,14 +471,14 @@ aside>*{flex-shrink:0}
   </div>
   <div id="map-legend">
     <div class="lg-head"><button type="button" class="map-btn" id="color-btn" aria-expanded="false" aria-controls="color-panel"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2 8.5 12 14l10-5.5z"/><path d="m2 13 10 5.5L22 13"/><path d="m2 17.5 10 5.5 10-5.5" opacity=".5"/></svg><span><small>Color by</small><b id="color-name">Overall rating</b></span><span class="car" aria-hidden="true">▾</span></button><button type="button" class="lg-info" id="lg-info" aria-expanded="false" aria-label="About these colors">i</button></div>
-    <span id="grp-src">DOE School Quality Snapshot · 2024–25</span>
+    <span id="grp-src">DOE School Quality Snapshot · __SNAPSHOT__</span>
       <div class="legend" id="leg-rate">
-        <div class="sw"><span><i style="background:#1f8a84"></i>Excellent (4)</span><span><i style="background:#f7cf45"></i>Good (3)</span><span><i style="background:#e8742a"></i>Fair (2)</span><span><i style="background:#b8202a"></i>Needs Improvement (1)</span></div>
+        <div class="sw"><span><i style="background:__GREEN__"></i>Excellent (4)</span><span><i style="background:__YELLOW__"></i>Good (3)</span><span><i style="background:__ORANGE__"></i>Fair (2)</span><span><i style="background:__RED__"></i>Needs Improvement (1)</span></div>
         <p class="hint" id="rate-hint"></p>
       </div>
       <div class="legend" id="leg-pk" hidden>
         <div class="sw"><span><i style="background:#2b6fae"></i>Pre-K and 3-K</span><span><i style="background:#9ecae1"></i>Pre-K only</span><span><i class="off"></i>Neither</span></div>
-        <p class="hint">Whether the zoned school has pre-K and 3-K seats, from the DOE’s Local Law 72 report for fall 2025 admissions. Shared zones show the school with the most. Pre-K and 3-K seats aren’t zoned: families apply through MySchools, and zoned families often get priority. <span class="nd"></span> No data.</p>
+        <p class="hint">Whether the zoned school has pre-K and 3-K seats, from the DOE’s Local Law 72 report for __PREK__ admissions. Shared zones show the school with the most. Pre-K and 3-K seats aren’t zoned: families apply through MySchools, and zoned families often get priority. <span class="nd"></span> No data.</p>
       </div>
       <div class="legend" id="leg-prog" hidden>
         <div class="sw"><span><i style="background:#2f6db5"></i><span id="prog-yes">Has the program</span></span><span><i class="off"></i>Doesn’t</span></div>
@@ -486,11 +486,11 @@ aside>*{flex-shrink:0}
       </div>
       <div class="legend" id="leg-iep" hidden>
         <div class="sw"><span><i style="background:#e0f1ee"></i>Under 17%</span><span><i style="background:#a6dbd0"></i>17–21%</span><span><i style="background:#5fb8a8"></i>22–26%</span><span><i style="background:#2a8a7e"></i>27–31%</span><span><i style="background:#0f5a54"></i>32% or more</span></div>
-        <p class="hint">Share of students with an IEP (an Individualized Education Program for special education services), 2024–25. NYC schools typically range from about 15% to 30%. Higher means more students receiving services, not better or worse. Ask each school which settings it offers, like ICT (co-taught) and 12:1:1 classes. <span class="nd"></span> No data.</p>
+        <p class="hint">Share of students with an IEP (an Individualized Education Program for special education services), __SNAPSHOT__. NYC schools typically range from about 15% to 30%. Higher means more students receiving services, not better or worse. Ask each school which settings it offers, like ICT (co-taught) and 12:1:1 classes. <span class="nd"></span> No data.</p>
       </div>
       <div class="legend" id="leg-util" hidden>
         <div class="sw"><span><i style="background:#fde0c5"></i>Under 70%</span><span><i style="background:#f8b98b"></i>70–89%</span><span><i style="background:#ee8a50"></i>90–99%</span><span><i style="background:#d4582a"></i>100–109%</span><span><i style="background:#a32f12"></i>110% or more</span></div>
-        <p class="hint">How full the school is: its enrollment as a share of the capacity of the rooms it uses, from the 2025–26 Enrollment, Capacity &amp; Utilization Report (the “Blue Book”). Capacity assumes the city’s class size goals (20 students in K–3, 23 in grades 4–8, 25 in high school), so a school over 100% has larger classes or fewer spare rooms. Crowded schools are more likely to have waitlists, even for zoned families, and to give up art or science rooms for classrooms. Many are crowded because they’re popular. Shared zones combine their schools. <span class="nd"></span> No data.</p>
+        <p class="hint">How full the school is: its enrollment as a share of the capacity of the rooms it uses, from the __BLUE_BOOK__ Enrollment, Capacity &amp; Utilization Report (the “Blue Book”). Capacity assumes the city’s class size goals (20 students in K–3, 23 in grades 4–8, 25 in high school), so a school over 100% has larger classes or fewer spare rooms. Crowded schools are more likely to have waitlists, even for zoned families, and to give up art or science rooms for classrooms. Many are crowded because they’re popular. Shared zones combine their schools. <span class="nd"></span> No data.</p>
       </div>
       <div class="legend" id="leg-out" hidden>
         <div class="lbar" id="out-bar"></div>
@@ -499,8 +499,8 @@ aside>*{flex-shrink:0}
       </div>
       <div class="legend" id="leg-test" hidden>
         <div class="lbar"></div>
-        <div class="lticks"><span style="left:5%">5</span><span style="left:50%">50</span><span style="left:95%">95%</span></div>
-        <p class="hint" id="test-hint">Share of students who met state standards (Level 3 or 4) on the New York State ELA and math tests, from the DOE’s 2024–25 School Quality Snapshot. Covers every tested grade at the school (grades 3–8). NYC elementary schools average ELA 58%, Math 60%. <span class="nd"></span> No test results.</p>
+        <div class="lticks">__TEST_TICKS__</div>
+        <p class="hint" id="test-hint">Share of students who met state standards (Level 3 or 4) on the New York State ELA and math tests, from the DOE’s __SNAPSHOT__ School Quality Snapshot. Covers every tested grade at the school (grades 3–8). NYC elementary schools average ELA 58%, Math 60%. <span class="nd"></span> No test results.</p>
       </div>
       <div class="legend nz-key" id="nz-key"><div class="sw"><span id="zsk-item"><i class="zsk"></i>Zoned</span><span id="nzk-item"><i class="nzk"></i>Non-zoned</span><span id="gtk-item"><i class="gtk"></i>Citywide G&amp;T</span></div></div>
   </div>
@@ -582,7 +582,7 @@ function pkCat(d){const p=PK[d];if(!p)return null;return (p[0]?1:0)+(p[2]?1:0)}
 function zonePk(dbns){const v=dbns.map(pkCat).filter(x=>x!=null);return v.length?Math.max(...v):null}
 // building use (SCA Blue Book 2025-26): [utilization %, enrollment, capacity] per school
 const U=D.U||{};
-// pre-K and 3-K (Local Law 72 report, fall 2025 admissions): [pre-K seats, applicants, 3-K seats, applicants]; null = no program
+// pre-K and 3-K (Local Law 72 report, __PREK__ admissions): [pre-K seats, applicants, 3-K seats, applicants]; null = no program
 const PK=D.PK||{};
 // kindergarten admissions (Local Law 72 reports): {year: [seats, true applicants, offers lo, hi,
 //   own district applicants lo, hi, offers lo, hi, other districts applicants lo, hi, offers lo, hi]}; ranges where the DOE hid small counts
@@ -690,16 +690,17 @@ function tipHtml(f){const p=f.properties;const dt=distTag(p);
 function psNum(f){const p=f.properties;return p.dbns.length?p.label||p.dbns[0].slice(3):''}
 // proficiency for a zone: pooled across its schools that have results
 function pct(dbns,m){let n=0,p=0;dbns.forEach(d=>{const v=T[d];if(!v)return;if(m!=='math'){n+=v[0];p+=v[1]}if(m!=='ela'){n+=v[2];p+=v[3]}});return n?100*p/n:null}
-const STOPS=[[5,[184,32,42]],[50,[232,116,42]],[75,[247,207,69]],[95,[31,138,132]]];
+const STOPS=__RATE_STOPS__;  // scripts/settings.py
 function rampColor(v,S){if(v<=S[0][0])return rgb(S[0][1]);for(let i=1;i<S.length;i++){const[a,ca]=S[i-1],[b,cb]=S[i];if(v<=b){const t=(v-a)/(b-a);return rgb(ca.map((c,k)=>c+(cb[k]-c)*t))}}return rgb(S[S.length-1][1])}
 // state tests: straight red (5%) -> yellow (50%) -> green (95%)
-const TEST_STOPS=[[5,[184,32,42]],[50,[247,207,69]],[95,[31,138,132]]];
+const TEST_STOPS=__TEST_STOPS__;
 function scoreColor(v){return rampColor(v,TEST_STOPS)}
 // high school outcomes have their own ranges: graduation 65/80/95, college & career 40/60/80
-const OUT={grad:{i:0,stops:[[65,[184,32,42]],[80,[247,207,69]],[95,[31,138,132]]],ticks:[65,80,95],name:'4-year graduation rate'},
-           coll:{i:1,stops:[[40,[184,32,42]],[60,[247,207,69]],[80,[31,138,132]]],ticks:[40,60,80],name:'College & career'},
-           ccr:{q:1,abs:1,stops:[[35,[184,32,42]],[55,[247,207,69]],[80,[31,138,132]]],ticks:[35,55,80],name:'College readiness'},
-           sat:{q:0,abs:1,min:600,max:1600,stops:[[800,[184,32,42]],[950,[247,207,69]],[1200,[31,138,132]]],ticks:[800,950,1200],name:'Average SAT'}};
+const OUT_STOPS=__OUT_STOPS__,outTicks=m=>OUT_STOPS[m].map(x=>x[0]);
+const OUT={grad:{i:0,stops:OUT_STOPS.grad,ticks:outTicks('grad'),name:'4-year graduation rate'},
+           coll:{i:1,stops:OUT_STOPS.coll,ticks:outTicks('coll'),name:'College & career'},
+           ccr:{q:1,abs:1,stops:OUT_STOPS.ccr,ticks:outTicks('ccr'),name:'College readiness'},
+           sat:{q:0,abs:1,min:600,max:1600,stops:OUT_STOPS.sat,ticks:outTicks('sat'),name:'Average SAT'}};
 const outVal=(d,m)=>{const o=OUT[m];return o.q!=null?(Q[d]?Q[d][o.q]:null):(O[d]?O[d][o.i]:null)};
 const outPos=(m,v)=>{const o=OUT[m],lo=o.min||0,hi=o.max||100;return Math.max(0,Math.min(100,100*(v-lo)/(hi-lo)))};
 const isOut=m=>m in OUT;
@@ -954,10 +955,10 @@ function factsHtml(d){const x=X[d]||[],c=CS[d]||{},u=U[d];if(!X[d]&&!CS[d]&&!u)r
   const cs=v=>v!=null?Math.round(v)+' students':null;
   const row=(k,v)=>v==null?'':'<span>'+k+'</span><b>'+v+'</b>';
   const h=row('Attendance',x[1]!=null?x[1]+'%':null)+row('Teachers with 3+ years’ experience',x[2]!=null?x[2]+'%':null)+row('Principal’s years at school',x[3]!=null?(Math.round(x[3]*10)/10):null)+(level==='es'?row('Kindergarten class size',cs(c.k))+row('Grades 1–5 class size',cs(c.e)):row('Core class size',cs(level==='ms'?c.ms:c.hs)))+row('Building use (how full)',u?u[0]+'% of capacity':null)+row('Students with IEPs (special ed)',x[6]!=null?x[6]+'%':null)+row('English language learners',x[5]!=null?x[5]+'%':null)+'';return h?'<div class="facts">'+h+'</div>':''}
-// pre-K and 3-K at an elementary school (Local Law 72, fall 2025): its own block next to kindergarten admissions
+// pre-K and 3-K at an elementary school (Local Law 72, __PREK__): its own block next to kindergarten admissions
 function pkHtml(d){const pk=level==='es'?PK[d]:null;if(!pk)return '';
   const r=(lab,n,a)=>'<tr><th>'+lab+'</th>'+(n?'<td>'+n+'</td><td>'+(a!=null?a.toLocaleString():'—')+'</td><td>'+(a?Math.round(a/n*10)/10+' per seat':'')+'</td>':'<td colspan="3" class="na">Not offered</td>')+'</tr>';
-  return '<div class="adm"><div class="adm-h">Pre-K and 3-K, fall 2025<span>seats and applicants at this school</span></div>'+
+  return '<div class="adm"><div class="adm-h">Pre-K and 3-K, __PREK__<span>seats and applicants at this school</span></div>'+
     (pk[0]||pk[2]?'<table><thead><tr><th></th><th>Seats</th><th>Applied</th><th></th></tr></thead><tbody>'+r('Pre-K',pk[0],pk[1])+r('3-K',pk[2],pk[3])+'</tbody></table>'
       :'<p class="adm-note">This school doesn’t offer pre-K or 3-K. Many seats are at nearby early childhood centers; MySchools lists every program.</p>')+
     (pk[0]||pk[2]?'<p class="adm-note">Seats aren’t zoned: families apply through MySchools, and zoned families often get priority. “Applied” counts every family who listed the school anywhere on their application.</p>':'')+
@@ -965,12 +966,12 @@ function pkHtml(d){const pk=level==='es'?PK[d]:null;if(!pk)return '';
 // street address with a copy button (for maps apps and forms)
 function addrHtml(d){const s=S[d];if(!s||!s.a)return '';const full=title(s.a)+', '+(BORO[d[2]]||'')+', NY';
   return '<span class="addr">'+esc(title(s.a))+', '+esc(BORO[d[2]]||'')+'<button type="button" class="copy-addr" data-copy="'+esc(full)+'" aria-label="Copy address: '+esc(full)+'">Copy</button></span>'}
-function rateHtml(d){const r=R[d];if(!r||r.slice(2,5).every(x=>x==null))return '<span class="meta">No 2024–25 Snapshot ratings (often K–2 or new schools).</span>';
-  const c=schoolRating(d,'comp');return '<div class="rates"><span class="tot">Overall rating</span><span class="tot">'+chip(c,1)+'</span><span class="sub-r">Instruction</span>'+chip(r[2])+'<span class="sub-r">Safety &amp; climate</span>'+chip(r[3])+'<span class="sub-r">Families</span>'+chip(r[4])+'</div><a href="https://tools.nycenet.edu/snapshot/2025/'+esc(d)+'/'+esc(r[5]||'EMS')+'/" target="_blank" rel="noopener">2024–25 School Quality Snapshot ↗</a>'}
-function outHtml(d){const o=O[d];if(!o)return '<span class="meta">No 2024–25 graduation data.</span>';
+function rateHtml(d){const r=R[d];if(!r||r.slice(2,5).every(x=>x==null))return '<span class="meta">No __SNAPSHOT__ Snapshot ratings (often K–2 or new schools).</span>';
+  const c=schoolRating(d,'comp');return '<div class="rates"><span class="tot">Overall rating</span><span class="tot">'+chip(c,1)+'</span><span class="sub-r">Instruction</span>'+chip(r[2])+'<span class="sub-r">Safety &amp; climate</span>'+chip(r[3])+'<span class="sub-r">Families</span>'+chip(r[4])+'</div><a href="https://tools.nycenet.edu/snapshot/__SNAPSHOT_YEAR__/'+esc(d)+'/'+esc(r[5]||'EMS')+'/" target="_blank" rel="noopener">__SNAPSHOT__ School Quality Snapshot ↗</a>'}
+function outHtml(d){const o=O[d];if(!o)return '<span class="meta">No __SNAPSHOT__ graduation data.</span>';
   const r=(lbl,m)=>{const v=o[OUT[m].i];return v==null?'':'<span>'+lbl+'</span><span class="bar"><i style="width:'+v+'%;background:'+outColor(m,v)+'"></i></span><b>'+Math.round(v)+'%</b>'};
   const q=Q[d]||[],ab=(lbl,m,txt)=>{const v=outVal(d,m);return v==null?'':'<span>'+lbl+'</span><span class="bar"><i style="width:'+outPos(m,v).toFixed(1)+'%;background:'+outColor(m,v)+'"></i></span><b>'+(txt?txt(v):Math.round(v))+'</b>'};
-  return '<div class="scores">'+r('Graduates in 4 years','grad')+r('College or career program','coll')+ab('College readiness score','ccr')+ab('Average SAT','sat')+'<small>2024–25 School Quality Snapshot · city averages: '+(o[2]!=null?'graduation '+o[2]+'%, ':'')+'readiness 54 (of 100). Readiness counts students who graduate ready for college work by CUNY’s standard, pass AP or college-credit exams, and similar.</small></div>'+destHtml(q[4])+advHtml(q)}
+  return '<div class="scores">'+r('Graduates in 4 years','grad')+r('College or career program','coll')+ab('College readiness score','ccr')+ab('Average SAT','sat')+'<small>__SNAPSHOT__ School Quality Snapshot · city averages: '+(o[2]!=null?'graduation '+o[2]+'%, ':'')+'readiness __CITY_READINESS__ (of 100). Readiness counts students who graduate ready for college work by CUNY’s standard, pass AP or college-credit exams, and similar.</small></div>'+destHtml(q[4])+advHtml(q)}
 // where last year's graduates enrolled within 6 months (DOE Snapshot); the rest didn't enroll or weren't tracked
 const DEST=[['CUNY 4-year','#e0a526'],['CUNY 2-year','#f2cf73'],['NY public (SUNY etc.)','#6aa84f'],['NY private','#5a9fcf'],['Out of state','#2b6fae'],['For-profit','#b55d8c'],['Career or other program','#9aa5a0']];
 function destHtml(v){if(!v||!v.some(x=>x))return '';
@@ -979,8 +980,8 @@ function advHtml(q){if(q[2]==null&&!(q[5]&&q[5].length))return '';
   return '<div class="facts">'+(q[2]!=null?'<span>Students in an advanced course</span><b>'+q[2]+'%</b>':'')+(q[3]!=null?'<span>Students in an AP course</span><b>'+q[3]+'%</b>':'')+(q[5]&&q[5].length?'<small>AP exams seniors passed: '+esc(q[5].join(', '))+'</small>':'')+'</div>'}
 function zonedHtml(d){const a=X[d]&&X[d][8]||'';if(/Zoned Guarantee/i.test(a))return '<div class="tags"><span class="tag">Zoned guarantee</span></div><span class="meta">Students in this zone who apply are guaranteed a seat in the zoned program.</span>';
   if(/Zoned Priority/i.test(a))return '<div class="tags"><span class="tag">Zoned priority</span></div><span class="meta">Students in this zone who apply get priority for the zoned program, but a seat isn’t guaranteed.</span>';return ''}
-function scoreHtml(d){if(level==='hs')return outHtml(d);const g=LEVEL_TXT[level].grades,v=T[d];if(!v)return '<span class="meta">No 2024–25 state test results'+(level==='es'?' (K–2 or newer school)':' (newer school)')+'.</span>';
-  const n=Math.max(v[0],v[2]);return '<div class="scores">'+row('ELA',v[0],v[1])+row('Math',v[2],v[3])+'<small>2024–25 School Quality Snapshot · '+n+' test takers'+(n<60?' · small group, read with care':'')+'</small></div>'}
+function scoreHtml(d){if(level==='hs')return outHtml(d);const g=LEVEL_TXT[level].grades,v=T[d];if(!v)return '<span class="meta">No __SNAPSHOT__ state test results'+(level==='es'?' (K–2 or newer school)':' (newer school)')+'.</span>';
+  const n=Math.max(v[0],v[2]);return '<div class="scores">'+row('ELA',v[0],v[1])+row('Math',v[2],v[3])+'<small>__SNAPSHOT__ School Quality Snapshot · '+n+' test takers'+(n<60?' · small group, read with care':'')+'</small></div>'}
 // how a zone with several schools works, from the DOE's note
 function zoneKind(p){const r=p.remarks||'';if(/zoned by address/i.test(r))return 'address';
   if(/grades?\s*K\s*-\s*[12]\b.*zoned|zoned to.*grades?|grades?\s*\d\s*-\s*\d\s*(are|is)?\s*zoned/i.test(r)&&!/^shared zone/i.test(r))return 'grade';
@@ -1113,19 +1114,19 @@ function syncLegend(){syncName();const lo=document.getElementById('leg-out');lo.
   if(isOut(metric)){const o=OUT[metric],s=o.stops,pct=v=>outPos(metric,v)+'%';
     document.getElementById('out-bar').style.background='linear-gradient(90deg,'+rgb(s[0][1])+' 0%,'+rgb(s[0][1])+' '+pct(s[0][0])+','+rgb(s[1][1])+' '+pct(s[1][0])+','+rgb(s[2][1])+' '+pct(s[2][0])+','+rgb(s[2][1])+' 100%)';
     document.getElementById('out-ticks').innerHTML=o.ticks.map((v,i)=>'<span style="left:'+outPos(metric,v)+'%">'+v+(i===o.ticks.length-1&&!o.abs?'%':'')+'</span>').join('');
-    document.getElementById('out-hint').innerHTML=metric==='sat'?'Average SAT score (out of 1600) of the school’s test takers, from the 2024–25 School Quality Snapshot. Most NYC high schools average 780–1100. <span class="nd"></span> No data.':metric==='ccr'?'The DOE’s college and career readiness score (0–100): credit for each student who graduates meeting CUNY’s standard to skip remedial classes, passing AP or college-credit exams, and similar. NYC average: 54. From the 2024–25 School Quality Snapshot. <span class="nd"></span> No data.':metric==='grad'?'Share of students who graduate within 4 years, from the 2024–25 School Quality Snapshot. NYC average: 81%. The scale is narrower than for test scores because most zoned high schools graduate 75–95% of students. <span class="nd"></span> No data.':'Share of graduates who enrolled in college or a career program within 6 months, from the 2024–25 School Quality Snapshot. <span class="nd"></span> No data.'}
-  document.getElementById('leg-pk').hidden=metric!=='pk';{const gs=document.getElementById('grp-src');if(gs&&metric==='pk')gs.textContent='DOE Local Law 72 report · fall 2025'}document.getElementById('leg-rate').hidden=!isRate(metric);document.getElementById('leg-test').hidden=!['both','ela','math'].includes(metric);document.getElementById('leg-prog').hidden=!isProg(metric);document.getElementById('leg-iep').hidden=metric!=='iep';document.getElementById('leg-util').hidden=metric!=='util';{const gs=document.getElementById('grp-src');if(gs&&['gt','dl','iep','util'].includes(metric))gs.textContent=metric==='util'?'NYC SCA Blue Book · 2025–26':GROUP_SRC.programs}document.getElementById('prog-yes').textContent=metric==='gt'?'Has G&T':'Has dual language';document.getElementById('prog-hint').textContent=metric==='gt'?'District Gifted & Talented programs listed for the zoned school in the 2024–25 Snapshot (73 zoned schools). G&T seats aren’t assigned by zone: families apply separately, and admission rules have changed in recent years, so check MySchools for this year’s process.':'Dual-language programs at the zoned school (151 zoned schools), from the 2024–25 Snapshot. Click a zone to see the languages. Seats are usually by application, often with priority for zoned families.';
+    document.getElementById('out-hint').innerHTML=metric==='sat'?'Average SAT score (out of 1600) of the school’s test takers, from the __SNAPSHOT__ School Quality Snapshot. Most NYC high schools average 780–1100. <span class="nd"></span> No data.':metric==='ccr'?'The DOE’s college and career readiness score (0–100): credit for each student who graduates meeting CUNY’s standard to skip remedial classes, passing AP or college-credit exams, and similar. NYC average: __CITY_READINESS__. From the __SNAPSHOT__ School Quality Snapshot. <span class="nd"></span> No data.':metric==='grad'?'Share of students who graduate within 4 years, from the __SNAPSHOT__ School Quality Snapshot. NYC average: __CITY_GRAD__%. The scale is narrower than for test scores because most zoned high schools graduate 75–95% of students. <span class="nd"></span> No data.':'Share of graduates who enrolled in college or a career program within 6 months, from the __SNAPSHOT__ School Quality Snapshot. <span class="nd"></span> No data.'}
+  document.getElementById('leg-pk').hidden=metric!=='pk';{const gs=document.getElementById('grp-src');if(gs&&metric==='pk')gs.textContent='DOE Local Law 72 report · __PREK__'}document.getElementById('leg-rate').hidden=!isRate(metric);document.getElementById('leg-test').hidden=!['both','ela','math'].includes(metric);document.getElementById('leg-prog').hidden=!isProg(metric);document.getElementById('leg-iep').hidden=metric!=='iep';document.getElementById('leg-util').hidden=metric!=='util';{const gs=document.getElementById('grp-src');if(gs&&['gt','dl','iep','util'].includes(metric))gs.textContent=metric==='util'?'NYC SCA Blue Book · __BLUE_BOOK__':GROUP_SRC.programs}document.getElementById('prog-yes').textContent=metric==='gt'?'Has G&T':'Has dual language';document.getElementById('prog-hint').textContent=metric==='gt'?'District Gifted & Talented programs listed for the zoned school in the __SNAPSHOT__ Snapshot (73 zoned schools). G&T seats aren’t assigned by zone: families apply separately, and admission rules have changed in recent years, so check MySchools for this year’s process.':'Dual-language programs at the zoned school (151 zoned schools), from the __SNAPSHOT__ Snapshot. Click a zone to see the languages. Seats are usually by application, often with priority for zoned families.';
   document.getElementById('rate-hint').innerHTML=(metric==='comp'?'Overall is the average of the three ratings, so zones blend between colors (3.3 sits between yellow and teal). ':'DOE rating for '+RNAME[metric]+'. ')+'Ratings are the DOE’s own. Shared zones average their schools. <span class="nd"></span> No rating.'}
 syncLegend();
 //METRIC
 // metric groups: tabs show one row of options at a time and remember the last pick in each
-const GROUP_SRC={quality:'DOE School Quality Snapshot · 2024–25',tests:'New York State tests · 2024–25 Snapshot',programs:'DOE School Quality Snapshot · 2024–25'};
+const GROUP_SRC={quality:'DOE School Quality Snapshot · __SNAPSHOT__',tests:'New York State tests · __SNAPSHOT__ Snapshot',programs:'DOE School Quality Snapshot · __SNAPSHOT__'};
 const lastPick={};
 document.querySelectorAll('.seg[data-g]').forEach(s=>{lastPick[s.dataset.g]=s.querySelector('input').value});
 lastPick.quality='comp';
 let curGroup='quality';
 function showGroup(g){curGroup=g;
-  document.getElementById('grp-src').textContent=g==='tests'?(level==='hs'?'DOE School Quality Snapshot · 2024–25':'New York State tests · 2024–25 Snapshot'):GROUP_SRC[g];}
+  document.getElementById('grp-src').textContent=g==='tests'?(level==='hs'?'DOE School Quality Snapshot · __SNAPSHOT__':'New York State tests · __SNAPSHOT__ Snapshot'):GROUP_SRC[g];}
 let quietColor=false;
 document.querySelectorAll('input[name=metric]').forEach(r=>r.addEventListener('change',()=>{const s=r.closest('.seg[data-g]');if(s){lastPick[s.dataset.g]=r.value;showGroup(s.dataset.g)}
   if(!quietColor)markEngaged();metric=r.value;syncLegend();restyle();drawLabels();setColorParam();placePanel();
@@ -1175,7 +1176,7 @@ async function setLevel(lv){if(lv===level)return;if(!LV[lv]&&!(await loadLevel(l
   document.getElementById('g-tests').textContent=hs?'Outcomes':'Tests';
   if(hs&&['both','ela','math'].includes(lastPick.tests)){testsPick=lastPick.tests;lastPick.tests=outPick}else if(!hs&&isOut(lastPick.tests)){outPick=lastPick.tests;lastPick.tests=testsPick}
   if(hs&&['both','ela','math'].includes(metric)||!hs&&isOut(metric)){const r=document.querySelector('input[name=metric][value='+lastPick.tests+']');r.checked=true;r.dispatchEvent(new Event('change'))}
-  document.getElementById('test-hint').innerHTML='Share of students who met state standards (Level 3 or 4) on the New York State ELA and math tests, from the DOE’s 2024–25 School Quality Snapshot. Covers every tested grade at the school (grades 3–8). '+tx.avg+'. <span class="nd"></span> No test results.';
+  document.getElementById('test-hint').innerHTML='Share of students who met state standards (Level 3 or 4) on the New York State ELA and math tests, from the DOE’s __SNAPSHOT__ School Quality Snapshot. Covers every tested grade at the school (grades 3–8). '+tx.avg+'. <span class="nd"></span> No test results.';
   // G&T is an elementary program; hide it for middle school
   const noGT=lv!=='es',gt=document.getElementById('m-gt');gt.hidden=noGT;document.getElementById('lbl-gt').hidden=noGT;
   document.getElementById('m-pk').hidden=noGT;document.getElementById('lbl-pk').hidden=noGT;

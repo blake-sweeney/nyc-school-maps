@@ -6,6 +6,17 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
+## Unreleased
+
+### Changed
+- Neighborhood pages make clear that each school zone covers only part of the neighborhood: "Different parts of Astoria (North)-Ditmars-Steinway are zoned for 4 elementary schools", tables headed "Elementary school zones in …" with a reminder that each address is zoned for just one school, and "zone covers 18% of the neighborhood" under each school. The reminder to confirm your exact address on schoolsearch.schools.nyc now sits right above each table.
+- Neighborhood pages explain where the school district matters. The Middle tab says most middle schools give priority by district and links to that district's middle schools. For neighborhoods split between districts (like Park Slope: District 15, about 75%, and District 13), it gives each share and notes your district depends on your address. In Districts 1 and 7, which have no elementary zones, the Elementary tab says so and links to the district's elementary schools.
+
+### Fixed
+- On school pages, the bars for state test scores, graduation, college readiness and SAT are now colored by the score (red for low, yellow for middle, green for high), the same as on the map's school cards. They were all green before.
+- School pages show a colored square next to each DOE rating (the overall number and the three category ratings), using the same colors as the map's school cards.
+- The grade range at the top of a school page now matches its pre-K and 3-K section and the map's school card. It used to come from an older (2019–20) school list, so some schools showed "Pre-K" in their grades even though they no longer have pre-K (like P.S. 161 in Harlem), and schools with 3-K didn't show it.
+
 ## 1.15.0 (2026-10-08)
 
 ### Added

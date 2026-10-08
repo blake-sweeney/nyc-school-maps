@@ -725,16 +725,17 @@ function tipHtml(f){const p=f.properties;const dt=distTag(p);
 function psNum(f){const p=f.properties;return p.dbns.length?p.label||p.dbns[0].slice(3):''}
 // proficiency for a zone: pooled across its schools that have results
 function pct(dbns,m){let n=0,p=0;dbns.forEach(d=>{const v=T[d];if(!v)return;if(m!=='math'){n+=v[0];p+=v[1]}if(m!=='ela'){n+=v[2];p+=v[3]}});return n?100*p/n:null}
-const STOPS=[[5,[184,32,42]],[50,[232,116,42]],[75,[247,207,69]],[95,[31,138,132]]];
+const STOPS=[[5,[184,32,42]],[50,[232,116,42]],[75,[247,207,69]],[95,[31,138,132]]];  // scripts/settings.py
 function rampColor(v,S){if(v<=S[0][0])return rgb(S[0][1]);for(let i=1;i<S.length;i++){const[a,ca]=S[i-1],[b,cb]=S[i];if(v<=b){const t=(v-a)/(b-a);return rgb(ca.map((c,k)=>c+(cb[k]-c)*t))}}return rgb(S[S.length-1][1])}
 // state tests: straight red (5%) -> yellow (50%) -> green (95%)
 const TEST_STOPS=[[5,[184,32,42]],[50,[247,207,69]],[95,[31,138,132]]];
 function scoreColor(v){return rampColor(v,TEST_STOPS)}
 // high school outcomes have their own ranges: graduation 65/80/95, college & career 40/60/80
-const OUT={grad:{i:0,stops:[[65,[184,32,42]],[80,[247,207,69]],[95,[31,138,132]]],ticks:[65,80,95],name:'4-year graduation rate'},
-           coll:{i:1,stops:[[40,[184,32,42]],[60,[247,207,69]],[80,[31,138,132]]],ticks:[40,60,80],name:'College & career'},
-           ccr:{q:1,abs:1,stops:[[35,[184,32,42]],[55,[247,207,69]],[80,[31,138,132]]],ticks:[35,55,80],name:'College readiness'},
-           sat:{q:0,abs:1,min:600,max:1600,stops:[[800,[184,32,42]],[950,[247,207,69]],[1200,[31,138,132]]],ticks:[800,950,1200],name:'Average SAT'}};
+const OUT_STOPS={"grad":[[65,[184,32,42]],[80,[247,207,69]],[95,[31,138,132]]],"coll":[[40,[184,32,42]],[60,[247,207,69]],[80,[31,138,132]]],"ccr":[[35,[184,32,42]],[55,[247,207,69]],[80,[31,138,132]]],"sat":[[800,[184,32,42]],[950,[247,207,69]],[1200,[31,138,132]]]},outTicks=m=>OUT_STOPS[m].map(x=>x[0]);
+const OUT={grad:{i:0,stops:OUT_STOPS.grad,ticks:outTicks('grad'),name:'4-year graduation rate'},
+           coll:{i:1,stops:OUT_STOPS.coll,ticks:outTicks('coll'),name:'College & career'},
+           ccr:{q:1,abs:1,stops:OUT_STOPS.ccr,ticks:outTicks('ccr'),name:'College readiness'},
+           sat:{q:0,abs:1,min:600,max:1600,stops:OUT_STOPS.sat,ticks:outTicks('sat'),name:'Average SAT'}};
 const outVal=(d,m)=>{const o=OUT[m];return o.q!=null?(Q[d]?Q[d][o.q]:null):(O[d]?O[d][o.i]:null)};
 const outPos=(m,v)=>{const o=OUT[m],lo=o.min||0,hi=o.max||100;return Math.max(0,Math.min(100,100*(v-lo)/(hi-lo)))};
 const isOut=m=>m in OUT;

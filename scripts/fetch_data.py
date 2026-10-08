@@ -32,7 +32,7 @@ ELA_DATASET = "iebs-5yhr"         # ELA Test Results 2013-2023
 MATH_DATASET = "74kb-55u9"        # Math Test Results 2013-2023
 TEST_YEAR = "2023"
 SNAPSHOT_API = "https://tools.nycenet.edu/api/v1/data/school/app/snapshot/all"
-SNAPSHOT_YEAR = "2025"            # 2024-25 School Quality Snapshot
+from settings import SNAPSHOT_YEAR  # which School Quality Snapshot (scripts/settings.py)
 CENTERLINE_DATASET = "inkn-q76z"  # NYC Street Centerline (CSCL)
 NTA_DATASET = "9nt8-h7nd"         # 2020 Neighborhood Tabulation Areas (NYC Planning)
 
