@@ -354,6 +354,7 @@ CSS = """
 @media (prefers-color-scheme:dark){:root{--bg:#141917;--panel:#1c2220;--fg:#e7ebe8;--muted:#9aa5a0;--line:#2f3835;--hl:#7fb8ec;
   --zone:#c99a0a;--zone-o:#3a3a2a;--dist:#232a27;--warn-bg:#3a3014;--warn-fg:#f3d98a;--bar:#2fa39b;color-scheme:dark}}
 *,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
 body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.5}
 a{color:var(--hl)}
 a:focus-visible,.go:focus-visible{outline:2px solid var(--hl);outline-offset:2px}
@@ -812,6 +813,17 @@ if(a===''&&c!=='')return 1;if(c===''&&a!=='')return -1;var r=num?(parseFloat(a)-
 return dir==='ascending'?r:-r}).forEach(function(r){b.appendChild(r)})})})})</script>"""
 
 
+# level tabs on district pages; #es / #ms / #hs in the address picks one (and is kept as you switch)
+TABS_JS = """<script>(function(){var tabs=[].slice.call(document.querySelectorAll('.lvtabs [role=tab]'));if(!tabs.length)return;
+document.documentElement.classList.add('js-tabs');
+function show(lv,push){tabs.forEach(function(t){var on=t.id==='tab-'+lv;t.setAttribute('aria-selected',on);t.tabIndex=on?0:-1;
+document.getElementById(t.getAttribute('aria-controls')).hidden=!on});if(push)try{history.replaceState(null,'','#'+lv)}catch(e){}}
+tabs.forEach(function(t,i){t.addEventListener('click',function(){show(t.id.slice(4),true)});
+t.addEventListener('keydown',function(ev){var d=ev.key==='ArrowRight'?1:ev.key==='ArrowLeft'?-1:0;if(!d)return;
+var n=tabs[(i+d+tabs.length)%tabs.length];n.focus();show(n.id.slice(4),true)})});
+var h=location.hash.slice(1);show(['es','ms','hs'].indexOf(h)>=0?h:'es',false)})()</script>"""
+
+
 DIST_CSS = """
 .tbl{overflow-x:auto;margin:0 -4px}
 /* fixed column widths, so the Rating and Tests columns line up from one table to the next */
@@ -831,6 +843,16 @@ table.sort td:first-child{text-align:left;font-family:var(--body);font-weight:40
 @media (max-width:640px){table.sort th:not(:first-child){width:68px}table.sort th button{padding:6px 3px}table.sort td{padding:7px 3px}}
 table.sort td i.sw{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:1px}
 table.sort td small{color:var(--muted);font-size:.78rem}
+.lvtabs{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel)}
+.lvtabs button{all:unset;cursor:pointer;text-align:center;padding:10px 6px;font-family:var(--display);font-weight:700;font-size:1rem;color:var(--muted);border-right:1px solid var(--line)}
+.lvtabs button:last-child{border-right:0}
+.lvtabs button small{display:block;font-weight:500;font-size:.75rem}
+.lvtabs button[aria-selected=true]{background:var(--fg);color:var(--panel)}
+.lvtabs button:focus-visible{outline:2px solid var(--hl);outline-offset:-3px}
+.lvtabs{display:none}.js-tabs .lvtabs{display:grid}
+.lvpanel{display:flex;flex-direction:column;gap:16px}
+.js-tabs .lvh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.lvh{margin:8px 0 0}
 .slist{list-style:none;margin:0;padding:0}
 .slist li{display:flex;align-items:baseline;gap:8px;padding:7px 0;border-top:1px solid var(--line)}
 .slist li small{color:var(--muted);font-size:.8rem}
@@ -878,19 +900,42 @@ def write_districts(d, root, site_url, goat):
         es_note = lambda x: "citywide G&T" if info[x].get("es") == "citywide" else ""
         ms_note = lambda x: "citywide" if info[x].get("ms") == "citywide" else ""
         hs_note = lambda x: "specialized" if info[x]["hs"] == "citywide" else "zoned" if info[x]["hs"] == "zoned" else ""
+        # one panel per level, switched by tabs (all three are in the HTML, so search engines and no-JS readers see everything)
+        def go(lv, word):
+            return (f'<a class="go" href="/#{lv}-d{e(k)}">Open the {word} school map of District {e(k)} '
+                    '<span aria-hidden="true">→</span></a>')
+        panels = [
+            ("es", "Elementary", f"{len(es_z) + len(es_n)}",
+             go("es", "elementary")
+             + f'<section class="card"><h2>Zoned elementary schools</h2>{school_table(es_z, names, R, es_cols)}'
+             + (f'<h2>Elementary schools without a zone</h2>{school_table(es_n, names, R, es_cols, es_note)}' if es_n else "")
+             + '<p class="src">Rating is the DOE’s overall rating (out of 4). Tests is the share of students meeting state standards '
+               'in ELA and math, grades 3–5. Zoned schools give priority to families in their zone; schools without a zone give '
+               'priority by district.</p></section>'),
+            ("ms", "Middle", f"{len(ms_z) + len(ms_n)}",
+             go("ms", "middle")
+             + '<section class="card">'
+             + (f'<h2>Zoned middle schools</h2>{school_table(ms_z, names, R, ms_cols)}' if ms_z else "")
+             + (f'<h2>Middle schools without a zone</h2>{school_table(ms_n, names, R, ms_cols, ms_note)}' if ms_n else "")
+             + '<p class="src">Rating is the DOE’s overall rating (out of 4). Tests is the share of students meeting state standards '
+               f'in ELA and math, grades 6–8. Most middle school programs fill seats with District {e(k)} students and residents first, '
+               'then consider other districts.</p></section>'),
+            ("hs", "High", f"{len(hs)}",
+             go("hs", "high")
+             + (f'<section class="card"><h2>High schools in District {e(k)}</h2>{school_table(hs, names, R, hs_cols, hs_note)}'
+                '<p class="src">Rating is the DOE’s overall rating (out of 4). Grad is the 4-year graduation rate, SAT the average score '
+                'and Readiness the DOE’s college readiness score (city average 54). High schools don’t give priority by district: any NYC '
+                'student can apply, and many programs give priority to students in their borough.</p></section>' if hs else
+                '<section class="card"><p>No high schools are located in this district. High schools admit students from across the city.</p></section>')),
+        ]
+        tabs = "".join(f'<button type="button" role="tab" id="tab-{lv}" aria-controls="p-{lv}" aria-selected="{"true" if lv == "es" else "false"}">'
+                       f'{w}<small>{n} schools</small></button>' for lv, w, n, _ in panels)
         body = (f'<div><div class="kicker">{e(boro)}</div><h1>District {e(k)} schools</h1>'
-                f'<p class="lede">Every public elementary, middle and high school in NYC school District {e(k)}. Rating is the DOE’s overall rating (out of 4); '
-                f'Tests is the share of students meeting state standards in ELA and math; for high schools, Grad is the 4-year graduation rate, SAT the average score and Readiness the DOE’s college readiness score (city average 54). '
-                f'Tap a column to sort, or a school for its zone, scores and admissions.</p></div>'
-                f'<a class="go" href="/">Open the map <span aria-hidden="true">→</span></a>'
-                f'<section class="card"><h2>Zoned elementary schools</h2>{school_table(es_z, names, R, es_cols)}'
-                + (f'<h2>Elementary schools without a zone</h2>{school_table(es_n, names, R, es_cols, es_note)}' if es_n else "")
-                + '</section>'
-                + (f'<section class="card"><h2>Zoned middle schools</h2>{school_table(ms_z, names, R, ms_cols)}' if ms_z else '<section class="card">')
-                + (f'<h2>Middle schools without a zone</h2>{school_table(ms_n, names, R, ms_cols, ms_note)}' if ms_n else "")
-                + '<p class="src">Most middle schools give priority to students who live or go to elementary school in the district.</p></section>'
-                + (f'<section class="card"><h2>High schools in District {e(k)}</h2>{school_table(hs, names, R, hs_cols, hs_note)}'
-                   '<p class="src">High schools admit students from across the city; many give priority to students who live in the same borough.</p></section>' if hs else ""))
+                f'<p class="lede">Every public elementary, middle and high school in NYC school District {e(k)}. '
+                'Tap a column to sort, or a school for its zone, scores and admissions.</p></div>'
+                f'<div class="lvtabs" role="tablist" aria-label="School level">{tabs}</div>'
+                + "".join(f'<div class="lvpanel" role="tabpanel" id="p-{lv}" aria-labelledby="tab-{lv}">'
+                          f'<h2 class="lvh">{w} schools</h2>{html}</div>' for lv, w, _, html in panels))
         title = f"District {k} Schools ({boro}): Zones, Ratings & Admissions | NYC School Zones"
         desc = (f"All {len(dbns)} public schools in NYC school District {k}, {boro}: zoned and non-zoned elementary and middle "
                 "schools and high schools, with DOE ratings, test scores and admissions.")
@@ -898,7 +943,7 @@ def write_districts(d, root, site_url, goat):
         out = os.path.join(root, "districts", k)
         os.makedirs(out, exist_ok=True)
         with open(os.path.join(out, "index.html"), "w", encoding="utf-8") as f:
-            f.write(relative(shell(title, desc, canon, body, goat, site_url), 2).replace("</body>", SORT_JS + "\n</body>", 1))
+            f.write(relative(shell(title, desc, canon, body, goat, site_url), 2).replace("</body>", SORT_JS + TABS_JS + "\n</body>", 1))
         urls.append(canon)
     # the index of districts
     groups = {}

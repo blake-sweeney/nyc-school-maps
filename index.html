@@ -27,7 +27,7 @@
 <meta name="twitter:title" content="NYC School Zones">
 <meta name="twitter:description" content="Every NYC elementary (kindergarten), middle and high school zone on one map, colored by DOE School Quality ratings and state test scores. Free for parents.">
 <meta name="twitter:image" content="https://nycschoolzones.com/preview.png">
-<!-- NYC School Zones · Copyright (C) 2026 Blake Sweeney · SPDX-License-Identifier: AGPL-3.0-or-later · v1.10.0 · https://github.com/blake-sweeney/nyc-school-maps -->
+<!-- NYC School Zones · Copyright (C) 2026 Blake Sweeney · SPDX-License-Identifier: AGPL-3.0-or-later · v1.11.0 · https://github.com/blake-sweeney/nyc-school-maps -->
 <title>NYC School Zones</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Sans+Condensed:wght@500;600;700&display=swap">
@@ -419,7 +419,7 @@ aside>*{flex-shrink:0}
       <p><button type="button" class="link-btn" id="about-open">About this map</button> · <button type="button" class="link-btn" id="terms-open">Terms &amp; privacy</button></p>
       <p><a href="districts/" id="dist-link">Browse schools by district</a></p>
       <p><a href="https://github.com/blake-sweeney/nyc-school-maps" target="_blank" rel="noopener">Source code</a> (AGPL-3.0)</p>
-      <p class="asof">Zones: NYC DOE Find a School, Oct 2026 · Ratings, test scores and programs: DOE 2024–25 School Quality Snapshot · Updated Oct 2026 · <a href="https://github.com/blake-sweeney/nyc-school-maps/blob/main/CHANGELOG.md" target="_blank" rel="noopener">v1.10.0</a></p>
+      <p class="asof">Zones: NYC DOE Find a School, Oct 2026 · Ratings, test scores and programs: DOE 2024–25 School Quality Snapshot · Updated Oct 2026 · <a href="https://github.com/blake-sweeney/nyc-school-maps/blob/main/CHANGELOG.md" target="_blank" rel="noopener">v1.11.0</a></p>
       <details><summary>Data sources</summary>
         <p>School zones from the DOE’s <a href="https://schoolsearch.schools.nyc/" target="_blank" rel="noopener">Find a School</a> map. Thanks to Jimmy Chion’s <a href="https://schoolzones.nyc/" target="_blank" rel="noopener">schoolzones.nyc</a> for pointing the way to the DOE’s current zone data. School names and addresses from the 2019–20 DOE location list. State test results, ratings, programs and current school names from the DOE’s <a href="https://tools.nycenet.edu/snapshot/" target="_blank" rel="noopener">2024–25 School Quality Snapshot</a>. Shared zones show the combined result of all their schools. Address lookup by NYC Planning’s GeoSearch.</p>
       </details>
@@ -1197,6 +1197,13 @@ const m=location.hash.match(/^#(?:(es|ms|hs)-)?(\d{2}[KMQRX]\d{3})$/i);
 if(m){const lv=(m[1]||'es').toLowerCase(),dbn=m[2].toUpperCase();
   if(hasLevel(lv)){if(lv!==level){document.getElementById('lv-'+lv).checked=true;await setLevel(lv)}
     const hit=byLayer.find(l=>l.feature.properties.dbns.includes(dbn));if(hit)select(hit,false);else if(nzGet(dbn))selectNZ(dbn,false)}}
+// district link from a district page: #es-d15 / #ms-d15 / #hs-d15 opens that level zoomed to the district, outlined
+const dm=location.hash.match(/^#(es|ms|hs)-d(\d{1,2})$/i);
+if(dm&&DIST[+dm[2]]){const lv=dm[1].toLowerCase(),k=String(+dm[2]);
+  if(hasLevel(lv)&&lv!==level){document.getElementById('lv-'+lv).checked=true;await setLevel(lv)}
+  const g={type:'Feature',properties:{},geometry:{type:'MultiPolygon',coordinates:DIST[k].r.map(r=>[r])}};
+  if(selLine)map.removeLayer(selLine);selLine=makeSel(g).addTo(map);
+  map.fitBounds(selLine.getBounds(),phone.matches?{paddingTopLeft:[20,70],paddingBottomRight:[20,90]}:{padding:[30,30]})}
 applyColorParam()})();
 syncStreets();
 // first visit: a short "Before you start" notice (remembered in this browser; reopen from "About this map")

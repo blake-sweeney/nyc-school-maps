@@ -6,6 +6,11 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
+## 1.11.0 (2026-10-08)
+
+### Added
+- District pages have Elementary / Middle / High tabs (each showing its number of schools), and each tab's "Open the map" button opens that level of the map zoomed to the district with its outline. Links like /districts/15/#ms open a tab directly.
+
 ## 1.10.0 (2026-10-08)
 
 ### Added

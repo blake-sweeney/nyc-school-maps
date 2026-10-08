@@ -1162,6 +1162,13 @@ const m=location.hash.match(/^#(?:(es|ms|hs)-)?(\d{2}[KMQRX]\d{3})$/i);
 if(m){const lv=(m[1]||'es').toLowerCase(),dbn=m[2].toUpperCase();
   if(hasLevel(lv)){if(lv!==level){document.getElementById('lv-'+lv).checked=true;await setLevel(lv)}
     const hit=byLayer.find(l=>l.feature.properties.dbns.includes(dbn));if(hit)select(hit,false);else if(nzGet(dbn))selectNZ(dbn,false)}}
+// district link from a district page: #es-d15 / #ms-d15 / #hs-d15 opens that level zoomed to the district, outlined
+const dm=location.hash.match(/^#(es|ms|hs)-d(\d{1,2})$/i);
+if(dm&&DIST[+dm[2]]){const lv=dm[1].toLowerCase(),k=String(+dm[2]);
+  if(hasLevel(lv)&&lv!==level){document.getElementById('lv-'+lv).checked=true;await setLevel(lv)}
+  const g={type:'Feature',properties:{},geometry:{type:'MultiPolygon',coordinates:DIST[k].r.map(r=>[r])}};
+  if(selLine)map.removeLayer(selLine);selLine=makeSel(g).addTo(map);
+  map.fitBounds(selLine.getBounds(),phone.matches?{paddingTopLeft:[20,70],paddingBottomRight:[20,90]}:{padding:[30,30]})}
 applyColorParam()})();
 syncStreets();
 // first visit: a short "Before you start" notice (remembered in this browser; reopen from "About this map")
