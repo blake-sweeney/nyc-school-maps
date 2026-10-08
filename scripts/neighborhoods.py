@@ -9,6 +9,7 @@ import math
 import os
 import re
 
+import settings
 from pages import (OUT_STOPS, SORT_JS, TABS_JS, TEST_STOPS, all_schools, e, in_polys, relative, rings_of, school_table,
                    shell, zone_svg)
 
@@ -205,7 +206,7 @@ def write(d, nbi, root, site_url, goat):
             note = {"es": "Tests is the share of students meeting state standards in ELA and math, grades 3–5.",
                     "ms": "Tests is the share of students meeting state standards in ELA and math, grades 6–8.",
                     "hs": "Grad is the 4-year graduation rate, SAT the average score and Readiness the DOE’s college "
-                          "readiness score (city average 54)."}[lv]
+                          f"readiness score (city average {settings.CITY_READINESS})."}[lv]
             go = (f'<a class="go" href="/#{lv}-d{e(dists[0])}">Open the {word} school map '
                   '<span aria-hidden="true">→</span></a>') if dists else ""
             panels.append((lv, word.capitalize(), go + f'<section class="card">{h}<p class="src">Rating is the DOE’s overall '

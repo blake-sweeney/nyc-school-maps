@@ -11,6 +11,7 @@ python3 -m http.server 8000           # preview at http://localhost:8000
 ```
 
 - Edit the sources, never the built files: `src/template.html` (map page), `scripts/pages.py` (school and district pages), `scripts/build.py` (data → page).
+- Data years, citywide averages and color scales live once in `scripts/settings.py`; the build fills them into the map (`__SNAPSHOT__`-style placeholders) and the pages. The pages take the theme colors and the "Before you start" notice from `src/template.html`. Don't copy these values into either file.
 - Always run the full build before committing and commit the rebuilt outputs with the source change (`index.html`, `assets/`, `schools/`, `districts/`, `sitemap.xml`). GitHub Pages serves them as-is.
 - See README.md "Repo layout" for what each file in `data/` holds.
 

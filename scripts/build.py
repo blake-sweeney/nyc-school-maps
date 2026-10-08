@@ -25,6 +25,8 @@ import re
 import os
 from html import escape
 
+import settings
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(ROOT, "data")
 
@@ -39,6 +41,27 @@ SITE_NAME = "NYC School Zones"
 SITE_TITLE = "NYC School Zone Map: Elementary, Middle & High School Zones"
 SITE_DESCRIPTION = ("Every NYC elementary (kindergarten), middle and high school zone on one map, colored by DOE "
                     "School Quality ratings and state test scores. Free for parents.")
+
+
+def fill_settings(template):
+    """Years and color ramps from scripts/settings.py into the map's placeholders."""
+    def hexc(c):
+        return "#%02x%02x%02x" % tuple(c)
+    lo, hi = settings.TEST_STOPS[0][0], settings.TEST_STOPS[-1][0]
+    gradient = ("linear-gradient(90deg," + f"{hexc(settings.TEST_STOPS[0][1])} 0%,"
+                + ",".join(f"{hexc(c)} {v}%" for v, c in settings.TEST_STOPS) + f",{hexc(settings.TEST_STOPS[-1][1])} 100%)")
+    ticks = "".join(f'<span style="left:{v}%">{v}{"%" if v == hi else ""}</span>' for v, _ in settings.TEST_STOPS)
+    for k, v in {"__SNAPSHOT_YEAR__": settings.SNAPSHOT_YEAR, "__SNAPSHOT__": settings.SNAPSHOT_LABEL,
+                 "__PREK__": settings.PREK_LABEL,
+                 "__CITY_GRAD__": str(settings.CITY_GRAD), "__CITY_READINESS__": str(settings.CITY_READINESS), "__BLUE_BOOK__": settings.BLUE_BOOK_LABEL,
+                 "__RATE_STOPS__": json.dumps(settings.RATE_STOPS, separators=(",", ":")),
+                 "__TEST_STOPS__": json.dumps(settings.TEST_STOPS, separators=(",", ":")),
+                 "__OUT_STOPS__": json.dumps(settings.OUT_STOPS, separators=(",", ":")),
+                 "__TEST_GRADIENT__": gradient, "__TEST_TICKS__": ticks,
+                 "__RED__": hexc(settings.RED), "__ORANGE__": hexc(settings.ORANGE),
+                 "__YELLOW__": hexc(settings.YELLOW), "__GREEN__": hexc(settings.GREEN)}.items():
+        template = template.replace(k, v)
+    return template
 
 
 def load(name):
@@ -437,9 +460,7 @@ def main(standalone_path=None, pages=None):
     zdate = datetime.date.fromtimestamp(os.path.getmtime(os.path.join(DATA, "elem_zones.json")))
     template = template.replace("__ZONES_DATE__", zdate.strftime("%b %Y"))
     template = template.replace("__ES_ZONES__", str(len(d["features"])))
-    # the map's "Before you start" notice and its styles, repeated on every school, district and neighborhood page
-    intro_html = re.search(r'<dialog class="intro" id="intro".*?</dialog>', template, re.S).group(0)
-    intro_css = "\n".join(line for line in template.splitlines() if line.startswith(".intro"))
+    template = fill_settings(template)
 
     full = dict(d)
     # For the website, middle school, high school and the all-streets layer load on demand from
@@ -462,7 +483,7 @@ def main(standalone_path=None, pages=None):
     if pages:
         # one plain page per school at /schools/<DBN>/ (see scripts/pages.py)
         import pages as school_pages
-        school_pages.set_intro(intro_html, intro_css)
+        school_pages.set_from_template(template)  # the notice, theme colors and fonts
         # which zones cover each neighborhood, for the neighborhood pages and the links to them (scripts/neighborhoods.py)
         nbi = None
         if os.path.exists(os.path.join(DATA, "neighborhoods.json")):

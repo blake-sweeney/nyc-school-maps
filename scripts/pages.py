@@ -13,6 +13,9 @@ import re
 import os
 from html import escape
 
+import settings
+from settings import SNAPSHOT_LABEL
+
 BORO = {"M": "Manhattan", "K": "Brooklyn", "Q": "Queens", "X": "Bronx", "R": "Staten Island"}
 RLAB = {1: "Needs Improvement", 2: "Fair", 3: "Good", 4: "Excellent"}
 LEVEL_NAME = {"es": "Elementary school", "ms": "Middle school", "hs": "High school"}
@@ -201,10 +204,10 @@ def relative(html, up):
 
 # ---------- the "Before you start" notice ----------
 
-# The map's first-visit notice (the <dialog> and its .intro styles, copied from src/template.html by build.py via
-# set_intro). It opens on the first visit to any page, the map or this one: both remember it under the same key.
+# The map's first-visit notice (the <dialog> and its .intro styles, copied from src/template.html by
+# set_from_template). It opens on the first visit to any page, the map or this one: both remember it under the same key.
 # Not when opened from disk (file://), where Firefox and Safari keep a separate "seen" for each file.
-INTRO = {"html": "", "css": ""}
+INTRO = {"html": "", "css": "", "theme": ""}
 INTRO_JS = """<script>(function(){var d=document.getElementById('intro'),K='nsz-intro-seen-v1';if(!d)return;
 function open(){if(d.open)return;try{d.showModal()}catch(e){d.setAttribute('open','')}}
 d.addEventListener('close',function(){try{localStorage.setItem(K,'1')}catch(e){}});
@@ -226,8 +229,19 @@ DISCLAIMER = ('<p class="disc">NYC School Zones is an independent site made by a
               'About this site, terms &amp; privacy</button></p>')
 
 
-def set_intro(html, css):
-    INTRO["html"], INTRO["css"] = html, css
+def set_from_template(template):
+    """Take what the pages share with the map from the filled-in map template: the "Before you start" notice and its
+    styles, and the light and dark theme colors and fonts."""
+    INTRO["html"] = re.search(r'<dialog class="intro" id="intro".*?</dialog>', template, re.S).group(0)
+    INTRO["css"] = "\n".join(line for line in template.splitlines() if line.startswith(".intro"))
+
+    def theme(block):
+        vs = dict(re.findall(r"--([\w-]+):\s*([^;]+?)\s*(?:;|$)", block))
+        return ";".join(f"--{k}:{vs[k]}" for k in SHARED_VARS if k in vs)
+    light = re.search(r"^:root\{(.*?)\}", template, re.S | re.M).group(1)
+    dark = re.search(r'@media \(prefers-color-scheme: dark\)\{:root:not\(\[data-theme="light"\]\)\{(.*?)\}\}', template, re.S).group(1)
+    INTRO["theme"] = (f':root{{{theme(light)};{PAGE_VARS["light"]}}}\n'
+                      f'@media (prefers-color-scheme:dark){{:root{{{theme(dark)};{PAGE_VARS["dark"]};color-scheme:dark}}}}\n')
 
 def myschools_url(dbn, lv):
     return {"ms": f"https://www.myschools.nyc/en/schools/middle-school/{dbn}",
@@ -237,7 +251,7 @@ def myschools_url(dbn, lv):
 
 def snapshot_url(dbn, r, lv):
     rt = (r[5] if r and len(r) > 5 and r[5] else None) or ("HS" if lv == "hs" else "EMS")
-    return f"https://tools.nycenet.edu/snapshot/2025/{dbn}/{rt}/"
+    return f"https://tools.nycenet.edu/snapshot/{settings.SNAPSHOT_YEAR}/{dbn}/{rt}/"
 
 
 def ext(href, text):
@@ -274,7 +288,7 @@ def bar(label, v, stops, txt=None, lo=0, hi=100):
 
 def ratings_html(dbn, r):
     if not r or all(x is None for x in r[2:5]):
-        return '<p class="muted">No 2024–25 School Quality Snapshot ratings.</p>'
+        return f'<p class="muted">No {SNAPSHOT_LABEL} School Quality Snapshot ratings.</p>'
     vals = [x for x in r[2:5] if x is not None]
     overall = sum(vals) / len(vals)
 
@@ -285,7 +299,7 @@ def ratings_html(dbn, r):
         ("Instruction and performance", chip(r[2], RLAB.get(r[2]))),
         ("Safety and school climate", chip(r[3], RLAB.get(r[3]))),
         ("Relationships with families", chip(r[4], RLAB.get(r[4]))),
-    ]) + '<p class="src">The DOE’s own ratings, from its 2024–25 School Quality Snapshot.</p>')
+    ]) + f'<p class="src">The DOE’s own ratings, from its {SNAPSHOT_LABEL} School Quality Snapshot.</p>')
 
 
 def tests_html(t, grades):
@@ -297,7 +311,7 @@ def tests_html(t, grades):
     if t[2]:
         rows.append(bar("Math", 100 * t[3] / t[2], TEST_STOPS, pct(100 * t[3] / t[2])))
     return (f'<h2>State test scores</h2><div class="bars">{"".join(rows)}</div>'
-            f'<p class="src">Share of students in grades {grades} who met state standards (level 3 or 4), 2024–25.</p>')
+            f'<p class="src">Share of students in grades {grades} who met state standards (level 3 or 4), {SNAPSHOT_LABEL}.</p>')
 
 
 def hs_outcomes_html(dbn, o, q, cut):
@@ -311,7 +325,7 @@ def hs_outcomes_html(dbn, o, q, cut):
         rows.append(bar("Average SAT", q[0], OUT_STOPS["sat"], q[0], 600, 1600))
     if any(rows):
         parts.append('<h2>Graduation and college</h2><div class="bars">' + "".join(rows) + "</div>"
-                     '<p class="src">2024–25 School Quality Snapshot. City averages: graduation 81%, college readiness 54 (of 100).</p>')
+                     f'<p class="src">{SNAPSHOT_LABEL} School Quality Snapshot. City averages: graduation {settings.CITY_GRAD}%, college readiness {settings.CITY_READINESS} (of 100).</p>')
     if q and q[4] and any(q[4]):
         segs = "".join(f'<i style="width:{v}%;background:{c}"></i>' for v, c in zip(q[4], DEST_COLORS) if v)
         items = "".join(f'<li><i style="background:{c}"></i>{e(n)}<b>{v}%</b></li>'
@@ -383,12 +397,11 @@ def k_adm_html(ka, lv="es", dist=None):
 
 # ---------- one page ----------
 
+# Colors and fonts: the map's (src/template.html :root, copied by set_from_template) plus these, for the zone maps and bars
+PAGE_VARS = {"light": "--zone:#f2b705;--zone-o:#e8e2c4;--dist:#eceee9;--bar:#1f8a84",
+             "dark": "--zone:#c99a0a;--zone-o:#3a3a2a;--dist:#232a27;--bar:#2fa39b"}
+SHARED_VARS = ("bg", "panel", "fg", "muted", "line", "hl", "accent", "accent-ink", "warn-bg", "warn-fg", "display", "body")
 CSS = """
-:root{--bg:#f3f4f1;--panel:#fff;--fg:#1d2321;--muted:#5d6763;--line:#d9ddd8;--hl:#0b4f8a;--accent:#f2b705;--accent-ink:#1d2321;
-  --zone:#f2b705;--zone-o:#e8e2c4;--dist:#eceee9;--warn-bg:#fff4d1;--warn-fg:#6b4d00;--bar:#1f8a84;
-  --display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;--body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif}
-@media (prefers-color-scheme:dark){:root{--bg:#141917;--panel:#1c2220;--fg:#e7ebe8;--muted:#9aa5a0;--line:#2f3835;--hl:#7fb8ec;
-  --zone:#c99a0a;--zone-o:#3a3a2a;--dist:#232a27;--warn-bg:#3a3014;--warn-fg:#f3d98a;--bar:#2fa39b;color-scheme:dark}}
 *,*::before,*::after{box-sizing:border-box}
 [hidden]{display:none!important}
 body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.5}
@@ -572,7 +585,7 @@ def page_html(d, dbn, streets, site_url, goat, nbi=None):
             body = facts_rows(rows)
         else:
             body = "<p>This school doesn’t offer pre-K or 3-K. Many seats are at nearby early childhood centers; MySchools lists every program.</p>"
-        sections.append("<h2>Pre-K and 3-K, fall 2025</h2>" + body +
+        sections.append(f"<h2>Pre-K and 3-K, {settings.PREK_LABEL}</h2>" + body +
                         ('<p class="src">Seats aren’t zoned: families apply through MySchools, and zoned families often get priority. '
                          '“Applied” counts every family who listed the school anywhere on their application. DOE Local Law 72 report.</p>'
                          if pk[0] or pk[2] else "")
@@ -720,7 +733,7 @@ def page_html(d, dbn, streets, site_url, goat, nbi=None):
 """
 
 
-def write_pages(d, root, only=None, site_url="https://nycschoolzones.com/", goat="", nbi=None):
+def write_pages(d, root, only, site_url, goat="", nbi=None):
     """Write /schools/<DBN>/index.html for each school (or only the DBNs in `only`). Returns the count."""
     dbns = set(d.get("schools", {})) | {r[0] for r in d.get("NZ", [])}
     for key in ("MS", "HS"):
@@ -731,7 +744,7 @@ def write_pages(d, root, only=None, site_url="https://nycschoolzones.com/", goat
     streets = street_index(d)
     os.makedirs(os.path.join(root, "schools"), exist_ok=True)
     with open(os.path.join(root, "schools", "style.css"), "w", encoding="utf-8") as f:
-        f.write(CSS.strip() + "\n" + INTRO["css"] + "\n" + INTRO_PAGE_CSS.strip() + "\n")
+        f.write(INTRO["theme"] + CSS.strip() + "\n" + INTRO["css"] + "\n" + INTRO_PAGE_CSS.strip() + "\n")
     n = 0
     for dbn in sorted(dbns):
         html = page_html(d, dbn, streets, site_url, goat, nbi)
@@ -807,12 +820,7 @@ def rating(R, dbn):
 
 
 # the map's color ramps (src/template.html: STOPS, TEST_STOPS and OUT), so table colors match the map key
-RATE_STOPS = [(5, (184, 32, 42)), (50, (232, 116, 42)), (75, (247, 207, 69)), (95, (31, 138, 132))]
-TEST_STOPS = [(5, (184, 32, 42)), (50, (247, 207, 69)), (95, (31, 138, 132))]
-OUT_STOPS = {"grad": [(65, (184, 32, 42)), (80, (247, 207, 69)), (95, (31, 138, 132))],
-             "coll": [(40, (184, 32, 42)), (60, (247, 207, 69)), (80, (31, 138, 132))],
-             "ccr": [(35, (184, 32, 42)), (55, (247, 207, 69)), (80, (31, 138, 132))],
-             "sat": [(800, (184, 32, 42)), (950, (247, 207, 69)), (1200, (31, 138, 132))]}
+RATE_STOPS, TEST_STOPS, OUT_STOPS = settings.RATE_STOPS, settings.TEST_STOPS, settings.OUT_STOPS
 
 
 def ramp(v, stops):
@@ -983,7 +991,7 @@ def write_districts(d, root, site_url, goat, nbi=None):
              go("hs", "high")
              + (f'<section class="card"><h2>High schools in District {e(k)}</h2>{school_table(hs, names, R, hs_cols, hs_note)}'
                 '<p class="src">Rating is the DOE’s overall rating (out of 4). Grad is the 4-year graduation rate, SAT the average score '
-                'and Readiness the DOE’s college readiness score (city average 54). High schools don’t give priority by district: any NYC '
+                f'and Readiness the DOE’s college readiness score (city average {settings.CITY_READINESS}). High schools don’t give priority by district: any NYC '
                 'student can apply, and many programs give priority to students in their borough.</p></section>' if hs else
                 '<section class="card"><p>No high schools are located in this district. High schools admit students from across the city.</p></section>')),
         ]
