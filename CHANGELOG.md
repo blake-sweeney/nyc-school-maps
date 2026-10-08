@@ -9,6 +9,7 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 ## 1.11.0 (2026-10-08)
 
 ### Added
+- Zoned schools show as a bullseye (◎) at the school's building, colored like the zones. Hover for its name and value; click to open its zone and card, which works even with Zones turned off (district view). A "Zoned schools" switch in Map layers hides them, and the legend's marker line reads "◎ Zoned ◆ Non-zoned ★ Citywide G&T" (or No zone / Citywide / Specialized for middle and high school). They replace the small black school dots.
 - District pages have Elementary / Middle / High tabs (each showing its number of schools), and each tab's "Open the map" button opens that level of the map zoomed to the district with its outline. Links like /districts/15/#ms open a tab directly.
 
 ## 1.10.0 (2026-10-08)
