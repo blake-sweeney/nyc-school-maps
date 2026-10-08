@@ -283,7 +283,105 @@ def main(standalone_path=None):
         hs = load("hs_zones.json")
         prepare_zones(hs)
         outcomes = load("hs_outcomes.json") if os.path.exists(os.path.join(DATA, "hs_outcomes.json")) else {}
+        hs_outcomes_file = set(outcomes)
         d["HS"] = {"schools": hs["schools"], "features": hs["features"], "O": outcomes}
+
+        # High school programs and every high school without a zone (MySchools high school directory).
+        # P: programs per school, [name, method code, seats, applicants, all seats filled, diversity set-aside, priority groups]
+        #   priority groups in order, NYC residents (everyone) left off: "C" continuing 8th graders, "B" the school's borough,
+        #   "Z" zoned students, anything else as written. NZ rows match the elementary/middle ones; the trailing flag marks the
+        #   9 specialized high schools (8 SHSAT schools + LaGuardia), and one more field holds a priority summary.
+        if os.path.exists(os.path.join(DATA, "hs_directory.json")):
+            hsdir = load("hs_directory.json")["schools"]
+            hs_zoned = {x for f in hs["features"] for x in f["properties"]["dbns"]}
+            BORO = {"M": "Manhattan", "K": "Brooklyn", "Q": "Queens", "X": "Bronx", "R": "Staten Island"}
+            MCODE = {"Screened": "S", "Screened With Assessment": "SA", "Screened: Language & Academics": "SL", "Ed. Opt.": "E",
+                     "Audition": "A", "Open": "O", "Language Criteria": "L", "Test": "T", "Zoned Guarantee": "ZG",
+                     "Zoned Priority": "ZP", "Transfer": "TR", "D75 Special Education Inclusive Services": "D75",
+                     "ASD/ACES Program": "ASD"}
+            SPECIAL = ("D75", "ASD")
+            city_grad = next((v[2] for v in outcomes.values() if v and len(v) > 2 and v[2] is not None), None)
+            d["HS"]["P"], d["HS"]["NZ"], d["HS"]["R"], d["HS"]["X"] = {}, [], {}, {}
+            for o in hsdir:
+                dbn, boro = o["dbn"], BORO[o["dbn"][2]]
+                progs = []
+                for q in o["p"]:
+                    code = MCODE.get(q["m"], q["m"])
+                    pg = []
+                    for g in q["pg"]:
+                        nm = g[0]
+                        if nm == "New York City residents":
+                            continue
+                        pg.append("C" if nm == "Continuing 8th graders" else "B" if nm == boro + " students or residents"
+                                  else "Z" if nm == "Students who live in the zoned area" else nm)
+                    progs.append([q["n"], code, q["s"], q["ap"], 1 if q["f"] else 0, 1 if q["d1"] else 0, pg])
+                progs.sort(key=lambda p: p[1] in SPECIAL)  # special education programs last
+                d["HS"]["P"][dbn] = progs
+                # ratings and outcomes from MySchools for schools the Snapshot files don't cover
+                if dbn not in d["R"] and any(o["r"]):
+                    d["HS"]["R"][dbn] = [o["n"], o["a"], *o["r"], "HS"]
+                if dbn not in outcomes and (o["gr"] is not None or o["cc"] is not None):
+                    outcomes[dbn] = [o["gr"], o["cc"], city_grad]
+                if dbn not in d["X"] and o["en"]:
+                    d["HS"]["X"][dbn] = [o["en"]]
+                if dbn in hs_zoned or not o["lat"]:
+                    continue
+                shs = any(q["shs"] or q["lg"] for q in o["p"])
+                main = [p for p in progs if p[1] not in SPECIAL]
+                nb = sum(1 for p in main if "B" in p[6])
+                if shs:
+                    pz = ""
+                elif main and nb == len(main):
+                    pz = "Priority to " + boro + " students and residents, then the rest of NYC."
+                elif nb:
+                    pz = "Some programs give priority to " + boro + " students and residents; the rest are open to all of NYC."
+                else:
+                    pz = "Open to students from anywhere in NYC."
+                if not shs and any("C" in p[6] for p in main):
+                    pz += " Continuing 8th graders get priority."
+                d["HS"]["NZ"].append([dbn, o["n"], o["a"], o["lat"], o["lon"], [], 0, progs, 1 if shs else 0, pz])
+            d["HS"]["O"] = outcomes
+            # SAT, college readiness, where graduates went and advanced courses (2024-25 Snapshot, high school report).
+            # Q: [average SAT, college & career readiness score, % in any advanced course, % in AP,
+            #     [CUNY 4-year, CUNY 2-year, NY public (SUNY etc.), NY private, out of state, for-profit, other] % of graduates,
+            #     AP subjects students passed]
+            if os.path.exists(os.path.join(DATA, "hs_snapshot.json")):
+                def num(x):
+                    try:
+                        return float(str(x).split("/")[0].split(" (")[-1].rstrip("%)").lstrip("("))
+                    except (ValueError, TypeError):
+                        return None
+                def paren(x):  # "2776 (85%)" -> 85
+                    m = re.search(r"\((<?)(\d+)%\)", str(x or ""))
+                    return (0 if m.group(1) else int(m.group(2))) if m else None
+                DEST = ("coll_4yr", "coll_2yr", "coll_publ", "coll_priv", "coll_oost", "coll_prft", "other")
+                Q = {}
+                for dbn, o in load("hs_snapshot.json")["schools"].items():
+                    sat, ccr = num(o.get("avg_sat")), num(o.get("val_ccr_4yr_all"))
+                    dest = [num(o.get(f"val_pct_cer_6mo_{k}_all")) for k in DEST]
+                    aps, i = [], 1
+                    while f"ccpc_co_{i}" in o:
+                        nm = o[f"ccpc_co_{i}"] or ""
+                        if nm.startswith("A.P.") and "Other" not in nm:
+                            aps.append(nm[4:].strip())
+                        i += 1
+                    row = [int(sat) if sat else None, int(ccr) if ccr is not None else None,
+                           paren(o.get("disp_str_advanced_enroll")), paren(o.get("disp_str_ap_enroll")),
+                           [int(x) if x is not None else None for x in dest] if any(x is not None for x in dest) else None, aps]
+                    if any(x is not None for x in row[:5]) or aps:
+                        Q[dbn] = row
+                    # graduation and college/career enrollment straight from the Snapshot for schools not in hs_outcomes.json
+                    g, c = num(o.get("val_grad_pct_4_all")), num(o.get("val_pct_cer_6mo_all"))
+                    if dbn not in hs_outcomes_file and (g is not None or c is not None):
+                        outcomes[dbn] = [int(g) if g is not None else None, int(c) if c is not None else None, city_grad]
+                d["HS"]["Q"] = Q
+                print(f"high school SAT/readiness/destinations: {sum(1 for r in Q.values() if r[0])} SAT, "
+                      f"{sum(1 for r in Q.values() if r[1] is not None)} readiness, {sum(1 for r in Q.values() if r[4])} destinations")
+            if os.path.exists(os.path.join(DATA, "shsat_cutoffs.json")):
+                c = load("shsat_cutoffs.json")
+                d["HS"]["CUT"] = {"y": c["year"], "c": c["cut"]}
+            print(f"high schools without a zone: {len(d['HS']['NZ'])} ({sum(1 for r in d['HS']['NZ'] if r[8])} specialized), "
+                  f"programs for {len(d['HS']['P'])} schools")
 
     ms_nz = {r[0] for r in d.get("MS", {}).get("NZ", [])}
     es_all = es_all | ms_nz  # school facts below cover the middle school choice schools too

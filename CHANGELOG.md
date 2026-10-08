@@ -6,12 +6,29 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
+## 1.8.0 (2026-10-07)
+
+### Added
+- High schools without zones: the other 415 high schools show as diamonds in the high school view, colored like the zones, with full school cards. "Other high schools" in Map layers hides them.
+- The 9 specialized high schools (the 8 SHSAT schools plus LaGuardia) show as stars, on by default. SHSAT school cards show the lowest score offered a seat for fall 2026 and fall 2025.
+- High school programs: every high school card, zoned or not, lists its programs from MySchools with how students get in (screened, Ed. Opt., audition, open, language, zoned, transfer, special education), who gets priority (continuing 8th graders, borough residents, zoned students), and last year's seats and applicants. Schools with more than 6 programs show the rest under "more programs."
+- Ratings and graduation rates for high schools without zones come from MySchools (same DOE Snapshot figures).
+- "Find a school" search includes every high school.
+- High school cards show the average SAT score, the DOE's college readiness score (city average 54), where graduates enrolled within 6 months (CUNY 4-year and 2-year, NY public, NY private, out of state, for-profit, career programs), the share of students in advanced and AP courses, and the AP exams seniors passed. From the 2024–25 School Quality Snapshot.
+- Color by in the high school view adds "Readiness" and "SAT".
+- The no-zone hatch now shows in the high school view too, with its own legend line ("No zoned high school (apply citywide)") and hover tip.
+
+### Changed
+- Schools that share a building fan out in a small ring when zoomed in, so each one can be clicked, and get one "N schools" label instead of overlapping names.
+
 ## 1.7.0 (2026-10-07)
 
 ### Added
 - Middle schools without zones: 304 middle schools that admit by application (no zone) show as diamonds in the middle school view, colored like the zones, with full school cards.
 - Middle school programs: every middle school card lists its programs from MySchools, with how students get in (open, zone priority, screened, audition, talent test, language) and last year's seats and applicants.
 - Middle school zone cards list the other middle schools in the district.
+- Hover tips on diamonds and stars match the zone tips: district and kind of school, then the name and value.
+- Areas with no zoned school get a light diagonal hatch in the elementary and middle school views (parks and cemeteries stay plain), with a legend line and a "No zoned school here" hover tip.
 - Citywide middle schools (Anderson, NEST+m, TAG Young Scholars, Special Music School, Mark Twain and 13 more, per InsideSchools) show as stars, with cards that say they're open to students from anywhere in NYC. They aren't listed as district options.
 
 ## 1.6.0 (2026-10-07)
