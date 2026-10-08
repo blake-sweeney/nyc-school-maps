@@ -10,7 +10,9 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 
 ### Added
 - A page for each of 197 NYC neighborhoods (like nycschoolzones.com/neighborhoods/park-slope/): the elementary, middle and high school zones that cover it, with how much of the neighborhood each zone covers, plus the schools without a zone and high schools located there, with ratings and test scores. Links to nearby neighborhoods, and an index of all neighborhoods by borough.
-- School pages say which neighborhood the school is in and which neighborhoods its zone covers. District pages list their neighborhoods and have a "Neighborhoods" link at the top, and the map's side panel links to the index ("by neighborhood").
+- School pages say which neighborhood the school is in and which neighborhoods its zone covers. District pages list their neighborhoods and have a "Neighborhoods" link at the top.
+- "Browse schools by district · by neighborhood" near the top of the map's side panel, under the title (it used to be a district link at the bottom).
+- Every school, district and neighborhood page shows the "Before you start" notice on your first visit, like the map does (once you've seen it on any page, it doesn't come back), and has a short version at the bottom with a link to reopen it, including terms and privacy.
 
 ### Changed
 - The map's browser tab now reads "NYC School Zone Map: Elementary, Middle & High School Zones", which is also the headline Google shows for the site.

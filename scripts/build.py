@@ -437,6 +437,9 @@ def main(standalone_path=None, pages=None):
     zdate = datetime.date.fromtimestamp(os.path.getmtime(os.path.join(DATA, "elem_zones.json")))
     template = template.replace("__ZONES_DATE__", zdate.strftime("%b %Y"))
     template = template.replace("__ES_ZONES__", str(len(d["features"])))
+    # the map's "Before you start" notice and its styles, repeated on every school, district and neighborhood page
+    intro_html = re.search(r'<dialog class="intro" id="intro".*?</dialog>', template, re.S).group(0)
+    intro_css = "\n".join(line for line in template.splitlines() if line.startswith(".intro"))
 
     full = dict(d)
     # For the website, middle school, high school and the all-streets layer load on demand from
@@ -459,6 +462,7 @@ def main(standalone_path=None, pages=None):
     if pages:
         # one plain page per school at /schools/<DBN>/ (see scripts/pages.py)
         import pages as school_pages
+        school_pages.set_intro(intro_html, intro_css)
         # which zones cover each neighborhood, for the neighborhood pages and the links to them (scripts/neighborhoods.py)
         nbi = None
         if os.path.exists(os.path.join(DATA, "neighborhoods.json")):

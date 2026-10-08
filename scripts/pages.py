@@ -192,10 +192,41 @@ LOCAL_FIX = ("<script>if(location.protocol==='file:')document.querySelectorAll('
 
 
 def relative(html, up):
-    """Root-relative links (href="/x") -> relative ones ("../../x"), plus the fix-up script for pages opened from disk."""
+    """Root-relative links (href="/x") -> relative ones ("../../x"), plus the fix-up script for pages opened from disk
+    and the "Before you start" notice."""
     pre = "../" * up
     html = re.sub(r'(href|src)="/(?!/)', lambda m: f'{m.group(1)}="{pre or "./"}', html)
-    return html.replace("</body>", LOCAL_FIX + "\n</body>", 1)
+    return html.replace("</body>", INTRO["html"] + INTRO_JS + LOCAL_FIX + "\n</body>", 1)
+
+
+# ---------- the "Before you start" notice ----------
+
+# The map's first-visit notice (the <dialog> and its .intro styles, copied from src/template.html by build.py via
+# set_intro). It opens on the first visit to any page, the map or this one: both remember it under the same key.
+INTRO = {"html": "", "css": ""}
+INTRO_JS = """<script>(function(){var d=document.getElementById('intro'),K='nsz-intro-seen-v1';if(!d)return;
+function open(){if(d.open)return;try{d.showModal()}catch(e){d.setAttribute('open','')}}
+d.addEventListener('close',function(){try{localStorage.setItem(K,'1')}catch(e){}});
+document.getElementById('intro-ok').addEventListener('click',function(){d.close()});
+d.addEventListener('click',function(e){if(e.target===d)d.close()});
+document.querySelectorAll('[data-intro]').forEach(function(b){b.addEventListener('click',open)});
+var seen=false;try{seen=localStorage.getItem(K)==='1'}catch(e){}if(!seen)setTimeout(open,400)})()</script>"""
+INTRO_PAGE_CSS = """
+.intro .row button{font:inherit;font-family:var(--display);font-weight:600;font-size:.9rem;padding:8px 12px;border-radius:6px;border:1px solid var(--fg);background:var(--fg);color:var(--panel);cursor:pointer}
+footer .disc{margin:0 0 8px}
+footer .link-btn{all:unset;cursor:pointer;color:var(--hl);text-decoration:underline}
+footer .link-btn:focus-visible{outline:2px solid var(--hl)}
+"""
+# the same points in short, at the foot of every page
+DISCLAIMER = ('<p class="disc">NYC School Zones is an independent site made by a NYC parent. It isn’t made by, affiliated '
+              'with or endorsed by NYC Public Schools. Data can be out of date or have errors, and zones change from year to '
+              'year: always confirm your exact address on <a href="https://schoolsearch.schools.nyc/" target="_blank" '
+              'rel="noopener">schoolsearch.schools.nyc</a> before applying. <button type="button" class="link-btn" data-intro>'
+              'About this site, terms &amp; privacy</button></p>')
+
+
+def set_intro(html, css):
+    INTRO["html"], INTRO["css"] = html, css
 
 def myschools_url(dbn, lv):
     return {"ms": f"https://www.myschools.nyc/en/schools/middle-school/{dbn}",
@@ -672,7 +703,7 @@ def page_html(d, dbn, streets, site_url, goat, nbi=None):
 {near_html}
 <section class="card"><h2>Apply</h2><p>Applications for NYC public schools go through MySchools, which lists this year’s programs, dates and admissions rules, and shows your chances at each school.</p>{more(ext(ms_url, "This school on MySchools"), ext("https://schoolsearch.schools.nyc/", "Find your zoned school"), ext(f"https://www.schools.nyc.gov/schools/{dbn[2:]}", "School website"))}</section>
 </main>
-<footer>NYC School Zones is free and independent. Data: NYC Department of Education (zones, School Quality Snapshot, MySchools, Local Law 72 reports), NYC School Construction Authority. Questions or corrections: <a href="mailto:info@nycschoolzones.com">info@nycschoolzones.com</a></footer>{goat}
+<footer>{DISCLAIMER}NYC School Zones is free and independent. Data: NYC Department of Education (zones, School Quality Snapshot, MySchools, Local Law 72 reports), NYC School Construction Authority. Questions or corrections: <a href="mailto:info@nycschoolzones.com">info@nycschoolzones.com</a></footer>{goat}
 </body>
 </html>
 """
@@ -689,7 +720,7 @@ def write_pages(d, root, only=None, site_url="https://nycschoolzones.com/", goat
     streets = street_index(d)
     os.makedirs(os.path.join(root, "schools"), exist_ok=True)
     with open(os.path.join(root, "schools", "style.css"), "w", encoding="utf-8") as f:
-        f.write(CSS.strip() + "\n")
+        f.write(CSS.strip() + "\n" + INTRO["css"] + "\n" + INTRO_PAGE_CSS.strip() + "\n")
     n = 0
     for dbn in sorted(dbns):
         html = page_html(d, dbn, streets, site_url, goat, nbi)
@@ -731,7 +762,7 @@ def shell(title, desc, canon, body, goat, site_url):
 <main>
 {body}
 </main>
-<footer>NYC School Zones is free and independent. Data: NYC Department of Education and NYC School Construction Authority. Questions or corrections: <a href="mailto:info@nycschoolzones.com">info@nycschoolzones.com</a></footer>{goat}
+<footer>{DISCLAIMER}NYC School Zones is free and independent. Data: NYC Department of Education and NYC School Construction Authority. Questions or corrections: <a href="mailto:info@nycschoolzones.com">info@nycschoolzones.com</a></footer>{goat}
 </body>
 </html>
 """
