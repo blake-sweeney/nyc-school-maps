@@ -6,6 +6,14 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
+## 1.9.0 (2026-10-08)
+
+### Added
+- A page for every school (1,509 of them) at nycschoolzones.com/schools/<DBN>/, so people can find schools through Google. Each page has the school's zone drawn inside its district, the streets in the zone, and the same facts as the map card as plain text (ratings, test scores or graduation, SAT and where graduates went, school facts, kindergarten admissions, programs and priorities). Each page links to the map at that school, MySchools, the school's DOE page, InsideSchools, the Snapshot and directions. Schools that span levels (K–8, 6–12) cover each level.
+- A page for each of the 32 districts, with a table of every school: overall rating plus state test scores, ELA and math together (elementary and middle) or graduation rate, average SAT and college readiness (high school), colored like the map key. Click a column heading to sort. There is also a district index at /districts/.
+- sitemap.xml and robots.txt for search engines.
+- School cards on the map link to the school's page, and "Copy link to this school" shares that page, so links show a proper preview.
+
 ## 1.8.2 (2026-10-08)
 
 ### Changed

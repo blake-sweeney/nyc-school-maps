@@ -50,6 +50,9 @@ VERSION                 site version, shown in the footer
 CHANGELOG.md            what changed in each version
 LICENSE                 AGPL-3.0
 assets/                 ms.js, hs.js, ls.js — built by build.py, loaded on demand
+schools/<DBN>/          one page per school — built by build.py (scripts/pages.py)
+districts/              one page per district + an index — built by build.py
+sitemap.xml, robots.txt  for search engines — built by build.py
 src/template.html       page source: layout, styles and map code
 data/
   elem_zones.json       zone boundaries + school names/locations
@@ -64,6 +67,7 @@ data/
   local_streets.json    every other street, compactly encoded
 scripts/
   build.py              data/ + src/template.html  →  index.html
+  pages.py              school pages, district pages and the sitemap (called by build.py)
   fetch_data.py         re-downloads everything in data/ from the city
   streets.py            merges and simplifies street centerlines (used by fetch_data.py)
   make_preview.py       draws preview.png (needs matplotlib)

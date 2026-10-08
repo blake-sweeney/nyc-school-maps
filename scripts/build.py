@@ -5,8 +5,10 @@
 
 Uses only the Python standard library. Run from the repo root:
 
-    python3 scripts/build.py                      # index.html + assets/ (what GitHub Pages serves)
+    python3 scripts/build.py                      # index.html + assets/ + school and district pages + sitemap (what GitHub Pages serves)
     python3 scripts/build.py --standalone out.html   # one self-contained file that also opens offline
+    python3 scripts/build.py --no-pages              # skip the school pages, district pages and sitemap (faster)
+    python3 scripts/build.py --pages 15K321,02M475   # only these school pages (no district pages or sitemap)
 
 Steps:
   1. Load zone boundaries (data/elem_zones.json).
@@ -190,7 +192,7 @@ def load_tests(fallback_name):
     return load(fallback_name)
 
 
-def main(standalone_path=None):
+def main(standalone_path=None, pages=None):
     import datetime
     d = load("elem_zones.json")
     ncolors = prepare_zones(d)
@@ -444,6 +446,17 @@ def main(standalone_path=None):
         assets[key] = rel
     d["ASSETS"] = assets
 
+    if pages:
+        # one plain page per school at /schools/<DBN>/ (see scripts/pages.py)
+        import pages as school_pages
+        n = school_pages.write_pages(full, ROOT, None if pages == "all" else pages.split(","), SITE_URL, goatcounter_tag())
+        print(f"wrote {n} school pages in schools/")
+        if pages == "all":
+            urls = school_pages.write_districts(full, ROOT, SITE_URL, goatcounter_tag())
+            school_urls = sorted(f"{SITE_URL}schools/{x}/" for x in os.listdir(os.path.join(ROOT, "schools"))
+                                 if os.path.exists(os.path.join(ROOT, "schools", x, "index.html")))
+            school_pages.write_sitemap(ROOT, SITE_URL, urls + school_urls)
+            print(f"wrote {len(urls)} district pages, sitemap.xml ({len(urls) + len(school_urls) + 1} URLs) and robots.txt")
     if standalone_path:
         write_page(template, full, standalone_path)
         print(f"wrote {standalone_path} ({os.path.getsize(standalone_path) / 1e6:.2f} MB, everything inline)")
@@ -492,4 +505,5 @@ def write_page(template, d, out):
 if __name__ == "__main__":
     import sys
     args = sys.argv[1:]
-    main(args[args.index("--standalone") + 1] if "--standalone" in args else None)
+    main(args[args.index("--standalone") + 1] if "--standalone" in args else None,
+         None if "--no-pages" in args else args[args.index("--pages") + 1] if "--pages" in args else "all")
