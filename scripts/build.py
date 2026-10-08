@@ -385,6 +385,14 @@ def main(standalone_path=None, pages=None):
             print(f"high schools without a zone: {len(d['HS']['NZ'])} ({sum(1 for r in d['HS']['NZ'] if r[8])} specialized), "
                   f"programs for {len(d['HS']['P'])} schools")
 
+    # grade 6 and grade 9 admissions (Local Law 72), same record shape as kindergarten (see fetch_k_admissions)
+    for key, name in (("MS", "ms_admissions.json"), ("HS", "hs_admissions.json")):
+        if key in d and os.path.exists(os.path.join(DATA, name)):
+            adm = load(name)
+            lvl = d[key]
+            have = set(lvl.get("schools", {})) | {r[0] for r in lvl.get("NZ", [])}
+            lvl["A"] = {k: {max(v): v[max(v)]} for k, v in adm.items() if k in have and v}  # the latest year is all the card shows
+            print(f"{key.lower()} admissions: {len(lvl['A'])} schools")
     ms_nz = {r[0] for r in d.get("MS", {}).get("NZ", [])}
     es_all = es_all | ms_nz  # school facts below cover the middle school choice schools too
     # Class size (optional): keep only zoned schools at any level

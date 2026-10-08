@@ -317,18 +317,32 @@ def programs_html(dbn, progs, hs):
             '<p class="src">How students get in, and last year’s seats and applicants, from MySchools.</p>')
 
 
-def k_adm_html(ka):
+def k_adm_html(ka, lv="es", dist=None):
+    """Admissions for kindergarten, grade 6 or grade 9 (Local Law 72): seats, applicants, offers; middle schools also by district."""
     if not ka:
         return ""
     y = max(ka)
     r = ka[y]
     if not r:
         return ""
-    off = round((r[2] + r[3]) / 2)
-    approx = "" if r[2] == r[3] else "about "
-    return (f"<h2>Kindergarten admissions, fall {e(y)}</h2>" + facts_rows([
-        ("Kindergarten seats", r[0]), ("Applicants", r[1]), ("Offered a seat", f"{approx}{off}")]) +
-        '<p class="src">DOE Local Law 72 report. Most zoned schools offer a seat to every zoned family who applies on time.</p>')
+    G = {"es": "Kindergarten", "ms": "Grade 6", "hs": "Grade 9"}[lv]
+
+    def val(lo, hi):
+        if hi - lo > max(4, 0.08 * max(hi, 1)):
+            return None
+        return ("" if lo == hi else "about ") + str(round((lo + hi) / 2))
+
+    rows = [(f"{G} seats", r[0]), ("Applicants", r[1]), ("Offered a seat", val(r[2], r[3]))]
+    if lv == "ms" and len(r) > 4:
+        for lab, (t0, t1, o0, o1) in ((f"District {dist}", r[4:8]), ("Other districts", r[8:12])):
+            o, t = val(o0, o1), val(t0, t1)
+            if o and t:
+                rows.append((f"{lab}: offered / applicants", f"{o} of {t}"))
+    note = {"es": "Most zoned schools offer a seat to every zoned family who applies on time.",
+            "ms": f"Most middle school programs fill seats with District {dist} students and residents first, then consider other districts.",
+            "hs": "Counts cover every program at the school."}[lv]
+    return (f"<h2>{G} admissions, fall {e(y)}</h2>" + facts_rows(rows) +
+            f'<p class="src">Applicants listed the school and didn’t get a choice they ranked higher. {e(note)} DOE Local Law 72 report.</p>')
 
 
 # ---------- one page ----------
@@ -512,7 +526,10 @@ def page_html(d, dbn, streets, site_url, goat):
             ext("https://www.myschools.nyc/en/", "Apply for pre-K and 3-K on MySchools") if pk and (pk[0] or pk[2]) else "",
             ext(f"https://www.schools.nyc.gov/schools/{dbn[2:]}", "School page: contacts, hours, bell schedule")))
     if lv == "es":
-        ka = k_adm_html(d.get("KA", {}).get(dbn))
+        ka = k_adm_html(d.get("KA", {}).get(dbn), "es", dist)
+        sections.append(ka + more(ext(ms_url, "See your chances on MySchools"), ext(LL72_URL, "DOE admissions reports")) if ka else "")
+    if lv in ("ms", "hs"):
+        ka = k_adm_html(((HS if lv == "hs" else MS).get("A") or {}).get(dbn), lv, dist)
         sections.append(ka + more(ext(ms_url, "See your chances on MySchools"), ext(LL72_URL, "DOE admissions reports")) if ka else "")
     progs = (HS.get("P") or {}).get(dbn) if lv == "hs" else (MS.get("P") or {}).get(dbn) if lv == "ms" else None
     pg = programs_html(dbn, progs, lv == "hs")
@@ -536,8 +553,10 @@ def page_html(d, dbn, streets, site_url, goat):
             t2 = (MS.get("T") or {}).get(dbn)
             if t2 and lv == "hs":
                 extra += tests_html(t2, "6–8").replace("<h2>State test scores</h2>", "<h2>Middle school test scores</h2>")
+            extra += k_adm_html((MS.get("A") or {}).get(dbn), "ms", dist)
             extra += programs_html(dbn, (MS.get("P") or {}).get(dbn), False)
         elif lv2 == "hs":
+            extra += k_adm_html((HS.get("A") or {}).get(dbn), "hs", dist)
             extra += programs_html(dbn, (HS.get("P") or {}).get(dbn), True)
         extra += more(f'<a href="{e(url2)}">See it on the {lvw2.lower()} school map →</a>', ext(myschools_url(dbn, lv2), f"{lvw2} school admissions on MySchools"))
         sections.append(extra)

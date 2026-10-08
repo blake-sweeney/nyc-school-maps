@@ -169,6 +169,40 @@ def _fetch_tests(grade_list, outname):
     save(outname, out)
 
 
+def snapshot_record(v, rt):
+    """One school's Snapshot values ({varname: value}) for report type rt (HS, EMS or EC) ->
+    (ratings, extra, outcome, tests); see fetch_snapshot for the shape of each."""
+    num = lambda k: int(v[k]) if v.get(k) not in (None, "", "N/A") else None
+
+    def flt(k):  # "97%", "<1%", "0.2" -> number
+        s = str(v.get(k) or "").replace("%", "").replace("<", "").strip()
+        try:
+            return float(s)
+        except ValueError:
+            return None
+
+    def pct_raw(k):  # 0.0089 -> 0.9
+        x = flt(k)
+        return None if x is None else round(x * 1000) / 10
+
+    ratings = [v.get("location_name_long"), v.get("address"),
+               num("rating_ip"), num("rating_ss"), num("rating_rf"), rt]
+    enrollment = flt("enrollment")
+    extra = [int(enrollment) if enrollment is not None else None, flt("attendance_rate"),
+             flt("teacher_3yr_exp_pct"), flt("principal_years"), v.get("dual_lang") or None,
+             pct_raw("ell_pct_raw"), pct_raw("iep_pct_raw"), flt("eni_pct_K8") if rt != "HS" else flt("eni_hs_pct_912"),
+             (v.get("all_hs_admissionsmethods") if rt == "HS" else v.get("all_es_admissionsmethods")) or None,
+             flt("median_distance")]
+    # elementary/middle state tests: [ELA test takers, ELA % proficient, Math test takers, Math % proficient, city ELA %, city Math %]
+    tests = None
+    if rt != "HS" and (flt("val_prof_pct_ela_all") is not None or flt("val_prof_pct_mth_all") is not None):
+        tests = [flt("n_prof_pct_ela_all"), flt("val_prof_pct_ela_all"), flt("n_prof_pct_mth_all"),
+                 flt("val_prof_pct_mth_all"), flt("cavg_prof_pct_ela_all"), flt("cavg_prof_pct_mth_all")]
+    # high schools: [4-year graduation %, college/career within 6 months %, city 4-year graduation %]
+    outcome = [flt("val_grad_pct_4_all"), flt("val_pct_cer_6mo_all"), flt("cavg_grad_pct_4_all")] if rt == "HS" else None
+    return ratings, extra, outcome, tests
+
+
 def fetch_snapshot():
     """Per zoned school, two files:
     snapshot_ratings.json: [name, address, Instruction, Safety, Families, report type]
@@ -199,35 +233,7 @@ def fetch_snapshot():
             if not rows:
                 continue
             v = {r["varname"]: r["value"] for r in rows}
-            num = lambda k: int(v[k]) if v.get(k) not in (None, "", "N/A") else None
-
-            def flt(k):  # "97%", "<1%", "0.2" -> number
-                s = str(v.get(k) or "").replace("%", "").replace("<", "").strip()
-                try:
-                    return float(s)
-                except ValueError:
-                    return None
-
-            def pct_raw(k):  # 0.0089 -> 0.9
-                x = flt(k)
-                return None if x is None else round(x * 1000) / 10
-
-            ratings = [v.get("location_name_long"), v.get("address"),
-                       num("rating_ip"), num("rating_ss"), num("rating_rf"), rt]
-            enrollment = flt("enrollment")
-            extra = [int(enrollment) if enrollment is not None else None, flt("attendance_rate"),
-                     flt("teacher_3yr_exp_pct"), flt("principal_years"), v.get("dual_lang") or None,
-                     pct_raw("ell_pct_raw"), pct_raw("iep_pct_raw"), flt("eni_pct_K8") if rt != "HS" else flt("eni_hs_pct_912"),
-                     (v.get("all_hs_admissionsmethods") if rt == "HS" else v.get("all_es_admissionsmethods")) or None,
-                     flt("median_distance")]
-            # elementary/middle state tests: [ELA test takers, ELA % proficient, Math test takers, Math % proficient, city ELA %, city Math %]
-            tests = None
-            if rt != "HS" and (flt("val_prof_pct_ela_all") is not None or flt("val_prof_pct_mth_all") is not None):
-                tests = [flt("n_prof_pct_ela_all"), flt("val_prof_pct_ela_all"), flt("n_prof_pct_mth_all"),
-                         flt("val_prof_pct_mth_all"), flt("cavg_prof_pct_ela_all"), flt("cavg_prof_pct_mth_all")]
-            # high schools: [4-year graduation %, college/career within 6 months %, city 4-year graduation %]
-            outcome = [flt("val_grad_pct_4_all"), flt("val_pct_cer_6mo_all"), flt("cavg_grad_pct_4_all")] if rt == "HS" else None
-            return dbn, (ratings, extra, outcome, tests)
+            return dbn, snapshot_record(v, rt)
         return dbn, None
 
     out, extra, outcomes, snap_tests, missing = {}, {}, {}, {}, []
@@ -425,11 +431,12 @@ def fetch_prek(path):
     save("prek.json", out)
 
 
-def fetch_k_admissions(paths):
+def fetch_k_admissions(paths, grade="Kindergarten", outname="k_admissions.json"):
     """Kindergarten seats, "true" applicants and offers per school, from the DOE's Local Law 72 files.
 
     Pass one or more "fall-YYYY-admissions" Local Law 72 files (2023 on; 2022 has no true applicants):
       fetch_data.py kadmissions ~/Downloads/fall-202*-admissions*.xlsx
+      fetch_data.py admissions ~/Downloads/fall-202*-admissions*.xlsx   # also grade 6 (ms_) and grade 9 (hs_admissions.json)
     True applicants are families who listed the school and didn't get an offer they ranked higher.
     Besides the school total, splits families into the school's own district and all other districts.
     Small counts are hidden by the DOE: "s" is 1-5 (2025 on; 0-5 before), "s^" is hidden so the others
@@ -450,10 +457,10 @@ def fetch_k_admissions(paths):
         year = m.group(1)
         rows = read_xlsx(path)["School"]
         head = rows[0]
-        if "Kindergarten True Applicants" not in head:
-            print(f"  skip {year}: no true applicants")
+        if f"{grade} True Applicants" not in head:
+            print(f"  skip {year}: no {grade} true applicants")
             continue
-        col = {k: head.index("Kindergarten " + k) for k in ("Seats Available", "True Applicants", "Offers")}
+        col = {k: head.index(f"{grade} " + k) for k in ("Seats Available", "True Applicants", "Offers")}
 
         def rng(v, cap=None):
             if v in (None, "N/A"):
@@ -506,7 +513,7 @@ def fetch_k_admissions(paths):
                 rec[3] = max(rec[2], min(rec[3], ho[1] + xo[1]))
             out.setdefault(dbn, {})[year] = rec
         print(f"  {year}: {sum(1 for v in out.values() if year in v)} schools")
-    save("k_admissions.json", out)
+    save(outname, out)
 
 
 def fetch_districts(path):
@@ -655,6 +662,234 @@ def fetch_utilization(path):
     save("utilization.json", out)
 
 
+# ---------- data gathered in a browser (MySchools and the Snapshot block scripts from outside one) ----------
+# The scripts in scripts/browser/ download raw files; these turn them into the files in data/.
+
+BROWSER = os.path.join(ROOT, "scripts", "browser")
+SPECIAL_MS = ("ASD/ACES Program", "D75 Special Education Inclusive Services")
+MS_CODE = {"Open": "O", "Zone Priority": "Z", "Screened": "S", "Screened With Assessment": "SA", "Audition": "A",
+           "Talent Test": "T", "Language Criteria": "L"}
+
+
+def _demand(q):
+    g = ((q.get("demand_last_year") or {}).get("general_education")) or {}
+    return g.get("seats"), g.get("applicants"), g.get("all_seats_filled")
+
+
+def _addr(x):
+    a = (x["school"].get("address") or {})
+    return a.get("address_1") or "", float(a.get("latitude") or 0) or None, float(a.get("longitude") or 0) or None
+
+
+def _strip_dbn(name):
+    import re
+    return re.sub(r"\s*\(\d\d[KMQRX]\d{3}\)\s*$", "", name or "").strip()
+
+
+def _myschools_k(schools):
+    """nonzoned_k.json and citywide_gt_k.json rows:
+    [dbn, name, address, lat, lon, priority districts, district residents only (1/0),
+     programs [[code, dual language (1/0), seats, applicants, all seats filled (1/0/None)]]]"""
+    import re
+    nz, gt = [], []
+    for x in schools:
+        kind = {e.get("name") for e in x.get("eligibility") or []}
+        if not kind & {"Non-Zoned School", "Citywide School"}:
+            continue
+        dbn = x["school"]["dbn"]
+        addr, lat, lon = _addr(x)
+        pd = sorted({int(m.group(1)) for f in x.get("other_features") or []
+                     for m in [re.search(r"reside in district (\d+)", f.get("name", ""), re.I)] if m})
+        only = int(any(re.search(r"only district \d+ residents", q.get("description") or "", re.I) for q in x["programs"]))
+        progs = []
+        for q in x["programs"]:
+            code = q["program"]["code"][len(dbn):] or "KG"
+            method = (q.get("admissions_method") or {}).get("name", "")
+            if method == "District G&T":
+                continue  # district G&T is a separate application
+            seats, apps, filled = _demand(q)
+            progs.append([code, 0 if code in ("KG", "GT") else 1, seats, apps, None if filled is None else int(filled)])
+        row = [dbn, _strip_dbn(x["name"]), addr.upper(), lat, lon, pd, only, progs]
+        (gt if "Citywide School" in kind else nz).append(row)
+    save("nonzoned_k.json", nz)
+    save("citywide_gt_k.json", gt)
+    print(f"  kindergarten: {len(nz)} non-zoned schools, {len(gt)} citywide G&T schools")
+
+
+def _same_name(prog, school):
+    """Is this program just the school's main program (named after the school)?"""
+    import re
+    words = lambda s: set(re.findall(r"[a-z0-9]+", s.lower())) - {"the", "school", "of", "and", "for", "ms", "is", "ps", "jhs"}
+    p, s = words(prog), words(school)
+    return bool(p) and len(p & s) >= 0.6 * len(p)
+
+
+def _myschools_ms(schools):
+    """ms_directory.json rows: [dbn, name, address, lat, lon,
+    programs [[name ('' = the school's main program), method code, seats, applicants, all seats filled, diversity set-aside]]]"""
+    out = []
+    for x in schools:
+        dbn = x["school"]["dbn"]
+        addr, lat, lon = _addr(x)
+        name = _strip_dbn(x["name"])
+        ps = [q for q in x["programs"] if (q.get("admissions_method") or {}).get("name") not in SPECIAL_MS]
+        progs = []
+        for q in ps:
+            method = (q.get("admissions_method") or {}).get("name", "")
+            pname = _strip_dbn(q["name"])
+            if len(ps) == 1 or _same_name(pname, name):
+                pname = ""
+            seats, apps, filled = _demand(q)
+            progs.append([pname, MS_CODE.get(method, method), seats, apps, None if filled is None else int(filled),
+                          1 if q.get("diversity_in_admission_1") else 0])
+        out.append([dbn, name, addr.upper(), lat, lon, progs])
+    save("ms_directory.json", out)
+    print(f"  middle school: {len(out)} schools")
+
+
+def _myschools_hs(schools, fetched):
+    """hs_directory.json: every high school with its programs (method, seats, applicants, priority groups),
+    ratings, graduation and college rates and enrollment, as read by build.py."""
+    import re
+    out = []
+    for x in schools:
+        s, a = x["school"], x["school"].get("address") or {}
+        r = lambda k: (x.get(k) or {}).get("score")
+        progs = []
+        for q in x.get("programs") or []:
+            dl = q.get("demand_last_year") or {}
+            g, w = dl.get("general_education") or {}, dl.get("students_with_disabilities") or {}
+            # program names end in their code, like "(M54A)"
+            progs.append({"c": q["program"]["code"], "n": re.sub(r"\s*\(\w+\)$", "", q["name"]), "m": (q.get("admissions_method") or {}).get("name"),
+                          "shs": q["program"].get("is_shs"), "lg": q["program"].get("is_lg"),
+                          "s": g.get("seats"), "ap": g.get("applicants"), "aps": g.get("applications_per_seat"),
+                          "f": g.get("all_seats_filled"), "ws": w.get("seats"), "wa": w.get("applicants"),
+                          "pg": [[z.get("name"), z.get("ge_priority_group_description")] for z in q.get("program_priority_groups") or []],
+                          "d1": q.get("diversity_in_admission_1"), "sc": [z.get("name") for z in q.get("selection_criteria") or []]})
+        out.append({"dbn": s["dbn"], "id": x.get("id"), "n": re.sub(r"\s*\(\w+\)$", "", x["name"]), "a": a.get("address_1"),
+                    "boro": (s.get("district") or {}).get("borough"),
+                    "lat": float(a.get("latitude") or 0), "lon": float(a.get("longitude") or 0), "p": progs,
+                    "r": [r("instruction_and_performance_rating"), r("safety_and_school_climate_rating"),
+                          r("relationships_with_families_rating")],
+                    "gr": x.get("stat_graduation"), "cc": x.get("stat_enroll_college_career"),
+                    "en": int(x["total_enrollment"]) if str(x.get("total_enrollment") or "").isdigit() else None,
+                    "g": x.get("grades_description"), "div": x.get("diversity_in_admissions") or ""})
+    save("hs_directory.json", {"source": f"MySchools high school directory API (process 1), fetched {fetched}",
+                               "schools": out})
+    print(f"  high school: {len(out)} schools")
+
+
+def import_myschools(paths):
+    """Turn myschools_k.json / myschools_ms.json / myschools_hs.json (from scripts/browser/myschools.js) into
+    nonzoned_k.json + citywide_gt_k.json, ms_directory.json and hs_directory.json."""
+    for path in paths:
+        with open(os.path.expanduser(path), encoding="utf-8") as f:
+            raw = json.load(f)
+        source, schools = raw.get("source", ""), raw["schools"]
+        pid = source.rsplit(" ", 1)[-1]
+        print(f"  {os.path.basename(path)}: {len(schools)} schools ({source})")
+        if pid == "4":
+            _myschools_k(schools)
+        elif pid == "6":
+            _myschools_ms(schools)
+        elif pid == "1":
+            _myschools_hs(schools, raw.get("fetched", ""))
+        else:
+            print(f"  skip {path}: not a kindergarten, middle or high school directory")
+
+
+def _zoned(name):
+    path = os.path.join(DATA, name)
+    if not os.path.exists(path):
+        return set()
+    with open(path, encoding="utf-8") as f:
+        return {d for feat in json.load(f)["features"] for d in feat["properties"]["dbns"]}
+
+
+def _load(name, default):
+    path = os.path.join(DATA, name)
+    if not os.path.exists(path):
+        return default
+    with open(path, encoding="utf-8") as f:
+        return json.load(f)
+
+
+def _snapshot_groups():
+    """Which schools need Snapshot data, and which report types to try for each."""
+    es_z, ms_z, hs_z = _zoned("elem_zones.json"), _zoned("ms_zones.json"), _zoned("hs_zones.json")
+    es_nz = {r[0] for r in _load("nonzoned_k.json", []) + _load("citywide_gt_k.json", [])} - es_z
+    ms_nz = {r[0] for r in _load("ms_directory.json", [])} - ms_z
+    hs_all = {s["dbn"] for s in _load("hs_directory.json", {"schools": []})["schools"]}
+    return es_z | ms_z | hs_z, hs_z, es_nz, ms_nz, hs_all
+
+
+def snapshot_job(out=None):
+    """Write ~/Downloads/snapshot_job.js: scripts/browser/snapshot.js with this year's list of schools filled in."""
+    zoned, hs_z, es_nz, ms_nz, hs_all = _snapshot_groups()
+    jobs = {}
+    for d in zoned | es_nz | ms_nz | hs_all:
+        wants = []
+        if d in hs_z or d in hs_all:
+            wants.append(["HS", "EMS"])
+        if (d in zoned and d not in hs_z) or d in es_nz or d in ms_nz:
+            wants.append(["EMS", "EC"])
+        jobs[d] = wants
+    with open(os.path.join(BROWSER, "snapshot.js"), encoding="utf-8") as f:
+        js = f.read()
+    js = js.replace("__YEAR__", json.dumps(SNAPSHOT_YEAR)).replace("__JOBS__", json.dumps(sorted(jobs.items())))
+    out = os.path.expanduser(out or "~/Downloads/snapshot_job.js")
+    with open(out, "w", encoding="utf-8") as f:
+        f.write(js)
+    print(f"wrote {out}: {len(jobs)} schools for the {SNAPSHOT_YEAR} Snapshot. Paste it into the browser console on tools.nycenet.edu.")
+
+
+HS_SNAPSHOT_KEEP = ("avg_sat", "val_ccr_4yr_all", "cavg_ccr_4yr_all", "val_pct_cer_6mo_all", "cavg_pct_cer_6mo_all",
+                    "val_grad_pct_4_all", "cavg_grad_pct_4_all", "disp_str_advanced_enroll", "disp_str_ap_enroll", "ccpc_total_n")
+
+
+def import_snapshot(path):
+    """Turn snapshot_raw.json (from snapshot_job.js) into the Snapshot files in data/: snapshot_ratings.json,
+    snapshot_extra.json, hs_outcomes.json and snapshot_tests.json for zoned schools; nonzoned_snapshot.json and
+    ms_snapshot.json for schools without zones; hs_snapshot.json (SAT, readiness, where graduates went) for high schools."""
+    with open(os.path.expanduser(path), encoding="utf-8") as f:
+        raw = json.load(f)
+    snap = raw["schools"]
+    zoned, hs_z, es_nz, ms_nz, hs_all = _snapshot_groups()
+    ratings, extra, outcomes, tests, nz, ms, hs = {}, {}, {}, {}, {}, {}, {}
+    def pick(rec, order):  # the first report type we have, in order
+        rt = next((t for t in order if t in rec), None)
+        return (rec[rt], rt) if rt else (None, None)
+
+    for dbn, rec in snap.items():
+        if dbn in zoned:  # zoned high schools use their high school report, everyone else elementary/middle
+            v, rt = pick(rec, ["HS", "EMS"] if dbn in hs_z else ["EMS", "EC", "HS"])
+            if v:
+                ratings[dbn], extra[dbn], o, t = snapshot_record(v, rt)
+                if o:
+                    outcomes[dbn] = o
+                if t:
+                    tests[dbn] = t
+        if dbn in es_nz or dbn in ms_nz:
+            v, rt = pick(rec, ["EMS", "EC", "HS"])
+            if v:
+                r, x, _, t = snapshot_record(v, rt)
+                (nz if dbn in es_nz else ms)[dbn] = {"r": r, "x": x, **({"t": t} if t else {})}
+        if dbn in hs_all and "HS" in rec:
+            hs[dbn] = {k: val for k, val in rec["HS"].items()
+                       if k in HS_SNAPSHOT_KEEP or k.startswith("val_pct_cer_6mo_") or k.startswith("ccpc_co_")}
+    missing = sorted((zoned | es_nz | ms_nz | hs_all) - set(snap))
+    if missing:
+        print(f"  no Snapshot page for {len(missing)} schools: {', '.join(missing[:20])}{' ...' if len(missing) > 20 else ''}")
+    save("snapshot_ratings.json", ratings)
+    save("snapshot_extra.json", extra)
+    save("hs_outcomes.json", outcomes)
+    save("snapshot_tests.json", tests)
+    save("nonzoned_snapshot.json", nz)
+    save("ms_snapshot.json", ms)
+    save("hs_snapshot.json", {"source": f"{raw.get('source', 'DOE School Quality Snapshot')} (HS report), "
+                                        f"tools.nycenet.edu/snapshot, fetched {raw.get('fetched', '')}", "schools": hs})
+
+
 if __name__ == "__main__":
     args = sys.argv[1:]
     if args[:1] == ["zones"] and len(args) == 2:  # zones from downloaded files: fetch_data.py zones ~/Downloads
@@ -672,6 +907,23 @@ if __name__ == "__main__":
     if args[:1] == ["kadmissions"] and len(args) >= 2:  # from downloaded Local Law 72 files, any number of years
         print("-- kadmissions (from files)")
         fetch_k_admissions(args[1:])
+        sys.exit()
+    if args[:1] == ["admissions"] and len(args) >= 2:  # kindergarten, grade 6 and grade 9 from the same Local Law 72 files
+        print("-- admissions (from files)")
+        fetch_k_admissions(args[1:])
+        fetch_k_admissions(args[1:], "Grade 6", "ms_admissions.json")
+        fetch_k_admissions(args[1:], "Grade 9", "hs_admissions.json")
+        sys.exit()
+    if args[:1] == ["myschools"] and len(args) >= 2:  # files from scripts/browser/myschools.js
+        print("-- myschools (from browser downloads)")
+        import_myschools(args[1:])
+        sys.exit()
+    if args[:1] == ["snapshot-job"]:  # writes ~/Downloads/snapshot_job.js to paste into the browser
+        snapshot_job(args[1] if len(args) > 1 else None)
+        sys.exit()
+    if args[:1] == ["snapshot-raw"] and len(args) == 2:  # the file snapshot_job.js downloaded
+        print("-- snapshot (from browser download)")
+        import_snapshot(args[1])
         sys.exit()
     if args[:1] == ["districts"] and len(args) == 2:  # from the downloaded NYC Open Data GeoJSON
         print("-- districts (from file)")

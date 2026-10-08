@@ -55,6 +55,8 @@ button{font:inherit;font-family:var(--display);font-weight:600;font-size:.9rem;p
 .addr-box{font-size:.82rem;padding:3px 6px;flex:1;min-width:140px}
 .school .meta{font-size:.85rem;color:var(--muted);font-variant-numeric:tabular-nums}
 .school a{color:var(--hl);font-size:.85rem}
+.opts-note{font-size:.8rem;color:var(--muted);margin:4px 0 6px}
+.dist-page{color:var(--hl);font-family:var(--display);font-weight:600;font-size:.88rem}
 .school .nm a.nm-link{color:inherit;font-size:inherit;cursor:pointer;text-decoration:underline;text-decoration-color:var(--muted);text-decoration-thickness:1px;text-underline-offset:3px}
 .school .nm a.nm-link:hover{color:var(--hl);text-decoration-color:currentColor}
 .note{background:var(--warn-bg);color:var(--warn-fg);font-size:.85rem;padding:8px 10px;border-radius:6px}
@@ -543,7 +545,7 @@ async function loadLevel(lv){if(LV[lv])return true;if(!ASSETS[lv])return false;
   try{const x=await getAsset(lv);
     Object.entries(x.schools).forEach(([d,s])=>{S[d]=Object.assign({},s,S[d]||{})});snapNames(Object.keys(x.schools));
     if(x.O)Object.assign(O,x.O);if(x.Q)Object.assign(Q,x.Q);
-    LV[lv]={F:x.features,T:x.T||{},S:x.schools,P:x.P||{},NZ:(x.NZ||[]).map(r=>mkNZ(r,lv)),CUT:x.CUT||null};if(x.R)Object.entries(x.R).forEach(([k,v])=>{if(!R[k])R[k]=v});if(x.X)Object.entries(x.X).forEach(([k,v])=>{if(!X[k])X[k]=v});regNZ(LV[lv].NZ);return true}
+    LV[lv]={F:x.features,T:x.T||{},S:x.schools,P:x.P||{},A:x.A||{},NZ:(x.NZ||[]).map(r=>mkNZ(r,lv)),CUT:x.CUT||null};if(x.R)Object.entries(x.R).forEach(([k,v])=>{if(!R[k])R[k]=v});if(x.X)Object.entries(x.X).forEach(([k,v])=>{if(!X[k])X[k]=v});regNZ(LV[lv].NZ);return true}
   catch(e){alertLoad();return false}finally{document.body.style.cursor=''}}
 function alertLoad(){const m=document.getElementById('llmsg');if(m){m.textContent='Couldn’t load that part of the map. Check your connection and try again.';m.hidden=false}}
 const RK={ip:2,ss:3,rf:4},RNAME={ip:'Instruction and Performance',ss:'Safety and School Climate',rf:'Relationships with Families'},RLAB={1:'Needs Improvement',2:'Fair',3:'Good',4:'Excellent'};
@@ -579,17 +581,21 @@ const GT_URL='https://www.schools.nyc.gov/enrollment/enroll-grade-by-grade/gifte
 function nzGet(d){return NZ.find(o=>o.d===d)}
 function regNZ(list){list.forEach(o=>{S[o.d]=Object.assign({n:o.n,a:o.a,lat:o.lat,lon:o.lon,g:null},S[o.d]||{})})}
 regNZ(NZ_ES);
-[['ms',MSD],['hs',HSD]].forEach(([lv,x])=>{if(!x||!LV[lv])return;Object.assign(LV[lv],{P:x.P||{},NZ:(x.NZ||[]).map(r=>mkNZ(r,lv)),CUT:x.CUT||null});
+[['ms',MSD],['hs',HSD]].forEach(([lv,x])=>{if(!x||!LV[lv])return;Object.assign(LV[lv],{P:x.P||{},A:x.A||{},NZ:(x.NZ||[]).map(r=>mkNZ(r,lv)),CUT:x.CUT||null});
   if(x.R)Object.entries(x.R).forEach(([k,v])=>{if(!R[k])R[k]=v});if(x.X)Object.entries(x.X).forEach(([k,v])=>{if(!X[k])X[k]=v});regNZ(LV[lv].NZ)});
 function nzDistricts(o){const ds=o.pd.length?o.pd:[+o.d.slice(0,2)];return ds}
 function nzPriority(o){if(o.hs){if(o.gt)return o.pr.some(p=>p[1]==='T')?'Admission is by SHSAT score only. Any NYC 8th or 9th grader can take the test.':'Admission is by audition. Students from anywhere in NYC can apply.';return o.pz||'Open to students from anywhere in NYC.'}if(o.ms&&o.gt)return 'Open to students from anywhere in NYC, not just District '+(+o.d.slice(0,2))+'. Some give priority to continuing students, siblings or certain districts; MySchools lists each program’s rules.';if(o.ms)return 'Students apply through MySchools. Most middle school programs give priority to students who live in, or go to elementary school in, District '+(+o.d.slice(0,2))+'.';if(o.gt)return 'Open to children found eligible for G&T, from anywhere in NYC.'+(o.pd.length?' Priority to eligible children in Districts '+o.pd.slice(0,-1).join(', ')+' and '+o.pd[o.pd.length-1]+'.':'');const ds=nzDistricts(o),t=ds.length>1?'Districts '+ds.slice(0,-1).join(', ')+' and '+ds[ds.length-1]:'District '+ds[0];
   return o.only?'Only '+t+' residents can apply.':'Priority to '+t+' residents. Most non-zoned schools also give priority to siblings and current pre-K students.'}
 function nzDemand(o){if(o.ms||o.hs){const ok=o.pr.filter(p=>p[2]!=null&&!(o.hs&&(p[1]==='D75'||p[1]==='ASD')));if(!ok.length)return '';const st=ok.reduce((a,p)=>a+p[2],0),ap=ok.reduce((a,p)=>a+p[3],0);return (o.pr.length>1?o.pr.length+' programs · ':'')+st+' seats · '+ap+' applicants last year'}
   const g=o.pr.find(p=>!p[1])||o.pr[0];if(!g||g[2]==null)return '';return g[2]+' seats · '+g[3]+' applicants last year'+(g[4]?' · all seats filled':'')}
-function nzOptions(dist,skip){if(!dist)return '';const l=NZ.filter(o=>!o.gt&&nzDistricts(o).includes(dist)&&!skip.includes(o.d));if(!l.length)return '';
+function nzOptions(dist,skip,open){if(!dist)return '';const hs=level==='hs';
+  const l=NZ.filter(o=>(hs?+o.d.slice(0,2)===dist:!o.gt&&nzDistricts(o).includes(dist))&&!skip.includes(o.d));if(!l.length)return '';
   l.sort((a,b)=>(schoolRating(b.d,'comp')??0)-(schoolRating(a.d,'comp')??0));
-  return '<hr class="sep"><details class="opts"><summary>Other options: '+l.length+(level==='ms'?' middle school'+(l.length>1?'s':'')+' without zones <small>in District '+dist+'</small>':' non-zoned school'+(l.length>1?'s':'')+' <small>with District '+dist+' priority</small>')+'</summary><ul>'+
-    l.map(o=>'<li><button type="button" data-nz="'+o.d+'"><span class="on">'+esc(o.n)+'<small>'+esc(nzDemand(o)||'No demand data')+'</small></span>'+chip(schoolRating(o.d,'comp'))+'</button></li>').join('')+'</ul></details>'}
+  const boro=BORO[(l[0]||{}).d?.[2]]||'',nb=l.filter(o=>/riority to /.test(o.pz)).length;
+  if(hs)return (open?'':'<hr class="sep">')+'<details class="opts"'+(open?' open':'')+'><summary>'+l.length+' high school'+(l.length>1?'s':'')+' in District '+dist+'</summary><p class="opts-note">High schools don’t give priority by district. Any NYC student can apply'+(nb?'. '+nb+' of these give priority to '+esc(boro)+' students and residents in some or all programs':'')+'.</p><ul>'+
+    l.map(o=>'<li><button type="button" data-nz="'+o.d+'"><span class="on">'+esc(o.n)+'<small>'+esc((o.gt?'Specialized · ':'')+(nzDemand(o)||'No demand data'))+'</small></span>'+chip(schoolRating(o.d,'comp'),1)+'</button></li>').join('')+'</ul></details>';
+  return (open?'':'<hr class="sep">')+'<details class="opts"'+(open?' open':'')+'><summary>'+(open?'':'Other options: ')+l.length+(level==='ms'?' middle school'+(l.length>1?'s':'')+' without zones <small>in District '+dist+'</small>':' non-zoned school'+(l.length>1?'s':'')+' <small>with District '+dist+' priority</small>')+'</summary><ul>'+
+    l.map(o=>'<li><button type="button" data-nz="'+o.d+'"><span class="on">'+esc(o.n)+'<small>'+esc(nzDemand(o)||'No demand data')+'</small></span>'+chip(schoolRating(o.d,'comp'),1)+'</button></li>').join('')+'</ul></details>'}
 // middle school programs from the MySchools directory: how each admits students and last year's demand
 const MNAME={O:'Open',Z:'Zone priority',S:'Screened',SA:'Screened + assessment',A:'Audition',T:'Talent test',L:'Language program'};
 const HNAME={S:'Screened (grades)',SA:'Screened + assessment',SL:'Screened: language & academics',E:'Ed. Opt. (mixed academic levels)',A:'Audition',O:'Open',L:'Language program',T:'SHSAT test',ZG:'Zoned guarantee',ZP:'Zoned priority',TR:'Transfer school (older students)',D75:'District 75 special education',ASD:'Autism (ASD) or ACES program'};
@@ -601,18 +607,24 @@ function progHtml(d){const lp=LV[level],P=lp&&lp.P&&lp.P[d];if(!P||!P.length||P.
 // specialized high schools: last two years' lowest SHSAT score offered a seat
 function cutHtml(d){const c=LV.hs&&LV.hs.CUT;if(level!=='hs'||!c||!c.c[d])return '';const v=c.c[d],y=+c.y;
   return '<div class="facts"><span>Lowest score offered a seat, fall '+y+'</span><b>'+v[0]+'</b><span>Fall '+(y-1)+'</span><b>'+v[1]+'</b><small>Scores run from about 200 to 800. Cutoffs shift each year with the applicant pool. As reported from DOE results by <a href="https://caddellprep.com/shsat/info/cut-off-scores/" target="_blank" rel="noopener">Caddell Prep</a>.</small></div>'}
-function admHtml(d){const k=KA[d];if(!k)return '';const y=Object.keys(k).sort().pop();const r=k[y];if(!r)return '';
+// grade 6 and grade 9 use the same Local Law 72 numbers as kindergarten (LV.ms.A, LV.hs.A)
+function admHtml(d,lv){lv=lv||'es';const src=lv==='es'?KA:(LV[lv]&&LV[lv].A)||{},k=src[d];if(!k)return '';const y=Object.keys(k).sort().pop();const r=k[y];if(!r)return '';
+  const G={es:'Kindergarten',ms:'Grade 6',hs:'Grade 9'}[lv];
   const dist=+d.slice(0,2),fine=(a,b,t)=>b-a<=Math.max(4,.08*t);
   // one row: accepted, applicants, share; a hidden count we can't pin to within a few shows as a dash
   const row=(lab,o0,o1,t0,t1)=>{const ok=t1!=null&&fine(o0,o1,t1)&&fine(t0,t1,t1),ex=o0===o1&&t0===t1,
       o=Math.round((o0+o1)/2),t=Math.round((t0+t1)/2),a=ex?'':'~';
     return '<tr><th>'+lab+'</th>'+(ok?'<td>'+(o0===o1?'':'~')+o+'</td><td>'+(t0===t1?'':'~')+t+'</td><td>'+(!t?'':o>=t?'all':a+Math.round(100*o/t)+'%')+'</td>':'<td>—</td><td>'+(t0===t1?t:'—')+'</td><td></td>')+'</tr>'};
-  const hasD=r.length>4;
-  let h='<div class="adm"><div class="adm-h">Kindergarten admissions, fall '+y+'<span>'+r[0]+' seats</span></div><table><thead><tr><th></th><th>Accepted</th><th>Applicants</th><th></th></tr></thead><tbody>'+
-    row('All families',r[2],r[3],r[1],r[1])+
+  // high schools don't give district priority, so the district split would mislead there
+  const hasD=r.length>4&&lv!=='hs',who=lv==='es'?'families':'students';
+  let h='<div class="adm"><div class="adm-h">'+G+' admissions, fall '+y+'<span>'+r[0]+' seats</span></div><table><thead><tr><th></th><th>Accepted</th><th>Applicants</th><th></th></tr></thead><tbody>'+
+    row('All '+who,r[2],r[3],r[1],r[1])+
     (hasD?row('District '+dist,r[6],r[7],r[4],r[5])+row('Other districts',r[10],r[11],r[8],r[9]):'')+'</tbody></table>';
-  if(hasD&&r[10]>0&&!nzGet(d))h+='<p class="adm-note">Some seats went to families from other districts, which usually means every zoned family who applied got one.</p>';
-  return h+'<details class="adm-about"><summary>About this data</summary><p>Applicants are families who listed the school and didn’t get a choice they ranked higher. Accepted means offered a seat. Accepted can top applicants when the DOE places a child who didn’t list the school there, often at their zoned school. '+(nzGet(d)?'':'District '+dist+' mixes zoned and non-zoned families. ')+'“—” means the DOE hid the count for privacy. Source: <a href="https://infohub.nyced.org/reports/government-reports" target="_blank" rel="noopener">DOE Local Law 72 reports</a>.</p></details></div>'}
+  if(lv==='es'&&hasD&&r[10]>0&&!nzGet(d))h+='<p class="adm-note">Some seats went to families from other districts, which usually means every zoned family who applied got one.</p>';
+  if(lv==='ms'&&hasD)h+='<p class="adm-note">Most middle school programs fill seats with District '+dist+' students and residents first, then consider other districts.</p>';
+  const about=lv==='es'?'Applicants are families who listed the school and didn’t get a choice they ranked higher. Accepted means offered a seat. Accepted can top applicants when the DOE places a child who didn’t list the school there, often at their zoned school. '+(nzGet(d)?'':'District '+dist+' mixes zoned and non-zoned families. ')
+    :'Applicants are students who listed the school (any of its programs) and didn’t get a choice they ranked higher. Accepted means offered a seat; it can top applicants when the DOE places students who didn’t get any of their choices. '+(lv==='ms'?'A district row counts students who live or go to school in that district. ':'Counts cover every program at the school. ');
+  return h+'<details class="adm-about"><summary>About this data</summary><p>'+about+'“—” means the DOE hid the count for privacy. Source: <a href="https://infohub.nyced.org/reports/government-reports" target="_blank" rel="noopener">DOE Local Law 72 reports</a>.</p></details></div>'}
 const UTIL_BINS=[[69.5,'#fde0c5'],[89.5,'#f8b98b'],[99.5,'#ee8a50'],[109.5,'#d4582a'],[Infinity,'#a32f12']];
 const utilColor=v=>UTIL_BINS.find(b=>v<b[0])[1];
 function zoneUtil(dbns){let e=0,c=0;for(const d of dbns){const u=U[d];if(u){e+=u[1];c+=u[2]}}return c?100*e/c:null}
@@ -705,7 +717,7 @@ function buildStripes(){buildNoZone();stripeGroup.clearLayers();if(metric==='non
       cols.map((c,k)=>'<rect x="'+k*bw+'" y="0" width="'+bw+'" height="'+W+'" fill="'+c+'"/>').join('')+'</pattern>');
     g.eachLayer(x=>{if(x._path)x._path.setAttribute('fill','url(#'+id+')')})})}
 function makeLayer(){return L.geoJSON(F,{style:f=>style(f,false),onEachFeature:(f,l)=>{
-  l.on('click',()=>select(l,true));
+  l.on('click',ev=>select(l,true,ev.latlng));
   l.bindTooltip(()=>tipHtml(f),{sticky:true,direction:'top',offset:[0,-6]});
 }})}
 layer=makeLayer().addTo(map);layer.eachLayer(l=>byLayer.push(l));
@@ -906,7 +918,7 @@ function grades(g,d){if(!g)return '';let l=g.split(',').filter(x=>x!=='3K'&&x!==
   const a=l.map(x=>x==='3K'?'3-K':x==='PK'?'Pre-K':x==='0K'?'K':String(+x));return a.length>1?a[0]+'–'+a[a.length-1]:a[0]}
 const card=document.getElementById('card');
 function row(lbl,n,p){if(!n)return '';const v=100*p/n;return '<span>'+lbl+'</span><span class="bar"><i style="width:'+v.toFixed(1)+'%;background:'+scoreColor(v)+'"></i></span><b>'+Math.round(v)+'%</b>'}
-function chip(r){return r==null?'<span class="chip">n/a</span>':'<span class="chip"><i style="background:'+rateColor(r)+'"></i>'+(Number.isInteger(r)?RLAB[r]:r.toFixed(1)+' / 4')+'</span>'}
+function chip(r,num){return r==null?'<span class="chip">n/a</span>':'<span class="chip"><i style="background:'+rateColor(r)+'"></i>'+(Number.isInteger(r)&&!num?RLAB[r]:r.toFixed(1)+' / 4')+'</span>'}
 function tagsHtml(d){const x=X[d];if(!x)return '';const tags=[];if(hasGT(d))tags.push('Gifted &amp; Talented');if(x[4])tags.push('Dual language: '+esc(x[4]));
   return tags.length?'<div class="tags">'+tags.map(s=>'<span class="tag">'+s+'</span>').join('')+'</div>':''}
 function factsHtml(d){const x=X[d]||[],c=CS[d]||{},u=U[d],pk=level==='es'?PK[d]:null;if(!X[d]&&!CS[d]&&!u&&!pk)return '';
@@ -918,7 +930,7 @@ function factsHtml(d){const x=X[d]||[],c=CS[d]||{},u=U[d],pk=level==='es'?PK[d]:
 function addrHtml(d){const s=S[d];if(!s||!s.a)return '';const full=title(s.a)+', '+(BORO[d[2]]||'')+', NY';
   return '<span class="addr">'+esc(title(s.a))+', '+esc(BORO[d[2]]||'')+'<button type="button" class="copy-addr" data-copy="'+esc(full)+'" aria-label="Copy address: '+esc(full)+'">Copy</button></span>'}
 function rateHtml(d){const r=R[d];if(!r||r.slice(2,5).every(x=>x==null))return '<span class="meta">No 2024–25 Snapshot ratings (often K–2 or new schools).</span>';
-  const c=schoolRating(d,'comp');return '<div class="rates"><span class="tot">Overall rating</span><span class="tot">'+chip(c)+'</span><span class="sub-r">Instruction</span>'+chip(r[2])+'<span class="sub-r">Safety &amp; climate</span>'+chip(r[3])+'<span class="sub-r">Families</span>'+chip(r[4])+'</div><a href="https://tools.nycenet.edu/snapshot/2025/'+esc(d)+'/'+esc(r[5]||'EMS')+'/" target="_blank" rel="noopener">2024–25 School Quality Snapshot ↗</a>'}
+  const c=schoolRating(d,'comp');return '<div class="rates"><span class="tot">Overall rating</span><span class="tot">'+chip(c,1)+'</span><span class="sub-r">Instruction</span>'+chip(r[2])+'<span class="sub-r">Safety &amp; climate</span>'+chip(r[3])+'<span class="sub-r">Families</span>'+chip(r[4])+'</div><a href="https://tools.nycenet.edu/snapshot/2025/'+esc(d)+'/'+esc(r[5]||'EMS')+'/" target="_blank" rel="noopener">2024–25 School Quality Snapshot ↗</a>'}
 function outHtml(d){const o=O[d];if(!o)return '<span class="meta">No 2024–25 graduation data.</span>';
   const r=(lbl,m)=>{const v=o[OUT[m].i];return v==null?'':'<span>'+lbl+'</span><span class="bar"><i style="width:'+v+'%;background:'+outColor(m,v)+'"></i></span><b>'+Math.round(v)+'%</b>'};
   const q=Q[d]||[],ab=(lbl,m,txt)=>{const v=outVal(d,m);return v==null?'':'<span>'+lbl+'</span><span class="bar"><i style="width:'+outPos(m,v).toFixed(1)+'%;background:'+outColor(m,v)+'"></i></span><b>'+(txt?txt(v):Math.round(v))+'</b>'};
@@ -943,18 +955,31 @@ function kindText(p){const n=p.dbns.length,k=zoneKind(p);
   return '<b>Shared zone:</b> families here get zoned priority at all '+n+' schools below and can rank any of them.'}
 // one school's details (zoned or not)
 function schoolBlock(d){const s=S[d],n=X[d]&&X[d][0]!=null?X[d][0].toLocaleString()+' students':'',gr=s&&s.g?'Grades '+esc(grades(s.g,d)):'';
-  return '<div class="school"><span class="nm"><a class="nm-link" href="'+pageUrl(d)+'">'+esc(short(d))+'</a> <span class="dbn">('+esc(d)+')</span></span>'+addrHtml(d)+(gr||n?'<span class="meta">'+[gr,n].filter(Boolean).join(' · ')+'</span>':'')+tagsHtml(d)+(level==='hs'?zonedHtml(d):'')+'<hr class="sep">'+rateHtml(d)+'<hr class="sep">'+scoreHtml(d)+(factsHtml(d)?'<hr class="sep">'+factsHtml(d):'')+(level!=='es'&&cutHtml(d)?'<hr class="sep">'+cutHtml(d):'')+(level!=='es'&&progHtml(d)?'<hr class="sep">'+progHtml(d):'')+(level==='es'&&KA[d]?'<hr class="sep">'+admHtml(d):'')+'<hr class="sep">'+'<div class="links">'+'<a href="'+pageUrl(d)+'"><b>Full school page →</b></a>'+'<a href="'+mySchoolsUrl(d)+'" target="_blank" rel="noopener"><b>MySchools: apply &amp; see your chances ↗</b></a><a href="https://www.schools.nyc.gov/schools/'+esc(d.slice(2))+'" target="_blank" rel="noopener">School website ↗</a></div></div>'}
-function select(l,fromClick){
+  return '<div class="school"><span class="nm"><a class="nm-link" href="'+pageUrl(d)+'">'+esc(short(d))+'</a> <span class="dbn">('+esc(d)+')</span></span>'+addrHtml(d)+(gr||n?'<span class="meta">'+[gr,n].filter(Boolean).join(' · ')+'</span>':'')+tagsHtml(d)+(level==='hs'?zonedHtml(d):'')+'<hr class="sep">'+rateHtml(d)+'<hr class="sep">'+scoreHtml(d)+(factsHtml(d)?'<hr class="sep">'+factsHtml(d):'')+(level!=='es'&&cutHtml(d)?'<hr class="sep">'+cutHtml(d):'')+(level!=='es'&&admHtml(d,level)?'<hr class="sep">'+admHtml(d,level):'')+(level!=='es'&&progHtml(d)?'<hr class="sep">'+progHtml(d):'')+(level==='es'&&KA[d]?'<hr class="sep">'+admHtml(d):'')+'<hr class="sep">'+'<div class="links">'+'<a href="'+pageUrl(d)+'"><b>Full school page →</b></a>'+'<a href="'+mySchoolsUrl(d)+'" target="_blank" rel="noopener"><b>MySchools: apply &amp; see your chances ↗</b></a><a href="https://www.schools.nyc.gov/schools/'+esc(d.slice(2))+'" target="_blank" rel="noopener">School website ↗</a></div></div>'}
+// a big no-zone area (most of the city in the high school view) spans many districts: a click there selects
+// just the district under the click, outlined, instead of the whole area
+function distAt(ll){const x=ll.lng,y=ll.lat;for(const [k,v] of Object.entries(DIST)){let inside=false;
+  for(const r of v.r){for(let i=0,j=r.length-1;i<r.length;j=i++){const [xi,yi]=r[i],[xj,yj]=r[j];if((yi>y)!==(yj>y)&&x<(xj-xi)*(y-yi)/(yj-yi)+xi)inside=!inside}}
+  if(inside)return k}
+  // in a gap between the simplified district outlines (a park, a pier): the district with the nearest edge point
+  let best=null,bd=Infinity,kx=Math.cos(y*Math.PI/180);for(const [k,v] of Object.entries(DIST))for(const r of v.r)for(const [xi,yi] of r){const dd=((xi-x)*kx)**2+(yi-y)**2;if(dd<bd){bd=dd;best=k}}
+  return bd<4e-5?best:null}
+function select(l,fromClick,ll){
   clearNZSel();
   markEngaged();
   if(selected)selected.setStyle(style(selected.feature,false));
-  selected=l;l.setStyle(style(l.feature,true));
-  if(selLine)map.removeLayer(selLine);selLine=makeSel(l.feature).addTo(map);
-  const p=l.feature.properties;let h='<div class="zt">'+(p.dist&&+p.dist?'District '+esc(p.dist)+' · ':'')+esc(BORO[p.boro]||'')+'</div>';
+  const p0=l.feature.properties,dk=!p0.dbns.length&&ll&&(!p0.dist||/,/.test(String(p0.dist)))?distAt(ll):null;
+  selected=l;l.setStyle(style(l.feature,!dk));
+  if(selLine)map.removeLayer(selLine);
+  selLine=makeSel(dk?{type:'Feature',properties:{},geometry:{type:'MultiPolygon',coordinates:DIST[dk].r.map(r=>[r])}}:l.feature).addTo(map);
+  const p=dk?Object.assign({},p0,{dist:dk,boro:p0.boro||({M:'M',X:'X',K:'K',Q:'Q',R:'R'})[(Object.keys(S).find(d=>+d.slice(0,2)===+dk)||'')[2]]}):p0;
+  let h='<div class="zt">'+(p.dist&&+p.dist?'District '+esc(p.dist)+' · ':'')+esc(BORO[p.boro]||'')+'</div>';
   if(p.dbns.length>1)h+='<div class="kind">'+kindText(p)+'</div>';
-  if(!p.dbns.length){h+='<div class="school"><span class="nm">'+LEVEL_TXT[level].noZone+'</span></div>';if(level==='ms'&&/District/.test(p.remarks||''))h+='<div class="note">Students here apply to middle schools through <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a>.</div>';if(level==='hs')h+='<div class="note">Students here apply to high schools citywide through <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a>.</div>';}
-  else{h+=p.dbns.map(schoolBlock).join('');if(level==='es'||level==='ms')h+=nzOptions(+p.dist,p.dbns);}
-  if(p.remarks)h+='<div class="note">'+esc(p.remarks)+'</div>';
+  if(!p.dbns.length){h+='<div class="school"><span class="nm">'+LEVEL_TXT[level].noZone+'</span></div>';if(level==='ms'&&/District/.test(p.remarks||''))h+='<div class="note">Students here apply to middle schools through <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a>.</div>';if(level==='hs')h+='<div class="note">Students here apply to high schools citywide through <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a>.</div>';
+    if(p.dist&&+p.dist){h+='<a class="dist-page" href="districts/'+(+p.dist)+'/'+(LOCAL?'index.html':'')+'">All District '+(+p.dist)+' schools, with ratings and test scores →</a>';h+=nzOptions(+p.dist,[],true)}}
+  else{h+=p.dbns.map(schoolBlock).join('');if(level==='es'||level==='ms')h+=nzOptions(+p.dist,p.dbns);
+    if(p.dist&&+p.dist)h+='<a class="dist-page" href="districts/'+(+p.dist)+'/'+(LOCAL?'index.html':'')+'">All District '+(+p.dist)+' schools, with ratings and test scores →</a>'}
+  if(p.remarks&&!/^Citywide High School Choice$/i.test(p.remarks))h+='<div class="note">'+esc(p.remarks)+'</div>';
 
   if(p.dbns.length)h+='<a class="confirm" href="https://schoolsearch.schools.nyc/" target="_blank" rel="noopener">Confirm your exact address on schoolsearch.schools.nyc ↗</a>';
   if(p.dbns.length)h+='<div class="card-actions"><button type="button" class="btn-sm" id="copy-link">Copy link to this zone</button><button type="button" class="btn-sm to-map" id="to-map">↑ Back to map</button></div>';

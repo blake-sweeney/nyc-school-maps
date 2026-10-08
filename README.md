@@ -14,6 +14,7 @@ An interactive map of New York City's elementary (kindergarten), middle and high
 - **SHSAT cutoffs:** `data/shsat_cutoffs.json`, DOE figures as reported by Caddell Prep
 - **Non-zoned schools (elementary):** the MySchools kindergarten directory (`data/nonzoned_k.json`) and their Snapshot pages (`data/nonzoned_snapshot.json`); both read through a browser, since those sites block scripts here
 - **Kindergarten admissions (zone card):** seats, true applicants and offers for fall 2023–2025, from the DOE's Local Law 72 reports; refresh with `python3 scripts/fetch_data.py kadmissions <files...>`
+- **Grade 6 and grade 9 admissions (middle and high school cards):** the same Local Law 72 files (`data/ms_admissions.json`, `data/hs_admissions.json`); refresh all three grades with `python3 scripts/fetch_data.py admissions <files...>`
 - **Pre-K and 3-K (zone card):** seats and applicants at each zoned elementary school, from the DOE's Local Law 72 admissions report
 - **Class size (zone card):** average kindergarten, grades 1–5 and core-subject class sizes, from the DOE's class size report
 - **Colors:** a red → orange → yellow → teal ramp, checked against common forms of color blindness (deuteranopia, protanopia)
@@ -69,11 +70,12 @@ scripts/
   build.py              data/ + src/template.html  →  index.html
   pages.py              school pages, district pages and the sitemap (called by build.py)
   fetch_data.py         re-downloads everything in data/ from the city
+  browser/              scripts to paste into a browser console for MySchools and the Snapshot (see "Refresh the data")
   streets.py            merges and simplifies street centerlines (used by fetch_data.py)
   make_preview.py       draws preview.png (needs matplotlib)
 ```
 
-Apart from make_preview.py, the scripts need anything beyond Python 3.
+Apart from make_preview.py (matplotlib) and the Blue Book step (pdftotext), the scripts need nothing beyond Python 3.
 
 ## Make changes
 
@@ -104,12 +106,79 @@ The site can report anonymous page views to [GoatCounter](https://www.goatcounte
 
 ## Refresh the data
 
+Most data changes once a year. This is the whole checklist, in order. Each step updates files in `data/`; run `python3 scripts/build.py` at the end (and after any step, to check it), then commit `data/` with the rebuilt site. Times are rough: when a source hasn't changed yet, skip it and come back.
+
+Two sources, MySchools and the School Quality Snapshot, block scripts from outside a browser. For those, a script in `scripts/browser/` runs in your browser's console and downloads a raw file, then `fetch_data.py` turns that file into `data/`. To open the console: Chrome/Edge Cmd+Option+J (Mac) or Ctrl+Shift+J; Firefox Cmd+Option+K or Ctrl+Shift+K. If the browser asks whether the site may download several files, allow it.
+
+### 1. Zones (each fall, when the DOE updates Find a School)
+
 ```sh
-python3 scripts/fetch_data.py      # or: fetch_data.py zones | tests | snapshot | streets
-python3 scripts/build.py
+python3 scripts/fetch_data.py zones
 ```
 
-Zones always come from the DOE's current Find a School map. If the DOE servers block your connection, download the three layers in a browser (the URLs are in `fetch_data.py`, `DOE_ZONES`) and run `python3 scripts/fetch_data.py zones ~/Downloads`. When the DOE publishes a new Snapshot or test year, update `TEST_YEAR` and `SNAPSHOT_YEAR` at the top of `scripts/fetch_data.py`.
+If the DOE servers block you, download the three layers in a browser (URLs in `fetch_data.py`, `DOE_ZONES`) and run `python3 scripts/fetch_data.py zones ~/Downloads`. Spot-check a few addresses against [schoolsearch.schools.nyc](https://schoolsearch.schools.nyc/).
+
+### 2. MySchools directories (each fall, once applications open: high and middle school in October, kindergarten in December)
+
+Programs, admissions methods, seats and applicants, priorities, schools without zones, and high school ratings.
+
+1. Open any page on [myschools.nyc](https://www.myschools.nyc/), open the console, paste all of `scripts/browser/myschools.js` and press Enter. About a minute later you have `myschools_k.json`, `myschools_ms.json` and `myschools_hs.json` in Downloads.
+2. `python3 scripts/fetch_data.py myschools ~/Downloads/myschools_*.json`
+
+This writes `nonzoned_k.json`, `citywide_gt_k.json`, `ms_directory.json` and `hs_directory.json`. If MySchools hasn't opened the next year's kindergarten applications yet, pass only the middle and high school files.
+
+### 3. School Quality Snapshot (when a new year appears at [tools.nycenet.edu/snapshot](https://tools.nycenet.edu/snapshot/))
+
+Ratings, test scores, graduation, SAT, college readiness, where graduates went, and school facts, for every school on the map.
+
+1. Set `SNAPSHOT_YEAR` at the top of `scripts/fetch_data.py` to the new year (2025 means 2024–25).
+2. `python3 scripts/fetch_data.py snapshot-job` writes `~/Downloads/snapshot_job.js`, with the list of schools from steps 1–2 filled in.
+3. Open [tools.nycenet.edu/snapshot](https://tools.nycenet.edu/snapshot/), open the console, paste all of `snapshot_job.js` and press Enter. It takes a few minutes and downloads `snapshot_raw.json`.
+4. `python3 scripts/fetch_data.py snapshot-raw ~/Downloads/snapshot_raw.json`
+
+This writes `snapshot_ratings.json`, `snapshot_extra.json`, `snapshot_tests.json`, `hs_outcomes.json`, `nonzoned_snapshot.json`, `ms_snapshot.json` and `hs_snapshot.json`. If your connection isn't blocked, `python3 scripts/fetch_data.py snapshot` still fetches the zoned schools directly. Then update the "2024–25" labels in `src/template.html` and `scripts/pages.py`.
+
+### 4. Admissions: kindergarten, grade 6, grade 9, pre-K and 3-K (each fall or winter, for the previous fall)
+
+Download the newest "fall-YYYY-admissions" Local Law 72 file from [DOE government reports](https://infohub.nyced.org/reports/government-reports), keep the last two years' files too, then:
+
+```sh
+python3 scripts/fetch_data.py admissions ~/Downloads/fall-202*-admissions*.xlsx
+python3 scripts/fetch_data.py prek ~/Downloads/fall-YYYY-admissions_72_suppressed.xlsx   # the newest one
+```
+
+### 5. Class size (spring, for February of the school year)
+
+```sh
+python3 scripts/fetch_data.py classsize
+```
+
+If the DOE site is blocked, download the school-level report from [class size reports](https://infohub.nyced.org/reports/government-reports/class-size-reports) and pass the file.
+
+### 6. Building use, the SCA "Blue Book" (once a year)
+
+Download the Classic Edition PDF from the [SCA](https://www.nycsca.org/Community/Capital-Plan-Reports-Data), then `python3 scripts/fetch_data.py utilization <file.pdf>` (needs `pdftotext`).
+
+### 7. Hand-checked lists (each fall, a few minutes each)
+
+- `data/citywide_ms.json`: citywide middle schools (open to students from anywhere in NYC). Compare against [InsideSchools](https://insideschools.org/insidetools/citywide-middle-schools) and update the list of DBNs and the `source` note.
+- `data/shsat_cutoffs.json`: lowest SHSAT score offered a seat at each of the 8 test schools, for the newest year and the one before. Published after offers come out in late winter; update `year`, `cut` and `source`.
+- Citywide G&T kindergarten schools come from MySchools in step 2; check the five still make sense.
+
+### 8. Rarely
+
+- District lines (only if the boundaries change): `python3 scripts/fetch_data.py districts <file.geojson>`, from [School Districts](https://data.cityofnewyork.us/d/8ugf-3d8u) (Export → GeoJSON).
+- Streets: `python3 scripts/fetch_data.py streets`.
+- State test files from NYC Open Data, only used as a fallback when the Snapshot has no scores: `python3 scripts/fetch_data.py tests`, after updating `TEST_YEAR`.
+
+### Then
+
+```sh
+python3 scripts/build.py          # site, school pages, district pages and sitemap
+python3 scripts/make_preview.py   # optional: redraw preview.png
+```
+
+Look over a few school cards and pages, bump `VERSION`, add a `CHANGELOG.md` entry and commit.
 
 ## Data sources
 

@@ -6,6 +6,20 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
+## 1.10.0 (2026-10-08)
+
+### Added
+- Clicking an area with no zone shows that district's schools without zones right in the card (every high school in the district, in the high school view), each one clickable, plus a link to the district's page. Zone cards link to their district page too.
+- Overall ratings always show as a number out of 4 ("4.0 / 4"). A school whose three ratings averaged to a whole number used to show a word ("Excellent"), which looked like a different measure next to "3.7 / 4."
+- Grade 6 and grade 9 admissions on middle and high school cards and school pages: seats, applicants and offers for fall 2025 from the DOE's Local Law 72 report. Middle schools also split applicants and offers between the school's district and other districts, which shows district priority at work (M.S. 255 offered 39% of District 2 applicants and about 12% of everyone else).
+- The high school list for a district explains that high schools don't give district priority, and how many give priority to students in their borough.
+
+### Fixed
+- Clicking an area with no zone that spans several districts (most of the city in the high school view) now selects just the district you clicked, outlined, with "District N" in the card, instead of outlining half a borough. The card no longer repeats "Citywide High School Choice."
+
+### Maintenance
+- A yearly refresh checklist in the README. MySchools and the Snapshot (which block scripts from outside a browser) now refresh through browser-console scripts in `scripts/browser/` plus new `fetch_data.py` commands: `myschools`, `snapshot-job` and `snapshot-raw`.
+
 ## 1.9.0 (2026-10-08)
 
 ### Added
