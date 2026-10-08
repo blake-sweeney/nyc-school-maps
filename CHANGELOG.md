@@ -6,7 +6,7 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
-## Unreleased
+## 1.16.0 (2026-10-08)
 
 ### Changed
 - Neighborhood pages make clear that each school zone covers only part of the neighborhood: "Different parts of Astoria (North)-Ditmars-Steinway are zoned for 4 elementary schools", tables headed "Elementary school zones in …" with a reminder that each address is zoned for just one school, and "zone covers 18% of the neighborhood" under each school. The reminder to confirm your exact address on schoolsearch.schools.nyc now sits right above each table.
