@@ -41,16 +41,6 @@ SITE_DESCRIPTION = ("Every NYC elementary (kindergarten), middle and high school
                     "School Quality ratings and state test scores. Free for parents.")
 
 
-# The 32 community school districts by borough, for the district links in the map's footer
-DISTRICT_BOROUGHS = [("Manhattan", range(1, 7)), ("Bronx", range(7, 13)),
-                     ("Brooklyn", [*range(13, 24), 32]), ("Queens", range(24, 31)), ("Staten Island", [31])]
-
-
-def district_links():
-    return "".join(f'<p><b>{b}</b> ' + " ".join(f'<a href="districts/{k}/">District {k}</a>' for k in ks) + "</p>"
-                   for b, ks in DISTRICT_BOROUGHS)
-
-
 def load(name):
     with open(os.path.join(DATA, name), encoding="utf-8") as f:
         return json.load(f)
@@ -447,7 +437,6 @@ def main(standalone_path=None, pages=None):
     zdate = datetime.date.fromtimestamp(os.path.getmtime(os.path.join(DATA, "elem_zones.json")))
     template = template.replace("__ZONES_DATE__", zdate.strftime("%b %Y"))
     template = template.replace("__ES_ZONES__", str(len(d["features"])))
-    template = template.replace("__DIST_LINKS__", district_links())
 
     full = dict(d)
     # For the website, middle school, high school and the all-streets layer load on demand from
