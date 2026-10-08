@@ -244,6 +244,40 @@ def main(standalone_path=None):
         d["MS"] = {"schools": ms["schools"], "features": ms["features"],
                    "T": {k: v for k, v in ms_tests.items() if k in ms_zoned and (v[0] or v[2])}}
 
+        # Middle school programs (MySchools directory) and choice schools with no zone. P: programs per school,
+        # [name ('' = the school's main program), method code, seats, applicants, all seats filled, diversity set-aside];
+        # NZ rows have the same shape as the elementary ones (no priority districts listed: middle schools give district priority)
+        if os.path.exists(os.path.join(DATA, "ms_directory.json")):
+            msdir = load("ms_directory.json")
+            snaps = {}
+            for name in ("nonzoned_snapshot.json", "ms_snapshot.json"):
+                if os.path.exists(os.path.join(DATA, name)):
+                    snaps.update(load(name))
+            d["MS"]["P"] = {r[0]: r[5] for r in msdir}
+            d["MS"]["NZ"] = []
+            # citywide middle schools (open to students from anywhere in the city) are marked with a trailing 1
+            citywide = set(load("citywide_ms.json")["dbns"]) if os.path.exists(os.path.join(DATA, "citywide_ms.json")) else set()
+            for r in msdir:
+                dbn = r[0]
+                if dbn in ms_zoned or not r[3]:
+                    continue
+                s = snaps.get(dbn)
+                name, addr = r[1], r[2]
+                if s:
+                    name, addr = s["r"][0] or name, s["r"][1] or addr
+                    d["R"].setdefault(dbn, s["r"])
+                    d["X"].setdefault(dbn, s["x"])
+                t = s and s.get("t")
+                if t and (t[1] is not None or t[3] is not None):
+                    n_ela = t[0] or (20 if t[1] is not None else 0)
+                    n_mth = t[2] or (20 if t[3] is not None else 0)
+                    d["MS"]["T"][dbn] = [int(n_ela) if t[1] is not None else 0, round(n_ela * t[1] / 100) if t[1] is not None else 0,
+                                         int(n_mth) if t[3] is not None else 0, round(n_mth * t[3] / 100) if t[3] is not None else 0]
+                elif dbn in ms_tests and (ms_tests[dbn][0] or ms_tests[dbn][2]):
+                    d["MS"]["T"][dbn] = ms_tests[dbn]
+                d["MS"]["NZ"].append([dbn, name, addr, r[3], r[4], [], 0, r[5], 1 if dbn in citywide else 0])
+            print(f"middle school choice schools (no zone): {len(d['MS']['NZ'])}, programs for {len(d['MS']['P'])} schools")
+
     # High school zones (optional): zoned-priority / zoned-guarantee programs, with Snapshot outcomes
     if os.path.exists(os.path.join(DATA, "hs_zones.json")):
         hs = load("hs_zones.json")
@@ -251,6 +285,8 @@ def main(standalone_path=None):
         outcomes = load("hs_outcomes.json") if os.path.exists(os.path.join(DATA, "hs_outcomes.json")) else {}
         d["HS"] = {"schools": hs["schools"], "features": hs["features"], "O": outcomes}
 
+    ms_nz = {r[0] for r in d.get("MS", {}).get("NZ", [])}
+    es_all = es_all | ms_nz  # school facts below cover the middle school choice schools too
     # Class size (optional): keep only zoned schools at any level
     if os.path.exists(os.path.join(DATA, "class_size.json")):
         all_zoned = set(es_all)

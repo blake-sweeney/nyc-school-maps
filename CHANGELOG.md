@@ -6,6 +6,14 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
+## 1.7.0 (2026-10-07)
+
+### Added
+- Middle schools without zones: 304 middle schools that admit by application (no zone) show as diamonds in the middle school view, colored like the zones, with full school cards.
+- Middle school programs: every middle school card lists its programs from MySchools, with how students get in (open, zone priority, screened, audition, talent test, language) and last year's seats and applicants.
+- Middle school zone cards list the other middle schools in the district.
+- Citywide middle schools (Anderson, NEST+m, TAG Young Scholars, Special Music School, Mark Twain and 13 more, per InsideSchools) show as stars, with cards that say they're open to students from anywhere in NYC. They aren't listed as district options.
+
 ## 1.6.0 (2026-10-07)
 
 ### Added
