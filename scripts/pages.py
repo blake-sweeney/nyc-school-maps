@@ -263,11 +263,12 @@ def facts_rows(rows):
     return '<dl class="facts">' + "".join(f"<dt>{e(k)}</dt><dd>{v}</dd>" for k, v in rows) + "</dl>"
 
 
-def bar(label, v, txt=None, lo=0, hi=100):
+def bar(label, v, stops, txt=None, lo=0, hi=100):
+    """A bar colored on the same ramp as the map's card (TEST_STOPS or OUT_STOPS)."""
     if v is None:
         return ""
     w = max(0, min(100, 100 * (v - lo) / (hi - lo)))
-    return (f'<div class="bar-row"><span>{e(label)}</span><span class="bar"><i style="width:{w:.0f}%"></i></span>'
+    return (f'<div class="bar-row"><span>{e(label)}</span><span class="bar"><i style="width:{w:.0f}%;background:{ramp(v, stops)}"></i></span>'
             f'<b>{e(txt if txt is not None else round(v))}</b></div>')
 
 
@@ -289,9 +290,9 @@ def tests_html(t, grades):
         return ""
     rows = []
     if t[0]:
-        rows.append(bar("English (ELA)", 100 * t[1] / t[0], pct(100 * t[1] / t[0])))
+        rows.append(bar("English (ELA)", 100 * t[1] / t[0], TEST_STOPS, pct(100 * t[1] / t[0])))
     if t[2]:
-        rows.append(bar("Math", 100 * t[3] / t[2], pct(100 * t[3] / t[2])))
+        rows.append(bar("Math", 100 * t[3] / t[2], TEST_STOPS, pct(100 * t[3] / t[2])))
     return (f'<h2>State test scores</h2><div class="bars">{"".join(rows)}</div>'
             f'<p class="src">Share of students in grades {grades} who met state standards (level 3 or 4), 2024–25.</p>')
 
@@ -300,11 +301,11 @@ def hs_outcomes_html(dbn, o, q, cut):
     parts = []
     rows = []
     if o:
-        rows.append(bar("Graduates in 4 years", o[0], pct(o[0])))
-        rows.append(bar("College or career program", o[1], pct(o[1])))
+        rows.append(bar("Graduates in 4 years", o[0], OUT_STOPS["grad"], pct(o[0])))
+        rows.append(bar("College or career program", o[1], OUT_STOPS["coll"], pct(o[1])))
     if q:
-        rows.append(bar("College readiness score", q[1], q[1]))
-        rows.append(bar("Average SAT", q[0], q[0], 600, 1600))
+        rows.append(bar("College readiness score", q[1], OUT_STOPS["ccr"], q[1]))
+        rows.append(bar("Average SAT", q[0], OUT_STOPS["sat"], q[0], 600, 1600))
     if any(rows):
         parts.append('<h2>Graduation and college</h2><div class="bars">' + "".join(rows) + "</div>"
                      '<p class="src">2024–25 School Quality Snapshot. City averages: graduation 81%, college readiness 54 (of 100).</p>')
@@ -800,6 +801,7 @@ def rating(R, dbn):
 RATE_STOPS = [(5, (184, 32, 42)), (50, (232, 116, 42)), (75, (247, 207, 69)), (95, (31, 138, 132))]
 TEST_STOPS = [(5, (184, 32, 42)), (50, (247, 207, 69)), (95, (31, 138, 132))]
 OUT_STOPS = {"grad": [(65, (184, 32, 42)), (80, (247, 207, 69)), (95, (31, 138, 132))],
+             "coll": [(40, (184, 32, 42)), (60, (247, 207, 69)), (80, (31, 138, 132))],
              "ccr": [(35, (184, 32, 42)), (55, (247, 207, 69)), (80, (31, 138, 132))],
              "sat": [(800, (184, 32, 42)), (950, (247, 207, 69)), (1200, (31, 138, 132))]}
 

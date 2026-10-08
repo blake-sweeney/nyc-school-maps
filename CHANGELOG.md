@@ -6,6 +6,11 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
+## Unreleased
+
+### Fixed
+- On school pages, the bars for state test scores, graduation, college readiness and SAT are now colored by the score (red for low, yellow for middle, green for high), the same as on the map's school cards. They were all green before.
+
 ## 1.15.0 (2026-10-08)
 
 ### Added
