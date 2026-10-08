@@ -64,6 +64,6 @@ d.addEventListener('close',function(){try{localStorage.setItem(K,'1')}catch(e){}
 document.getElementById('intro-ok').addEventListener('click',function(){d.close()});
 d.addEventListener('click',function(e){if(e.target===d)d.close()});
 document.querySelectorAll('[data-intro]').forEach(function(b){b.addEventListener('click',open)});
-var seen=false;try{seen=localStorage.getItem(K)==='1'}catch(e){}if(!seen)setTimeout(open,400)})()</script><script>if(location.protocol==='file:')document.querySelectorAll('a[href]').forEach(function(a){var h=a.getAttribute('href');if(/^[a-z]+:/i.test(h))return;a.setAttribute('href',h.replace(/\/(#|$)/,'/index.html$1').replace(/^((?:\.\.\/)+)#/,'$1index.html#'))})</script>
+var seen=location.protocol==='file:';try{seen=seen||localStorage.getItem(K)==='1'}catch(e){}if(!seen)setTimeout(open,400)})()</script><script>if(location.protocol==='file:')document.querySelectorAll('a[href]').forEach(function(a){var h=a.getAttribute('href');if(/^[a-z]+:/i.test(h))return;a.setAttribute('href',h.replace(/\/(#|$)/,'/index.html$1').replace(/^((?:\.\.\/)+)#/,'$1index.html#'))})</script>
 </body>
 </html>

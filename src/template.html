@@ -1222,7 +1222,7 @@ const introTerms=document.getElementById('intro-terms');
 document.getElementById('terms-open').addEventListener('click',()=>{introTerms.open=true;openIntro();
   requestAnimationFrame(()=>introTerms.scrollIntoView({block:'start'}))});
 intro.addEventListener('close',()=>{introTerms.open=false});
-if(!seenIntro())setTimeout(openIntro,400);
+if(!seenIntro()&&!LOCAL)setTimeout(openIntro,400);  // not when opened from disk, where some browsers keep a separate "seen" per file
 // ---- phones: bottom sheet for details; Search / Grades / About buttons on the map ----
 function sheetOpen(){return appEl.classList.contains('sheet-open')}
 function setSheet(open){if(!phone.matches||sheetOpen()===open)return;appEl.classList.toggle('sheet-open',open);syncSheetBtn();

@@ -203,6 +203,7 @@ def relative(html, up):
 
 # The map's first-visit notice (the <dialog> and its .intro styles, copied from src/template.html by build.py via
 # set_intro). It opens on the first visit to any page, the map or this one: both remember it under the same key.
+# Not when opened from disk (file://), where Firefox and Safari keep a separate "seen" for each file.
 INTRO = {"html": "", "css": ""}
 INTRO_JS = """<script>(function(){var d=document.getElementById('intro'),K='nsz-intro-seen-v1';if(!d)return;
 function open(){if(d.open)return;try{d.showModal()}catch(e){d.setAttribute('open','')}}
@@ -210,7 +211,7 @@ d.addEventListener('close',function(){try{localStorage.setItem(K,'1')}catch(e){}
 document.getElementById('intro-ok').addEventListener('click',function(){d.close()});
 d.addEventListener('click',function(e){if(e.target===d)d.close()});
 document.querySelectorAll('[data-intro]').forEach(function(b){b.addEventListener('click',open)});
-var seen=false;try{seen=localStorage.getItem(K)==='1'}catch(e){}if(!seen)setTimeout(open,400)})()</script>"""
+var seen=location.protocol==='file:';try{seen=seen||localStorage.getItem(K)==='1'}catch(e){}if(!seen)setTimeout(open,400)})()</script>"""
 INTRO_PAGE_CSS = """
 .intro .row button{font:inherit;font-family:var(--display);font-weight:600;font-size:.9rem;padding:8px 12px;border-radius:6px;border:1px solid var(--fg);background:var(--fg);color:var(--panel);cursor:pointer}
 footer .disc{margin:0 0 8px}
