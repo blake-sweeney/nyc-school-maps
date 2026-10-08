@@ -6,7 +6,7 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
-## Unreleased
+## 1.15.0 (2026-10-08)
 
 ### Added
 - A page for each of 197 NYC neighborhoods (like nycschoolzones.com/neighborhoods/park-slope/): the elementary, middle and high school zones that cover it, with how much of the neighborhood each zone covers, plus the schools without a zone and high schools located there, with ratings and test scores. Links to nearby neighborhoods, and an index of all neighborhoods by borough.
