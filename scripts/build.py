@@ -23,6 +23,7 @@ import collections
 import json
 import re
 import os
+from html import escape
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(ROOT, "data")
@@ -34,8 +35,20 @@ GOATCOUNTER_CODE = "nycschoolzones"
 # Link previews (Facebook, iMessage, Reddit, Slack, X). preview.png is made by scripts/make_preview.py.
 SITE_URL = "https://nycschoolzones.com/"
 SITE_NAME = "NYC School Zones"
+# The map's browser-tab title, and the headline Google shows for the home page
+SITE_TITLE = "NYC School Zone Map: Elementary, Middle & High School Zones"
 SITE_DESCRIPTION = ("Every NYC elementary (kindergarten), middle and high school zone on one map, colored by DOE "
                     "School Quality ratings and state test scores. Free for parents.")
+
+
+# The 32 community school districts by borough, for the district links in the map's footer
+DISTRICT_BOROUGHS = [("Manhattan", range(1, 7)), ("Bronx", range(7, 13)),
+                     ("Brooklyn", [*range(13, 24), 32]), ("Queens", range(24, 31)), ("Staten Island", [31])]
+
+
+def district_links():
+    return "".join(f'<p><b>{b}</b> ' + " ".join(f'<a href="districts/{k}/">District {k}</a>' for k in ks) + "</p>"
+                   for b, ks in DISTRICT_BOROUGHS)
 
 
 def load(name):
@@ -114,7 +127,6 @@ def prepare_zones(d):
 
 
 def head_tags():
-    from html import escape
     title, desc, url = escape(SITE_NAME), escape(SITE_DESCRIPTION), SITE_URL
     img = SITE_URL + "preview.png"
     return (
@@ -435,6 +447,7 @@ def main(standalone_path=None, pages=None):
     zdate = datetime.date.fromtimestamp(os.path.getmtime(os.path.join(DATA, "elem_zones.json")))
     template = template.replace("__ZONES_DATE__", zdate.strftime("%b %Y"))
     template = template.replace("__ES_ZONES__", str(len(d["features"])))
+    template = template.replace("__DIST_LINKS__", district_links())
 
     full = dict(d)
     # For the website, middle school, high school and the all-streets layer load on demand from
@@ -463,13 +476,15 @@ def main(standalone_path=None, pages=None):
             urls = school_pages.write_districts(full, ROOT, SITE_URL, goatcounter_tag())
             school_urls = sorted(f"{SITE_URL}schools/{x}/" for x in os.listdir(os.path.join(ROOT, "schools"))
                                  if os.path.exists(os.path.join(ROOT, "schools", x, "index.html")))
-            school_pages.write_sitemap(ROOT, SITE_URL, urls + school_urls)
-            print(f"wrote {len(urls)} district pages, sitemap.xml ({len(urls) + len(school_urls) + 1} URLs) and robots.txt")
     if standalone_path:
         write_page(template, full, standalone_path)
         print(f"wrote {standalone_path} ({os.path.getsize(standalone_path) / 1e6:.2f} MB, everything inline)")
     out = os.path.join(ROOT, "index.html")
     write_page(template, d, out)
+    if pages == "all":
+        # last, so each page's lastmod can tell whether this build changed it
+        school_pages.write_sitemap(ROOT, SITE_URL, urls + school_urls)
+        print(f"wrote {len(urls)} district pages, sitemap.xml ({len(urls) + len(school_urls) + 1} URLs) and robots.txt")
     d = full  # for the summary below
 
     print(f"{len(d['features'])} zones, {ncolors} neighbor colors, "
@@ -503,8 +518,7 @@ def write_page(template, d, out):
         + goatcounter_tag()
         + "\n</body>\n</html>\n"
     )
-    # The public site uses the site name as its browser-tab title.
-    html = re.sub(r"<title>.*?</title>", f"<title>{SITE_NAME}</title>", html, count=1)
+    html = re.sub(r"<title>.*?</title>", lambda m: f"<title>{escape(SITE_TITLE)}</title>", html, count=1)
     with open(out, "w", encoding="utf-8") as f:
         f.write(html)
 

@@ -28,7 +28,7 @@
 <meta name="twitter:description" content="Every NYC elementary (kindergarten), middle and high school zone on one map, colored by DOE School Quality ratings and state test scores. Free for parents.">
 <meta name="twitter:image" content="https://nycschoolzones.com/preview.png">
 <!-- NYC School Zones · Copyright (C) 2026 Blake Sweeney · SPDX-License-Identifier: AGPL-3.0-or-later · v1.14.0 · https://github.com/blake-sweeney/nyc-school-maps -->
-<title>NYC School Zones</title>
+<title>NYC School Zone Map: Elementary, Middle &amp; High School Zones</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Sans+Condensed:wght@500;600;700&display=swap">
 <style>
@@ -267,6 +267,7 @@ aside>*{flex-shrink:0}
 .about .link-btn{all:unset;cursor:pointer;color:var(--hl);text-decoration:underline}
 .about details summary{cursor:pointer;color:var(--fg);font-family:var(--display);font-weight:600}
 .about details p{margin:6px 0 0}
+.dist-links a{display:inline-block;padding:3px 0;margin-right:.7em;white-space:nowrap}
 .sw i.stripes{background:repeating-linear-gradient(45deg,#1f8a84 0 3px,#e8742a 3px 6px)}
 #map-legend .nz-key{order:10}
 #map-legend .dist-key{order:11}
@@ -424,6 +425,7 @@ aside>*{flex-shrink:0}
       <p>Questions, corrections or ideas? Email <a href="mailto:info@nycschoolzones.com?subject=NYC%20School%20Zones%20feedback">info@nycschoolzones.com</a></p>
       <p><button type="button" class="link-btn" id="about-open">About this map</button> · <button type="button" class="link-btn" id="terms-open">Terms &amp; privacy</button></p>
       <p><a href="districts/" id="dist-link">Browse schools by district</a></p>
+      <details class="dist-links"><summary>Districts by borough</summary><p><b>Manhattan</b> <a href="districts/1/">District 1</a> <a href="districts/2/">District 2</a> <a href="districts/3/">District 3</a> <a href="districts/4/">District 4</a> <a href="districts/5/">District 5</a> <a href="districts/6/">District 6</a></p><p><b>Bronx</b> <a href="districts/7/">District 7</a> <a href="districts/8/">District 8</a> <a href="districts/9/">District 9</a> <a href="districts/10/">District 10</a> <a href="districts/11/">District 11</a> <a href="districts/12/">District 12</a></p><p><b>Brooklyn</b> <a href="districts/13/">District 13</a> <a href="districts/14/">District 14</a> <a href="districts/15/">District 15</a> <a href="districts/16/">District 16</a> <a href="districts/17/">District 17</a> <a href="districts/18/">District 18</a> <a href="districts/19/">District 19</a> <a href="districts/20/">District 20</a> <a href="districts/21/">District 21</a> <a href="districts/22/">District 22</a> <a href="districts/23/">District 23</a> <a href="districts/32/">District 32</a></p><p><b>Queens</b> <a href="districts/24/">District 24</a> <a href="districts/25/">District 25</a> <a href="districts/26/">District 26</a> <a href="districts/27/">District 27</a> <a href="districts/28/">District 28</a> <a href="districts/29/">District 29</a> <a href="districts/30/">District 30</a></p><p><b>Staten Island</b> <a href="districts/31/">District 31</a></p></details>
       <p><a href="https://github.com/blake-sweeney/nyc-school-maps" target="_blank" rel="noopener">Source code</a> (AGPL-3.0)</p>
       <p class="asof">Zones: NYC DOE Find a School, Oct 2026 · Ratings, test scores and programs: DOE 2024–25 School Quality Snapshot · Updated Oct 2026 · <a href="https://github.com/blake-sweeney/nyc-school-maps/blob/main/CHANGELOG.md" target="_blank" rel="noopener">v1.14.0</a></p>
       <details><summary>Data sources</summary>
@@ -962,7 +964,7 @@ function zoneUrl(){return location.href}
 const LOCAL=location.protocol==='file:';
 function pageUrl(d){return 'schools/'+encodeURIComponent(d)+'/'+(LOCAL?'index.html':'')}
 function pageLink(d){return LOCAL?pageUrl(d):new URL(pageUrl(d),location.href).href}
-if(LOCAL){const dl=document.getElementById('dist-link');if(dl)dl.href='districts/index.html'}
+if(LOCAL)document.querySelectorAll('.about a[href^="districts/"]').forEach(a=>{a.href=a.getAttribute('href')+'index.html'})
 document.getElementById('card').addEventListener('click',async e=>{const b=e.target.closest('.copy-addr');if(!b)return;
   const v=b.dataset.copy;let ok=false;try{await navigator.clipboard.writeText(v);ok=true}catch(err){}
   if(!ok){const i=document.createElement('input');i.value=v;i.setAttribute('aria-label','Address');i.className='addr-box';b.replaceWith(i);i.focus();i.select();return}

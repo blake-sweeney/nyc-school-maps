@@ -6,6 +6,14 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
+## Unreleased
+
+### Added
+- "Districts by borough" at the bottom of the side panel (under About on phones): a link to every district's page of schools, grouped by borough.
+
+### Changed
+- The map's browser tab now reads "NYC School Zone Map: Elementary, Middle & High School Zones", which is also the headline Google shows for the site.
+
 ## 1.14.0 (2026-10-08)
 
 ### Added

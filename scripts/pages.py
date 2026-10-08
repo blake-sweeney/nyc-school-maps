@@ -971,12 +971,33 @@ def write_districts(d, root, site_url, goat):
 
 
 def write_sitemap(root, site_url, urls):
+    """lastmod is the day a page last changed: pages this build left identical to the last commit keep
+    the date from the old sitemap, and the rest get today. Without git, every page gets today."""
     import datetime
+    import subprocess
     today = datetime.date.today().isoformat()
-    with open(os.path.join(root, "sitemap.xml"), "w", encoding="utf-8") as f:
+    path = os.path.join(root, "sitemap.xml")
+    old = {}
+    if os.path.exists(path):
+        with open(path, encoding="utf-8") as f:
+            old = dict(re.findall(r"<loc>([^<]*)</loc><lastmod>([^<]*)</lastmod>", f.read()))
+    try:
+        out = subprocess.run(["git", "status", "--porcelain", "--untracked-files=all", "--", "index.html", "assets",
+                              "schools", "districts"], cwd=root, capture_output=True, text=True, check=True).stdout
+        changed = {line[3:].strip('"').split(" -> ")[-1] for line in out.splitlines()}
+    except (OSError, subprocess.CalledProcessError):
+        changed = None
+
+    def lastmod(u):
+        rel = u[len(site_url):]
+        files = ("index.html", "assets/") if rel == "" else (rel + "index.html",)
+        if changed is None or any(c.startswith(fl) for c in changed for fl in files):
+            return today
+        return old.get(escape(u), today)
+    with open(path, "w", encoding="utf-8") as f:
         f.write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n')
         for u in [site_url] + urls:
-            f.write(f"<url><loc>{escape(u)}</loc><lastmod>{today}</lastmod></url>\n")
+            f.write(f"<url><loc>{escape(u)}</loc><lastmod>{lastmod(u)}</lastmod></url>\n")
         f.write("</urlset>\n")
     with open(os.path.join(root, "robots.txt"), "w", encoding="utf-8") as f:
         f.write(f"User-agent: *\nAllow: /\n\nSitemap: {site_url}sitemap.xml\n")

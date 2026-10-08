@@ -53,7 +53,7 @@ LICENSE                 AGPL-3.0
 assets/                 ms.js, hs.js, ls.js — built by build.py, loaded on demand
 schools/<DBN>/          one page per school — built by build.py (scripts/pages.py)
 districts/              one page per district + an index — built by build.py
-sitemap.xml, robots.txt  for search engines — built by build.py
+sitemap.xml, robots.txt  for search engines — built by build.py (a page's lastmod is the day a build last changed it)
 src/template.html       page source: layout, styles and map code
 data/
   elem_zones.json       zone boundaries + school names/locations
