@@ -102,6 +102,7 @@ def index(d, raw):
         # districts covering at least a tenth of it (the biggest one always), most area first
         nb["dists"] = [k for i, k in enumerate(sorted((k for k in dc if dc[k]), key=lambda k: -dc[k]))
                        if i == 0 or dc[k] >= 0.1 * len(pts)]
+        nb["dshare"] = {k: dc[k] / max(len(pts), 1) for k in nb["dists"]}
         nbs[code] = nb
     by_zone = {}
     for code, nb in nbs.items():
@@ -172,6 +173,28 @@ def write(d, nbi, root, site_url, goat):
         dists = nb["dists"]
         dist_links = and_list([f'<a href="/districts/{e(k)}/">District {e(k)}</a>' for k in dists]) if dists else ""
         located = nb.get("in", [])
+        def district_note(lv, ks):
+            """Where the district matters: most middle schools, and elementary schools in districts without zones.
+            ks: the districts to link (for elementary, only those without zones)."""
+            word = {"es": "elementary", "ms": "middle"}[lv]
+            if len(ks) == 1:
+                links = f'<a href="/districts/{e(ks[0])}/#{lv}">See all District {e(ks[0])} {word} schools →</a>'
+            else:
+                links = "".join(f'<a href="/districts/{e(k)}/#{lv}">District {e(k)} {word} schools →</a>' for k in ks)
+            if lv == "ms":
+                why = "Most middle schools give priority to students who live or go to school in their district."
+            else:
+                why = (and_list([f"District {e(k)}" for k in ks]) + f" {'has' if len(ks) == 1 else 'have'} no elementary "
+                       "school zones: elementary schools there give priority to families who live in the district.")
+            if len(dists) == 1:
+                where = "" if lv == "es" else f"{e(name)} is in District {e(dists[0])}."
+            else:
+                parts = [f"District {e(k)} (about {max(5, 5 * round(20 * nb['dshare'][k]))}%)" for k in dists]
+                where = (f"{e(name)} is split between {and_list(parts)}. Your district depends on your exact address, "
+                         "like your zone.")
+            return f'<div class="dnote"><p>{why}{" " + where if where else ""}</p><p class="dlinks">{links}</p></div>'
+        es_zone_dists = {f["properties"].get("dist") for f in src["es"] if f["properties"]["dbns"]}
+
         panels, counts = [], {}
         shared = {lv: any(len(dbns) > 1 for dbns, _ in nb["zones"][lv]) for lv, _ in LEVELS}  # zones with two schools
         n_zoned = {}
@@ -210,6 +233,10 @@ def write(d, nbi, root, site_url, goat):
                 h = ("<p>No high school zones cover this neighborhood, and no high schools are located in it. "
                      "Any NYC student can apply to high schools across the city.</p>" if lv == "hs" else
                      f"<p>No {word} schools found for this neighborhood.</p>")
+            if lv == "ms" and dists:
+                h = district_note("ms", dists) + h
+            elif lv == "es" and [k for k in dists if k not in es_zone_dists]:
+                h = district_note("es", [k for k in dists if k not in es_zone_dists]) + h
             note = {"es": "Tests is the share of students meeting state standards in ELA and math, grades 3–5.",
                     "ms": "Tests is the share of students meeting state standards in ELA and math, grades 6–8.",
                     "hs": "Grad is the 4-year graduation rate, SAT the average score and Readiness the DOE’s college "
@@ -280,6 +307,9 @@ def write(d, nbi, root, site_url, goat):
 
 
 NB_CSS = """
+.dnote{margin:0 0 14px;padding:10px 12px;border-left:3px solid var(--hl);background:var(--bg);border-radius:4px}
+.dnote p{margin:0}.dnote .dlinks{margin-top:4px;display:flex;flex-wrap:wrap;column-gap:16px}
+.dnote .dlinks a{display:inline-block;padding:4px 0;white-space:nowrap}
 .zmap .nbfill{fill:var(--dist);stroke:none}
 .zmap .nbline{fill:none;stroke:var(--fg);stroke-width:3;stroke-linejoin:round}
 """

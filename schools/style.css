@@ -104,5 +104,8 @@ table.sort td small.line{display:block}
 .dgrid{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
 .dgrid a{display:block;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 12px;text-decoration:none;color:var(--fg);font-family:var(--display);font-weight:700}
 .dgrid a small{display:block;font-weight:500;color:var(--muted);font-size:.8rem}
+.dnote{margin:0 0 14px;padding:10px 12px;border-left:3px solid var(--hl);background:var(--bg);border-radius:4px}
+.dnote p{margin:0}.dnote .dlinks{margin-top:4px;display:flex;flex-wrap:wrap;column-gap:16px}
+.dnote .dlinks a{display:inline-block;padding:4px 0;white-space:nowrap}
 .zmap .nbfill{fill:var(--dist);stroke:none}
 .zmap .nbline{fill:none;stroke:var(--fg);stroke-width:3;stroke-linejoin:round}
