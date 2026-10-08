@@ -27,7 +27,7 @@
 <meta name="twitter:title" content="NYC School Zones">
 <meta name="twitter:description" content="Every NYC elementary (kindergarten), middle and high school zone on one map, colored by DOE School Quality ratings and state test scores. Free for parents.">
 <meta name="twitter:image" content="https://nycschoolzones.com/preview.png">
-<!-- NYC School Zones · Copyright (C) 2026 Blake Sweeney · SPDX-License-Identifier: AGPL-3.0-or-later · v1.8.1 · https://github.com/blake-sweeney/nyc-school-maps -->
+<!-- NYC School Zones · Copyright (C) 2026 Blake Sweeney · SPDX-License-Identifier: AGPL-3.0-or-later · v1.8.2 · https://github.com/blake-sweeney/nyc-school-maps -->
 <title>NYC School Zones</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Sans+Condensed:wght@500;600;700&display=swap">
@@ -261,7 +261,6 @@ aside>*{flex-shrink:0}
 .about details summary{cursor:pointer;color:var(--fg);font-family:var(--display);font-weight:600}
 .about details p{margin:6px 0 0}
 .sw i.stripes{background:repeating-linear-gradient(45deg,#1f8a84 0 3px,#e8742a 3px 6px)}
-#map-legend .multi-key{order:9}
 #map-legend .nz-key{order:10}
 #map-legend .dist-key{order:11}
 #map-legend .nozone-key{order:9}
@@ -271,7 +270,7 @@ aside>*{flex-shrink:0}
 .sw i.dk{border:0;border-radius:0;height:0;width:18px;border-top:3.5px solid var(--fg);box-shadow:0 0 0 1.5px var(--panel);align-self:center}
 .dnum{font-family:var(--display);font-weight:700;font-size:26px;line-height:1;color:var(--fg);opacity:.55;text-align:center;white-space:nowrap;pointer-events:none;text-shadow:0 0 3px var(--panel),0 0 6px var(--panel),0 0 10px var(--panel)}
 .dnum small{display:block;font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:600}
-#nz-key .sw{display:flex;flex-wrap:wrap;gap:4px 14px}
+#nz-key .sw{display:flex;flex-wrap:nowrap;gap:4px 14px;white-space:nowrap}
 .nzk{display:inline-block;width:9px;height:9px;transform:rotate(45deg);background:var(--fg);border:1.5px solid var(--panel);box-shadow:0 0 0 1px var(--fg);margin:0 3px}
 .sw i.nzk{border-radius:0;flex:none;width:8px;height:8px;margin:0 3px 0 2px}
 .sw i.gtk{border:0;border-radius:0;width:13px;height:13px}
@@ -415,7 +414,7 @@ aside>*{flex-shrink:0}
       <p>Questions, corrections or ideas? Email <a href="mailto:info@nycschoolzones.com?subject=NYC%20School%20Zones%20feedback">info@nycschoolzones.com</a></p>
       <p><button type="button" class="link-btn" id="about-open">About this map</button> · <button type="button" class="link-btn" id="terms-open">Terms &amp; privacy</button></p>
       <p><a href="https://github.com/blake-sweeney/nyc-school-maps" target="_blank" rel="noopener">Source code</a> (AGPL-3.0)</p>
-      <p class="asof">Zones: NYC DOE Find a School, Oct 2026 · Ratings, test scores and programs: DOE 2024–25 School Quality Snapshot · Updated Oct 2026 · <a href="https://github.com/blake-sweeney/nyc-school-maps/blob/main/CHANGELOG.md" target="_blank" rel="noopener">v1.8.1</a></p>
+      <p class="asof">Zones: NYC DOE Find a School, Oct 2026 · Ratings, test scores and programs: DOE 2024–25 School Quality Snapshot · Updated Oct 2026 · <a href="https://github.com/blake-sweeney/nyc-school-maps/blob/main/CHANGELOG.md" target="_blank" rel="noopener">v1.8.2</a></p>
       <details><summary>Data sources</summary>
         <p>School zones from the DOE’s <a href="https://schoolsearch.schools.nyc/" target="_blank" rel="noopener">Find a School</a> map. Thanks to Jimmy Chion’s <a href="https://schoolzones.nyc/" target="_blank" rel="noopener">schoolzones.nyc</a> for pointing the way to the DOE’s current zone data. School names and addresses from the 2019–20 DOE location list. State test results, ratings, programs and current school names from the DOE’s <a href="https://tools.nycenet.edu/snapshot/" target="_blank" rel="noopener">2024–25 School Quality Snapshot</a>. Shared zones show the combined result of all their schools. Address lookup by NYC Planning’s GeoSearch.</p>
       </details>
@@ -515,10 +514,7 @@ aside>*{flex-shrink:0}
         <div class="lticks" id="out-ticks"></div>
         <p class="hint" id="out-hint"></p>
       </div>
-      <div class="legend multi-key"><div class="sw"><span><i class="stripes"></i>More than one school (a stripe for each)</span></div></div>
-      <div class="legend nozone-key" id="nozone-key" hidden><div class="sw"><span><i class="nzh"></i><span id="nozone-lab">No zoned school (apply by district)</span></span></div></div>
-      <div class="legend dist-key" id="dist-key" hidden><div class="sw"><span><i class="dk"></i>School district line</span></div></div>
-      <div class="legend nz-key" id="nz-key"><div class="sw"><span><i class="nzk"></i>Non-zoned school</span><span><i class="gtk"></i>Citywide G&amp;T school</span></div></div>
+      <div class="legend nz-key" id="nz-key"><div class="sw"><span><i class="nzk"></i>Non-zoned school</span><span><i class="gtk"></i>Citywide G&amp;T</span></div></div>
       <div class="legend" id="leg-test" hidden>
         <div class="lbar"></div>
         <div class="lticks"><span style="left:5%">5</span><span style="left:50%">50</span><span style="left:95%">95%</span></div>
@@ -865,7 +861,7 @@ function buildDistricts(){distGroup.clearLayers();if(!distLines.length)return;co
 function drawDistNums(){distNums.clearLayers();const z=map.getZoom();if(!LAY.dist||z>=(LAY.zones?13:15.5))return;
   Object.entries(DIST).forEach(([k,v])=>L.marker(v.lp,{interactive:false,keyboard:false,pane:'distPane',icon:L.divIcon({className:'',html:'<div class="dnum">'+(z>=11.5?'<small>District</small>':'')+k+'</div>',iconSize:[70,40],iconAnchor:[35,z>=11.5?20:13]})}).addTo(distNums))}
 function syncDistricts(){const on=LAY.dist&&distLines.length>0;[distGroup,distNums].forEach(g=>{if(on&&!map.hasLayer(g))g.addTo(map);if(!on&&map.hasLayer(g))map.removeLayer(g)});
-  document.getElementById('dist-key').hidden=!on;document.getElementById('ly-dist-row').hidden=!distLines.length;if(on){buildDistricts();drawDistNums()}buildDistFill()}
+  document.getElementById('ly-dist-row').hidden=!distLines.length;if(on){buildDistricts();drawDistNums()}buildDistFill()}
 map.on('zoomend',()=>{if(LAY.dist&&distLines.length){buildDistricts();drawDistNums()}});
 
 // non-zoned schools: small diamonds in the current color, drawn above the zone dots
@@ -1212,9 +1208,9 @@ const LayersCtl=L.Control.extend({options:{position:'topleft'},onAdd(){const d=L
 new LayersCtl().addTo(map);
 document.getElementById('pb-layers').addEventListener('click',()=>setPop('layers',lypop.hidden));
 document.getElementById('ly-close').addEventListener('click',()=>{if(phone.matches)setPop('layers',false);else{lypop.hidden=true;document.getElementById('layers-btn').setAttribute('aria-expanded','false')}});
-function syncLayerBoxes(){Object.keys(LAY).forEach(k=>{const b=document.getElementById('ly-'+k);if(b)b.checked=!!LAY[k]});document.querySelectorAll('.ly-es').forEach(e=>e.hidden=!NZ.some(o=>o.gt));document.getElementById('ly-gt-lab').textContent=level==='hs'?'Specialized high schools':level==='ms'?'Citywide middle schools':'Citywide G&T schools';{const g=document.querySelectorAll('#nz-key .sw>span')[1];if(g)g.lastChild.textContent=level==='hs'?'Specialized high school':level==='ms'?'Citywide middle school':'Citywide G&T school'}document.querySelectorAll('.ly-nzrow').forEach(e=>e.hidden=level==='hs'||!NZ.length);document.querySelectorAll('.ly-hsrow').forEach(e=>e.hidden=level!=='hs'||!NZ.some(o=>!o.gt));document.getElementById('ly-nz-lab').textContent=level==='ms'?'Middle schools without zones':'Non-zoned schools';const k=document.querySelector('#nz-key .sw>span');if(k)k.lastChild.textContent=level==='hs'?'High school, no zone':level==='ms'?'Middle school, no zone':'Non-zoned school'}
+function syncLayerBoxes(){Object.keys(LAY).forEach(k=>{const b=document.getElementById('ly-'+k);if(b)b.checked=!!LAY[k]});document.querySelectorAll('.ly-es').forEach(e=>e.hidden=!NZ.some(o=>o.gt));document.getElementById('ly-gt-lab').textContent=level==='hs'?'Specialized high schools':level==='ms'?'Citywide middle schools':'Citywide G&T schools';{const g=document.querySelectorAll('#nz-key .sw>span')[1];if(g)g.lastChild.textContent=level==='hs'?'Specialized':level==='ms'?'Citywide':'Citywide G&T'}document.querySelectorAll('.ly-nzrow').forEach(e=>e.hidden=level==='hs'||!NZ.length);document.querySelectorAll('.ly-hsrow').forEach(e=>e.hidden=level!=='hs'||!NZ.some(o=>!o.gt));document.getElementById('ly-nz-lab').textContent=level==='ms'?'Middle schools without zones':'Non-zoned schools';const k=document.querySelector('#nz-key .sw>span');if(k)k.lastChild.textContent=level==='es'?'Non-zoned school':'No zone'}
 function syncZoneLines(){byLayer.forEach(l=>{l.options.interactive=!!LAY.zones;if(!LAY.zones)l.closeTooltip()});if(!zoneLines)return;if(LAY.zones&&!map.hasLayer(zoneLines))zoneLines.addTo(map);if(!LAY.zones&&map.hasLayer(zoneLines))map.removeLayer(zoneLines)}
-function applyLayers(){syncZoneLines();document.querySelector('#map-legend .multi-key').hidden=!LAY.zones;restyle();if(typeof syncDistricts==='function')syncDistricts();buildNZ();drawLabels();syncNames();if(typeof syncDistricts==='function')syncDistricts()}
+function applyLayers(){syncZoneLines();restyle();if(typeof syncDistricts==='function')syncDistricts();buildNZ();drawLabels();syncNames();if(typeof syncDistricts==='function')syncDistricts()}
 // hiding zones also drops a selected zone (its outline and card); a selected school marker stays
 function clearZoneSel(){if(!selected)return;selected.setStyle(style(selected.feature,false));selected=null;if(selLine){map.removeLayer(selLine);selLine=null}
   card.className='card empty';card.textContent='Select a zone on the map, or search for a school, to see its zoned school.';sheetDefault();

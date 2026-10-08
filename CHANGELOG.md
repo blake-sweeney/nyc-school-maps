@@ -6,6 +6,11 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
+## 1.8.2 (2026-10-08)
+
+### Changed
+- A smaller map legend: the shared-zone stripes, no-zone hatch and district line rows are gone (the stripes and hatch explain themselves on the map and on hover, and district lines are in Map layers), and the marker key fits on one line ("No zone ◆ Specialized ★" in high school, for example).
+
 ## 1.8.1 (2026-10-08)
 
 ### Changed
