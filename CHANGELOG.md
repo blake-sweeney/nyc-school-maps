@@ -10,6 +10,7 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 
 ### Fixed
 - On school pages, the bars for state test scores, graduation, college readiness and SAT are now colored by the score (red for low, yellow for middle, green for high), the same as on the map's school cards. They were all green before.
+- School pages show a colored square next to each DOE rating (the overall number and the three category ratings), using the same colors as the map's school cards.
 
 ## 1.15.0 (2026-10-08)
 

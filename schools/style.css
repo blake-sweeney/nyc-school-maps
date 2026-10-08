@@ -36,6 +36,7 @@ h2{font-family:var(--display);font-weight:700;font-size:1.15rem;margin:0 0 8px}
 .zmap .sd{fill:var(--fg);stroke:var(--panel);stroke-width:3}.zmap .sr{fill:none;stroke:var(--hl);stroke-width:3}
 .note{background:var(--warn-bg);color:var(--warn-fg);padding:10px 12px;border-radius:8px;font-size:.92rem;margin:12px 0 0}
 .facts{display:grid;grid-template-columns:1fr auto;gap:6px 16px;margin:0;font-size:.95rem}
+.facts dd i.sw{display:inline-block;width:10px;height:10px;border-radius:2px;border:1px solid var(--line);margin-right:6px}
 .facts dt{color:var(--fg)}.facts dd{margin:0;font-family:var(--display);font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
 .bars{display:flex;flex-direction:column;gap:6px}
 .bar-row{display:grid;grid-template-columns:minmax(0,1fr) 120px 52px;gap:10px;align-items:center;font-size:.95rem}

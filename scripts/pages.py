@@ -277,11 +277,14 @@ def ratings_html(dbn, r):
         return '<p class="muted">No 2024–25 School Quality Snapshot ratings.</p>'
     vals = [x for x in r[2:5] if x is not None]
     overall = sum(vals) / len(vals)
+
+    def chip(v, txt):  # a swatch on the ratings ramp, like the map card's chips
+        return "–" if v is None else swatch(rate_color(v), e(txt))
     return ('<h2>DOE ratings</h2>' + facts_rows([
-        ("Overall (average)", f"{overall:.1f} / 4"),
-        ("Instruction and performance", e(RLAB.get(r[2], "–"))),
-        ("Safety and school climate", e(RLAB.get(r[3], "–"))),
-        ("Relationships with families", e(RLAB.get(r[4], "–"))),
+        ("Overall (average)", chip(overall, f"{overall:.1f} / 4")),
+        ("Instruction and performance", chip(r[2], RLAB.get(r[2]))),
+        ("Safety and school climate", chip(r[3], RLAB.get(r[3]))),
+        ("Relationships with families", chip(r[4], RLAB.get(r[4]))),
     ]) + '<p class="src">The DOE’s own ratings, from its 2024–25 School Quality Snapshot.</p>')
 
 
@@ -419,6 +422,7 @@ h2{font-family:var(--display);font-weight:700;font-size:1.15rem;margin:0 0 8px}
 .zmap .sd{fill:var(--fg);stroke:var(--panel);stroke-width:3}.zmap .sr{fill:none;stroke:var(--hl);stroke-width:3}
 .note{background:var(--warn-bg);color:var(--warn-fg);padding:10px 12px;border-radius:8px;font-size:.92rem;margin:12px 0 0}
 .facts{display:grid;grid-template-columns:1fr auto;gap:6px 16px;margin:0;font-size:.95rem}
+.facts dd i.sw{display:inline-block;width:10px;height:10px;border-radius:2px;border:1px solid var(--line);margin-right:6px}
 .facts dt{color:var(--fg)}.facts dd{margin:0;font-family:var(--display);font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
 .bars{display:flex;flex-direction:column;gap:6px}
 .bar-row{display:grid;grid-template-columns:minmax(0,1fr) 120px 52px;gap:10px;align-items:center;font-size:.95rem}
