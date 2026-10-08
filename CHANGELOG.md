@@ -11,6 +11,9 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 ### Changed
 - A smaller map legend: the shared-zone stripes, no-zone hatch and district line rows are gone (the stripes and hatch explain themselves on the map and on hover, and district lines are in Map layers), and the marker key fits on one line ("No zone ◆ Specialized ★" in high school, for example).
 
+### Fixed
+- Diamonds and stars are back to their smaller size when zoomed out to see the whole city, and grow to the larger size as you zoom into a neighborhood.
+
 ## 1.8.1 (2026-10-08)
 
 ### Changed

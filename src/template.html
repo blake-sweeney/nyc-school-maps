@@ -847,7 +847,8 @@ function shortName(n){n=n.replace(/^The\s+/i,'').replace(/,\s*The$/i,'').replace
   const w=n.split(/\s+/);let t=w[0];for(let i=1;i<w.length&&(t+' '+w[i]).length<=24;i++)t+=' '+w[i];return t.replace(/\s+(of|for|and|the|at|in|&)$/i,'').replace(/[,.;:-]+$/,'')}
 function nzSpot(o){return o.lat.toFixed(4)+','+o.lon.toFixed(4)}
 function nzAt(k){return NZ.filter(o=>nzShown(o)&&nzSpot(o)===k)}
-function nzSize(){const z=map.getZoom();return z<11.5?14:z<13?18:22}
+// small when zoomed out (the whole city), full size once you're looking at a neighborhood
+function nzSize(){const z=map.getZoom();return z<11.5?8:z<12.5?11:z<13.5?15:20}
 function buildNZ(){nzGroup.clearLayers();document.getElementById('nz-key').hidden=!nzOn();document.querySelectorAll('#nz-key .sw>span').forEach((e,i)=>e.hidden=!(i?LAY.gt&&NZ.some(o=>o.gt):LAY[level==='hs'?'hsnz':'nz']));if(!nzOn())return;const sz=nzSize();
   const groups={};NZ.forEach(o=>{if(nzShown(o))(groups[nzSpot(o)]=groups[nzSpot(o)]||[]).push(o)});
   NZ.forEach(o=>{if(!nzShown(o))return;const sz=o.gt?Math.round(nzSize()*(nzSel===o.d?2.3:2)):nzSize();
