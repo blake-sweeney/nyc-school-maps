@@ -360,6 +360,7 @@ a{color:var(--hl)}
 a:focus-visible,.go:focus-visible{outline:2px solid var(--hl);outline-offset:2px}
 .top{background:var(--panel);border-bottom:1px solid var(--line)}
 .top .in{max-width:760px;margin:0 auto;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.top .nav{display:flex;gap:16px}
 .brand{font-family:var(--display);font-weight:700;color:var(--fg);text-decoration:none}
 main{max-width:760px;margin:0 auto;padding:22px 16px 48px;display:flex;flex-direction:column;gap:22px}
 .kicker{font-family:var(--display);font-weight:600;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
@@ -415,7 +416,7 @@ def school_levels(d, dbn):
     return out
 
 
-def page_html(d, dbn, streets, site_url, goat):
+def page_html(d, dbn, streets, site_url, goat, nbi=None):
     levels = school_levels(d, dbn)
     if not levels:
         return None
@@ -463,6 +464,11 @@ def page_html(d, dbn, streets, site_url, goat):
             lede.append("This zone is shared with " + ", ".join(
                 f'<a href="/schools/{e(m)}/">{e(nice_name(S.get(m, {}).get("n", m)))}</a>' for m in mates) +
                 ". Families who live here get zoned priority at each of these schools.")
+        nb_codes = (nbi or {}).get("by_school", {}).get(dbn, [])
+        if nb_codes:
+            nl = [f'<a href="/neighborhoods/{e(nbi["nbs"][c]["slug"])}/">{e(nbi["nbs"][c]["name"])}</a>' for c in nb_codes[:4]]
+            lede.append("The zone covers " + ("part of " if len(nl) == 1 else "parts of ")
+                        + (nl[0] if len(nl) == 1 else ", ".join(nl[:-1]) + " and " + nl[-1]) + ".")
         if st:
             lede.append("Streets in the zone include " + e(", ".join(st[:-1]) + (" and " + st[-1] if len(st) > 1 else st[0])) + ".")
         zone_lede = "".join(f"<p>{x2}</p>" for x2 in lede)
@@ -627,6 +633,8 @@ def page_html(d, dbn, streets, site_url, goat):
     from urllib.parse import quote
     addr_q = quote(f"{name}, {addr}, {boro}, NY")
     meta = " · ".join(x2 for x2 in [kind, f"District {dist}", boro, grades_txt] if x2)
+    hn = (nbi or {}).get("home", {}).get(dbn)
+    home_nb = f' · in <a href="/neighborhoods/{e(nbi["nbs"][hn]["slug"])}/">{e(nbi["nbs"][hn]["name"])}</a>' if hn else ""
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -655,7 +663,7 @@ def page_html(d, dbn, streets, site_url, goat):
 <div>
 <div class="kicker">{e(meta)}</div>
 <h1>{e(name)}</h1>
-<p class="lede">{e(addr)}{", " + e(boro) if addr else e(boro)} · DBN {e(dbn)}</p>
+<p class="lede">{e(addr)}{", " + e(boro) if addr else e(boro)}{home_nb} · DBN {e(dbn)}</p>
 </div>
 <div class="actions"><a class="go" href="{e(map_url)}">Open on the map <span aria-hidden="true">→</span></a>
 <nav class="quick" aria-label="Links for this school">{ext(ms_url, "MySchools: apply & see your chances")}{ext(f"https://www.schools.nyc.gov/schools/{dbn[2:]}", "School website")}{ext(f"https://insideschools.org/school/{dbn}", "InsideSchools")}{ext(f"https://www.google.com/maps/dir/?api=1&destination={addr_q}", "Directions")}</nav></div>
@@ -670,7 +678,7 @@ def page_html(d, dbn, streets, site_url, goat):
 """
 
 
-def write_pages(d, root, only=None, site_url="https://nycschoolzones.com/", goat=""):
+def write_pages(d, root, only=None, site_url="https://nycschoolzones.com/", goat="", nbi=None):
     """Write /schools/<DBN>/index.html for each school (or only the DBNs in `only`). Returns the count."""
     dbns = set(d.get("schools", {})) | {r[0] for r in d.get("NZ", [])}
     for key in ("MS", "HS"):
@@ -684,7 +692,7 @@ def write_pages(d, root, only=None, site_url="https://nycschoolzones.com/", goat
         f.write(CSS.strip() + "\n")
     n = 0
     for dbn in sorted(dbns):
-        html = page_html(d, dbn, streets, site_url, goat)
+        html = page_html(d, dbn, streets, site_url, goat, nbi)
         if not html:
             continue
         out = os.path.join(root, "schools", dbn)
@@ -719,7 +727,7 @@ def shell(title, desc, canon, body, goat, site_url):
 <link rel="stylesheet" href="/schools/style.css">
 </head>
 <body>
-<header class="top"><div class="in"><a class="brand" href="/">NYC School Zones</a><a href="/districts/">All districts</a></div></header>
+<header class="top"><div class="in"><a class="brand" href="/">NYC School Zones</a><nav class="nav"><a href="/districts/">Districts</a><a href="/neighborhoods/">Neighborhoods</a></nav></div></header>
 <main>
 {body}
 </main>
@@ -871,7 +879,7 @@ table.sort td small{color:var(--muted);font-size:.78rem}
 """
 
 
-def write_districts(d, root, site_url, goat):
+def write_districts(d, root, site_url, goat, nbi=None):
     info, names, R = all_schools(d)
     MS, HS = d.get("MS") or {}, d.get("HS") or {}
     def tp(T):  # ELA and math together, % meeting standards (pooled, like "ELA + Math" on the map)
@@ -944,6 +952,10 @@ def write_districts(d, root, site_url, goat):
                 f'<div class="lvtabs" role="tablist" aria-label="School level">{tabs}</div>'
                 + "".join(f'<div class="lvpanel" role="tabpanel" id="p-{lv}" aria-labelledby="tab-{lv}">'
                           f'<h2 class="lvh">{w} schools</h2>{html}</div>' for lv, w, _, html in panels))
+        nbl = sorted((nb for nb in (nbi or {}).get("nbs", {}).values() if k in nb["dists"]), key=lambda nb: nb["name"])
+        if nbl:
+            body += ('<section class="card"><h2>Neighborhoods in District ' + e(k) + '</h2><p>'
+                     + " · ".join(f'<a href="/neighborhoods/{e(nb["slug"])}/">{e(nb["name"])}</a>' for nb in nbl) + "</p></section>")
         title = f"District {k} Schools ({boro}): Zones, Ratings & Admissions | NYC School Zones"
         desc = (f"All {len(dbns)} public schools in NYC school District {k}, {boro}: zoned and non-zoned elementary and middle "
                 "schools and high schools, with DOE ratings, test scores and admissions.")
@@ -983,7 +995,7 @@ def write_sitemap(root, site_url, urls):
             old = dict(re.findall(r"<loc>([^<]*)</loc><lastmod>([^<]*)</lastmod>", f.read()))
     try:
         out = subprocess.run(["git", "status", "--porcelain", "--untracked-files=all", "--", "index.html", "assets",
-                              "schools", "districts"], cwd=root, capture_output=True, text=True, check=True).stdout
+                              "schools", "districts", "neighborhoods"], cwd=root, capture_output=True, text=True, check=True).stdout
         changed = {line[3:].strip('"').split(" -> ")[-1] for line in out.splitlines()}
     except (OSError, subprocess.CalledProcessError):
         changed = None

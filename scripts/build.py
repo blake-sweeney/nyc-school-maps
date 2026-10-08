@@ -470,10 +470,20 @@ def main(standalone_path=None, pages=None):
     if pages:
         # one plain page per school at /schools/<DBN>/ (see scripts/pages.py)
         import pages as school_pages
-        n = school_pages.write_pages(full, ROOT, None if pages == "all" else pages.split(","), SITE_URL, goatcounter_tag())
+        # which zones cover each neighborhood, for the neighborhood pages and the links to them (scripts/neighborhoods.py)
+        nbi = None
+        if os.path.exists(os.path.join(DATA, "neighborhoods.json")):
+            import neighborhoods
+            nbi = neighborhoods.index(full, load("neighborhoods.json"))
+        n = school_pages.write_pages(full, ROOT, None if pages == "all" else pages.split(","), SITE_URL, goatcounter_tag(), nbi)
         print(f"wrote {n} school pages in schools/")
         if pages == "all":
-            urls = school_pages.write_districts(full, ROOT, SITE_URL, goatcounter_tag())
+            urls = school_pages.write_districts(full, ROOT, SITE_URL, goatcounter_tag(), nbi)
+            print(f"wrote {len(urls)} district pages")
+            if nbi:
+                nb_urls = neighborhoods.write(full, nbi, ROOT, SITE_URL, goatcounter_tag())
+                print(f"wrote {len(nb_urls)} neighborhood pages")
+                urls += nb_urls
             school_urls = sorted(f"{SITE_URL}schools/{x}/" for x in os.listdir(os.path.join(ROOT, "schools"))
                                  if os.path.exists(os.path.join(ROOT, "schools", x, "index.html")))
     if standalone_path:
@@ -484,7 +494,7 @@ def main(standalone_path=None, pages=None):
     if pages == "all":
         # last, so each page's lastmod can tell whether this build changed it
         school_pages.write_sitemap(ROOT, SITE_URL, urls + school_urls)
-        print(f"wrote {len(urls)} district pages, sitemap.xml ({len(urls) + len(school_urls) + 1} URLs) and robots.txt")
+        print(f"wrote sitemap.xml ({len(urls) + len(school_urls) + 1} URLs) and robots.txt")
     d = full  # for the summary below
 
     print(f"{len(d['features'])} zones, {ncolors} neighbor colors, "

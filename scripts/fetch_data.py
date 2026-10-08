@@ -4,7 +4,7 @@
 """Download fresh source data into data/. Standard library only.
 
     python3 scripts/fetch_data.py            # everything
-    python3 scripts/fetch_data.py zones      # just one: zones | tests | snapshot | streets
+    python3 scripts/fetch_data.py zones      # just one: zones | tests | snapshot | streets | neighborhoods
 
 Then rebuild the page with:  python3 scripts/build.py
 
@@ -12,6 +12,7 @@ When the city publishes newer data, update the dataset IDs / years below.
 """
 import concurrent.futures
 import json
+import math
 import os
 import sys
 import urllib.parse
@@ -33,6 +34,7 @@ TEST_YEAR = "2023"
 SNAPSHOT_API = "https://tools.nycenet.edu/api/v1/data/school/app/snapshot/all"
 SNAPSHOT_YEAR = "2025"            # 2024-25 School Quality Snapshot
 CENTERLINE_DATASET = "inkn-q76z"  # NYC Street Centerline (CSCL)
+NTA_DATASET = "9nt8-h7nd"         # 2020 Neighborhood Tabulation Areas (NYC Planning)
 
 
 def get_json(url):
@@ -398,8 +400,35 @@ def fetch_class_size(path=None):
     save("class_size.json", out)
 
 
+def fetch_neighborhoods():
+    """Neighborhood boundaries for the neighborhood pages: NYC Planning's 2020 Neighborhood Tabulation Areas.
+    Writes neighborhoods.json: {NTA code: {"n": name, "b": borough, "p": [polygons as [outer ring, holes...]]}}.
+    Only residential areas (NTA type 0); parks, cemeteries, airports and the like are left out.
+    Rings are simplified to about 10 m, like the district lines.
+    """
+    gj = get_json(f"{OPEN_DATA}/resource/{NTA_DATASET}.geojson?$limit=1000")
+    out = {}
+    for f in gj["features"]:
+        p = f["properties"]
+        if str(p.get("ntatype")) != "0":
+            continue
+        g = f["geometry"]
+        polys = []
+        for poly in (g["coordinates"] if g["type"] == "MultiPolygon" else [g["coordinates"]]):
+            if ring_area(poly[0]) < 2e-7:
+                continue
+            rings = [[[round(x, 5), round(y, 5)] for x, y in dp(r, 0.0001)] for r in poly]
+            if len(rings[0]) >= 4:
+                polys.append([rings[0]] + [r for r in rings[1:] if len(r) >= 4])
+        if polys:
+            out[p["nta2020"]] = {"n": p["ntaname"], "b": p["boroname"], "p": polys}
+    print(f"  {len(out)} residential neighborhoods")
+    save("neighborhoods.json", dict(sorted(out.items())))
+
+
+
 STEPS = {"zones": fetch_zones, "tests": fetch_tests, "snapshot": fetch_snapshot, "streets": fetch_streets,
-         "classsize": fetch_class_size}
+         "classsize": fetch_class_size, "neighborhoods": fetch_neighborhoods}
 
 def fetch_prek(path):
     """Pre-K and 3-K seats and applicants per school, from the DOE's Local Law 72 admissions report.
@@ -516,6 +545,33 @@ def fetch_k_admissions(paths, grade="Kindergarten", outname="k_admissions.json")
     save(outname, out)
 
 
+def dp(pts, tol):
+    """Douglas-Peucker line simplification."""
+    keep = [False] * len(pts)
+    keep[0] = keep[-1] = True
+    stack = [(0, len(pts) - 1)]
+    while stack:
+        a, b = stack.pop()
+        (ax, ay), (bx, by) = pts[a], pts[b]
+        dx, dy = bx - ax, by - ay
+        ll = dx * dx + dy * dy
+        md, mi = 0, -1
+        for i in range(a + 1, b):
+            px, py = pts[i]
+            t = 0 if not ll else max(0, min(1, ((px - ax) * dx + (py - ay) * dy) / ll))
+            d = math.hypot(px - ax - t * dx, py - ay - t * dy)
+            if d > md:
+                md, mi = d, i
+        if md > tol:
+            keep[mi] = True
+            stack += [(a, mi), (mi, b)]
+    return [p for p, k in zip(pts, keep) if k]
+
+
+def ring_area(r):
+    return abs(sum(r[i - 1][0] * r[i][1] - r[i][0] * r[i - 1][1] for i in range(1, len(r)))) / 2
+
+
 def fetch_districts(path):
     """School district boundaries, simplified for drawing as lines.
 
@@ -524,33 +580,8 @@ def fetch_districts(path):
     Writes districts.json: {district: {"r": [rings as [lon, lat] lists], "lp": [lat, lon] label point}}.
     Rings are simplified to about 10 m and tiny islands dropped; holes aren't needed for outlines.
     """
-    import math
     with open(os.path.expanduser(path), encoding="utf-8") as f:
         gj = json.load(f)
-
-    def dp(pts, tol):  # Douglas-Peucker
-        keep = [False] * len(pts)
-        keep[0] = keep[-1] = True
-        stack = [(0, len(pts) - 1)]
-        while stack:
-            a, b = stack.pop()
-            (ax, ay), (bx, by) = pts[a], pts[b]
-            dx, dy = bx - ax, by - ay
-            ll = dx * dx + dy * dy
-            md, mi = 0, -1
-            for i in range(a + 1, b):
-                px, py = pts[i]
-                t = 0 if not ll else max(0, min(1, ((px - ax) * dx + (py - ay) * dy) / ll))
-                d = math.hypot(px - ax - t * dx, py - ay - t * dy)
-                if d > md:
-                    md, mi = d, i
-            if md > tol:
-                keep[mi] = True
-                stack += [(a, mi), (mi, b)]
-        return [p for p, k in zip(pts, keep) if k]
-
-    def area(r):
-        return abs(sum(r[i - 1][0] * r[i][1] - r[i][0] * r[i - 1][1] for i in range(1, len(r)))) / 2
 
     def inside(x, y, r):
         c = False
@@ -591,7 +622,7 @@ def fetch_districts(path):
         rec = out.setdefault(dist, {"r": [], "big": None})
         for poly in polys:
             ring = poly[0]
-            a = area(ring)
+            a = ring_area(ring)
             if a < 2e-6:
                 continue
             simp = [[round(x, 5), round(y, 5)] for x, y in dp(ring, 0.00012)]

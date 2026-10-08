@@ -7,6 +7,7 @@ An interactive map of New York City's elementary (kindergarten), middle and high
 - **State tests (2024–25 Snapshot):** share of students scoring proficient in ELA and Math (grades 3–5 for elementary, 6–8 for middle); high schools show 4-year graduation and college/career enrollment instead
 - **Programs:** gifted & talented, dual language and special education
 - **Crowding:** each school's enrollment as a share of its building capacity, from the SCA's Enrollment, Capacity & Utilization Report ("Blue Book")
+- **Neighborhoods:** [2020 Neighborhood Tabulation Areas](https://data.cityofnewyork.us/d/9nt8-h7nd), NYC Planning via NYC Open Data (refresh with `python3 scripts/fetch_data.py neighborhoods`)
 - **School district lines:** [School Districts](https://data.cityofnewyork.us/d/8ugf-3d8u), NYC Open Data (GeoJSON export; refresh with `python3 scripts/fetch_data.py districts <file.geojson>`)
 - **Middle schools and programs:** the MySchools middle school directory (`data/ms_directory.json`) and Snapshot pages for schools without zones (`data/ms_snapshot.json`), both read through a browser
 - **High schools and programs:** the MySchools high school directory (`data/hs_directory.json`, programs, priorities, seats and applicants, ratings and graduation rates), read through a browser
@@ -53,6 +54,7 @@ LICENSE                 AGPL-3.0
 assets/                 ms.js, hs.js, ls.js — built by build.py, loaded on demand
 schools/<DBN>/          one page per school — built by build.py (scripts/pages.py)
 districts/              one page per district + an index — built by build.py
+neighborhoods/          one page per neighborhood + an index — built by build.py (scripts/neighborhoods.py)
 sitemap.xml, robots.txt  for search engines — built by build.py (a page's lastmod is the day a build last changed it)
 src/template.html       page source: layout, styles and map code
 data/
@@ -66,9 +68,11 @@ data/
   snapshot_ratings.json Snapshot ratings by school
   streets.json          simplified major streets for the overlay
   local_streets.json    every other street, compactly encoded
+  neighborhoods.json    residential neighborhood boundaries (NYC Planning NTAs)
 scripts/
   build.py              data/ + src/template.html  →  index.html
   pages.py              school pages, district pages and the sitemap (called by build.py)
+  neighborhoods.py      matches zones to neighborhoods and writes the neighborhood pages (called by build.py)
   fetch_data.py         re-downloads everything in data/ from the city
   browser/              scripts to paste into a browser console for MySchools and the Snapshot (see "Refresh the data")
   streets.py            merges and simplifies street centerlines (used by fetch_data.py)
@@ -174,12 +178,13 @@ Download the Classic Edition PDF from the [SCA](https://www.nycsca.org/Community
 
 - District lines (only if the boundaries change): `python3 scripts/fetch_data.py districts <file.geojson>`, from [School Districts](https://data.cityofnewyork.us/d/8ugf-3d8u) (Export → GeoJSON).
 - Streets: `python3 scripts/fetch_data.py streets`.
+- Neighborhoods (only when NYC Planning redraws them, about once a decade): `python3 scripts/fetch_data.py neighborhoods`.
 - State test files from NYC Open Data, only used as a fallback when the Snapshot has no scores: `python3 scripts/fetch_data.py tests`, after updating `TEST_YEAR`.
 
 ### Then
 
 ```sh
-python3 scripts/build.py          # site, school pages, district pages and sitemap
+python3 scripts/build.py          # site, school, district and neighborhood pages, and sitemap
 python3 scripts/make_preview.py   # optional: redraw preview.png
 ```
 

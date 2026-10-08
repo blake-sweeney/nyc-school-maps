@@ -9,6 +9,8 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 ## Unreleased
 
 ### Added
+- A page for each of 197 NYC neighborhoods (like nycschoolzones.com/neighborhoods/park-slope/): the elementary, middle and high school zones that cover it, with how much of the neighborhood each zone covers, plus the schools without a zone and high schools located there, with ratings and test scores. Links to nearby neighborhoods, and an index of all neighborhoods by borough.
+- School pages say which neighborhood the school is in and which neighborhoods its zone covers. District pages list their neighborhoods and have a "Neighborhoods" link at the top, and the map's side panel links to the index ("by neighborhood").
 - "Districts by borough" at the bottom of the side panel (under About on phones): a link to every district's page of schools, grouped by borough.
 
 ### Changed
