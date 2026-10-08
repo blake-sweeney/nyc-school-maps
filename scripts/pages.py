@@ -847,7 +847,7 @@ def swatch(color, txt):
     return f'<i class="sw" style="background:{color}"></i>{txt}'
 
 
-def school_table(dbns, names, R, cols, note=None):
+def school_table(dbns, names, R, cols, note=None, note_line=False):
     """A sortable table: school name, overall rating, then `cols` = [(heading, fn(dbn) -> number or None, format)]."""
     if not dbns:
         return ""
@@ -856,11 +856,12 @@ def school_table(dbns, names, R, cols, note=None):
     th = "".join(f'<th scope="col" data-type="{t}"{first if i == 0 else ""}><button type="button">{e(h)}</button></th>'
                  for i, (h, t) in enumerate(heads))
     rows = []
+    small_cls = ' class="line"' if note_line else ""  # the note on its own line under the name
     for dbn in sorted(dbns, key=lambda x: names[x].lower()):
         rt = rating(R, dbn)
         tag = note(dbn) if note else ""
         cells = [f'<td data-v="{e(names[dbn].lower())}"><a href="/schools/{e(dbn)}/">{e(names[dbn])}</a>'
-                 + (f' <small>{e(tag)}</small>' if tag else "") + "</td>",
+                 + (f' <small{small_cls}>{e(tag)}</small>' if tag else "") + "</td>",
                  f'<td data-v="{"" if rt is None else f"{rt:.2f}"}">{"–" if rt is None else swatch(rate_color(rt), f"{rt:.1f}")}</td>']
         for _, fn, fmt, stops in cols:
             v = fn(dbn)
@@ -910,6 +911,7 @@ table.sort td:first-child{text-align:left;font-family:var(--body);font-weight:40
 @media (max-width:640px){table.sort th:not(:first-child){width:68px}table.sort th button{padding:6px 3px}table.sort td{padding:7px 3px}}
 table.sort td i.sw{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:1px}
 table.sort td small{color:var(--muted);font-size:.78rem}
+table.sort td small.line{display:block}
 .lvtabs{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel)}
 .lvtabs button{all:unset;cursor:pointer;text-align:center;padding:10px 6px;font-family:var(--display);font-weight:700;font-size:1rem;color:var(--muted);border-right:1px solid var(--line)}
 .lvtabs button:last-child{border-right:0}

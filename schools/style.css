@@ -86,6 +86,7 @@ table.sort td:first-child{text-align:left;font-family:var(--body);font-weight:40
 @media (max-width:640px){table.sort th:not(:first-child){width:68px}table.sort th button{padding:6px 3px}table.sort td{padding:7px 3px}}
 table.sort td i.sw{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:1px}
 table.sort td small{color:var(--muted);font-size:.78rem}
+table.sort td small.line{display:block}
 .lvtabs{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel)}
 .lvtabs button{all:unset;cursor:pointer;text-align:center;padding:10px 6px;font-family:var(--display);font-weight:700;font-size:1rem;color:var(--muted);border-right:1px solid var(--line)}
 .lvtabs button:last-child{border-right:0}

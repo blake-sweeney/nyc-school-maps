@@ -8,6 +8,9 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 
 ## Unreleased
 
+### Changed
+- Neighborhood pages make clear that each school zone covers only part of the neighborhood: "Different parts of Astoria (North)-Ditmars-Steinway are zoned for 4 elementary schools", tables headed "Elementary school zones in …" with a reminder that each address is zoned for just one school, and "zone covers 18% of the neighborhood" under each school. The reminder to confirm your exact address on schoolsearch.schools.nyc now sits right above each table.
+
 ### Fixed
 - On school pages, the bars for state test scores, graduation, college readiness and SAT are now colored by the score (red for low, yellow for middle, green for high), the same as on the map's school cards. They were all green before.
 - School pages show a colored square next to each DOE rating (the overall number and the three category ratings), using the same colors as the map's school cards.
