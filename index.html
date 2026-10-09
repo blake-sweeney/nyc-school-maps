@@ -197,7 +197,7 @@ aside>*{flex-shrink:0}
 .sec-b{display:flex;flex-direction:column;gap:6px;padding:2px 0 4px}.sec[open]>.sec-b{padding-bottom:12px}
 .sec[open]{border-bottom:1px solid var(--line);margin-bottom:6px}.sec[open]+hr.sep{display:none}.sec-b>a{color:var(--hl);font-size:.82rem}
 .sec>summary .sa{font-family:var(--display);font-weight:600;font-size:.8rem;white-space:nowrap;font-variant-numeric:tabular-nums}
-.sec[data-sec="adm-k"][open]~.adm-none{display:none}
+.sec.no-host[open]~.adm-none{display:none}
 .adm-none{margin:4px 0 0;font-size:.8rem;color:var(--muted)}.adm-none a{font-size:inherit}.adm small{font-weight:400;color:var(--muted)}
 .adm-about{font-size:.75rem;color:var(--muted)}.adm-about summary{cursor:pointer}.adm-about p{margin:4px 0 0}
 .about{font-size:.8rem;color:var(--muted);display:flex;flex-direction:column;gap:6px;margin-top:auto}
@@ -1063,14 +1063,15 @@ function esAdmHtml(d){const pk=PK[d],ka=KA[d],ky=ka&&Object.keys(ka).sort().pop(
   const early=(lab,n,a,o)=>'<div class="adm"><div class="facts"><span>Seats</span><b>'+show(n)+'</b><span>Applied</span><b>'+show(a)+'</b><span>Offers</span><b>'+show(o)+'</b></div>'+hidNote(n,a,o)+
     '<p class="adm-note">“Applied” counts families who listed the school and didn’t get a choice they ranked higher. '+lab[0].toUpperCase()+lab.slice(1)+' seats aren’t zoned: families apply through MySchools, and zoned families often get priority.</p><a href="https://www.myschools.nyc/en/" target="_blank" rel="noopener">Find '+lab+' programs on MySchools ↗</a></div>';
   const py='fall 2025'.replace(/\D/g,''),no=pk?[!pk[0]&&'pre-K',!pk[2]&&'3-K'].filter(Boolean):[];
-  // a school without pre-K or 3-K: a short line under the sections, the full note inside kindergarten's
+  // a school without pre-K or 3-K: a short line under the sections, the full note inside the section just above it
   const noLine=no.length?'No '+no.join(' or ')+' at this school.':'';
-  const noMore=no.length?'<p class="adm-note">'+noLine+' Many seats are at nearby early childhood centers; <a href="https://www.myschools.nyc/en/" target="_blank" rel="noopener">MySchools</a> lists every program.</p>':'';
-  let h='';
-  if(k)h+=one('adm-k','K',ky,k[0],k[1],admHtml(d,'es',true)+noMore);
-  if(pk){if(pk[0])h+=one('adm-pk','Pre-K',py,pk[0],pk[1],early('pre-K',pk[0],pk[1],pk[4]));
-    if(pk[2])h+=one('adm-3k','3-K',py,pk[2],pk[3],early('3-K',pk[2],pk[3],pk[5]));
-    if(noLine)h+='<p class="adm-none">'+noLine+'</p>'}
+  const noMore=no.length?'<div class="adm"><p class="adm-note">'+noLine+' Many seats are at nearby early childhood centers; <a href="https://www.myschools.nyc/en/" target="_blank" rel="noopener">MySchools</a> lists every program.</p></div>':'';
+  const parts=[];
+  if(k)parts.push(['adm-k','K',ky,k[0],k[1],admHtml(d,'es',true)]);
+  if(pk&&pk[0])parts.push(['adm-pk','Pre-K',py,pk[0],pk[1],early('pre-K',pk[0],pk[1],pk[4])]);
+  if(pk&&pk[2])parts.push(['adm-3k','3-K',py,pk[2],pk[3],early('3-K',pk[2],pk[3],pk[5])]);
+  let h=parts.map((x,i)=>{const last=noLine&&i===parts.length-1,o=one(x[0],x[1],x[2],x[3],x[4],x[5]+(last?noMore:''));return last?o.replace('class="sec"','class="sec no-host"'):o}).join('');
+  if(noLine)h+='<p class="adm-none">'+noLine+'</p>';
   return h}
 // street address with a copy button (for maps apps and forms)
 function addrHtml(d){const s=S[d];if(!s||!s.a)return '';const full=title(s.a)+', '+(BORO[d[2]]||'')+', NY';
