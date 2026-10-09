@@ -761,8 +761,10 @@ function makeSel(feature){const [h,l]=selStyles();return L.featureGroup([L.geoJS
 function restyleSel(){if(!selLine)return;const s=selStyles();selLine.getLayers().forEach((g,i)=>g.setStyle(s[i]))}
 map.on('zoomend',restyleSel);
 // phones: leave room for the collapsed sheet and color card at the bottom
+// open no farther out than zoom 10 (the farthest before zoom 9 was added): fit under the old limit, then lift it
+map.setMinZoom(10);
 map.fitBounds(layer.getBounds(),matchMedia('(max-width:760px)').matches?{paddingTopLeft:[10,60],paddingBottomRight:[10,180]}:{padding:[10,10]});
-if(map.getZoom()<10)map.setZoom(10,{animate:false});  // open no farther out than before zoom 9 was added
+map.setMinZoom(9);
 
 // major streets: highways (tier 1) always, major streets (2) from zoom 11.5, secondary (3) from zoom 13
 map.createPane('streets').style.zIndex=450;map.getPane('streets').style.pointerEvents='none';
@@ -816,7 +818,9 @@ map.on('zoomend moveend',syncStreets);
 // zoned schools: a bullseye in the school's color at its building; click to open its zone (works with zones hidden too)
 map.createPane('zsPane').style.zIndex=461;
 const zsGroup=L.layerGroup().addTo(map);
-function zsOn(){return !!LAY.zs}
+// zoomed all the way out the markers step aside and the zones carry the colors (with their stronger fill)
+function markersByZoom(){return map.getZoom()>=10}  // a function, so the zone style can call it before this line runs
+function zsOn(){return !!LAY.zs&&markersByZoom()}
 function zsTip(d){const v=schoolVal(d),val=v==null||isProg(metric)&&!v?'':' · '+(isProg(metric)?'has '+(metric==='gt'?'G&T':'dual language'):fmtVal(v));
   return '<small class="tip-d">District '+(+d.slice(0,2))+' · Zoned</small><br>'+esc(short(d))+val}
 function zsSelected(d){return selected&&selected.feature.properties.dbns.includes(d)}
@@ -870,9 +874,9 @@ function buildDistFill(){distFill.clearLayers();const on=LAY.dist&&!LAY.zones&&O
   Object.values(DIST).forEach(v=>L.polygon(v.r.map(r=>r.map(c=>[c[1],c[0]])),{renderer:fillRend,interactive:false,stroke:false,fillColor:(isDark()?DFILL_DARK:DFILL)[v.c||0],fillOpacity:isDark()?.7:.62}).addTo(distFill));
   if(!map.hasLayer(distFill))distFill.addTo(map)}
 const distLines=Object.values(DIST).flatMap(v=>v.r.map(r=>r.map(c=>[c[1],c[0]])));
-function distStyle(){const z=map.getZoom(),w=z<11.5?1.4:z<12.5?2.2:z<13.5?3:z<15?3.8:4.6;return[{renderer:distRend,interactive:false,color:css('--panel'),weight:w+3.5,opacity:.85,lineJoin:'round',lineCap:'round'},{renderer:distRend,interactive:false,color:css('--fg'),weight:w,opacity:.95,lineJoin:'round',lineCap:'round'}]}
+function distStyle(){const z=map.getZoom(),w=(z<11.5?1.4:z<12.5?2.2:z<13.5?3:z<15?3.8:4.6)*farScale();return[{renderer:distRend,interactive:false,color:css('--panel'),weight:w+3.5,opacity:.85,lineJoin:'round',lineCap:'round'},{renderer:distRend,interactive:false,color:css('--fg'),weight:w,opacity:.95,lineJoin:'round',lineCap:'round'}]}
 function buildDistricts(){distGroup.clearLayers();if(!distLines.length)return;const [h,l]=distStyle();L.polyline(distLines,h).addTo(distGroup);L.polyline(distLines,l).addTo(distGroup)}
-function drawDistNums(){distNums.clearLayers();const z=map.getZoom();if(!LAY.dist||z>=(LAY.zones?13:15.5))return;
+function drawDistNums(){distNums.clearLayers();const z=map.getZoom();if(!LAY.dist||z<10||z>=(LAY.zones?13:15.5))return;  // too crowded at zoom 9
   Object.entries(DIST).forEach(([k,v])=>L.marker(v.lp,{interactive:false,keyboard:false,pane:'distPane',icon:L.divIcon({className:'',html:'<div class="dnum">'+(z>=11.5?'<small>District</small>':'')+k+'</div>',iconSize:[70,40],iconAnchor:[35,z>=11.5?20:13]})}).addTo(distNums))}
 function syncDistricts(){const on=LAY.dist&&distLines.length>0;[distGroup,distNums].forEach(g=>{if(on&&!map.hasLayer(g))g.addTo(map);if(!on&&map.hasLayer(g))map.removeLayer(g)});
   document.getElementById('ly-dist-row').hidden=!distLines.length;if(on){buildDistricts();drawDistNums()}buildDistFill()}
@@ -883,7 +887,7 @@ map.createPane('nzPane').style.zIndex=462;
 const nzGroup=L.layerGroup().addTo(map);let nzSel=null;
 const nzKey=o=>o.gt?'gt':o.hs?'hsnz':'nz';
 function nzShown(o){return LAY[nzKey(o)]}
-function nzOn(){return NZ.length>0&&(LAY[level==='hs'?'hsnz':'nz']||LAY.gt)}
+function nzOn(){return NZ.length>0&&(LAY[level==='hs'?'hsnz':'nz']||LAY.gt)&&markersByZoom()}
 function nzFill(d){return fillFor({properties:{dbns:[d],c:0}})}
 const STAR='50,2 61.5,36 97,36 68,57.5 79,92 50,71 21,92 32,57.5 3,36 38.5,36';
 // dark outline, white ring, then the color; selected adds a blue outer ring (like the diamonds)
