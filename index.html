@@ -853,14 +853,15 @@ map.on('zoomend moveend',syncStreets);
 // zoned schools: a bullseye in the school's color at its building; click to open its zone (works with zones hidden too)
 map.createPane('zsPane').style.zIndex=461;
 const zsGroup=L.layerGroup().addTo(map);
-// zoomed all the way out the markers step aside and the zones carry the colors (with their stronger fill)
-function markersByZoom(){return map.getZoom()>=10}  // a function, so the zone style can call it before this line runs
+// school markers show from zoom 14 in (a few blocks); farther out the zones carry the colors, with their stronger fill.
+// The selected school's marker always shows.
+function markersByZoom(){return map.getZoom()>=14}  // a function, so the zone style can call it before this line runs
 function zsOn(){return !!LAY.zs&&markersByZoom()}
 function zsTip(d){const v=schoolVal(d),val=v==null||isProg(metric)&&!v?'':' · '+(isProg(metric)?'has '+(metric==='gt'?'G&T':'dual language'):fmtVal(v));
   return '<small class="tip-d">District '+(+d.slice(0,2))+' · Zoned</small><br>'+esc(short(d))+val}
 function zsSelected(d){return selected&&selected.feature.properties.dbns.includes(d)}
-function buildZS(){zsGroup.clearLayers();if(!zsOn()||typeof nzSize!=='function')return;const sz=Math.round(nzSize()*1.1),zoned=new Set(byLayer.flatMap(l=>l.feature.properties.dbns));
-  Object.entries(LV[level].S).forEach(([d,s])=>{if(!s.lat||!zoned.has(d))return;const sel=zsSelected(d),z=sel?Math.round(sz*1.3):sz;
+function buildZS(){zsGroup.clearLayers();if(!LAY.zs||typeof nzSize!=='function')return;const near=markersByZoom();const sz=Math.round(nzSize()*1.1),zoned=new Set(byLayer.flatMap(l=>l.feature.properties.dbns));
+  Object.entries(LV[level].S).forEach(([d,s])=>{if(!s.lat||!zoned.has(d))return;const sel=zsSelected(d);if(!near&&!sel)return;const z=sel?Math.round(sz*1.3):sz;
     const m=L.marker([s.lat,s.lon],{pane:'zsPane',keyboard:false,zIndexOffset:sel?1000:0,icon:L.divIcon({className:'',html:'<div class="zsm'+(sel?' sel':'')+'" style="--c:'+nzFill(d)+'"></div>',iconSize:[z,z],iconAnchor:[z/2,z/2]})});
     m.bindTooltip(()=>zsTip(d),{direction:'top',offset:[0,-z/2]});
     m.on('click',()=>{const l=byLayer.find(x=>x.feature.properties.dbns.includes(d));if(l)select(l,true)});m.addTo(zsGroup)})}
@@ -922,7 +923,8 @@ map.createPane('nzPane').style.zIndex=462;
 const nzGroup=L.layerGroup().addTo(map);let nzSel=null;
 const nzKey=o=>o.gt?'gt':o.hs?'hsnz':'nz';
 function nzShown(o){return LAY[nzKey(o)]}
-function nzOn(){return NZ.length>0&&(LAY[level==='hs'?'hsnz':'nz']||LAY.gt)&&markersByZoom()}
+function nzWanted(){return NZ.length>0&&(LAY[level==='hs'?'hsnz':'nz']||LAY.gt)}
+function nzOn(){return nzWanted()&&markersByZoom()}
 function nzFill(d){return fillFor({properties:{dbns:[d],c:0}})}
 const STAR='50,2 61.5,36 97,36 68,57.5 79,92 50,71 21,92 32,57.5 3,36 38.5,36';
 // dark outline, white ring, then the color; selected adds a blue outer ring (like the diamonds)
@@ -939,9 +941,9 @@ function nzAt(k){return NZ.filter(o=>nzShown(o)&&nzSpot(o)===k)}
 // zoomed all the way out, markers and zone lines shrink: half size at zoom 9, three quarters at 10, full from 11
 function farScale(){return Math.min(1,Math.max(.5,.5+(map.getZoom()-9)*.25))}
 function nzSize(){const z=map.getZoom();return (z<11.5?8:z<12.5?10:z<13.5?13:z<14.5?16:20)*farScale()}
-function buildNZ(){nzGroup.clearLayers();document.getElementById('nz-key').hidden=!nzOn();buildZS();document.getElementById('nz-key').hidden=!nzOn()&&!zsOn();document.getElementById('zsk-item').hidden=!zsOn();document.getElementById('nzk-item').hidden=!(nzOn()&&LAY[level==='hs'?'hsnz':'nz']);document.getElementById('gtk-item').hidden=!(nzOn()&&LAY.gt&&NZ.some(o=>o.gt));if(!nzOn())return;const sz=nzSize();
-  const groups={};NZ.forEach(o=>{if(nzShown(o))(groups[nzSpot(o)]=groups[nzSpot(o)]||[]).push(o)});
-  NZ.forEach(o=>{if(!nzShown(o))return;const sz=o.gt?Math.round(nzSize()*(nzSel===o.d?2.3:2)):nzSize();
+function buildNZ(){nzGroup.clearLayers();document.getElementById('nz-key').hidden=!nzOn();buildZS();document.getElementById('nz-key').hidden=!nzOn()&&!zsOn();document.getElementById('zsk-item').hidden=!zsOn();document.getElementById('nzk-item').hidden=!(nzOn()&&LAY[level==='hs'?'hsnz':'nz']);document.getElementById('gtk-item').hidden=!(nzOn()&&LAY.gt&&NZ.some(o=>o.gt));if(!nzWanted())return;const sz=nzSize(),near=markersByZoom();
+  const groups={};NZ.forEach(o=>{if(nzShown(o)&&(near||nzSel===o.d))(groups[nzSpot(o)]=groups[nzSpot(o)]||[]).push(o)});
+  NZ.forEach(o=>{if(!nzShown(o)||!near&&nzSel!==o.d)return;const sz=o.gt?Math.round(nzSize()*(nzSel===o.d?2.3:2)):nzSize();
     const g=groups[nzSpot(o)],i=g.indexOf(o),r=g.length>1&&map.getZoom()>=12?nzSize()*.75+g.length*1.5:0,ang=2*Math.PI*i/g.length-Math.PI/2,dx=r*Math.cos(ang),dy=r*Math.sin(ang);
     const m=L.marker([o.lat,o.lon],{pane:'nzPane',keyboard:false,zIndexOffset:nzSel===o.d?1000:0,
       icon:L.divIcon({className:'',html:o.gt?gtStar(nzFill(o.d),nzSel===o.d):'<div class="nzm'+(nzSel===o.d?' sel':'')+'" style="--c:'+nzFill(o.d)+'"></div>',iconSize:[sz,sz],iconAnchor:[sz/2-dx,sz/2-dy]})});
