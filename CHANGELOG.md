@@ -6,7 +6,7 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
-## Unreleased
+## 1.20.0 (2026-10-09)
 
 ### Changed
 - The elementary school card on the map is much shorter. It opens with the overall rating, one state test score for ELA and math together, and one line each for kindergarten, pre-K and 3-K admissions with seats and applicants. Tap a line to see more: the three ratings, ELA and math separately, offers and how seats were filled for that grade, or school details like attendance and class size. If a school has no pre-K or 3-K, a short line says so; open kindergarten admissions for where to find those seats. The card remembers which sections you open, and coloring the map by a rating, ELA, math, special ed or crowding opens the section that shows it. Lines between sections only appear under a section you open.
