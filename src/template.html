@@ -161,7 +161,8 @@ aside>*{flex-shrink:0}
 .sec>summary .st{flex:1;font-weight:700}.sec>summary .st small{display:block;font-weight:400;color:var(--muted);font-size:.75rem}
 .sec>summary::after{content:'';flex:none;width:7px;height:7px;margin:0 3px 3px 2px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);transition:transform .15s}
 .sec[open]>summary::after{transform:translateY(3px) rotate(-135deg)}
-.sec-b{display:flex;flex-direction:column;gap:6px;padding:2px 0 4px}.sec[open]>.sec-b{padding-bottom:12px}.sec-b>a{color:var(--hl);font-size:.82rem}
+.sec-b{display:flex;flex-direction:column;gap:6px;padding:2px 0 4px}.sec[open]>.sec-b{padding-bottom:12px}
+.sec[open]{border-bottom:1px solid var(--line);margin-bottom:6px}.sec[open]+hr.sep{display:none}.sec-b>a{color:var(--hl);font-size:.82rem}
 .sec>summary .sa{font-family:var(--display);font-weight:600;font-size:.8rem;white-space:nowrap;font-variant-numeric:tabular-nums}
 .adm-none{margin:4px 0 0;font-size:.8rem;color:var(--muted)}.adm-none a{font-size:inherit}.adm small{font-weight:400;color:var(--muted)}
 .adm-about{font-size:.75rem;color:var(--muted)}.adm-about summary{cursor:pointer}.adm-about p{margin:4px 0 0}
@@ -1047,7 +1048,7 @@ function kindText(p){const n=p.dbns.length,k=zoneKind(p);
   return '<b>Shared zone:</b> families here get zoned priority at all '+n+' schools below and can rank any of them.'}
 // one school's details (zoned or not)
 function schoolBlock(d){const s=S[d],n=X[d]&&X[d][0]!=null?X[d][0].toLocaleString()+' students':'',gr=s&&s.g?'Grades '+esc(grades(s.g,d)):'';
-  return '<div class="school"><span class="nm"><a class="nm-link" href="'+pageUrl(d)+'">'+esc(short(d))+'</a> <span class="dbn">('+esc(d)+')</span></span>'+addrHtml(d)+(gr||n?'<span class="meta">'+[gr,n].filter(Boolean).join(' · ')+'</span>':'')+tagsHtml(d)+(level==='hs'?zonedHtml(d):'')+(level==='es'?'<hr class="sep">'+esRateHtml(d)+'<hr class="sep">'+esTestHtml(d)+(esAdmHtml(d)?'<hr class="sep">'+esAdmHtml(d):'')+(factsHtml(d)?'<hr class="sep">'+sec('facts','<span class="st">School details</span>',factsHtml(d)):''):'<hr class="sep">'+rateHtml(d)+'<hr class="sep">'+scoreHtml(d)+(factsHtml(d)?'<hr class="sep">'+factsHtml(d):''))+(level!=='es'&&cutHtml(d)?'<hr class="sep">'+cutHtml(d):'')+(level!=='es'&&admHtml(d,level)?'<hr class="sep">'+admHtml(d,level):'')+(level!=='es'&&progHtml(d)?'<hr class="sep">'+progHtml(d):'')+'<hr class="sep">'+'<div class="links">'+'<a href="'+pageUrl(d)+'"><b>Full school page →</b></a>'+'<a href="'+mySchoolsUrl(d)+'" target="_blank" rel="noopener"><b>MySchools: apply &amp; see your chances ↗</b></a><a href="https://www.schools.nyc.gov/schools/'+esc(d.slice(2))+'" target="_blank" rel="noopener">School website ↗</a></div></div>'}
+  return '<div class="school"><span class="nm"><a class="nm-link" href="'+pageUrl(d)+'">'+esc(short(d))+'</a> <span class="dbn">('+esc(d)+')</span></span>'+addrHtml(d)+(gr||n?'<span class="meta">'+[gr,n].filter(Boolean).join(' · ')+'</span>':'')+tagsHtml(d)+(level==='hs'?zonedHtml(d):'')+(level==='es'?'<hr class="sep">'+esRateHtml(d)+esTestHtml(d)+esAdmHtml(d)+(factsHtml(d)?sec('facts','<span class="st">School details</span>',factsHtml(d)):''):'<hr class="sep">'+rateHtml(d)+'<hr class="sep">'+scoreHtml(d)+(factsHtml(d)?'<hr class="sep">'+factsHtml(d):''))+(level!=='es'&&cutHtml(d)?'<hr class="sep">'+cutHtml(d):'')+(level!=='es'&&admHtml(d,level)?'<hr class="sep">'+admHtml(d,level):'')+(level!=='es'&&progHtml(d)?'<hr class="sep">'+progHtml(d):'')+'<hr class="sep">'+'<div class="links">'+'<a href="'+pageUrl(d)+'"><b>Full school page →</b></a>'+'<a href="'+mySchoolsUrl(d)+'" target="_blank" rel="noopener"><b>MySchools: apply &amp; see your chances ↗</b></a><a href="https://www.schools.nyc.gov/schools/'+esc(d.slice(2))+'" target="_blank" rel="noopener">School website ↗</a></div></div>'}
 // a big no-zone area (most of the city in the high school view) spans many districts: a click there selects
 // just the district under the click, outlined, instead of the whole area
 function distAt(ll){const x=ll.lng,y=ll.lat;for(const [k,v] of Object.entries(DIST)){let inside=false;
@@ -1068,12 +1069,12 @@ function select(l,fromClick,ll){
   let h='<div class="zt">'+(p.dist&&+p.dist?'District '+esc(p.dist)+' · ':'')+esc(BORO[p.boro]||'')+'</div>';
   if(p.dbns.length>1)h+='<div class="kind">'+kindText(p)+'</div>';
   if(!p.dbns.length){h+='<div class="school"><span class="nm">'+LEVEL_TXT[level].noZone+'</span></div>';if(level==='ms'&&/District/.test(p.remarks||''))h+='<div class="note">Students here apply to middle schools through <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a>.</div>';if(level==='hs')h+='<div class="note">Students here apply to high schools citywide through <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a>.</div>';
-    if(p.dist&&+p.dist){h+='<a class="dist-page" href="districts/'+(+p.dist)+'/'+(LOCAL?'index.html':'')+'">All District '+(+p.dist)+' schools, with ratings and test scores →</a>';h+=nzOptions(+p.dist,[],true)}}
+    if(p.dist&&+p.dist){h+='<a class="dist-page" href="districts/'+(+p.dist)+'/'+(LOCAL?'index.html':'')+'">All District '+(+p.dist)+' schools →</a>';h+=nzOptions(+p.dist,[],true)}}
   else{h+=p.dbns.map(schoolBlock).join('');
     h+='<a class="confirm" href="https://schoolsearch.schools.nyc/" target="_blank" rel="noopener">Confirm your exact address on schoolsearch.schools.nyc ↗</a>';
     h+='<div class="card-actions"><button type="button" class="btn-sm" id="copy-link">Copy link to '+(p.dbns.length>1?'these schools':'this school')+'</button><button type="button" class="btn-sm to-map" id="to-map">↑ Back to map</button></div>';
     const opts=level==='es'||level==='ms'?nzOptions(+p.dist,p.dbns):'';h+=opts||'<hr class="sep">';
-    if(p.dist&&+p.dist)h+='<a class="dist-page" href="districts/'+(+p.dist)+'/'+(LOCAL?'index.html':'')+'">All District '+(+p.dist)+' schools, with ratings and test scores →</a>'}
+    if(p.dist&&+p.dist)h+='<a class="dist-page" href="districts/'+(+p.dist)+'/'+(LOCAL?'index.html':'')+'">All District '+(+p.dist)+' schools →</a>'}
   if(p.remarks&&!/^Citywide High School Choice$/i.test(p.remarks))h+='<div class="note">'+esc(p.remarks)+'</div>';
 
   card.className='card';card.innerHTML=h;
