@@ -6,7 +6,7 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
-## Unreleased
+## 1.19.0 (2026-10-09)
 
 ### Added
 - Neighborhood pages show a map in each of the Elementary, Middle and High tabs: the neighborhood with the school zones inside it, each zone shaded by its school's overall rating and numbered. The same number appears next to the school in the list below, so you can see which part of the neighborhood each school is zoned for. (The single elementary map at the top of the page is gone.)
