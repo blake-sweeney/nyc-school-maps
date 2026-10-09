@@ -263,9 +263,9 @@ aside>*{flex-shrink:0}
 .nzm{width:100%;height:100%;box-sizing:border-box;transform:rotate(45deg) scale(.72);background:var(--c);border:0;box-shadow:0 0 0 2px var(--dot),0 1px 3px rgba(0,0,0,.35);cursor:pointer}
 /* fingers need a bigger target than the drawn marker: an invisible ring around each one on touch screens */
 @media (pointer:coarse){.leaflet-nz-pane .leaflet-marker-icon::after,.leaflet-zs-pane .leaflet-marker-icon::after{content:"";position:absolute;inset:-14px;border-radius:50%}}
-.zsm{width:100%;height:100%;box-sizing:border-box;border-radius:50%;background:radial-gradient(circle,var(--dot) 0 22%,var(--panel) 23% 40%,var(--c) 41%);border:0;box-shadow:0 0 0 1.5px var(--dot),0 1px 3px rgba(0,0,0,.35);cursor:pointer}
+.zsm{width:100%;height:100%;box-sizing:border-box;border-radius:50%;background:radial-gradient(circle,var(--panel) 0 34%,var(--c) 36%);border:0;box-shadow:0 0 0 1.5px var(--dot),0 1px 3px rgba(0,0,0,.35);cursor:pointer}
 .zsm.sel{box-shadow:0 0 0 2px var(--panel),0 0 0 4.5px var(--hl)}
-.sw i.zsk,.zsk{display:inline-block;width:11px;height:11px;flex:none;border-radius:50%;background:radial-gradient(circle,var(--fg) 0 22%,var(--panel) 23% 42%,var(--fg) 43%);margin:0 3px}
+.sw i.zsk,.zsk{display:inline-block;width:11px;height:11px;flex:none;border-radius:50%;background:radial-gradient(circle,var(--panel) 0 34%,var(--fg) 36%);margin:0 3px}
 .nzm.sel{box-shadow:0 0 0 2px var(--panel),0 0 0 4.5px var(--hl)}
 .zl.nzl{font-weight:600;font-style:italic}
 .opts{margin-top:4px;font-size:.85rem}
@@ -815,7 +815,7 @@ function drawStreetLabels(){sLabels.clearLayers();const z=map.getZoom();const b=
 map.on('zoomend moveend',syncStreets);
 
 // school dots
-// zoned schools: a bullseye in the school's color at its building; click to open its zone (works with zones hidden too)
+// zoned schools: a ring in the school's color at its building; click to open its zone (works with zones hidden too)
 map.createPane('zsPane').style.zIndex=461;
 const zsGroup=L.layerGroup().addTo(map);
 // school markers show from zoom 12 in (about a district across); farther out the zones carry the colors, with their stronger fill.
@@ -833,7 +833,7 @@ function buildZS(){zsGroup.clearLayers();if(!LAY.zs||typeof nzSize!=='function')
 function buildDots(){buildZS()}
 buildDots();
 // shrink school dots when zoomed out so they don't cover the zone colors
-function sizeDots(){}  // bullseyes are redrawn with the other markers on zoom (buildNZ)
+function sizeDots(){}  // the rings are redrawn with the other markers on zoom (buildNZ)
 map.on('zoomend',sizeDots);sizeDots();
 
 // zone number labels when zoomed in
