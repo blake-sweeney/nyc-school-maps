@@ -293,14 +293,13 @@ aside>*{flex-shrink:0}
 .gtm{display:block;width:100%;height:100%;overflow:visible;cursor:pointer;filter:drop-shadow(0 1px 2px rgba(0,0,0,.3))}
 .gtk{display:inline-block;width:12px;height:12px;flex:none;background:var(--fg);clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)}
 
-.nzm{width:100%;height:100%;box-sizing:border-box;transform:rotate(45deg) scale(.72);background:var(--c);border:2px solid var(--panel);box-shadow:0 0 0 1.2px var(--dot),0 1px 3px rgba(0,0,0,.35);cursor:pointer}
+.nzm{width:100%;height:100%;box-sizing:border-box;transform:rotate(45deg) scale(.72);background:var(--c);border:0;box-shadow:0 0 0 2px var(--dot),0 1px 3px rgba(0,0,0,.35);cursor:pointer}
 /* fingers need a bigger target than the drawn marker: an invisible ring around each one on touch screens */
 @media (pointer:coarse){.leaflet-nz-pane .leaflet-marker-icon::after,.leaflet-zs-pane .leaflet-marker-icon::after{content:"";position:absolute;inset:-14px;border-radius:50%}}
-.zsm{width:100%;height:100%;box-sizing:border-box;border-radius:50%;background:radial-gradient(circle,var(--dot) 0 22%,var(--panel) 23% 40%,var(--c) 41%);border:1.5px solid var(--panel);box-shadow:0 0 0 1.2px var(--dot),0 1px 3px rgba(0,0,0,.35);cursor:pointer}
+.zsm{width:100%;height:100%;box-sizing:border-box;border-radius:50%;background:radial-gradient(circle,var(--dot) 0 22%,var(--panel) 23% 40%,var(--c) 41%);border:0;box-shadow:0 0 0 1.5px var(--dot),0 1px 3px rgba(0,0,0,.35);cursor:pointer}
 .zsm.sel{box-shadow:0 0 0 2px var(--panel),0 0 0 4.5px var(--hl)}
 .sw i.zsk,.zsk{display:inline-block;width:11px;height:11px;flex:none;border-radius:50%;background:radial-gradient(circle,var(--fg) 0 22%,var(--panel) 23% 42%,var(--fg) 43%);margin:0 3px}
 .nzm.sel{box-shadow:0 0 0 2px var(--panel),0 0 0 4.5px var(--hl)}
-.nz-small .nzm{border-width:1.5px}
 .zl.nzl{font-weight:600;font-style:italic}
 .opts{margin-top:4px;font-size:.85rem}
 .opts summary{cursor:pointer;font-weight:700}
@@ -706,10 +705,11 @@ function syncNames(){if(!useBase)return;if(LAY.names&&!map.hasLayer(labelTiles))
 function baseFade(){const z=map.getZoom();baseTiles.setOpacity(z<11.5?.45:z<12.5?.7:1);labelTiles.setOpacity(z<12?.75:1)}
 function isDark(){const th=document.documentElement.dataset.theme;return th==='dark'||(th!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)}
 // a bit more solid in dark mode, where see-through colors over the dark basemap look muddy
-// zone fill: a light wash under the zoned-school markers, fading as you zoom in; stronger when the markers are
-// switched off, since the zones then carry the colors on their own
-function zoneAlpha(){if(!useBase)return .78;const z=map.getZoom(),zs=zsOn();
-  const a=zs?(z<11.5?.36:z<12.5?.35:z<13.5?.34:.33):(z<11.5?.8:z<12.5?.7:z<13.5?.6:.5);return isDark()?Math.min(a+(zs?.08:.15),.9):a}
+// zone fill: full color when zoomed all the way out (no markers), fading to a light wash by zoom 12 where the
+// markers appear, then a touch lighter as you zoom in. With "Zoned schools" switched off the zones keep more color.
+function zoneAlpha(){if(!useBase)return .78;const z=map.getZoom();
+  if(!LAY.zs){const a=z<11.5?.8:z<12.5?.7:z<13.5?.6:.5;return isDark()?Math.min(a+.15,.9):a}
+  const a=z<=9?.8:z<12?.8-(z-9)*(.8-.36)/3:z<12.5?.36:z<13.5?.35:z<14.5?.34:.33;return isDark()?Math.min(a+.08,.9):a}
 const SEL_FILL=.2;  // the selected zone's extra fill
 map.on('zoomend',()=>{baseFade();if(useBase&&typeof restyle==='function')restyle()});baseFade();
 const renderer=L.canvas({padding:.3,tolerance:2});
@@ -931,7 +931,7 @@ const STAR='50,2 61.5,36 97,36 68,57.5 79,92 50,71 21,92 32,57.5 3,36 38.5,36';
 function gtStar(c,sel){return '<svg class="gtm" viewBox="-16 -16 132 132" aria-hidden="true">'+
   (sel?'<polygon points="'+STAR+'" fill="none" stroke="var(--hl)" stroke-width="30" stroke-linejoin="round"/><polygon points="'+STAR+'" fill="none" stroke="var(--panel)" stroke-width="20" stroke-linejoin="round"/>':'')+
   '<polygon points="'+STAR+'" fill="var(--panel)" stroke="var(--dot)" stroke-width="'+(sel?12:16)+'" stroke-linejoin="round"/>'+
-  '<polygon points="'+STAR+'" fill="'+c+'" stroke="var(--panel)" stroke-width="8" stroke-linejoin="round"/></svg>'}
+  '<polygon points="'+STAR+'" fill="'+c+'"/></svg>'}
 // a marker label: up to ~24 characters of the name, with "High School" shortened to "HS"
 function shortName(n){n=n.replace(/^The\s+/i,'').replace(/,\s*The$/i,'').replace(/\bHigh School\b/gi,'HS');
   const w=n.split(/\s+/);let t=w[0];for(let i=1;i<w.length&&(t+' '+w[i]).length<=24;i++)t+=' '+w[i];return t.replace(/\s+(of|for|and|the|at|in|&)$/i,'').replace(/[,.;:-]+$/,'')}
