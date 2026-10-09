@@ -297,9 +297,12 @@ aside>*{flex-shrink:0}
 /* fingers need a bigger target than the drawn marker: an invisible ring around each one on touch screens */
 @media (pointer:coarse){.leaflet-nz-pane .leaflet-marker-icon::after,.leaflet-zs-pane .leaflet-marker-icon::after{content:"";position:absolute;inset:-14px;border-radius:50%}}
 .zsm{width:100%;height:100%;box-sizing:border-box;border-radius:50%;background:var(--c);border:0;box-shadow:0 0 0 1.5px var(--dot),0 1px 3px rgba(0,0,0,.35);cursor:pointer}
-.zsm.sel{box-shadow:0 0 0 2px var(--panel),0 0 0 4.5px var(--hl)}
+.addr-pin{display:block;overflow:visible;filter:drop-shadow(0 1px 2px rgba(0,0,0,.4))}
+.addr-pin path{fill:var(--fg);stroke:var(--panel);stroke-width:1.5}.addr-pin circle{fill:var(--accent)}
+/* selected: the usual outline stays, with a blue ring right outside it */
+.zsm.sel{box-shadow:0 0 0 1.5px var(--dot),0 0 0 4px var(--hl),0 1px 3px rgba(0,0,0,.35)}
 .sw i.zsk,.zsk{display:inline-block;width:11px;height:11px;flex:none;border-radius:50%;background:var(--fg);margin:0 3px}
-.nzm.sel{box-shadow:0 0 0 2px var(--panel),0 0 0 4.5px var(--hl)}
+.nzm.sel{box-shadow:0 0 0 2px var(--dot),0 0 0 5px var(--hl),0 1px 3px rgba(0,0,0,.35)}
 .zl.nzl{font-weight:600;font-style:italic}
 .opts{margin-top:4px;font-size:.85rem}
 .opts summary{cursor:pointer;font-weight:700}
@@ -934,8 +937,8 @@ function nzFill(d){return fillFor({properties:{dbns:[d],c:0}})}
 const STAR='50,2 61.5,36 97,36 68,57.5 79,92 50,71 21,92 32,57.5 3,36 38.5,36';
 // dark outline, white ring, then the color; selected adds a blue outer ring (like the diamonds)
 function gtStar(c,sel){return '<svg class="gtm" viewBox="-16 -16 132 132" aria-hidden="true">'+
-  (sel?'<polygon points="'+STAR+'" fill="none" stroke="var(--hl)" stroke-width="30" stroke-linejoin="round"/><polygon points="'+STAR+'" fill="none" stroke="var(--panel)" stroke-width="20" stroke-linejoin="round"/>':'')+
-  '<polygon points="'+STAR+'" fill="var(--panel)" stroke="var(--dot)" stroke-width="'+(sel?12:16)+'" stroke-linejoin="round"/>'+
+  (sel?'<polygon points="'+STAR+'" fill="none" stroke="var(--hl)" stroke-width="30" stroke-linejoin="round"/>':'')+
+  '<polygon points="'+STAR+'" fill="var(--panel)" stroke="var(--dot)" stroke-width="16" stroke-linejoin="round"/>'+
   '<polygon points="'+STAR+'" fill="'+c+'"/></svg>'}
 // a marker label: up to ~24 characters of the name, with "High School" shortened to "HS"
 function shortName(n){n=n.replace(/^The\s+/i,'').replace(/,\s*The$/i,'').replace(/\bHigh School\b/gi,'HS');
@@ -1116,11 +1119,14 @@ q.addEventListener('input',()=>{const v=q.value.trim().toLowerCase();if(v.length
 function inRing(x,y,r){let ins=false;for(let i=0,j=r.length-1;i<r.length;j=i++){const[xi,yi]=r[i],[xj,yj]=r[j];if((yi>y)!==(yj>y)&&x<(xj-xi)*(y-yi)/(yj-yi)+xi)ins=!ins}return ins}
 function inGeom(x,y,g){const ps=g.type==='MultiPolygon'?g.coordinates:[g.coordinates];return ps.some(p=>inRing(x,y,p[0])&&!p.slice(1).some(h=>inRing(x,y,h)))}
 // address lookup: NYC Planning GeoSearch (free, no key). Coordinates like "40.67, -73.97" also work.
+map.createPane('pinPane').style.zIndex=470;map.getPane('pinPane').style.pointerEvents='none';
+const PIN_SVG='<svg class="addr-pin" viewBox="0 0 26 34" width="26" height="34" aria-hidden="true"><path d="M13 33C13 33 2 20 2 12.5a11 11 0 0 1 22 0C24 20 13 33 13 33z"/><circle cx="13" cy="12.5" r="4.2"/></svg>';
 let pin=null,lastPoint=null;const llmsg=document.getElementById('llmsg'),llIn=document.getElementById('ll'),addrRes=document.getElementById('addr-res');
 const GEO='https://geosearch.planninglabs.nyc/v2/';
 function locate(a,b,label,keepView){lastPoint={a,b,label};llmsg.hidden=true;
-  // the pin lives in the click-through selection pane so the zones underneath stay clickable and hoverable
-  if(pin)map.removeLayer(pin);pin=L.circleMarker([a,b],{renderer:selRend,pane:'selPane',radius:8,weight:3,color:css('--accent'),fillColor:css('--fg'),fillOpacity:1,interactive:false}).addTo(map);
+  // a map pin with its tip on the address, above the school markers; it doesn't take clicks, so the zone underneath
+  // stays clickable and hoverable
+  if(pin)map.removeLayer(pin);pin=L.marker([a,b],{pane:'pinPane',interactive:false,keyboard:false,icon:L.divIcon({className:'',html:PIN_SVG,iconSize:[26,34],iconAnchor:[13,33]})}).addTo(map);
   const hit=byLayer.find(l=>inGeom(b,a,l.feature.geometry));
   if(!hit||!hit.feature.properties.dbns.length){if(hit)select(hit,true);llmsg.textContent=LEVEL_TXT[level].miss;llmsg.hidden=false;if(!keepView)map.setView([a,b],14);return}
   select(hit,true);if(!keepView)showLatLng([a,b],15)}
