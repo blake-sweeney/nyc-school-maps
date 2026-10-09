@@ -671,7 +671,11 @@ function syncNames(){if(!useBase)return;if(LAY.names&&!map.hasLayer(labelTiles))
 function baseFade(){const z=map.getZoom();baseTiles.setOpacity(z<11.5?.45:z<12.5?.7:1);labelTiles.setOpacity(z<12?.75:1)}
 function isDark(){const th=document.documentElement.dataset.theme;return th==='dark'||(th!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)}
 // a bit more solid in dark mode, where see-through colors over the dark basemap look muddy
-function zoneAlpha(){if(!useBase)return .78;const z=map.getZoom();const a=z<11.5?.8:z<12.5?.7:z<13.5?.6:.5;return isDark()?Math.min(a+.15,.9):a}
+// zone fill: a light wash under the zoned-school markers, fading as you zoom in; stronger when the markers are
+// switched off, since the zones then carry the colors on their own
+function zoneAlpha(){if(!useBase)return .78;const z=map.getZoom(),zs=zsOn();
+  const a=zs?(z<11.5?.5:z<12.5?.42:z<13.5?.33:.25):(z<11.5?.8:z<12.5?.7:z<13.5?.6:.5);return isDark()?Math.min(a+(zs?.08:.15),.9):a}
+const SEL_FILL=.2;  // the selected zone's extra fill
 map.on('zoomend',()=>{baseFade();if(useBase&&typeof restyle==='function')restyle()});baseFade();
 const renderer=L.canvas({padding:.3,tolerance:2});
 function short(d){const s=S[d];if(!s)return 'School '+d;return s.n}
@@ -711,7 +715,7 @@ function fillFor(f){const p=f.properties;if(!p.dbns.length)return css('--land');
 function style(f,sel){const a=zoneAlpha();const empty=!f.properties.dbns.length;
   if(!LAY.zones)return{renderer,stroke:false,fillColor:'#000',fillOpacity:0};
   if(f.properties.dbns.length>1&&metric!=='none')return{renderer,stroke:false,fillColor:fillFor(f),fillOpacity:0};  // drawn as stripes
-  return{renderer,stroke:false,fillColor:fillFor(f),fillOpacity:useBase&&empty?.15:sel?Math.min(a+.15,.95):a}}
+  return{renderer,stroke:false,fillColor:fillFor(f),fillOpacity:useBase&&empty?.15:sel?Math.min(a+SEL_FILL,.95):a}}
 let selected=null,layer=null,byLayer=[],zoneLines=null;
 // zones with more than one school: diagonal stripes, one band in each school's color
 map.createPane('stripes').style.zIndex=401;map.getPane('stripes').style.pointerEvents='none';
@@ -727,7 +731,7 @@ function buildStripes(){buildNoZone();stripeGroup.clearLayers();if(metric==='non
   const a=zoneAlpha();let defs=null,i=0;
   byLayer.forEach(l=>{const p=l.feature.properties;if(p.dbns.length<2)return;
     const cols=p.dbns.map(d=>fillFor({properties:Object.assign({},p,{dbns:[d]})}));
-    const g=L.geoJSON(l.feature,{style:{renderer:stripeRend,stroke:false,fill:true,fillColor:cols[0],fillOpacity:l===selected?Math.min(a+.15,.95):a,interactive:false}}).addTo(stripeGroup);
+    const g=L.geoJSON(l.feature,{style:{renderer:stripeRend,stroke:false,fill:true,fillColor:cols[0],fillOpacity:l===selected?Math.min(a+SEL_FILL,.95):a,interactive:false}}).addTo(stripeGroup);
     const svg=stripeRend._container;if(!svg)return;
     if(!defs){defs=svg.querySelector('defs');if(!defs){defs=document.createElementNS('http://www.w3.org/2000/svg','defs');svg.insertBefore(defs,svg.firstChild)}defs.innerHTML=''}
     const id='zs'+(i++),bw=6,W=bw*cols.length;
