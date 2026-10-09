@@ -709,7 +709,7 @@ function isDark(){const th=document.documentElement.dataset.theme;return th==='d
 // markers appear, then a touch lighter as you zoom in. With "Zoned schools" switched off the zones keep more color.
 function zoneAlpha(){if(!useBase)return .78;const z=map.getZoom();
   if(!LAY.zs){const a=z<11.5?.8:z<12.5?.7:z<13.5?.6:.5;return isDark()?Math.min(a+.15,.9):a}
-  const a=z<=9?.8:z<12?.8-(z-9)*(.8-.36)/3:z<12.5?.36:z<13.5?.35:z<14.5?.34:.33;return isDark()?Math.min(a+.08,.9):a}
+  const a=Math.min(.9,(z<=9?.8:z<12?.8-(z-9)*(.8-.36)/3:z<12.5?.36:z<13.5?.35:z<14.5?.34:.33)*1.36);return isDark()?Math.min(a+.08,.9):a}
 const SEL_FILL=.2;  // the selected zone's extra fill
 map.on('zoomend',()=>{baseFade();if(useBase&&typeof restyle==='function')restyle()});baseFade();
 const renderer=L.canvas({padding:.3,tolerance:2});
@@ -940,7 +940,9 @@ function nzAt(k){return NZ.filter(o=>nzShown(o)&&nzSpot(o)===k)}
 // small when zoomed out (the whole city), full size once you're looking at a neighborhood
 // zoomed all the way out, markers and zone lines shrink: half size at zoom 9, three quarters at 10, full from 11
 function farScale(){return Math.min(1,Math.max(.5,.5+(map.getZoom()-9)*.25))}
-function nzSize(){const z=map.getZoom();return (z<11.5?8:z<12.5?10:z<13.5?13:z<14.5?16:20)*farScale()}
+// markers appear at zoom 12 at half size and grow to full size by 14 (farther out only the selected school's shows)
+function markerScale(){return Math.min(1,Math.max(.5,.5+(map.getZoom()-12)*.25))}
+function nzSize(){const z=map.getZoom();return (z<11.5?8:z<12.5?10:z<13.5?13:z<14.5?16:20)*markerScale()}
 function buildNZ(){nzGroup.clearLayers();document.getElementById('nz-key').hidden=!nzOn();buildZS();document.getElementById('nz-key').hidden=!nzOn()&&!zsOn();document.getElementById('zsk-item').hidden=!zsOn();document.getElementById('nzk-item').hidden=!(nzOn()&&LAY[level==='hs'?'hsnz':'nz']);document.getElementById('gtk-item').hidden=!(nzOn()&&LAY.gt&&NZ.some(o=>o.gt));if(!nzWanted())return;const sz=nzSize(),near=markersByZoom();
   const groups={};NZ.forEach(o=>{if(nzShown(o)&&(near||nzSel===o.d))(groups[nzSpot(o)]=groups[nzSpot(o)]||[]).push(o)});
   NZ.forEach(o=>{if(!nzShown(o)||!near&&nzSel!==o.d)return;const sz=o.gt?Math.round(nzSize()*(nzSel===o.d?2.3:2)):nzSize();
