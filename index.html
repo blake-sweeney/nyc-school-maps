@@ -309,7 +309,7 @@ aside>*{flex-shrink:0}
 @media (pointer:coarse){.leaflet-nz-pane .leaflet-marker-icon::after,.leaflet-zs-pane .leaflet-marker-icon::after{content:"";position:absolute;inset:-14px;border-radius:50%}}
 .zsm{width:100%;height:100%;box-sizing:border-box;border-radius:50%;background:var(--c);border:0;box-shadow:0 0 0 1.5px var(--dot),0 1px 3px rgba(0,0,0,.35);cursor:pointer}
 .addr-pin{display:block;overflow:visible;filter:drop-shadow(0 1px 2px rgba(0,0,0,.4))}
-.addr-pin path{fill:var(--fg);stroke:var(--panel);stroke-width:1.5}.addr-pin circle{fill:var(--accent)}
+.addr-pin path{fill:#e0242c;stroke:#fff;stroke-width:1.6}.addr-pin circle{fill:#fff}
 /* selected: the usual outline stays, with a blue ring right outside it */
 .zsm.sel{box-shadow:0 0 0 1.5px var(--dot),0 0 0 4px var(--hl),0 1px 3px rgba(0,0,0,.35)}
 .sw i.zsk,.zsk{display:inline-block;width:11px;height:11px;flex:none;border-radius:50%;background:var(--fg);margin:0 3px}
@@ -866,7 +866,8 @@ map.on('zoomend moveend',syncStreets);
 
 // school dots
 // marker sizes relative to nzSize(): zoned circles, diamonds (schools without a zone), and the selected one's extra
-const ZS_SIZE=.73,NZ_SIZE=.8,SEL_SIZE=1.3;
+// a star's box is a bit bigger than a diamond's so the two read as the same size on the map
+const ZS_SIZE=.73,NZ_SIZE=.8,STAR_SIZE=1.3,SEL_SIZE=1.3;
 // the selected marker's size: 30% larger, and at least 3px larger so it shows on the smallest markers (sizes aren't
 // rounded to whole pixels, which would swallow the difference at small sizes)
 function selSize(sz){return Math.max(sz*SEL_SIZE,sz+3)}
@@ -965,7 +966,7 @@ function markerScale(){return Math.min(1,Math.max(.5,.5+(map.getZoom()-12)*.25))
 function nzSize(){const z=map.getZoom();return (z<11.5?8:z<12.5?10:z<13.5?13:z<14.5?16:20)*markerScale()}
 function buildNZ(){nzGroup.clearLayers();document.getElementById('nz-key').hidden=!nzOn();buildZS();document.getElementById('nz-key').hidden=!nzOn()&&!zsOn();document.getElementById('zsk-item').hidden=!zsOn();document.getElementById('nzk-item').hidden=!(nzOn()&&LAY[level==='hs'?'hsnz':'nz']);document.getElementById('gtk-item').hidden=!(nzOn()&&LAY.gt&&NZ.some(o=>o.gt));if(!nzWanted())return;const sz=nzSize(),near=markersByZoom();
   const groups={};NZ.forEach(o=>{if(nzShown(o)&&(near||nzSel===o.d))(groups[nzSpot(o)]=groups[nzSpot(o)]||[]).push(o)});
-  NZ.forEach(o=>{if(!nzShown(o)||!near&&nzSel!==o.d)return;const sz=o.gt?Math.round(nzSize()*(nzSel===o.d?2.3:2)):(nzSel===o.d?selSize(nzSize()*NZ_SIZE):nzSize()*NZ_SIZE);
+  NZ.forEach(o=>{if(!nzShown(o)||!near&&nzSel!==o.d)return;const b=nzSize()*(o.gt?STAR_SIZE:NZ_SIZE),sz=nzSel===o.d?selSize(b):b;
     const g=groups[nzSpot(o)],i=g.indexOf(o),r=g.length>1&&map.getZoom()>=12?nzSize()*.75+g.length*1.5:0,ang=2*Math.PI*i/g.length-Math.PI/2,dx=r*Math.cos(ang),dy=r*Math.sin(ang);
     const m=L.marker([o.lat,o.lon],{pane:'nzPane',keyboard:false,zIndexOffset:nzSel===o.d?1000:0,
       icon:L.divIcon({className:'',html:o.gt?gtStar(nzFill(o.d),nzSel===o.d):'<div class="nzm'+(nzSel===o.d?' sel':'')+'" style="--c:'+nzFill(o.d)+'"></div>',iconSize:[sz,sz],iconAnchor:[sz/2-dx,sz/2-dy]})});
@@ -1171,13 +1172,13 @@ function inRing(x,y,r){let ins=false;for(let i=0,j=r.length-1;i<r.length;j=i++){
 function inGeom(x,y,g){const ps=g.type==='MultiPolygon'?g.coordinates:[g.coordinates];return ps.some(p=>inRing(x,y,p[0])&&!p.slice(1).some(h=>inRing(x,y,h)))}
 // address lookup: NYC Planning GeoSearch (free, no key). Coordinates like "40.67, -73.97" also work.
 map.createPane('pinPane').style.zIndex=470;map.getPane('pinPane').style.pointerEvents='none';
-const PIN_SVG='<svg class="addr-pin" viewBox="0 0 26 34" width="26" height="34" aria-hidden="true"><path d="M13 33C13 33 2 20 2 12.5a11 11 0 0 1 22 0C24 20 13 33 13 33z"/><circle cx="13" cy="12.5" r="4.2"/></svg>';
+const PIN_SVG='<svg class="addr-pin" viewBox="0 0 26 34" width="34" height="44" aria-hidden="true"><path d="M13 33C13 33 2 20 2 12.5a11 11 0 0 1 22 0C24 20 13 33 13 33z"/><circle cx="13" cy="12.5" r="4.2"/></svg>';
 let pin=null,lastPoint=null;const llmsg=document.getElementById('llmsg'),llIn=document.getElementById('ll'),addrRes=document.getElementById('addr-res');
 const GEO='https://geosearch.planninglabs.nyc/v2/';
 function locate(a,b,label,keepView){lastPoint={a,b,label};llmsg.hidden=true;
   // a map pin with its tip on the address, above the school markers; it doesn't take clicks, so the zone underneath
   // stays clickable and hoverable
-  if(pin)map.removeLayer(pin);pin=L.marker([a,b],{pane:'pinPane',interactive:false,keyboard:false,icon:L.divIcon({className:'',html:PIN_SVG,iconSize:[26,34],iconAnchor:[13,33]})}).addTo(map);
+  if(pin)map.removeLayer(pin);pin=L.marker([a,b],{pane:'pinPane',interactive:false,keyboard:false,icon:L.divIcon({className:'',html:PIN_SVG,iconSize:[34,44],iconAnchor:[17,43]})}).addTo(map);
   const hit=byLayer.find(l=>inGeom(b,a,l.feature.geometry));
   if(!hit||!hit.feature.properties.dbns.length){if(hit)select(hit,true);llmsg.textContent=LEVEL_TXT[level].miss;llmsg.hidden=false;if(!keepView)map.setView([a,b],14);return}
   select(hit,true);if(!keepView)showLatLng([a,b],15)}
