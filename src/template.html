@@ -155,6 +155,13 @@ aside>*{flex-shrink:0}
 .progs .pn{min-width:0}.progs small{display:block;color:var(--muted);font-size:.75rem}
 .more-progs summary{cursor:pointer;color:var(--hl);font-size:.8rem;padding:5px 0;border-top:1px solid var(--line)}
 .progs .pd{text-align:right;white-space:nowrap;font-family:var(--display);font-weight:600;font-variant-numeric:tabular-nums}
+.sec>summary{display:flex;align-items:center;gap:8px;min-height:34px;cursor:pointer;list-style:none;font-size:.85rem}
+.sec>summary::-webkit-details-marker{display:none}
+.sec>summary .st{flex:1;font-weight:700}.sec>summary .st small{display:block;font-weight:400;color:var(--muted);font-size:.75rem}
+.sec>summary::after{content:'';flex:none;width:7px;height:7px;margin:0 3px 3px 2px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);transition:transform .15s}
+.sec[open]>summary::after{transform:translateY(3px) rotate(-135deg)}
+.sec-b{display:flex;flex-direction:column;gap:6px;padding:2px 0 4px}.sec-b>a{color:var(--hl);font-size:.82rem}
+.adm+.sec{margin-top:4px}.adm .adm-sum td:last-child{color:inherit;font-weight:600}.adm small{font-weight:400;color:var(--muted)}
 .adm-about{font-size:.75rem;color:var(--muted)}.adm-about summary{cursor:pointer}.adm-about p{margin:4px 0 0}
 .about{font-size:.8rem;color:var(--muted);display:flex;flex-direction:column;gap:6px;margin-top:auto}
 .about p{margin:0}
@@ -584,7 +591,8 @@ function pkCat(d){const p=PK[d];if(!p)return null;return (p[0]?1:0)+(p[2]?1:0)}
 function zonePk(dbns){const v=dbns.map(pkCat).filter(x=>x!=null);return v.length?Math.max(...v):null}
 // building use (SCA Blue Book 2025-26): [utilization %, enrollment, capacity] per school
 const U=D.U||{};
-// pre-K and 3-K (Local Law 72 report, __PREK__ admissions): [pre-K seats, applicants, 3-K seats, applicants]; null = no program
+// pre-K and 3-K (Local Law 72 report, __PREK__ admissions): [pre-K seats, applicants, 3-K seats, applicants, pre-K offers,
+//   3-K offers]; applicants didn't get a choice they ranked higher; null = no program, "s" = hidden for privacy
 const PK=D.PK||{};
 // kindergarten admissions (Local Law 72 reports): {year: [seats, true applicants, offers lo, hi,
 //   own district applicants lo, hi, offers lo, hi, other districts applicants lo, hi, offers lo, hi]}; ranges where the DOE hid small counts
@@ -978,16 +986,34 @@ function factsHtml(d){const x=X[d]||[],c=CS[d]||{},u=U[d];if(!X[d]&&!CS[d]&&!u)r
   const cs=v=>v!=null?Math.round(v)+' students':null;
   const row=(k,v)=>v==null?'':'<span>'+k+'</span><b>'+v+'</b>';
   const h=row('Attendance',x[1]!=null?x[1]+'%':null)+row('Teachers with 3+ years’ experience',x[2]!=null?x[2]+'%':null)+row('Principal’s years at school',x[3]!=null?(Math.round(x[3]*10)/10):null)+(level==='es'?row('Kindergarten class size',cs(c.k))+row('Grades 1–5 class size',cs(c.e)):row('Core class size',cs(level==='ms'?c.ms:c.hs)))+row('Building use (how full)',u?u[0]+'% of capacity':null)+row('Students with IEPs (special ed)',x[6]!=null?x[6]+'%':null)+row('English language learners',x[5]!=null?x[5]+'%':null)+'';return h?'<div class="facts">'+h+'</div>':''}
-// pre-K and 3-K at an elementary school (Local Law 72, __PREK__): its own block next to kindergarten admissions
-function pkHtml(d){const pk=level==='es'?PK[d]:null;if(!pk)return '';
+// elementary card: sections that open and close. Each viewer's choice is remembered in this browser; the Color by
+// metric also opens the section that shows it (without changing what's remembered).
+const SEC_KEY='nsz-card-v1',SEC={},SEC_FOR={ip:'rate',ss:'rate',rf:'rate',ela:'tests',math:'tests',iep:'facts',util:'facts'};
+try{Object.assign(SEC,JSON.parse(localStorage.getItem(SEC_KEY)||'{}'))}catch(e){}
+function sec(k,sum,body){return '<details class="sec" data-sec="'+k+'"'+(SEC[k]||SEC_FOR[metric]===k?' open':'')+'><summary>'+sum+'</summary><div class="sec-b">'+body+'</div></details>'}
+card.addEventListener('click',e=>{const s=e.target.closest('.sec>summary');if(!s)return;const k=s.parentNode.dataset.sec;
+  SEC[k]=!s.parentNode.open;try{localStorage.setItem(SEC_KEY,JSON.stringify(SEC))}catch(err){}});
+function esRateHtml(d){const r=R[d];if(!r||r.slice(2,5).every(x=>x==null))return '<span class="meta">No __SNAPSHOT__ Snapshot ratings (often K–2 or new schools).</span>';
+  return sec('rate','<span class="st">Overall rating</span>'+chip(schoolRating(d,'comp'),1),'<div class="rates"><span>Instruction</span>'+chip(r[2],1)+'<span>Safety &amp; climate</span>'+chip(r[3],1)+'<span>Families</span>'+chip(r[4],1)+'</div><a href="https://tools.nycenet.edu/snapshot/__SNAPSHOT_YEAR__/'+esc(d)+'/'+esc(r[5]||'EMS')+'/" target="_blank" rel="noopener">__SNAPSHOT__ School Quality Snapshot ↗</a>')}
+// one score for ELA and math together (students meeting standards on either test, as the "ELA + Math" Color by)
+function esTestHtml(d){const v=T[d];if(!v)return '<span class="meta">No __SNAPSHOT__ state test results (K–2 or newer school).</span>';
+  const b=pct([d],'both'),e=v[0]?100*v[1]/v[0]:null,m=v[2]?100*v[3]/v[2]:null,gap=e!=null&&m!=null?Math.round(m-e):0;
+  const hint=Math.abs(gap)>=10?(gap>0?'Math ':'ELA ')+Math.abs(gap)+' points higher':'ELA and math, grades 3–5';
+  return sec('tests','<span class="st">State test score<small>'+hint+'</small></span><span class="chip"><i style="background:'+scoreColor(b)+'"></i>'+Math.round(b)+'%</span>',scoreHtml(d))}
+// admissions at an elementary school: 3-K and pre-K (Local Law 72, __PREK__) and kindergarten (KA, latest year) side by side;
+// offers and how kindergarten seats were filled behind "More"
+function esAdmHtml(d){const pk=PK[d],ka=KA[d],ky=ka&&Object.keys(ka).sort().pop(),k=ky&&ka[ky];if(!pk&&!k)return '';
   // "s": the report hides that count for privacy; the program is still offered
-  const num=v=>typeof v==='number',hid=pk.includes('s');
-  const r=(lab,n,a)=>'<tr><th>'+lab+'</th>'+(n?'<td>'+(num(n)?n:'—')+'</td><td>'+(num(a)?a.toLocaleString():'—')+'</td><td>'+(num(a)&&num(n)&&a?Math.round(a/n*10)/10+' per seat':'')+'</td>':'<td colspan="3" class="na">Not offered</td>')+'</tr>';
-  return '<div class="adm"><div class="adm-h">Pre-K and 3-K, __PREK__<span>seats and applicants at this school</span></div>'+
-    (pk[0]||pk[2]?'<table><thead><tr><th></th><th>Seats</th><th>Applied</th><th></th></tr></thead><tbody>'+r('Pre-K',pk[0],pk[1])+r('3-K',pk[2],pk[3])+'</tbody></table>'+(hid?'<p class="adm-note">— Not published: the DOE hides small counts for privacy.</p>':'')
-      :'<p class="adm-note">This school doesn’t offer pre-K or 3-K. Many seats are at nearby early childhood centers; MySchools lists every program.</p>')+
-    (pk[0]||pk[2]?'<p class="adm-note">Seats aren’t zoned: families apply through MySchools, and zoned families often get priority. “Applied” counts every family who listed the school anywhere on their application.</p>':'')+
-    '<a href="https://www.myschools.nyc/en/" target="_blank" rel="noopener">Find pre-K and 3-K programs on MySchools ↗</a></div>'}
+  const num=v=>typeof v==='number',show=v=>num(v)?v.toLocaleString():'—';let hid=false;
+  const r=(lab,n,a)=>{if(n&&(!num(n)||!num(a)))hid=true;return '<tr><th>'+lab+'</th>'+(n?'<td>'+show(n)+'</td><td>'+show(a)+'</td>':'<td colspan="2" class="na">Not offered</td>')+'</tr>'};
+  const yr='fall '+(ky||'__PREK__'.replace(/\D/g,'')),kLab='Kindergarten'+(ky&&'__PREK__'.indexOf(ky)<0?' <small>(fall '+ky+')</small>':'');
+  const rows=(pk?r('3-K',pk[2],pk[3])+r('Pre-K',pk[0],pk[1]):'')+(k?r(kLab,k[0],k[1]):'');
+  const off=pk?[['3-K',pk[2],pk[5]],['Pre-K',pk[0],pk[4]]].filter(x=>x[1]):[];
+  const more=(off.length?'<div class="facts">'+off.map(x=>'<span>'+x[0]+' offers</span><b>'+show(x[2])+'</b>').join('')+'</div>':'')+
+    (pk&&(pk[0]||pk[2])?'<p class="adm-note">Pre-K and 3-K seats aren’t zoned: families apply through MySchools, and zoned families often get priority.</p>':pk?'<p class="adm-note">This school doesn’t offer pre-K or 3-K. Many seats are at nearby early childhood centers; MySchools lists every program.</p>':'')+
+    '<a href="https://www.myschools.nyc/en/" target="_blank" rel="noopener">Find pre-K and 3-K programs on MySchools ↗</a>'+(k?'<hr class="sep">'+admHtml(d):'');
+  return '<div class="adm"><div class="adm-h">Admissions, '+yr+'<span>seats and families who applied</span></div><table class="adm-sum"><thead><tr><th></th><th>Seats</th><th>Applied</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+    (hid?'<p class="adm-note">— Not published: the DOE hides small counts for privacy.</p>':'')+'</div>'+sec('adm','<span class="st">Offers and how seats were filled</span>','<div class="adm">'+more+'</div>')}
 // street address with a copy button (for maps apps and forms)
 function addrHtml(d){const s=S[d];if(!s||!s.a)return '';const full=title(s.a)+', '+(BORO[d[2]]||'')+', NY';
   return '<span class="addr">'+esc(title(s.a))+', '+esc(BORO[d[2]]||'')+'<button type="button" class="copy-addr" data-copy="'+esc(full)+'" aria-label="Copy address: '+esc(full)+'">Copy</button></span>'}
@@ -1017,7 +1043,7 @@ function kindText(p){const n=p.dbns.length,k=zoneKind(p);
   return '<b>Shared zone:</b> families here get zoned priority at all '+n+' schools below and can rank any of them.'}
 // one school's details (zoned or not)
 function schoolBlock(d){const s=S[d],n=X[d]&&X[d][0]!=null?X[d][0].toLocaleString()+' students':'',gr=s&&s.g?'Grades '+esc(grades(s.g,d)):'';
-  return '<div class="school"><span class="nm"><a class="nm-link" href="'+pageUrl(d)+'">'+esc(short(d))+'</a> <span class="dbn">('+esc(d)+')</span></span>'+addrHtml(d)+(gr||n?'<span class="meta">'+[gr,n].filter(Boolean).join(' · ')+'</span>':'')+tagsHtml(d)+(level==='hs'?zonedHtml(d):'')+'<hr class="sep">'+rateHtml(d)+'<hr class="sep">'+scoreHtml(d)+(factsHtml(d)?'<hr class="sep">'+factsHtml(d):'')+(level!=='es'&&cutHtml(d)?'<hr class="sep">'+cutHtml(d):'')+(level!=='es'&&admHtml(d,level)?'<hr class="sep">'+admHtml(d,level):'')+(level!=='es'&&progHtml(d)?'<hr class="sep">'+progHtml(d):'')+(level==='es'&&PK[d]?'<hr class="sep">'+pkHtml(d):'')+(level==='es'&&KA[d]?'<hr class="sep">'+admHtml(d):'')+'<hr class="sep">'+'<div class="links">'+'<a href="'+pageUrl(d)+'"><b>Full school page →</b></a>'+'<a href="'+mySchoolsUrl(d)+'" target="_blank" rel="noopener"><b>MySchools: apply &amp; see your chances ↗</b></a><a href="https://www.schools.nyc.gov/schools/'+esc(d.slice(2))+'" target="_blank" rel="noopener">School website ↗</a></div></div>'}
+  return '<div class="school"><span class="nm"><a class="nm-link" href="'+pageUrl(d)+'">'+esc(short(d))+'</a> <span class="dbn">('+esc(d)+')</span></span>'+addrHtml(d)+(gr||n?'<span class="meta">'+[gr,n].filter(Boolean).join(' · ')+'</span>':'')+tagsHtml(d)+(level==='hs'?zonedHtml(d):'')+(level==='es'?'<hr class="sep">'+esRateHtml(d)+'<hr class="sep">'+esTestHtml(d)+(esAdmHtml(d)?'<hr class="sep">'+esAdmHtml(d):'')+(factsHtml(d)?'<hr class="sep">'+sec('facts','<span class="st">School details</span>',factsHtml(d)):''):'<hr class="sep">'+rateHtml(d)+'<hr class="sep">'+scoreHtml(d)+(factsHtml(d)?'<hr class="sep">'+factsHtml(d):''))+(level!=='es'&&cutHtml(d)?'<hr class="sep">'+cutHtml(d):'')+(level!=='es'&&admHtml(d,level)?'<hr class="sep">'+admHtml(d,level):'')+(level!=='es'&&progHtml(d)?'<hr class="sep">'+progHtml(d):'')+'<hr class="sep">'+'<div class="links">'+'<a href="'+pageUrl(d)+'"><b>Full school page →</b></a>'+'<a href="'+mySchoolsUrl(d)+'" target="_blank" rel="noopener"><b>MySchools: apply &amp; see your chances ↗</b></a><a href="https://www.schools.nyc.gov/schools/'+esc(d.slice(2))+'" target="_blank" rel="noopener">School website ↗</a></div></div>'}
 // a big no-zone area (most of the city in the high school view) spans many districts: a click there selects
 // just the district under the click, outlined, instead of the whole area
 function distAt(ll){const x=ll.lng,y=ll.lat;for(const [k,v] of Object.entries(DIST)){let inside=false;
@@ -1158,6 +1184,7 @@ function showGroup(g){curGroup=g;
 let quietColor=false;
 document.querySelectorAll('input[name=metric]').forEach(r=>r.addEventListener('change',()=>{const s=r.closest('.seg[data-g]');if(s){lastPick[s.dataset.g]=r.value;showGroup(s.dataset.g)}
   if(!quietColor)markEngaged();metric=r.value;syncLegend();restyle();drawLabels();setColorParam();placePanel();
+  if(SEC_FOR[metric])card.querySelectorAll('.sec[data-sec="'+SEC_FOR[metric]+'"]').forEach(x=>{x.open=true});
   if(!quietColor&&phone.matches)setPanel(false)}));
 // the color choice rides along in the URL (?c=ela), so a shared link opens with the same coloring
 function setColorParam(){try{const u=new URL(location.href);if(metric==='comp')u.searchParams.delete('c');else u.searchParams.set('c',metric);history.replaceState(null,'',u.pathname+u.search+u.hash)}catch(e){}}

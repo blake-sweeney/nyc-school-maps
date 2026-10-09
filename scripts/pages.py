@@ -581,18 +581,20 @@ def page_html(d, dbn, streets, site_url, goat, nbi=None):
             ext(f"https://www.schools.nyc.gov/schools/{dbn[2:]}", "School page: contacts, hours, bell schedule")))
     if lv == "es" and pk:
         if pk[0] or pk[2]:
-            def offer(n, a):  # "s": the report hides that count for privacy; the program is still offered
+            def offer(n, a, o):  # "s": the report hides that count for privacy; the program is still offered
                 if not n:
                     return "Not offered"
                 seats = "Offered (seats not published)" if n == "s" else f"{n} seats"
-                return seats + ("" if a is None else " · applicants not published" if a == "s" else f" · {a:,} applied")
-            rows = [(lab, offer(n, a)) for lab, n, a in (("Pre-K", pk[0], pk[1]), ("3-K", pk[2], pk[3]))]
+                return (seats + ("" if a is None else " · applicants not published" if a == "s" else f" · {a:,} applied")
+                        + ("" if o in (None, "s") else f" · {o:,} offers"))
+            pko = pk[4:6] if len(pk) > 5 else [None, None]
+            rows = [(lab, offer(n, a, o)) for lab, n, a, o in (("Pre-K", pk[0], pk[1], pko[0]), ("3-K", pk[2], pk[3], pko[1]))]
             body = facts_rows(rows)
         else:
             body = "<p>This school doesn’t offer pre-K or 3-K. Many seats are at nearby early childhood centers; MySchools lists every program.</p>"
         sections.append(f"<h2>Pre-K and 3-K, {settings.PREK_LABEL}</h2>" + body +
                         ('<p class="src">Seats aren’t zoned: families apply through MySchools, and zoned families often get priority. '
-                         '“Applied” counts every family who listed the school anywhere on their application. DOE Local Law 72 report.</p>'
+                         'Applicants listed the school and didn’t get a choice they ranked higher. DOE Local Law 72 report.</p>'
                          if pk[0] or pk[2] else "")
                         + more(ext("https://www.myschools.nyc/en/", "Find pre-K and 3-K programs on MySchools")))
     if lv == "es":

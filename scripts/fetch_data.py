@@ -431,24 +431,25 @@ STEPS = {"zones": fetch_zones, "tests": fetch_tests, "snapshot": fetch_snapshot,
          "classsize": fetch_class_size, "neighborhoods": fetch_neighborhoods}
 
 def fetch_prek(path):
-    """Pre-K and 3-K seats and applicants per school, from the DOE's Local Law 72 admissions report.
+    """Pre-K and 3-K seats, applicants and offers per school, from the DOE's Local Law 72 admissions report.
 
     Download the latest "fall-YYYY-admissions" Local Law 72 file (School tab) from
     https://infohub.nyced.org/reports/government-reports, then run: fetch_data.py prek <file.xlsx>
-    Writes prek.json: {dbn: [pre-K seats, pre-K applicants, 3-K seats, 3-K applicants]}, from the
-    "All Students" row: a number; None where the school has no program ("N/A" or blank); or "s" where the report
-    hides the count for privacy. Keep "s" apart from None: a hidden seat count still means the school has the
-    program, and the map and pages show it as offered.
-    Applicants are everyone who listed the school anywhere on their application.
+    Writes prek.json: {dbn: [pre-K seats, pre-K applicants, 3-K seats, 3-K applicants, pre-K offers, 3-K offers]},
+    from the "All Students" row: a number; None where the school has no program ("N/A" or blank); or "s" where the
+    report hides the count for privacy ("s" or "s^"). Keep "s" apart from None: a hidden seat count still means the
+    school has the program, and the map and pages show it as offered.
+    Applicants are "true" applicants, as for kindergarten: families who listed the school and didn't get an offer
+    they ranked higher.
     """
     rows = read_xlsx(os.path.expanduser(path))["School"]
     head = rows[0]
-    col = {k: head.index(k) for k in ("Pre-K Seats Available", "Pre-K Total Applicants",
-                                       "3K Seats Available", "3K Total Applicants")}
+    col = {k: head.index(k) for k in ("Pre-K Seats Available", "Pre-K True Applicants", "Pre-K Offers",
+                                       "3K Seats Available", "3K True Applicants", "3K Offers")}
 
     def num(r, k):
         v = r[col[k]] if len(r) > col[k] else None
-        if str(v).strip().lower() == "s":
+        if str(v).strip().lower() in ("s", "s^"):
             return "s"
         try:
             return int(float(v))
@@ -458,8 +459,9 @@ def fetch_prek(path):
     out = {}
     for r in rows[1:]:
         if len(r) > 3 and r[3] == "All Students" and r[1]:
-            out[r[1]] = [num(r, "Pre-K Seats Available"), num(r, "Pre-K Total Applicants"),
-                         num(r, "3K Seats Available"), num(r, "3K Total Applicants")]
+            out[r[1]] = [num(r, "Pre-K Seats Available"), num(r, "Pre-K True Applicants"),
+                         num(r, "3K Seats Available"), num(r, "3K True Applicants"),
+                         num(r, "Pre-K Offers"), num(r, "3K Offers")]
     print(f"  {len(out)} schools, {sum(1 for v in out.values() if v[0])} with pre-K, "
           f"{sum(1 for v in out.values() if 's' in v)} with a count hidden for privacy")
     save("prek.json", out)

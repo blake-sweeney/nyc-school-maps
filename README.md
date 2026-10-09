@@ -16,7 +16,7 @@ An interactive map of New York City's elementary (kindergarten), middle and high
 - **Non-zoned schools (elementary):** the MySchools kindergarten directory (`data/nonzoned_k.json`) and their Snapshot pages (`data/nonzoned_snapshot.json`); both read through a browser, since those sites block scripts here
 - **Kindergarten admissions (zone card):** seats, true applicants and offers for fall 2023–2025, from the DOE's Local Law 72 reports; refresh with `python3 scripts/fetch_data.py kadmissions <files...>`
 - **Grade 6 and grade 9 admissions (middle and high school cards):** the same Local Law 72 files (`data/ms_admissions.json`, `data/hs_admissions.json`); refresh all three grades with `python3 scripts/fetch_data.py admissions <files...>`
-- **Pre-K and 3-K (zone card):** seats and applicants at each zoned elementary school, from the DOE's Local Law 72 admissions report
+- **Pre-K and 3-K (zone card):** seats, applicants and offers at each elementary school (applicants who didn't get a choice they ranked higher, as for kindergarten), from the DOE's Local Law 72 admissions report
 - **Class size (zone card):** average kindergarten, grades 1–5 and core-subject class sizes, from the DOE's class size report
 - **Colors:** a red → orange → yellow → teal ramp, checked against common forms of color blindness (deuteranopia, protanopia)
 - **Streets:** a "Major streets" toggle (highways, main roads and truck routes) and an "All streets" toggle (every street, shown once you zoom in to street level), with names along the lines
