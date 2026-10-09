@@ -1015,9 +1015,11 @@ function factsHtml(d){const x=X[d]||[],c=CS[d]||{},u=U[d];if(!X[d]&&!CS[d]&&!u)r
   const h=row('Attendance',x[1]!=null?x[1]+'%':null)+row('Teachers with 3+ years’ experience',x[2]!=null?x[2]+'%':null)+row('Principal’s years at school',x[3]!=null?(Math.round(x[3]*10)/10):null)+(level==='es'?row('Kindergarten class size',cs(c.k))+row('Grades 1–5 class size',cs(c.e)):row('Core class size',cs(level==='ms'?c.ms:c.hs)))+row('Building use (how full)',u?u[0]+'% of capacity':null)+row('Students with IEPs (special ed)',x[6]!=null?x[6]+'%':null)+row('English language learners',x[5]!=null?x[5]+'%':null)+'';return h?'<div class="facts">'+h+'</div>':''}
 // pre-K and 3-K at an elementary school (Local Law 72, fall 2025): its own block next to kindergarten admissions
 function pkHtml(d){const pk=level==='es'?PK[d]:null;if(!pk)return '';
-  const r=(lab,n,a)=>'<tr><th>'+lab+'</th>'+(n?'<td>'+n+'</td><td>'+(a!=null?a.toLocaleString():'—')+'</td><td>'+(a?Math.round(a/n*10)/10+' per seat':'')+'</td>':'<td colspan="3" class="na">Not offered</td>')+'</tr>';
+  // "s": the report hides that count for privacy; the program is still offered
+  const num=v=>typeof v==='number',hid=pk.includes('s');
+  const r=(lab,n,a)=>'<tr><th>'+lab+'</th>'+(n?'<td>'+(num(n)?n:'—')+'</td><td>'+(num(a)?a.toLocaleString():'—')+'</td><td>'+(num(a)&&num(n)&&a?Math.round(a/n*10)/10+' per seat':'')+'</td>':'<td colspan="3" class="na">Not offered</td>')+'</tr>';
   return '<div class="adm"><div class="adm-h">Pre-K and 3-K, fall 2025<span>seats and applicants at this school</span></div>'+
-    (pk[0]||pk[2]?'<table><thead><tr><th></th><th>Seats</th><th>Applied</th><th></th></tr></thead><tbody>'+r('Pre-K',pk[0],pk[1])+r('3-K',pk[2],pk[3])+'</tbody></table>'
+    (pk[0]||pk[2]?'<table><thead><tr><th></th><th>Seats</th><th>Applied</th><th></th></tr></thead><tbody>'+r('Pre-K',pk[0],pk[1])+r('3-K',pk[2],pk[3])+'</tbody></table>'+(hid?'<p class="adm-note">— Not published: the DOE hides small counts for privacy.</p>':'')
       :'<p class="adm-note">This school doesn’t offer pre-K or 3-K. Many seats are at nearby early childhood centers; MySchools lists every program.</p>')+
     (pk[0]||pk[2]?'<p class="adm-note">Seats aren’t zoned: families apply through MySchools, and zoned families often get priority. “Applied” counts every family who listed the school anywhere on their application.</p>':'')+
     '<a href="https://www.myschools.nyc/en/" target="_blank" rel="noopener">Find pre-K and 3-K programs on MySchools ↗</a></div>'}

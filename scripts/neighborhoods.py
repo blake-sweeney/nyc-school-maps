@@ -10,8 +10,8 @@ import os
 import re
 
 import settings
-from pages import (OUT_STOPS, SORT_JS, TABS_JS, TEST_STOPS, all_schools, e, in_polys, relative, rings_of, school_table,
-                   shell, zone_svg)
+from pages import (OUT_STOPS, SORT_JS, TABS_JS, TEST_STOPS, all_schools, e, in_polys, rate_color, rating, relative,
+                   rings_of, school_table, shell)
 
 # Zones are matched to neighborhoods by sampling points on a grid of about 60 m. A zone is listed on a
 # neighborhood's page when it covers at least MIN_NB of the neighborhood, or at least MIN_ZONE of the zone
@@ -54,6 +54,27 @@ def cells(polys):
     return out
 
 
+def label_cell(cs):
+    """Where to put a label in a set of grid cells: the cell deepest inside it (farthest from its edge, in grid steps),
+    nearest the center among equals, so the label sits well inside even an L-shaped or thin area."""
+    cs = set(cs)
+    depth, frontier = {}, []
+    for i, j in cs:
+        if any((i + di, j + dj) not in cs for di, dj in ((1, 0), (-1, 0), (0, 1), (0, -1))):
+            depth[(i, j)] = 0
+            frontier.append((i, j))
+    while frontier:
+        nxt = []
+        for i, j in frontier:
+            for q in ((i + 1, j), (i - 1, j), (i, j + 1), (i, j - 1)):
+                if q in cs and q not in depth:
+                    depth[q] = depth[(i, j)] + 1
+                    nxt.append(q)
+        frontier = nxt
+    mi, mj = sum(a for a, _ in cs) / len(cs), sum(b for _, b in cs) / len(cs)
+    return max(cs, key=lambda q: (depth.get(q, 0), -((q[0] - mi) ** 2 + (q[1] - mj) ** 2)))
+
+
 def school_points(d):
     """{dbn: (lon, lat)} for every school with a location."""
     out = {}
@@ -69,14 +90,15 @@ def school_points(d):
 
 def index(d, raw):
     """Match zones and schools to neighborhoods. Returns {code: neighborhood} with name, borough, slug, polygons,
-    "zones" {level: [(dbns, share of the neighborhood)]}, "in" (DBNs of schools located there), "dists"
+    "zones" {level: [(dbns, share of the neighborhood, label point (lon, lat) inside the overlap, zone polygons)]}, "in" (DBNs of schools located there), "dists"
     (districts, most area first) and "near" (codes of neighborhoods that touch it); plus "by_school"
     {dbn: [codes whose pages list the school's zone, most overlap first]} and "home" {dbn: code it's located in}."""
-    feats = []  # (level, dbns, grid cells) for every zone with a school
+    feats = []  # (level, dbns, grid cells, polygons) for every zone with a school
     for lv, src in (("es", d), ("ms", d.get("MS") or {}), ("hs", d.get("HS") or {})):
         for f in src.get("features", []):
             if f["properties"]["dbns"]:
-                feats.append((lv, tuple(f["properties"]["dbns"]), cells(rings_of(f["geometry"]))))
+                polys = rings_of(f["geometry"])
+                feats.append((lv, tuple(f["properties"]["dbns"]), cells(polys), polys))
     by_cell = {}
     for i, f in enumerate(feats):
         for c in f[2]:
@@ -91,12 +113,12 @@ def index(d, raw):
         used.add(s)
         pts = cells(v["p"])
         nb = {"code": code, "name": v["n"], "boro": v["b"], "slug": s, "polys": v["p"], "bbox": bbox(v["p"]), "n": len(pts)}
-        cnt = {}
+        cnt = {}  # zone -> its grid cells inside the neighborhood
         for c in pts:
             for i in by_cell.get(c, ()):
-                cnt[i] = cnt.get(i, 0) + 1
-        for i, c in cnt.items():
-            zone_total[i] += c
+                cnt.setdefault(i, []).append(c)
+        for i, cs in cnt.items():
+            zone_total[i] += len(cs)
         hits[code] = cnt
         dc = {k: len(pts & dcs) for k, dcs in dist_cells.items()}
         # districts covering at least a tenth of it (the biggest one always), most area first
@@ -107,10 +129,12 @@ def index(d, raw):
     by_zone = {}
     for code, nb in nbs.items():
         nb["zones"] = {lv: [] for lv, _ in LEVELS}
-        for i, c in hits[code].items():
+        for i, cs in hits[code].items():
+            c = len(cs)
             share_nb, share_zone = c / max(nb["n"], 1), c / zone_total[i]
             if share_nb >= MIN_NB or share_zone >= MIN_ZONE:
-                nb["zones"][feats[i][0]].append((feats[i][1], share_nb))
+                li, lj = label_cell(cs)
+                nb["zones"][feats[i][0]].append((feats[i][1], share_nb, (li * STEP[0], lj * STEP[1]), feats[i][3]))
                 for dbn in feats[i][1]:
                     by_zone.setdefault(dbn, {})
                     by_zone[dbn][code] = max(by_zone[dbn].get(code, 0), share_zone)
@@ -139,6 +163,68 @@ def index(d, raw):
         nb["near"].sort(key=lambda c2: nbs[c2]["name"])
     by_school = {dbn: sorted(v, key=lambda c: -v[c]) for dbn, v in by_zone.items()}
     return {"nbs": nbs, "by_school": by_school, "home": home}
+
+
+def level_map(nb, zones, lv, word, w=560, h=420, pad=14):
+    """An SVG map of the neighborhood with the zones of one school level inside it: each zone shaded by its school's
+    rating (like the map's Color by) and marked with its number from the table. zones: [(number, polygons, label
+    point (lon, lat), color)]."""
+    outer = [r for p in nb["polys"] for r in p[:1]]
+    pts = [c for r in outer for c in r]
+    lat0 = sum(c[1] for c in pts) / len(pts)
+    kx = math.cos(math.radians(lat0))
+    x0, x1 = min(c[0] for c in pts) * kx, max(c[0] for c in pts) * kx
+    y0, y1 = min(c[1] for c in pts), max(c[1] for c in pts)
+    sc = min((w - 2 * pad) / max(x1 - x0, 1e-9), (h - 2 * pad) / max(y1 - y0, 1e-9))
+    ox, oy = (w - (x1 - x0) * sc) / 2, (h - (y1 - y0) * sc) / 2
+
+    def xy(c):
+        return ox + (c[0] * kx - x0) * sc, oy + (y1 - c[1]) * sc
+
+    def path(rings):
+        out = []
+        for r in rings:
+            kept, last = [], None
+            for c in r:
+                x, y = xy(c)
+                if last is None or abs(x - last[0]) + abs(y - last[1]) >= 2:
+                    kept.append(f"{x:.0f} {y:.0f}")
+                    last = (x, y)
+            if len(kept) >= 3:
+                out.append("M" + "L".join(kept) + "Z")
+        return "".join(out)
+    nbpath = path([r for p in nb["polys"] for r in p])
+    cid = f"nbclip-{lv}"
+    out = [f'<svg class="nbmap" viewBox="0 0 {w} {h}" role="img" aria-label="Map of {e(nb["name"])} with its {word} '
+           f'school zones, numbered to match the list below">',
+           f'<defs><clipPath id="{cid}"><path d="{nbpath}" clip-rule="evenodd"/></clipPath></defs>',
+           f'<path class="nbbg" d="{nbpath}" fill-rule="evenodd"/><g clip-path="url(#{cid})">']
+    for _, polys, _, color in zones:
+        out.append(f'<path class="zf" fill="{color}" fill-rule="evenodd" d="{path([r for p in polys for r in p])}"/>')
+    out.append(f'</g><path class="nbline" d="{nbpath}" fill-rule="evenodd"/>')
+    # number badges at each overlap's label point, nudged apart where they'd overlap
+    r = 15
+    spots = [[*xy(pt), n] for n, _, pt, _ in zones]
+    for _ in range(30):
+        moved = False
+        for i in range(len(spots)):
+            for j in range(i + 1, len(spots)):
+                dx, dy = spots[j][0] - spots[i][0], spots[j][1] - spots[i][1]
+                dist = math.hypot(dx, dy)
+                if dist < 2 * r + 3:
+                    push = (2 * r + 3 - dist) / 2 + .5
+                    ux, uy = (dx / dist, dy / dist) if dist else (1, 0)
+                    spots[i][0] -= ux * push; spots[i][1] -= uy * push
+                    spots[j][0] += ux * push; spots[j][1] += uy * push
+                    moved = True
+        for sp in spots:
+            sp[0], sp[1] = min(max(sp[0], r + 2), w - r - 2), min(max(sp[1], r + 2), h - r - 2)
+        if not moved:
+            break
+    for x, y, n in spots:
+        out.append(f'<g class="zb"><circle cx="{x:.0f}" cy="{y:.0f}" r="{r}"/><text x="{x:.0f}" y="{y:.0f}">{n}</text></g>')
+    out.append("</svg>")
+    return "".join(out)
 
 
 def link(nb):
@@ -196,11 +282,11 @@ def write(d, nbi, root, site_url, goat):
         es_zone_dists = {f["properties"].get("dist") for f in src["es"] if f["properties"]["dbns"]}
 
         panels, counts = [], {}
-        shared = {lv: any(len(dbns) > 1 for dbns, _ in nb["zones"][lv]) for lv, _ in LEVELS}  # zones with two schools
+        shared = {lv: any(len(z[0]) > 1 for z in nb["zones"][lv]) for lv, _ in LEVELS}  # zones with two schools
         n_zoned = {}
         for lv, word in LEVELS:
             zoned = {}
-            for dbns, share in nb["zones"][lv]:
+            for dbns, share, *_ in nb["zones"][lv]:
                 for x in dbns:
                     if x in names:
                         zoned[x] = max(zoned.get(x, 0), share)
@@ -220,12 +306,25 @@ def write(d, nbi, root, site_url, goat):
                 return {"citywide": "specialized" if lv == "hs" else "citywide"}.get(k, "")
             h = ""
             if zoned:
+                # number the zones in table order (schools sharing a zone share its number), and map them
+                num, zone_num, zmap = {}, {}, []
+                for x in sorted(zoned, key=lambda x: names[x].lower()):
+                    zi = next(i for i, z in enumerate(nb["zones"][lv]) if x in z[0])
+                    if zi not in zone_num:
+                        zone_num[zi] = len(zone_num) + 1
+                        dbns, _, pt, polys = nb["zones"][lv][zi]
+                        rts = [rating(R, y) for y in dbns if rating(R, y) is not None]
+                        zmap.append((zone_num[zi], polys, pt, rate_color(sum(rts) / len(rts)) if rts else "#a3a8a5"))
+                    num[x] = zone_num[zi]
                 h += (f'<h2>{word.capitalize()} school zones in {e(name)}</h2>'
+                      + level_map(nb, zmap, lv, word)
+                      + '<p class="src">Each numbered area is the part of the neighborhood zoned for one school, shaded by '
+                        'its overall rating (gray: no rating). The numbers match the list below.</p>'
                       f'<p class="note">Each zone covers only part of {e(name)}, and each address is zoned for just one '
                       f'{"school" if not shared[lv] else "school, or for the schools that share its zone"}. Always confirm your '
                       'exact address on <a href="https://schoolsearch.schools.nyc/" target="_blank" rel="noopener">'
                       'schoolsearch.schools.nyc</a>.</p>'
-                      + school_table(list(zoned), names, R, cols[lv], zone_note, note_line=True))
+                      + school_table(list(zoned), names, R, cols[lv], zone_note, note_line=True, num=num))
             if others:
                 h += (f'<h2>{"High schools" if lv == "hs" else word.capitalize() + " schools without a zone"} in {e(name)}</h2>'
                       + school_table(others, names, R, cols[lv], other_note))
@@ -245,16 +344,6 @@ def write(d, nbi, root, site_url, goat):
                   '<span aria-hidden="true">→</span></a>') if dists else ""
             panels.append((lv, word.capitalize(), go + f'<section class="card">{h}<p class="src">Rating is the DOE’s overall '
                            f'rating (out of 4). {note}</p></section>'))
-        # the map: the neighborhood outlined over its elementary zones
-        ring_list = [r for p in nb["polys"] for r in p[:1]]
-        es_polys = [p for f in src["es"] if f["properties"]["dbns"] and any(set(f["properties"]["dbns"]) & set(z[0])
-                    for z in nb["zones"]["es"]) for p in rings_of(f["geometry"])]
-        svg = zone_svg(ring_list, [], es_polys, None).replace(
-            "Map of the zone inside its school district", f"Map of {name} with the elementary school zones that cover it")
-        # zone_svg draws the outline under the zones; here the neighborhood goes on top as a line
-        svg = svg.replace('<path class="dist"', '<path class="nbfill"', 1)
-        outline = re.search(r'<path class="nbfill" d="([^"]*)"/>', svg).group(1)
-        svg = svg.replace("</svg>", f'<path class="nbline" d="{outline}"/></svg>')
         es = n_zoned["es"]
         if len(es) > 1:
             es_txt = (f"Different parts of {e(name)} are zoned for {len(es)} elementary schools. Zone lines don’t "
@@ -271,9 +360,7 @@ def write(d, nbi, root, site_url, goat):
         body = (f'<div><div class="kicker">{e(boro)} neighborhood</div><h1>{e(name)} school zones</h1>'
                 f'<p class="lede">Public elementary, middle and high schools for families in {e(name)}: zoned schools, '
                 'schools without a zone and high schools, with ratings and test scores.</p></div>'
-                f'<section class="card split"><div>{svg}</div><div><h2>The neighborhood</h2><p>{lede}</p>'
-                + ('<p class="src">The map shows the neighborhood’s outline over the elementary school zones that cover parts '
-                   'of it.</p>' if es else "") + '</div></section>'
+                f'<section class="card"><h2>The neighborhood</h2><p>{lede}</p></section>'
                 '<div class="lvtabs" role="tablist" aria-label="School level">'
                 + "".join(f'<button type="button" role="tab" id="tab-{lv}" aria-controls="p-{lv}" '
                           f'aria-selected="{"true" if lv == "es" else "false"}">{w}<small>{counts[lv]} schools</small></button>'
@@ -307,9 +394,15 @@ def write(d, nbi, root, site_url, goat):
 
 
 NB_CSS = """
+.nbmap{display:block;width:100%;max-width:560px;height:auto;margin:4px auto 0}
+.nbmap .nbbg{fill:var(--dist)}
+.nbmap .zf{stroke:var(--panel);stroke-width:1.5;stroke-linejoin:round}
+.nbmap .nbline{fill:none;stroke:var(--fg);stroke-width:3;stroke-linejoin:round}
+.nbmap .zb circle{fill:var(--panel);stroke:var(--fg);stroke-width:2}
+.nbmap .zb text{font-family:var(--display);font-weight:700;font-size:17px;fill:var(--fg);text-anchor:middle;dominant-baseline:central}
+.znum{display:inline-grid;place-items:center;min-width:1.45em;height:1.45em;margin-right:6px;border:1.5px solid var(--fg);
+  border-radius:50%;font-family:var(--display);font-weight:700;font-size:.78rem;vertical-align:1px}
 .dnote{margin:0 0 14px;padding:10px 12px;border-left:3px solid var(--hl);background:var(--bg);border-radius:4px}
 .dnote p{margin:0}.dnote .dlinks{margin-top:4px;display:flex;flex-wrap:wrap;column-gap:16px}
 .dnote .dlinks a{display:inline-block;padding:4px 0;white-space:nowrap}
-.zmap .nbfill{fill:var(--dist);stroke:none}
-.zmap .nbline{fill:none;stroke:var(--fg);stroke-width:3;stroke-linejoin:round}
 """

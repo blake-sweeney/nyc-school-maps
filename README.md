@@ -191,6 +191,8 @@ python3 scripts/build.py          # site, school, district and neighborhood page
 python3 scripts/make_preview.py   # optional: redraw preview.png
 ```
 
+The school, district and neighborhood pages, including the neighborhood zone maps, are rebuilt from `data/`, so they need nothing by hand. Every year shown on the map and the pages comes from the dates of the data files or from `scripts/settings.py`: check that `SNAPSHOT_YEAR`, `CITY_GRAD`, `CITY_READINESS`, `PREK_LABEL` and `BLUE_BOOK_LABEL` match what you refreshed. Also update the years in "Data sources" below.
+
 Look over a few school cards and pages, bump `VERSION`, add a `CHANGELOG.md` entry and commit.
 
 ## Data sources
