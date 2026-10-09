@@ -853,9 +853,9 @@ map.on('zoomend moveend',syncStreets);
 // zoned schools: a bullseye in the school's color at its building; click to open its zone (works with zones hidden too)
 map.createPane('zsPane').style.zIndex=461;
 const zsGroup=L.layerGroup().addTo(map);
-// school markers show from zoom 14 in (a few blocks); farther out the zones carry the colors, with their stronger fill.
+// school markers show from zoom 12 in (about a district across); farther out the zones carry the colors, with their stronger fill.
 // The selected school's marker always shows.
-function markersByZoom(){return map.getZoom()>=14}  // a function, so the zone style can call it before this line runs
+function markersByZoom(){return map.getZoom()>=12}  // a function, so the zone style can call it before this line runs
 function zsOn(){return !!LAY.zs&&markersByZoom()}
 function zsTip(d){const v=schoolVal(d),val=v==null||isProg(metric)&&!v?'':' · '+(isProg(metric)?'has '+(metric==='gt'?'G&T':'dual language'):fmtVal(v));
   return '<small class="tip-d">District '+(+d.slice(0,2))+' · Zoned</small><br>'+esc(short(d))+val}
