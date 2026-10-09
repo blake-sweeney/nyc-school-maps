@@ -688,7 +688,7 @@ function rateColor(r){const P=[5,50,75,95];const i=Math.min(2,Math.max(0,Math.fl
 const BORO={M:'Manhattan',K:'Brooklyn',Q:'Queens',X:'Bronx',R:'Staten Island'};
 const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const appEl=document.querySelector('.app'),aside=document.querySelector('aside');
-const map=L.map('map',{preferCanvas:true,zoomSnap:.5,minZoom:10,maxZoom:18,attributionControl:false}).setView([40.70,-73.95],11);
+const map=L.map('map',{preferCanvas:true,zoomSnap:.5,minZoom:9,maxZoom:18,attributionControl:false}).setView([40.70,-73.95],11);
 // NYC's official basemap (City of New York, CC BY 4.0), shown in muted grays under see-through zone colors.
 // Its street and place labels draw above the zones. If the tiles don't load, the map falls back to its own streets.
 let useBase=true,tileOk=0,tileErr=0;
@@ -709,7 +709,7 @@ function isDark(){const th=document.documentElement.dataset.theme;return th==='d
 // zone fill: a light wash under the zoned-school markers, fading as you zoom in; stronger when the markers are
 // switched off, since the zones then carry the colors on their own
 function zoneAlpha(){if(!useBase)return .78;const z=map.getZoom(),zs=zsOn();
-  const a=zs?(z<11.5?.42:z<12.5?.39:z<13.5?.36:.33):(z<11.5?.8:z<12.5?.7:z<13.5?.6:.5);return isDark()?Math.min(a+(zs?.08:.15),.9):a}
+  const a=zs?(z<11.5?.36:z<12.5?.35:z<13.5?.34:.33):(z<11.5?.8:z<12.5?.7:z<13.5?.6:.5);return isDark()?Math.min(a+(zs?.08:.15),.9):a}
 const SEL_FILL=.2;  // the selected zone's extra fill
 map.on('zoomend',()=>{baseFade();if(useBase&&typeof restyle==='function')restyle()});baseFade();
 const renderer=L.canvas({padding:.3,tolerance:2});
@@ -783,7 +783,7 @@ map.createPane('zoneLines').style.zIndex=455;map.getPane('zoneLines').style.poin
 map.createPane('selPane').style.zIndex=458;map.getPane('selPane').style.pointerEvents='none';
 const zlRend=L.canvas({pane:'zoneLines',padding:.3}),selRend=L.canvas({pane:'selPane',padding:.3});
 function lineStyle(){const z=map.getZoom();const [w,o]=z<11?[.5,.5]:z<12.5?[.8,.7]:z<14?[1.3,.85]:z<15.5?[2,.9]:[2.6,.95];
-  return{renderer:zlRend,interactive:false,fill:false,color:css('--zone-line'),weight:w,opacity:o,lineJoin:'round'}}
+  return{renderer:zlRend,interactive:false,fill:false,color:css('--zone-line'),weight:w*farScale(),opacity:o,lineJoin:'round'}}
 zoneLines=L.geoJSON(F,{style:lineStyle,interactive:false}).addTo(map);
 const restyleLines=()=>zoneLines.setStyle(lineStyle());
 map.on('zoomend',restyleLines);
@@ -797,6 +797,7 @@ function restyleSel(){if(!selLine)return;const s=selStyles();selLine.getLayers()
 map.on('zoomend',restyleSel);
 // phones: leave room for the collapsed sheet and color card at the bottom
 map.fitBounds(layer.getBounds(),matchMedia('(max-width:760px)').matches?{paddingTopLeft:[10,60],paddingBottomRight:[10,180]}:{padding:[10,10]});
+if(map.getZoom()<10)map.setZoom(10,{animate:false});  // open no farther out than before zoom 9 was added
 
 // major streets: highways (tier 1) always, major streets (2) from zoom 11.5, secondary (3) from zoom 13
 map.createPane('streets').style.zIndex=450;map.getPane('streets').style.pointerEvents='none';
@@ -931,7 +932,9 @@ function shortName(n){n=n.replace(/^The\s+/i,'').replace(/,\s*The$/i,'').replace
 function nzSpot(o){return o.lat.toFixed(4)+','+o.lon.toFixed(4)}
 function nzAt(k){return NZ.filter(o=>nzShown(o)&&nzSpot(o)===k)}
 // small when zoomed out (the whole city), full size once you're looking at a neighborhood
-function nzSize(){const z=map.getZoom();return z<11.5?8:z<12.5?10:z<13.5?13:z<14.5?16:20}
+// zoomed all the way out, markers and zone lines shrink: half size at zoom 9, three quarters at 10, full from 11
+function farScale(){return Math.min(1,Math.max(.5,.5+(map.getZoom()-9)*.25))}
+function nzSize(){const z=map.getZoom();return (z<11.5?8:z<12.5?10:z<13.5?13:z<14.5?16:20)*farScale()}
 function buildNZ(){nzGroup.clearLayers();document.getElementById('nz-key').hidden=!nzOn();buildZS();document.getElementById('nz-key').hidden=!nzOn()&&!zsOn();document.getElementById('zsk-item').hidden=!zsOn();document.getElementById('nzk-item').hidden=!(nzOn()&&LAY[level==='hs'?'hsnz':'nz']);document.getElementById('gtk-item').hidden=!(nzOn()&&LAY.gt&&NZ.some(o=>o.gt));if(!nzOn())return;const sz=nzSize();
   const groups={};NZ.forEach(o=>{if(nzShown(o))(groups[nzSpot(o)]=groups[nzSpot(o)]||[]).push(o)});
   NZ.forEach(o=>{if(!nzShown(o))return;const sz=o.gt?Math.round(nzSize()*(nzSel===o.d?2.3:2)):nzSize();
