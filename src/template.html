@@ -117,7 +117,8 @@ aside>*{flex-shrink:0}
 .chip{display:inline-flex;align-items:center;gap:5px;font-family:var(--display);font-weight:600;font-size:.8rem;white-space:nowrap}
 .chip i{width:10px;height:10px;border-radius:2px;border:1px solid var(--line)}
 .rates .tot{font-weight:700}
-.school hr.sep{border:0;border-top:1px solid var(--line);margin:8px 0 6px;width:100%}
+.school hr.sep,.card>hr.sep{border:0;border-top:1px solid var(--line);margin:8px 0 6px;width:100%}
+.card>hr.sep{margin:0}
 .rates .sub-r{padding-left:14px;color:var(--muted)}
 .lbar{height:12px;border-radius:3px;background:__TEST_GRADIENT__}
 .lticks{position:relative;height:16px;font-family:var(--display);font-size:.75rem;color:var(--muted);font-variant-numeric:tabular-nums}
@@ -155,6 +156,16 @@ aside>*{flex-shrink:0}
 .progs .pn{min-width:0}.progs small{display:block;color:var(--muted);font-size:.75rem}
 .more-progs summary{cursor:pointer;color:var(--hl);font-size:.8rem;padding:5px 0;border-top:1px solid var(--line)}
 .progs .pd{text-align:right;white-space:nowrap;font-family:var(--display);font-weight:600;font-variant-numeric:tabular-nums}
+.sec>summary{display:flex;align-items:center;gap:8px;min-height:34px;cursor:pointer;list-style:none;font-size:.85rem}
+.sec>summary::-webkit-details-marker{display:none}
+.sec>summary .st{flex:1;min-width:0;font-weight:700}.sec>summary .st small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:400;color:var(--muted);font-size:.75rem}
+.sec>summary::after{content:'';flex:none;width:7px;height:7px;margin:0 3px 3px 2px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);transition:transform .15s}
+.sec[open]>summary::after{transform:translateY(3px) rotate(-135deg)}
+.sec-b{display:flex;flex-direction:column;gap:6px;padding:2px 0 4px}.sec[open]>.sec-b{padding-bottom:12px}
+.sec[open]{border-bottom:1px solid var(--line);margin-bottom:6px}.sec[open]+hr.sep{display:none}.sec-b>a{color:var(--hl);font-size:.82rem}
+.sec>summary .sa{font-family:var(--display);font-weight:600;font-size:.8rem;white-space:nowrap;font-variant-numeric:tabular-nums}
+.sec.no-host[open]~.adm-none{display:none}
+.adm-none{margin:4px 0 0;font-size:.8rem;color:var(--muted)}.adm-none a{font-size:inherit}.adm small{font-weight:400;color:var(--muted)}
 .adm-about{font-size:.75rem;color:var(--muted)}.adm-about summary{cursor:pointer}.adm-about p{margin:4px 0 0}
 .about{font-size:.8rem;color:var(--muted);display:flex;flex-direction:column;gap:6px;margin-top:auto}
 .about p{margin:0}
@@ -584,7 +595,8 @@ function pkCat(d){const p=PK[d];if(!p)return null;return (p[0]?1:0)+(p[2]?1:0)}
 function zonePk(dbns){const v=dbns.map(pkCat).filter(x=>x!=null);return v.length?Math.max(...v):null}
 // building use (SCA Blue Book 2025-26): [utilization %, enrollment, capacity] per school
 const U=D.U||{};
-// pre-K and 3-K (Local Law 72 report, __PREK__ admissions): [pre-K seats, applicants, 3-K seats, applicants]; null = no program
+// pre-K and 3-K (Local Law 72 report, __PREK__ admissions): [pre-K seats, applicants, 3-K seats, applicants, pre-K offers,
+//   3-K offers]; applicants didn't get a choice they ranked higher; null = no program, "s" = hidden for privacy
 const PK=D.PK||{};
 // kindergarten admissions (Local Law 72 reports): {year: [seats, true applicants, offers lo, hi,
 //   own district applicants lo, hi, offers lo, hi, other districts applicants lo, hi, offers lo, hi]}; ranges where the DOE hid small counts
@@ -619,30 +631,30 @@ function nzOptions(dist,skip,open){if(!dist)return '';const hs=level==='hs';
 const MNAME={O:'Open',Z:'Zone priority',S:'Screened',SA:'Screened + assessment',A:'Audition',T:'Talent test',L:'Language program'};
 const HNAME={S:'Screened (grades)',SA:'Screened + assessment',SL:'Screened: language & academics',E:'Ed. Opt. (mixed academic levels)',A:'Audition',O:'Open',L:'Language program',T:'SHSAT test',ZG:'Zoned guarantee',ZP:'Zoned priority',TR:'Transfer school (older students)',D75:'District 75 special education',ASD:'Autism (ASD) or ACES program'};
 function prioText(d,pg){if(!pg||!pg.length)return '';const t=pg.map(g=>g==='C'?'continuing 8th graders':g==='B'?(BORO[d[2]]||'borough')+' students and residents':g==='Z'?'students in the zone':g);return 'priority: '+t.join(', then ')}
-function progHtml(d){const lp=LV[level],P=lp&&lp.P&&lp.P[d];if(!P||!P.length||P.length===1&&P[0][1]==='T')return '';const hs=level==='hs';
+function progHtml(d,inSec){const lp=LV[level],P=lp&&lp.P&&lp.P[d];if(!P||!P.length||P.length===1&&P[0][1]==='T')return '';const hs=level==='hs';
   const li=p=>'<li><span class="pn">'+esc(p[0]||'Main program')+'<small>'+esc((hs?HNAME:MNAME)[p[1]]||p[1])+(p[5]?' · diversity set-aside':'')+(hs&&p[6]&&p[6].length?' · '+esc(prioText(d,p[6])):'')+'</small></span><span class="pd">'+(p[2]!=null&&(p[2]||p[3])?p[2]+' seats · '+p[3]+' applied'+(p[4]?'<small>all seats filled</small>':''):'<small>'+(p[1]==='T'?'by test score':'no data')+'</small>')+'</span></li>';
-  const top=P.slice(0,P.length>6?5:6),rest=P.slice(top.length);
-  return '<div class="progs"><div class="adm-h">'+(hs?'High school':'Middle school')+' programs<span>how students get in · last year’s seats and applicants</span></div><ul>'+top.map(li).join('')+'</ul>'+(rest.length?'<details class="more-progs"><summary>'+rest.length+' more program'+(rest.length>1?'s':'')+'</summary><ul>'+rest.map(li).join('')+'</ul></details>':'')+'</div>'}
+  const top=inSec?P:P.slice(0,P.length>6?5:6),rest=P.slice(top.length);
+  return '<div class="progs">'+(inSec?'':'<div class="adm-h">'+(hs?'High school':'Middle school')+' programs<span>how students get in · last year’s seats and applicants</span></div>')+'<ul>'+top.map(li).join('')+'</ul>'+(rest.length?'<details class="more-progs"><summary>'+rest.length+' more program'+(rest.length>1?'s':'')+'</summary><ul>'+rest.map(li).join('')+'</ul></details>':'')+'</div>'}
 // specialized high schools: last two years' lowest SHSAT score offered a seat
 function cutHtml(d){const c=LV.hs&&LV.hs.CUT;if(level!=='hs'||!c||!c.c[d])return '';const v=c.c[d],y=+c.y;
   return '<div class="facts"><span>Lowest score offered a seat, fall '+y+'</span><b>'+v[0]+'</b><span>Fall '+(y-1)+'</span><b>'+v[1]+'</b><small>Scores run from about 200 to 800. Cutoffs shift each year with the applicant pool. As reported from DOE results by <a href="https://caddellprep.com/shsat/info/cut-off-scores/" target="_blank" rel="noopener">Caddell Prep</a>.</small></div>'}
 // grade 6 and grade 9 use the same Local Law 72 numbers as kindergarten (LV.ms.A, LV.hs.A)
-function admHtml(d,lv){lv=lv||'es';const src=lv==='es'?KA:(LV[lv]&&LV[lv].A)||{},k=src[d];if(!k)return '';const y=Object.keys(k).sort().pop();const r=k[y];if(!r)return '';
+function admHtml(d,lv,noHead){lv=lv||'es';const src=lv==='es'?KA:(LV[lv]&&LV[lv].A)||{},k=src[d];if(!k)return '';const y=Object.keys(k).sort().pop();const r=k[y];if(!r)return '';
   const G={es:'Kindergarten',ms:'Grade 6',hs:'Grade 9'}[lv];
   const dist=+d.slice(0,2),fine=(a,b,t)=>b-a<=Math.max(4,.08*t);
-  // one row: accepted, applicants, share; a hidden count we can't pin to within a few shows as a dash
+  // one row: offers, applicants, share; a hidden count we can't pin to within a few shows as a dash
   const row=(lab,o0,o1,t0,t1)=>{const ok=t1!=null&&fine(o0,o1,t1)&&fine(t0,t1,t1),ex=o0===o1&&t0===t1,
       o=Math.round((o0+o1)/2),t=Math.round((t0+t1)/2),a=ex?'':'~';
     return '<tr><th>'+lab+'</th>'+(ok?'<td>'+(o0===o1?'':'~')+o+'</td><td>'+(t0===t1?'':'~')+t+'</td><td>'+(!t?'':o>=t?'all':a+Math.round(100*o/t)+'%')+'</td>':'<td>—</td><td>'+(t0===t1?t:'—')+'</td><td></td>')+'</tr>'};
   // high schools don't give district priority, so the district split would mislead there
   const hasD=r.length>4&&lv!=='hs',who=lv==='es'?'families':'students';
-  let h='<div class="adm"><div class="adm-h">'+G+' admissions, fall '+y+'<span>'+r[0]+' seats</span></div><table><thead><tr><th></th><th>Accepted</th><th>Applicants</th><th></th></tr></thead><tbody>'+
+  let h='<div class="adm">'+(noHead?'':'<div class="adm-h">'+G+' admissions, fall '+y+'<span>'+r[0]+' seats</span></div>')+'<table><thead><tr><th></th><th>Offers</th><th>Applied</th><th></th></tr></thead><tbody>'+
     row('All '+who,r[2],r[3],r[1],r[1])+
     (hasD?row('District '+dist,r[6],r[7],r[4],r[5])+row('Other districts',r[10],r[11],r[8],r[9]):'')+'</tbody></table>';
   if(lv==='es'&&hasD&&r[10]>0&&!nzGet(d))h+='<p class="adm-note">Some seats went to families from other districts, which usually means every zoned family who applied got one.</p>';
   if(lv==='ms'&&hasD)h+='<p class="adm-note">Most middle school programs fill seats with District '+dist+' students and residents first, then consider other districts.</p>';
-  const about=lv==='es'?'Applicants are families who listed the school and didn’t get a choice they ranked higher. Accepted means offered a seat. Accepted can top applicants when the DOE places a child who didn’t list the school there, often at their zoned school. '+(nzGet(d)?'':'District '+dist+' mixes zoned and non-zoned families. ')
-    :'Applicants are students who listed the school (any of its programs) and didn’t get a choice they ranked higher. Accepted means offered a seat; it can top applicants when the DOE places students who didn’t get any of their choices. '+(lv==='ms'?'A district row counts students who live or go to school in that district. ':'Counts cover every program at the school. ');
+  const about=lv==='es'?'Applicants are families who listed the school and didn’t get a choice they ranked higher. Offers are seats offered. Offers can top applicants when the DOE places a child who didn’t list the school there, often at their zoned school. '+(nzGet(d)?'':'District '+dist+' mixes zoned and non-zoned families. ')
+    :'Applicants are students who listed the school (any of its programs) and didn’t get a choice they ranked higher. Offers are seats offered; they can top applicants when the DOE places students who didn’t get any of their choices. '+(lv==='ms'?'A district row counts students who live or go to school in that district. ':'Counts cover every program at the school. ');
   return h+'<details class="adm-about"><summary>About this data</summary><p>'+about+'“—” means the DOE hid the count for privacy. Source: <a href="https://infohub.nyced.org/reports/government-reports" target="_blank" rel="noopener">DOE Local Law 72 reports</a>.</p></details></div>'}
 const UTIL_BINS=[[69.5,'#fde0c5'],[89.5,'#f8b98b'],[99.5,'#ee8a50'],[109.5,'#d4582a'],[Infinity,'#a32f12']];
 const utilColor=v=>UTIL_BINS.find(b=>v<b[0])[1];
@@ -978,21 +990,57 @@ function factsHtml(d){const x=X[d]||[],c=CS[d]||{},u=U[d];if(!X[d]&&!CS[d]&&!u)r
   const cs=v=>v!=null?Math.round(v)+' students':null;
   const row=(k,v)=>v==null?'':'<span>'+k+'</span><b>'+v+'</b>';
   const h=row('Attendance',x[1]!=null?x[1]+'%':null)+row('Teachers with 3+ years’ experience',x[2]!=null?x[2]+'%':null)+row('Principal’s years at school',x[3]!=null?(Math.round(x[3]*10)/10):null)+(level==='es'?row('Kindergarten class size',cs(c.k))+row('Grades 1–5 class size',cs(c.e)):row('Core class size',cs(level==='ms'?c.ms:c.hs)))+row('Building use (how full)',u?u[0]+'% of capacity':null)+row('Students with IEPs (special ed)',x[6]!=null?x[6]+'%':null)+row('English language learners',x[5]!=null?x[5]+'%':null)+'';return h?'<div class="facts">'+h+'</div>':''}
-// pre-K and 3-K at an elementary school (Local Law 72, __PREK__): its own block next to kindergarten admissions
-function pkHtml(d){const pk=level==='es'?PK[d]:null;if(!pk)return '';
+// school card: sections that open and close. Each viewer's choice is remembered in this browser; the Color by
+// metric also opens the section that shows it (without changing what's remembered).
+const SEC_KEY='nsz-card-v1',SEC={},SEC_FOR={ip:'rate',ss:'rate',rf:'rate',ela:'tests',math:'tests',coll:'out',ccr:'out',sat:'out',iep:'facts',util:'facts'};
+try{Object.assign(SEC,JSON.parse(localStorage.getItem(SEC_KEY)||'{}'))}catch(e){}
+function sec(k,sum,body){return '<details class="sec" data-sec="'+k+'"'+(SEC[k]||SEC_FOR[metric]===k?' open':'')+'><summary>'+sum+'</summary><div class="sec-b">'+body+'</div></details>'}
+card.addEventListener('click',e=>{const s=e.target.closest('.sec>summary');if(!s)return;const k=s.parentNode.dataset.sec;
+  SEC[k]=!s.parentNode.open;try{localStorage.setItem(SEC_KEY,JSON.stringify(SEC))}catch(err){}});
+function rateSec(d){const r=R[d];if(!r||r.slice(2,5).every(x=>x==null))return '<span class="meta">No __SNAPSHOT__ Snapshot ratings (often K–2 or new schools).</span>';
+  return sec('rate','<span class="st">Overall rating</span>'+chip(schoolRating(d,'comp'),1),'<div class="rates"><span>Instruction</span>'+chip(r[2],1)+'<span>Safety &amp; climate</span>'+chip(r[3],1)+'<span>Families</span>'+chip(r[4],1)+'</div><a href="https://tools.nycenet.edu/snapshot/__SNAPSHOT_YEAR__/'+esc(d)+'/'+esc(r[5]||'EMS')+'/" target="_blank" rel="noopener">__SNAPSHOT__ School Quality Snapshot ↗</a>')}
+// one score for ELA and math together (students meeting standards on either test, as the "ELA + Math" Color by)
+function testSec(d){const v=T[d];if(!v)return scoreHtml(d);
+  const b=pct([d],'both'),e=v[0]?100*v[1]/v[0]:null,m=v[2]?100*v[3]/v[2]:null,gap=e!=null&&m!=null?Math.round(m-e):0;
+  const hint=Math.abs(gap)>=10?(gap>0?'Math ':'ELA ')+Math.abs(gap)+' points higher':'ELA and math, grades '+LEVEL_TXT[level].grades;
+  return sec('tests','<span class="st">State test score<small>'+hint+'</small></span><span class="chip"><i style="background:'+scoreColor(b)+'"></i>'+Math.round(b)+'%</span>',scoreHtml(d))}
+// high school outcomes: the 4-year graduation rate up top, the other measures and where graduates went inside
+function outSec(d){const o=O[d],g=o&&o[OUT.grad.i];if(g==null)return outHtml(d);
+  return sec('out','<span class="st">Graduation rate<small>Graduates in 4 years · NYC __CITY_GRAD__%</small></span><span class="chip"><i style="background:'+outColor('grad',g)+'"></i>'+Math.round(g)+'%</span>',outHtml(d))}
+// grade 6 or grade 9 admissions (Local Law 72): seats / applied up top, offers by district inside
+function admSec(d){const k=(LV[level]&&LV[level].A||{})[d],y=k&&Object.keys(k).sort().pop(),r=y&&k[y];if(!r)return '';
+  const g=level==='ms'?'6':'9';
+  return sec('adm-'+g,'<span class="st">Admissions, grade '+g+'<small>Seats / applied, fall '+y+'</small></span><span class="sa">'+r[0].toLocaleString()+' / '+r[1].toLocaleString()+'</span>',admHtml(d,level,true))}
+// specialized high schools: last fall's SHSAT cutoff up top
+function cutSec(d){const c=LV.hs&&LV.hs.CUT;if(level!=='hs'||!c||!c.c[d])return '';
+  return sec('cut','<span class="st">SHSAT cutoff<small>Lowest score offered a seat, fall '+c.y+'</small></span><span class="sa">'+c.c[d][0]+'</span>',cutHtml(d))}
+// middle and high school programs: how many, and how they admit students
+function progSec(d){const P=(LV[level]&&LV[level].P||{})[d],h=progHtml(d,true);if(!h)return '';
+  const how=[...new Set(P.map(p=>(level==='hs'?HNAME:MNAME)[p[1]]||p[1]))].join(', ');
+  return sec('progs','<span class="st">Programs<small>'+esc(how)+'</small></span><span class="sa">'+P.length+'</span>',h)}
+// admissions at an elementary school: one section per entry grade, kindergarten (KA, latest year) then pre-K and
+// 3-K (Local Law 72, __PREK__); the summary shows seats / applicants, the section the details
+function esAdmHtml(d){const pk=PK[d],ka=KA[d],ky=ka&&Object.keys(ka).sort().pop(),k=ky&&ka[ky];if(!pk&&!k)return '';
   // "s": the report hides that count for privacy; the program is still offered
-  const num=v=>typeof v==='number',hid=pk.includes('s');
-  const r=(lab,n,a)=>'<tr><th>'+lab+'</th>'+(n?'<td>'+(num(n)?n:'—')+'</td><td>'+(num(a)?a.toLocaleString():'—')+'</td><td>'+(num(a)&&num(n)&&a?Math.round(a/n*10)/10+' per seat':'')+'</td>':'<td colspan="3" class="na">Not offered</td>')+'</tr>';
-  return '<div class="adm"><div class="adm-h">Pre-K and 3-K, __PREK__<span>seats and applicants at this school</span></div>'+
-    (pk[0]||pk[2]?'<table><thead><tr><th></th><th>Seats</th><th>Applied</th><th></th></tr></thead><tbody>'+r('Pre-K',pk[0],pk[1])+r('3-K',pk[2],pk[3])+'</tbody></table>'+(hid?'<p class="adm-note">— Not published: the DOE hides small counts for privacy.</p>':'')
-      :'<p class="adm-note">This school doesn’t offer pre-K or 3-K. Many seats are at nearby early childhood centers; MySchools lists every program.</p>')+
-    (pk[0]||pk[2]?'<p class="adm-note">Seats aren’t zoned: families apply through MySchools, and zoned families often get priority. “Applied” counts every family who listed the school anywhere on their application.</p>':'')+
-    '<a href="https://www.myschools.nyc/en/" target="_blank" rel="noopener">Find pre-K and 3-K programs on MySchools ↗</a></div>'}
+  const num=v=>typeof v==='number',show=v=>num(v)?v.toLocaleString():'—';
+  const one=(key,lab,yr,n,a,body)=>sec(key,'<span class="st">Admissions, '+lab+'<small>Seats / applied, fall '+yr+'</small></span><span class="sa">'+show(n)+' / '+show(a)+'</span>',body);
+  const hidNote=(...v)=>v.some(x=>x==='s')?'<p class="adm-note">— Not published: the DOE hides small counts for privacy.</p>':'';
+  const early=(lab,n,a,o)=>'<div class="adm"><div class="facts"><span>Seats</span><b>'+show(n)+'</b><span>Applied</span><b>'+show(a)+'</b><span>Offers</span><b>'+show(o)+'</b></div>'+hidNote(n,a,o)+
+    '<p class="adm-note">“Applied” counts families who listed the school and didn’t get a choice they ranked higher. '+lab[0].toUpperCase()+lab.slice(1)+' seats aren’t zoned: families apply through MySchools, and zoned families often get priority.</p><a href="https://www.myschools.nyc/en/" target="_blank" rel="noopener">Find '+lab+' programs on MySchools ↗</a></div>';
+  const py='__PREK__'.replace(/\D/g,''),no=pk?[!pk[0]&&'pre-K',!pk[2]&&'3-K'].filter(Boolean):[];
+  // a school without pre-K or 3-K: a short line under the sections, the full note inside the section just above it
+  const noLine=no.length?'No '+no.join(' or ')+' at this school.':'';
+  const noMore=no.length?'<div class="adm"><p class="adm-note">'+noLine+' Many seats are at nearby early childhood centers; <a href="https://www.myschools.nyc/en/" target="_blank" rel="noopener">MySchools</a> lists every program.</p></div>':'';
+  const parts=[];
+  if(k)parts.push(['adm-k','K',ky,k[0],k[1],admHtml(d,'es',true)]);
+  if(pk&&pk[0])parts.push(['adm-pk','Pre-K',py,pk[0],pk[1],early('pre-K',pk[0],pk[1],pk[4])]);
+  if(pk&&pk[2])parts.push(['adm-3k','3-K',py,pk[2],pk[3],early('3-K',pk[2],pk[3],pk[5])]);
+  let h=parts.map((x,i)=>{const last=noLine&&i===parts.length-1,o=one(x[0],x[1],x[2],x[3],x[4],x[5]+(last?noMore:''));return last?o.replace('class="sec"','class="sec no-host"'):o}).join('');
+  if(noLine)h+='<p class="adm-none">'+noLine+'</p>';
+  return h}
 // street address with a copy button (for maps apps and forms)
 function addrHtml(d){const s=S[d];if(!s||!s.a)return '';const full=title(s.a)+', '+(BORO[d[2]]||'')+', NY';
   return '<span class="addr">'+esc(title(s.a))+', '+esc(BORO[d[2]]||'')+'<button type="button" class="copy-addr" data-copy="'+esc(full)+'" aria-label="Copy address: '+esc(full)+'">Copy</button></span>'}
-function rateHtml(d){const r=R[d];if(!r||r.slice(2,5).every(x=>x==null))return '<span class="meta">No __SNAPSHOT__ Snapshot ratings (often K–2 or new schools).</span>';
-  const c=schoolRating(d,'comp');return '<div class="rates"><span class="tot">Overall rating</span><span class="tot">'+chip(c,1)+'</span><span class="sub-r">Instruction</span>'+chip(r[2])+'<span class="sub-r">Safety &amp; climate</span>'+chip(r[3])+'<span class="sub-r">Families</span>'+chip(r[4])+'</div><a href="https://tools.nycenet.edu/snapshot/__SNAPSHOT_YEAR__/'+esc(d)+'/'+esc(r[5]||'EMS')+'/" target="_blank" rel="noopener">__SNAPSHOT__ School Quality Snapshot ↗</a>'}
 function outHtml(d){const o=O[d];if(!o)return '<span class="meta">No __SNAPSHOT__ graduation data.</span>';
   const r=(lbl,m)=>{const v=o[OUT[m].i];return v==null?'':'<span>'+lbl+'</span><span class="bar"><i style="width:'+v+'%;background:'+outColor(m,v)+'"></i></span><b>'+Math.round(v)+'%</b>'};
   const q=Q[d]||[],ab=(lbl,m,txt)=>{const v=outVal(d,m);return v==null?'':'<span>'+lbl+'</span><span class="bar"><i style="width:'+outPos(m,v).toFixed(1)+'%;background:'+outColor(m,v)+'"></i></span><b>'+(txt?txt(v):Math.round(v))+'</b>'};
@@ -1017,7 +1065,7 @@ function kindText(p){const n=p.dbns.length,k=zoneKind(p);
   return '<b>Shared zone:</b> families here get zoned priority at all '+n+' schools below and can rank any of them.'}
 // one school's details (zoned or not)
 function schoolBlock(d){const s=S[d],n=X[d]&&X[d][0]!=null?X[d][0].toLocaleString()+' students':'',gr=s&&s.g?'Grades '+esc(grades(s.g,d)):'';
-  return '<div class="school"><span class="nm"><a class="nm-link" href="'+pageUrl(d)+'">'+esc(short(d))+'</a> <span class="dbn">('+esc(d)+')</span></span>'+addrHtml(d)+(gr||n?'<span class="meta">'+[gr,n].filter(Boolean).join(' · ')+'</span>':'')+tagsHtml(d)+(level==='hs'?zonedHtml(d):'')+'<hr class="sep">'+rateHtml(d)+'<hr class="sep">'+scoreHtml(d)+(factsHtml(d)?'<hr class="sep">'+factsHtml(d):'')+(level!=='es'&&cutHtml(d)?'<hr class="sep">'+cutHtml(d):'')+(level!=='es'&&admHtml(d,level)?'<hr class="sep">'+admHtml(d,level):'')+(level!=='es'&&progHtml(d)?'<hr class="sep">'+progHtml(d):'')+(level==='es'&&PK[d]?'<hr class="sep">'+pkHtml(d):'')+(level==='es'&&KA[d]?'<hr class="sep">'+admHtml(d):'')+'<hr class="sep">'+'<div class="links">'+'<a href="'+pageUrl(d)+'"><b>Full school page →</b></a>'+'<a href="'+mySchoolsUrl(d)+'" target="_blank" rel="noopener"><b>MySchools: apply &amp; see your chances ↗</b></a><a href="https://www.schools.nyc.gov/schools/'+esc(d.slice(2))+'" target="_blank" rel="noopener">School website ↗</a></div></div>'}
+  return '<div class="school"><span class="nm"><a class="nm-link" href="'+pageUrl(d)+'">'+esc(short(d))+'</a> <span class="dbn">('+esc(d)+')</span></span>'+addrHtml(d)+(gr||n?'<span class="meta">'+[gr,n].filter(Boolean).join(' · ')+'</span>':'')+tagsHtml(d)+(level==='hs'?zonedHtml(d):'')+'<hr class="sep">'+rateSec(d)+(level==='hs'?outSec(d):testSec(d))+(level==='es'?esAdmHtml(d):admSec(d)+cutSec(d)+progSec(d))+(factsHtml(d)?sec('facts','<span class="st">School details</span>',factsHtml(d)):'')+'<hr class="sep">'+'<div class="links">'+'<a href="'+pageUrl(d)+'"><b>Full school page →</b></a>'+'<a href="'+mySchoolsUrl(d)+'" target="_blank" rel="noopener"><b>MySchools: apply &amp; see your chances ↗</b></a><a href="https://www.schools.nyc.gov/schools/'+esc(d.slice(2))+'" target="_blank" rel="noopener">School website ↗</a></div></div>'}
 // a big no-zone area (most of the city in the high school view) spans many districts: a click there selects
 // just the district under the click, outlined, instead of the whole area
 function distAt(ll){const x=ll.lng,y=ll.lat;for(const [k,v] of Object.entries(DIST)){let inside=false;
@@ -1038,13 +1086,14 @@ function select(l,fromClick,ll){
   let h='<div class="zt">'+(p.dist&&+p.dist?'District '+esc(p.dist)+' · ':'')+esc(BORO[p.boro]||'')+'</div>';
   if(p.dbns.length>1)h+='<div class="kind">'+kindText(p)+'</div>';
   if(!p.dbns.length){h+='<div class="school"><span class="nm">'+LEVEL_TXT[level].noZone+'</span></div>';if(level==='ms'&&/District/.test(p.remarks||''))h+='<div class="note">Students here apply to middle schools through <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a>.</div>';if(level==='hs')h+='<div class="note">Students here apply to high schools citywide through <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a>.</div>';
-    if(p.dist&&+p.dist){h+='<a class="dist-page" href="districts/'+(+p.dist)+'/'+(LOCAL?'index.html':'')+'">All District '+(+p.dist)+' schools, with ratings and test scores →</a>';h+=nzOptions(+p.dist,[],true)}}
-  else{h+=p.dbns.map(schoolBlock).join('');if(level==='es'||level==='ms')h+=nzOptions(+p.dist,p.dbns);
-    if(p.dist&&+p.dist)h+='<a class="dist-page" href="districts/'+(+p.dist)+'/'+(LOCAL?'index.html':'')+'">All District '+(+p.dist)+' schools, with ratings and test scores →</a>'}
+    if(p.dist&&+p.dist){h+='<a class="dist-page" href="districts/'+(+p.dist)+'/'+(LOCAL?'index.html':'')+'">All District '+(+p.dist)+' schools →</a>';h+=nzOptions(+p.dist,[],true)}}
+  else{h+=p.dbns.map(schoolBlock).join('');
+    h+='<a class="confirm" href="https://schoolsearch.schools.nyc/" target="_blank" rel="noopener">Confirm your exact address on schoolsearch.schools.nyc ↗</a>';
+    h+='<div class="card-actions"><button type="button" class="btn-sm" id="copy-link">Copy link to '+(p.dbns.length>1?'these schools':'this school')+'</button><button type="button" class="btn-sm to-map" id="to-map">↑ Back to map</button></div>';
+    const opts=level==='es'||level==='ms'?nzOptions(+p.dist,p.dbns):'';h+=opts||'<hr class="sep">';
+    if(p.dist&&+p.dist)h+='<a class="dist-page" href="districts/'+(+p.dist)+'/'+(LOCAL?'index.html':'')+'">All District '+(+p.dist)+' schools →</a>'}
   if(p.remarks&&!/^Citywide High School Choice$/i.test(p.remarks))h+='<div class="note">'+esc(p.remarks)+'</div>';
 
-  if(p.dbns.length)h+='<a class="confirm" href="https://schoolsearch.schools.nyc/" target="_blank" rel="noopener">Confirm your exact address on schoolsearch.schools.nyc ↗</a>';
-  if(p.dbns.length)h+='<div class="card-actions"><button type="button" class="btn-sm" id="copy-link">Copy link to this zone</button><button type="button" class="btn-sm to-map" id="to-map">↑ Back to map</button></div>';
   card.className='card';card.innerHTML=h;
   if(p.dbns.length){setZoneHash(p.dbns[0]);
     document.getElementById('copy-link').onclick=e=>copyLink(e.currentTarget);
@@ -1158,6 +1207,7 @@ function showGroup(g){curGroup=g;
 let quietColor=false;
 document.querySelectorAll('input[name=metric]').forEach(r=>r.addEventListener('change',()=>{const s=r.closest('.seg[data-g]');if(s){lastPick[s.dataset.g]=r.value;showGroup(s.dataset.g)}
   if(!quietColor)markEngaged();metric=r.value;syncLegend();restyle();drawLabels();setColorParam();placePanel();
+  if(SEC_FOR[metric])card.querySelectorAll('.sec[data-sec="'+SEC_FOR[metric]+'"]').forEach(x=>{x.open=true});
   if(!quietColor&&phone.matches)setPanel(false)}));
 // the color choice rides along in the URL (?c=ela), so a shared link opens with the same coloring
 function setColorParam(){try{const u=new URL(location.href);if(metric==='comp')u.searchParams.delete('c');else u.searchParams.set('c',metric);history.replaceState(null,'',u.pathname+u.search+u.hash)}catch(e){}}
