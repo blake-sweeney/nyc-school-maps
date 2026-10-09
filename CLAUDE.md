@@ -38,7 +38,7 @@ Check changes in a real browser (Playwright/Chromium) against the local server, 
 
 ## Conventions
 
-- Map: Leaflet, with markers as `divIcon`s on their own panes. Marker size comes from `nzSize()` by zoom; stars are 2×, bullseyes 1.1×. Labels go through the collision-avoiding `drawLabels`.
+- Map: Leaflet, with markers as `divIcon`s on their own panes. Marker size comes from `nzSize()` by zoom; circles are `ZS_SIZE`, diamonds `NZ_SIZE`, stars `STAR_SIZE` (drawn to match the diamonds). Labels go through the collision-avoiding `drawLabels`.
 - Map links use hashes: `#es-DBN`, `#ms-DBN`, `#hs-DBN`, `#middle`, `#high`, `#ms-d15`. Keep old hashes working.
 - Layer settings persist in localStorage (`nsz-layers-v1`). If you change their shape, migrate old values or bump the key.
 - Ratings display as numbers ("3.7 / 4"), never mixed with words. Colors on the district pages match the map's Color by ramps.

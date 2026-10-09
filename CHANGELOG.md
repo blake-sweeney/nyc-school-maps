@@ -6,6 +6,12 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
+## Unreleased
+
+### Changed
+- The pin for an address you search is now bright red and a bit larger, so it's easier to spot on the map.
+- Stars for citywide G&T schools (and specialized and citywide schools on the middle and high school maps) are now about the same size as the other school markers instead of twice as big.
+
 ## 1.20.0 (2026-10-09)
 
 ### Changed
