@@ -1047,7 +1047,7 @@ function esAdmHtml(d){const pk=PK[d],ka=KA[d],ky=ka&&Object.keys(ka).sort().pop(
   const one=(key,lab,yr,n,a,body)=>sec(key,'<span class="st">Admissions, '+lab+'<small>Seats / applied, fall '+yr+'</small></span><span class="sa">'+show(n)+' / '+show(a)+'</span>',body);
   const hidNote=(...v)=>v.some(x=>x==='s')?'<p class="adm-note">— Not published: the DOE hides small counts for privacy.</p>':'';
   const early=(lab,n,a,o)=>'<div class="adm"><div class="facts"><span>Seats</span><b>'+show(n)+'</b><span>Applied</span><b>'+show(a)+'</b><span>Offers</span><b>'+show(o)+'</b></div>'+hidNote(n,a,o)+
-    '<p class="adm-note">'+lab[0].toUpperCase()+lab.slice(1)+' seats aren’t zoned: families apply through MySchools, and zoned families often get priority. Applicants listed the school and didn’t get a choice they ranked higher.</p><a href="https://www.myschools.nyc/en/" target="_blank" rel="noopener">Find '+lab+' programs on MySchools ↗</a></div>';
+    '<p class="adm-note">“Applied” is the DOE’s count of true applicants. '+lab[0].toUpperCase()+lab.slice(1)+' seats aren’t zoned: families apply through MySchools, and zoned families often get priority.</p><a href="https://www.myschools.nyc/en/" target="_blank" rel="noopener">Find '+lab+' programs on MySchools ↗</a></div>';
   const py='fall 2025'.replace(/\D/g,''),no=pk?[!pk[0]&&'pre-K',!pk[2]&&'3-K'].filter(Boolean):[];
   // a school without pre-K or 3-K: a short line under the sections, the full note inside kindergarten's
   const noLine=no.length?'No '+no.join(' or ')+' at this school.':'';
