@@ -6,6 +6,12 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
+## Unreleased
+
+### Changed
+- Map icons for stars, diamond and circles keep a consistent border color when selected to match deselected state
+- Changed the icon for address from a circle to a pin
+
 ## 1.17.0 (2026-10-09)
 
 ### Changed
