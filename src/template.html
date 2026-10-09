@@ -260,14 +260,13 @@ aside>*{flex-shrink:0}
 .gtm{display:block;width:100%;height:100%;overflow:visible;cursor:pointer;filter:drop-shadow(0 1px 2px rgba(0,0,0,.3))}
 .gtk{display:inline-block;width:12px;height:12px;flex:none;background:var(--fg);clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)}
 
-.nzm{width:100%;height:100%;box-sizing:border-box;transform:rotate(45deg) scale(.72);background:var(--c);border:2px solid var(--panel);box-shadow:0 0 0 1.2px var(--dot),0 1px 3px rgba(0,0,0,.35);cursor:pointer}
+.nzm{width:100%;height:100%;box-sizing:border-box;transform:rotate(45deg) scale(.72);background:var(--c);border:0;box-shadow:0 0 0 2px var(--dot),0 1px 3px rgba(0,0,0,.35);cursor:pointer}
 /* fingers need a bigger target than the drawn marker: an invisible ring around each one on touch screens */
 @media (pointer:coarse){.leaflet-nz-pane .leaflet-marker-icon::after,.leaflet-zs-pane .leaflet-marker-icon::after{content:"";position:absolute;inset:-14px;border-radius:50%}}
-.zsm{width:100%;height:100%;box-sizing:border-box;border-radius:50%;background:radial-gradient(circle,var(--dot) 0 22%,var(--panel) 23% 40%,var(--c) 41%);border:1.5px solid var(--panel);box-shadow:0 0 0 1.2px var(--dot),0 1px 3px rgba(0,0,0,.35);cursor:pointer}
+.zsm{width:100%;height:100%;box-sizing:border-box;border-radius:50%;background:var(--c);border:0;box-shadow:0 0 0 1.5px var(--dot),0 1px 3px rgba(0,0,0,.35);cursor:pointer}
 .zsm.sel{box-shadow:0 0 0 2px var(--panel),0 0 0 4.5px var(--hl)}
-.sw i.zsk,.zsk{display:inline-block;width:11px;height:11px;flex:none;border-radius:50%;background:radial-gradient(circle,var(--fg) 0 22%,var(--panel) 23% 42%,var(--fg) 43%);margin:0 3px}
+.sw i.zsk,.zsk{display:inline-block;width:11px;height:11px;flex:none;border-radius:50%;background:var(--fg);margin:0 3px}
 .nzm.sel{box-shadow:0 0 0 2px var(--panel),0 0 0 4.5px var(--hl)}
-.nz-small .nzm{border-width:1.5px}
 .zl.nzl{font-weight:600;font-style:italic}
 .opts{margin-top:4px;font-size:.85rem}
 .opts summary{cursor:pointer;font-weight:700}
@@ -653,7 +652,7 @@ function rateColor(r){const P=[5,50,75,95];const i=Math.min(2,Math.max(0,Math.fl
 const BORO={M:'Manhattan',K:'Brooklyn',Q:'Queens',X:'Bronx',R:'Staten Island'};
 const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const appEl=document.querySelector('.app'),aside=document.querySelector('aside');
-const map=L.map('map',{preferCanvas:true,zoomSnap:.5,minZoom:10,maxZoom:18,attributionControl:false}).setView([40.70,-73.95],11);
+const map=L.map('map',{preferCanvas:true,zoomSnap:.5,minZoom:9,maxZoom:18,attributionControl:false}).setView([40.70,-73.95],11);
 // NYC's official basemap (City of New York, CC BY 4.0), shown in muted grays under see-through zone colors.
 // Its street and place labels draw above the zones. If the tiles don't load, the map falls back to its own streets.
 let useBase=true,tileOk=0,tileErr=0;
@@ -671,7 +670,12 @@ function syncNames(){if(!useBase)return;if(LAY.names&&!map.hasLayer(labelTiles))
 function baseFade(){const z=map.getZoom();baseTiles.setOpacity(z<11.5?.45:z<12.5?.7:1);labelTiles.setOpacity(z<12?.75:1)}
 function isDark(){const th=document.documentElement.dataset.theme;return th==='dark'||(th!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)}
 // a bit more solid in dark mode, where see-through colors over the dark basemap look muddy
-function zoneAlpha(){if(!useBase)return .78;const z=map.getZoom();const a=z<11.5?.8:z<12.5?.7:z<13.5?.6:.5;return isDark()?Math.min(a+.15,.9):a}
+// zone fill: full color when zoomed all the way out (no markers), fading to a light wash by zoom 12 where the
+// markers appear, then a touch lighter as you zoom in. With "Zoned schools" switched off the zones keep more color.
+function zoneAlpha(){if(!useBase)return .78;const z=map.getZoom();
+  if(!LAY.zs){const a=z<11.5?.8:z<12.5?.7:z<13.5?.6:.5;return isDark()?Math.min(a+.15,.9):a}
+  const a=Math.min(.9,(z<=9?.8:z<12?.8-(z-9)*(.8-.36)/3:z<12.5?.36:z<13.5?.35:z<14.5?.34:.33)*1.36);return isDark()?Math.min(a+.08,.9):a}
+const SEL_FILL=.2;  // the selected zone's extra fill
 map.on('zoomend',()=>{baseFade();if(useBase&&typeof restyle==='function')restyle()});baseFade();
 const renderer=L.canvas({padding:.3,tolerance:2});
 function short(d){const s=S[d];if(!s)return 'School '+d;return s.n}
@@ -711,7 +715,7 @@ function fillFor(f){const p=f.properties;if(!p.dbns.length)return css('--land');
 function style(f,sel){const a=zoneAlpha();const empty=!f.properties.dbns.length;
   if(!LAY.zones)return{renderer,stroke:false,fillColor:'#000',fillOpacity:0};
   if(f.properties.dbns.length>1&&metric!=='none')return{renderer,stroke:false,fillColor:fillFor(f),fillOpacity:0};  // drawn as stripes
-  return{renderer,stroke:false,fillColor:fillFor(f),fillOpacity:useBase&&empty?.15:sel?Math.min(a+.15,.95):a}}
+  return{renderer,stroke:false,fillColor:fillFor(f),fillOpacity:useBase&&empty?.15:sel?Math.min(a+SEL_FILL,.95):a}}
 let selected=null,layer=null,byLayer=[],zoneLines=null;
 // zones with more than one school: diagonal stripes, one band in each school's color
 map.createPane('stripes').style.zIndex=401;map.getPane('stripes').style.pointerEvents='none';
@@ -727,7 +731,7 @@ function buildStripes(){buildNoZone();stripeGroup.clearLayers();if(metric==='non
   const a=zoneAlpha();let defs=null,i=0;
   byLayer.forEach(l=>{const p=l.feature.properties;if(p.dbns.length<2)return;
     const cols=p.dbns.map(d=>fillFor({properties:Object.assign({},p,{dbns:[d]})}));
-    const g=L.geoJSON(l.feature,{style:{renderer:stripeRend,stroke:false,fill:true,fillColor:cols[0],fillOpacity:l===selected?Math.min(a+.15,.95):a,interactive:false}}).addTo(stripeGroup);
+    const g=L.geoJSON(l.feature,{style:{renderer:stripeRend,stroke:false,fill:true,fillColor:cols[0],fillOpacity:l===selected?Math.min(a+SEL_FILL,.95):a,interactive:false}}).addTo(stripeGroup);
     const svg=stripeRend._container;if(!svg)return;
     if(!defs){defs=svg.querySelector('defs');if(!defs){defs=document.createElementNS('http://www.w3.org/2000/svg','defs');svg.insertBefore(defs,svg.firstChild)}defs.innerHTML=''}
     const id='zs'+(i++),bw=6,W=bw*cols.length;
@@ -744,7 +748,7 @@ map.createPane('zoneLines').style.zIndex=455;map.getPane('zoneLines').style.poin
 map.createPane('selPane').style.zIndex=458;map.getPane('selPane').style.pointerEvents='none';
 const zlRend=L.canvas({pane:'zoneLines',padding:.3}),selRend=L.canvas({pane:'selPane',padding:.3});
 function lineStyle(){const z=map.getZoom();const [w,o]=z<11?[.5,.5]:z<12.5?[.8,.7]:z<14?[1.3,.85]:z<15.5?[2,.9]:[2.6,.95];
-  return{renderer:zlRend,interactive:false,fill:false,color:css('--zone-line'),weight:w,opacity:o,lineJoin:'round'}}
+  return{renderer:zlRend,interactive:false,fill:false,color:css('--zone-line'),weight:w*farScale(),opacity:o,lineJoin:'round'}}
 zoneLines=L.geoJSON(F,{style:lineStyle,interactive:false}).addTo(map);
 const restyleLines=()=>zoneLines.setStyle(lineStyle());
 map.on('zoomend',restyleLines);
@@ -757,7 +761,10 @@ function makeSel(feature){const [h,l]=selStyles();return L.featureGroup([L.geoJS
 function restyleSel(){if(!selLine)return;const s=selStyles();selLine.getLayers().forEach((g,i)=>g.setStyle(s[i]))}
 map.on('zoomend',restyleSel);
 // phones: leave room for the collapsed sheet and color card at the bottom
+// open no farther out than zoom 10 (the farthest before zoom 9 was added): fit under the old limit, then lift it
+map.setMinZoom(10);
 map.fitBounds(layer.getBounds(),matchMedia('(max-width:760px)').matches?{paddingTopLeft:[10,60],paddingBottomRight:[10,180]}:{padding:[10,10]});
+map.setMinZoom(9);
 
 // major streets: highways (tier 1) always, major streets (2) from zoom 11.5, secondary (3) from zoom 13
 map.createPane('streets').style.zIndex=450;map.getPane('streets').style.pointerEvents='none';
@@ -808,22 +815,27 @@ function drawStreetLabels(){sLabels.clearLayers();const z=map.getZoom();const b=
 map.on('zoomend moveend',syncStreets);
 
 // school dots
-// zoned schools: a bullseye in the school's color at its building; click to open its zone (works with zones hidden too)
+// marker sizes relative to nzSize(): zoned circles, diamonds (schools without a zone), and the selected one's extra
+const ZS_SIZE=.73,NZ_SIZE=.8,SEL_SIZE=1.3;
+// zoned schools: a circle in the school's color at its building; click to open its zone (works with zones hidden too)
 map.createPane('zsPane').style.zIndex=461;
 const zsGroup=L.layerGroup().addTo(map);
-function zsOn(){return !!LAY.zs}
+// school markers show from zoom 12 in (about a district across); farther out the zones carry the colors, with their stronger fill.
+// The selected school's marker always shows.
+function markersByZoom(){return map.getZoom()>=12}  // a function, so the zone style can call it before this line runs
+function zsOn(){return !!LAY.zs&&markersByZoom()}
 function zsTip(d){const v=schoolVal(d),val=v==null||isProg(metric)&&!v?'':' · '+(isProg(metric)?'has '+(metric==='gt'?'G&T':'dual language'):fmtVal(v));
   return '<small class="tip-d">District '+(+d.slice(0,2))+' · Zoned</small><br>'+esc(short(d))+val}
 function zsSelected(d){return selected&&selected.feature.properties.dbns.includes(d)}
-function buildZS(){zsGroup.clearLayers();if(!zsOn()||typeof nzSize!=='function')return;const sz=Math.round(nzSize()*1.1),zoned=new Set(byLayer.flatMap(l=>l.feature.properties.dbns));
-  Object.entries(LV[level].S).forEach(([d,s])=>{if(!s.lat||!zoned.has(d))return;const sel=zsSelected(d),z=sel?Math.round(sz*1.3):sz;
+function buildZS(){zsGroup.clearLayers();if(!LAY.zs||typeof nzSize!=='function')return;const near=markersByZoom();const sz=nzSize()*ZS_SIZE,zoned=new Set(byLayer.flatMap(l=>l.feature.properties.dbns));
+  Object.entries(LV[level].S).forEach(([d,s])=>{if(!s.lat||!zoned.has(d))return;const sel=zsSelected(d);if(!near&&!sel)return;const z=Math.round(sel?sz*SEL_SIZE:sz);
     const m=L.marker([s.lat,s.lon],{pane:'zsPane',keyboard:false,zIndexOffset:sel?1000:0,icon:L.divIcon({className:'',html:'<div class="zsm'+(sel?' sel':'')+'" style="--c:'+nzFill(d)+'"></div>',iconSize:[z,z],iconAnchor:[z/2,z/2]})});
     m.bindTooltip(()=>zsTip(d),{direction:'top',offset:[0,-z/2]});
     m.on('click',()=>{const l=byLayer.find(x=>x.feature.properties.dbns.includes(d));if(l)select(l,true)});m.addTo(zsGroup)})}
 function buildDots(){buildZS()}
 buildDots();
 // shrink school dots when zoomed out so they don't cover the zone colors
-function sizeDots(){}  // bullseyes are redrawn with the other markers on zoom (buildNZ)
+function sizeDots(){}  // the circles are redrawn with the other markers on zoom (buildNZ)
 map.on('zoomend',sizeDots);sizeDots();
 
 // zone number labels when zoomed in
@@ -865,9 +877,9 @@ function buildDistFill(){distFill.clearLayers();const on=LAY.dist&&!LAY.zones&&O
   Object.values(DIST).forEach(v=>L.polygon(v.r.map(r=>r.map(c=>[c[1],c[0]])),{renderer:fillRend,interactive:false,stroke:false,fillColor:(isDark()?DFILL_DARK:DFILL)[v.c||0],fillOpacity:isDark()?.7:.62}).addTo(distFill));
   if(!map.hasLayer(distFill))distFill.addTo(map)}
 const distLines=Object.values(DIST).flatMap(v=>v.r.map(r=>r.map(c=>[c[1],c[0]])));
-function distStyle(){const z=map.getZoom(),w=z<11.5?1.4:z<12.5?2.2:z<13.5?3:z<15?3.8:4.6;return[{renderer:distRend,interactive:false,color:css('--panel'),weight:w+3.5,opacity:.85,lineJoin:'round',lineCap:'round'},{renderer:distRend,interactive:false,color:css('--fg'),weight:w,opacity:.95,lineJoin:'round',lineCap:'round'}]}
+function distStyle(){const z=map.getZoom(),w=(z<11.5?1.4:z<12.5?2.2:z<13.5?3:z<15?3.8:4.6)*farScale();return[{renderer:distRend,interactive:false,color:css('--panel'),weight:w+3.5,opacity:.85,lineJoin:'round',lineCap:'round'},{renderer:distRend,interactive:false,color:css('--fg'),weight:w,opacity:.95,lineJoin:'round',lineCap:'round'}]}
 function buildDistricts(){distGroup.clearLayers();if(!distLines.length)return;const [h,l]=distStyle();L.polyline(distLines,h).addTo(distGroup);L.polyline(distLines,l).addTo(distGroup)}
-function drawDistNums(){distNums.clearLayers();const z=map.getZoom();if(!LAY.dist||z>=(LAY.zones?13:15.5))return;
+function drawDistNums(){distNums.clearLayers();const z=map.getZoom();if(!LAY.dist||z<10||z>=(LAY.zones?13:15.5))return;  // too crowded at zoom 9
   Object.entries(DIST).forEach(([k,v])=>L.marker(v.lp,{interactive:false,keyboard:false,pane:'distPane',icon:L.divIcon({className:'',html:'<div class="dnum">'+(z>=11.5?'<small>District</small>':'')+k+'</div>',iconSize:[70,40],iconAnchor:[35,z>=11.5?20:13]})}).addTo(distNums))}
 function syncDistricts(){const on=LAY.dist&&distLines.length>0;[distGroup,distNums].forEach(g=>{if(on&&!map.hasLayer(g))g.addTo(map);if(!on&&map.hasLayer(g))map.removeLayer(g)});
   document.getElementById('ly-dist-row').hidden=!distLines.length;if(on){buildDistricts();drawDistNums()}buildDistFill()}
@@ -878,24 +890,29 @@ map.createPane('nzPane').style.zIndex=462;
 const nzGroup=L.layerGroup().addTo(map);let nzSel=null;
 const nzKey=o=>o.gt?'gt':o.hs?'hsnz':'nz';
 function nzShown(o){return LAY[nzKey(o)]}
-function nzOn(){return NZ.length>0&&(LAY[level==='hs'?'hsnz':'nz']||LAY.gt)}
+function nzWanted(){return NZ.length>0&&(LAY[level==='hs'?'hsnz':'nz']||LAY.gt)}
+function nzOn(){return nzWanted()&&markersByZoom()}
 function nzFill(d){return fillFor({properties:{dbns:[d],c:0}})}
 const STAR='50,2 61.5,36 97,36 68,57.5 79,92 50,71 21,92 32,57.5 3,36 38.5,36';
 // dark outline, white ring, then the color; selected adds a blue outer ring (like the diamonds)
 function gtStar(c,sel){return '<svg class="gtm" viewBox="-16 -16 132 132" aria-hidden="true">'+
   (sel?'<polygon points="'+STAR+'" fill="none" stroke="var(--hl)" stroke-width="30" stroke-linejoin="round"/><polygon points="'+STAR+'" fill="none" stroke="var(--panel)" stroke-width="20" stroke-linejoin="round"/>':'')+
   '<polygon points="'+STAR+'" fill="var(--panel)" stroke="var(--dot)" stroke-width="'+(sel?12:16)+'" stroke-linejoin="round"/>'+
-  '<polygon points="'+STAR+'" fill="'+c+'" stroke="var(--panel)" stroke-width="8" stroke-linejoin="round"/></svg>'}
+  '<polygon points="'+STAR+'" fill="'+c+'"/></svg>'}
 // a marker label: up to ~24 characters of the name, with "High School" shortened to "HS"
 function shortName(n){n=n.replace(/^The\s+/i,'').replace(/,\s*The$/i,'').replace(/\bHigh School\b/gi,'HS');
   const w=n.split(/\s+/);let t=w[0];for(let i=1;i<w.length&&(t+' '+w[i]).length<=24;i++)t+=' '+w[i];return t.replace(/\s+(of|for|and|the|at|in|&)$/i,'').replace(/[,.;:-]+$/,'')}
 function nzSpot(o){return o.lat.toFixed(4)+','+o.lon.toFixed(4)}
 function nzAt(k){return NZ.filter(o=>nzShown(o)&&nzSpot(o)===k)}
 // small when zoomed out (the whole city), full size once you're looking at a neighborhood
-function nzSize(){const z=map.getZoom();return z<11.5?8:z<12.5?10:z<13.5?13:z<14.5?16:20}
-function buildNZ(){nzGroup.clearLayers();document.getElementById('nz-key').hidden=!nzOn();buildZS();document.getElementById('nz-key').hidden=!nzOn()&&!zsOn();document.getElementById('zsk-item').hidden=!zsOn();document.getElementById('nzk-item').hidden=!(nzOn()&&LAY[level==='hs'?'hsnz':'nz']);document.getElementById('gtk-item').hidden=!(nzOn()&&LAY.gt&&NZ.some(o=>o.gt));if(!nzOn())return;const sz=nzSize();
-  const groups={};NZ.forEach(o=>{if(nzShown(o))(groups[nzSpot(o)]=groups[nzSpot(o)]||[]).push(o)});
-  NZ.forEach(o=>{if(!nzShown(o))return;const sz=o.gt?Math.round(nzSize()*(nzSel===o.d?2.3:2)):nzSize();
+// zoomed all the way out, markers and zone lines shrink: half size at zoom 9, three quarters at 10, full from 11
+function farScale(){return Math.min(1,Math.max(.5,.5+(map.getZoom()-9)*.25))}
+// markers appear at zoom 12 at half size and grow to full size by 14 (farther out only the selected school's shows)
+function markerScale(){return Math.min(1,Math.max(.5,.5+(map.getZoom()-12)*.25))}
+function nzSize(){const z=map.getZoom();return (z<11.5?8:z<12.5?10:z<13.5?13:z<14.5?16:20)*markerScale()}
+function buildNZ(){nzGroup.clearLayers();document.getElementById('nz-key').hidden=!nzOn();buildZS();document.getElementById('nz-key').hidden=!nzOn()&&!zsOn();document.getElementById('zsk-item').hidden=!zsOn();document.getElementById('nzk-item').hidden=!(nzOn()&&LAY[level==='hs'?'hsnz':'nz']);document.getElementById('gtk-item').hidden=!(nzOn()&&LAY.gt&&NZ.some(o=>o.gt));if(!nzWanted())return;const sz=nzSize(),near=markersByZoom();
+  const groups={};NZ.forEach(o=>{if(nzShown(o)&&(near||nzSel===o.d))(groups[nzSpot(o)]=groups[nzSpot(o)]||[]).push(o)});
+  NZ.forEach(o=>{if(!nzShown(o)||!near&&nzSel!==o.d)return;const sz=o.gt?Math.round(nzSize()*(nzSel===o.d?2.3:2)):Math.round(nzSize()*NZ_SIZE*(nzSel===o.d?SEL_SIZE:1));
     const g=groups[nzSpot(o)],i=g.indexOf(o),r=g.length>1&&map.getZoom()>=12?nzSize()*.75+g.length*1.5:0,ang=2*Math.PI*i/g.length-Math.PI/2,dx=r*Math.cos(ang),dy=r*Math.sin(ang);
     const m=L.marker([o.lat,o.lon],{pane:'nzPane',keyboard:false,zIndexOffset:nzSel===o.d?1000:0,
       icon:L.divIcon({className:'',html:o.gt?gtStar(nzFill(o.d),nzSel===o.d):'<div class="nzm'+(nzSel===o.d?' sel':'')+'" style="--c:'+nzFill(o.d)+'"></div>',iconSize:[sz,sz],iconAnchor:[sz/2-dx,sz/2-dy]})});
