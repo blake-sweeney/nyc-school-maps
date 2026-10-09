@@ -819,8 +819,8 @@ map.on('zoomend moveend',syncStreets);
 
 // school dots
 // marker sizes relative to nzSize(): zoned circles, diamonds (schools without a zone), and the selected one's extra
-const ZS_SIZE=.73,NZ_SIZE=.8,SEL_SIZE=1.6;
-// the selected marker's size: 60% larger, and at least 3px larger so it shows on the smallest markers (sizes aren't
+const ZS_SIZE=.73,NZ_SIZE=.8,SEL_SIZE=1.3;
+// the selected marker's size: 30% larger, and at least 3px larger so it shows on the smallest markers (sizes aren't
 // rounded to whole pixels, which would swallow the difference at small sizes)
 function selSize(sz){return Math.max(sz*SEL_SIZE,sz+3)}
 // zoned schools: a circle in the school's color at its building; click to open its zone (works with zones hidden too)
