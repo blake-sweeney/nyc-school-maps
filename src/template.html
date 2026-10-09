@@ -674,7 +674,7 @@ function isDark(){const th=document.documentElement.dataset.theme;return th==='d
 // zone fill: a light wash under the zoned-school markers, fading as you zoom in; stronger when the markers are
 // switched off, since the zones then carry the colors on their own
 function zoneAlpha(){if(!useBase)return .78;const z=map.getZoom(),zs=zsOn();
-  const a=zs?(z<11.5?.5:z<12.5?.42:z<13.5?.33:.25):(z<11.5?.8:z<12.5?.7:z<13.5?.6:.5);return isDark()?Math.min(a+(zs?.08:.15),.9):a}
+  const a=zs?(z<11.5?.42:z<12.5?.39:z<13.5?.36:.33):(z<11.5?.8:z<12.5?.7:z<13.5?.6:.5);return isDark()?Math.min(a+(zs?.08:.15),.9):a}
 const SEL_FILL=.2;  // the selected zone's extra fill
 map.on('zoomend',()=>{baseFade();if(useBase&&typeof restyle==='function')restyle()});baseFade();
 const renderer=L.canvas({padding:.3,tolerance:2});

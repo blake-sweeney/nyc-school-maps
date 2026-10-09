@@ -9,7 +9,7 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 ## Unreleased
 
 ### Changed
-- Zone colors on the map are lighter, so the school markers stand out and the streets show through. They start about as light as they used to be when zoomed in, and get lighter still as you zoom in to a few blocks. If you switch off "Zoned schools" in Map layers, the zones go back to their stronger colors, since they're then the only colors on the map. The zone you select stands out more against its lighter neighbors.
+- Zone colors on the map are lighter, so the school markers stand out and the streets show through. They're a light wash at every zoom, and a little lighter still when you zoom in to a few blocks. If you switch off "Zoned schools" in Map layers, the zones go back to their stronger colors, since they're then the only colors on the map. The zone you select stands out more against its lighter neighbors.
 
 ## 1.16.0 (2026-10-08)
 
