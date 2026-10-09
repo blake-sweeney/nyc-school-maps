@@ -850,6 +850,8 @@ function drawStreetLabels(){sLabels.clearLayers();const z=map.getZoom();const b=
 map.on('zoomend moveend',syncStreets);
 
 // school dots
+// marker sizes relative to nzSize(): zoned circles, diamonds (schools without a zone), and the selected one's extra
+const ZS_SIZE=.73,NZ_SIZE=.8,SEL_SIZE=1.3;
 // zoned schools: a circle in the school's color at its building; click to open its zone (works with zones hidden too)
 map.createPane('zsPane').style.zIndex=461;
 const zsGroup=L.layerGroup().addTo(map);
@@ -860,8 +862,8 @@ function zsOn(){return !!LAY.zs&&markersByZoom()}
 function zsTip(d){const v=schoolVal(d),val=v==null||isProg(metric)&&!v?'':' · '+(isProg(metric)?'has '+(metric==='gt'?'G&T':'dual language'):fmtVal(v));
   return '<small class="tip-d">District '+(+d.slice(0,2))+' · Zoned</small><br>'+esc(short(d))+val}
 function zsSelected(d){return selected&&selected.feature.properties.dbns.includes(d)}
-function buildZS(){zsGroup.clearLayers();if(!LAY.zs||typeof nzSize!=='function')return;const near=markersByZoom();const sz=Math.round(nzSize()*1.1),zoned=new Set(byLayer.flatMap(l=>l.feature.properties.dbns));
-  Object.entries(LV[level].S).forEach(([d,s])=>{if(!s.lat||!zoned.has(d))return;const sel=zsSelected(d);if(!near&&!sel)return;const z=sel?Math.round(sz*1.3):sz;
+function buildZS(){zsGroup.clearLayers();if(!LAY.zs||typeof nzSize!=='function')return;const near=markersByZoom();const sz=nzSize()*ZS_SIZE,zoned=new Set(byLayer.flatMap(l=>l.feature.properties.dbns));
+  Object.entries(LV[level].S).forEach(([d,s])=>{if(!s.lat||!zoned.has(d))return;const sel=zsSelected(d);if(!near&&!sel)return;const z=Math.round(sel?sz*SEL_SIZE:sz);
     const m=L.marker([s.lat,s.lon],{pane:'zsPane',keyboard:false,zIndexOffset:sel?1000:0,icon:L.divIcon({className:'',html:'<div class="zsm'+(sel?' sel':'')+'" style="--c:'+nzFill(d)+'"></div>',iconSize:[z,z],iconAnchor:[z/2,z/2]})});
     m.bindTooltip(()=>zsTip(d),{direction:'top',offset:[0,-z/2]});
     m.on('click',()=>{const l=byLayer.find(x=>x.feature.properties.dbns.includes(d));if(l)select(l,true)});m.addTo(zsGroup)})}
@@ -945,7 +947,7 @@ function markerScale(){return Math.min(1,Math.max(.5,.5+(map.getZoom()-12)*.25))
 function nzSize(){const z=map.getZoom();return (z<11.5?8:z<12.5?10:z<13.5?13:z<14.5?16:20)*markerScale()}
 function buildNZ(){nzGroup.clearLayers();document.getElementById('nz-key').hidden=!nzOn();buildZS();document.getElementById('nz-key').hidden=!nzOn()&&!zsOn();document.getElementById('zsk-item').hidden=!zsOn();document.getElementById('nzk-item').hidden=!(nzOn()&&LAY[level==='hs'?'hsnz':'nz']);document.getElementById('gtk-item').hidden=!(nzOn()&&LAY.gt&&NZ.some(o=>o.gt));if(!nzWanted())return;const sz=nzSize(),near=markersByZoom();
   const groups={};NZ.forEach(o=>{if(nzShown(o)&&(near||nzSel===o.d))(groups[nzSpot(o)]=groups[nzSpot(o)]||[]).push(o)});
-  NZ.forEach(o=>{if(!nzShown(o)||!near&&nzSel!==o.d)return;const sz=o.gt?Math.round(nzSize()*(nzSel===o.d?2.3:2)):nzSize();
+  NZ.forEach(o=>{if(!nzShown(o)||!near&&nzSel!==o.d)return;const sz=o.gt?Math.round(nzSize()*(nzSel===o.d?2.3:2)):Math.round(nzSize()*NZ_SIZE*(nzSel===o.d?SEL_SIZE:1));
     const g=groups[nzSpot(o)],i=g.indexOf(o),r=g.length>1&&map.getZoom()>=12?nzSize()*.75+g.length*1.5:0,ang=2*Math.PI*i/g.length-Math.PI/2,dx=r*Math.cos(ang),dy=r*Math.sin(ang);
     const m=L.marker([o.lat,o.lon],{pane:'nzPane',keyboard:false,zIndexOffset:nzSel===o.d?1000:0,
       icon:L.divIcon({className:'',html:o.gt?gtStar(nzFill(o.d),nzSel===o.d):'<div class="nzm'+(nzSel===o.d?' sel':'')+'" style="--c:'+nzFill(o.d)+'"></div>',iconSize:[sz,sz],iconAnchor:[sz/2-dx,sz/2-dy]})});
