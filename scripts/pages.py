@@ -847,7 +847,7 @@ def swatch(color, txt):
     return f'<i class="sw" style="background:{color}"></i>{txt}'
 
 
-def school_table(dbns, names, R, cols, note=None, note_line=False):
+def school_table(dbns, names, R, cols, note=None, note_line=False, num=None):
     """A sortable table: school name, overall rating, then `cols` = [(heading, fn(dbn) -> number or None, format)]."""
     if not dbns:
         return ""
@@ -860,7 +860,8 @@ def school_table(dbns, names, R, cols, note=None, note_line=False):
     for dbn in sorted(dbns, key=lambda x: names[x].lower()):
         rt = rating(R, dbn)
         tag = note(dbn) if note else ""
-        cells = [f'<td data-v="{e(names[dbn].lower())}"><a href="/schools/{e(dbn)}/">{e(names[dbn])}</a>'
+        badge = f'<span class="znum" aria-label="zone {num[dbn]} on the map">{num[dbn]}</span>' if num and dbn in num else ""
+        cells = [f'<td data-v="{e(names[dbn].lower())}">{badge}<a href="/schools/{e(dbn)}/">{e(names[dbn])}</a>'
                  + (f' <small{small_cls}>{e(tag)}</small>' if tag else "") + "</td>",
                  f'<td data-v="{"" if rt is None else f"{rt:.2f}"}">{"–" if rt is None else swatch(rate_color(rt), f"{rt:.1f}")}</td>']
         for _, fn, fmt, stops in cols:
