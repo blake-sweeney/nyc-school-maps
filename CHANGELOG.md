@@ -6,6 +6,11 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
+## Unreleased
+
+### Added
+- Middle school map: a new "Screened" option under Color by shows which schools have at least one screened program (74 of about 480 middle schools). Click a school to see each program and how it admits students.
+
 ## 1.21.0 (2026-10-09)
 
 ### Added
