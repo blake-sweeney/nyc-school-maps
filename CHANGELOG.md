@@ -8,6 +8,9 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 
 ## 1.21.0 (2026-10-09)
 
+### Added
+- When you open a school from a zone's list of other options, or from search results, its card has a "← Back" link that returns you to the zone (with the list open where you left it) or to your search results. Your browser's Back button, and the back gesture on phones, do the same.
+
 ### Changed
 - The pin for an address you search is now bright red and a bit larger, so it's easier to spot on the map.
 - Stars for citywide G&T schools (and specialized and citywide schools on the middle and high school maps) are now about the same size as the other school markers instead of twice as big.
