@@ -98,6 +98,8 @@ button{font:inherit;font-family:var(--display);font-weight:600;font-size:.9rem;p
 .asof{font-size:.75rem;color:var(--muted);margin:8px 0 0;line-height:1.4}
 .note a{color:inherit;font-weight:700}
 .card .confirm{font-size:.82rem;color:var(--hl)}
+.back-link{align-self:flex-start;font:inherit;font-family:var(--display);font-weight:600;font-size:.85rem;color:var(--hl);background:none;border:0;padding:6px 0;margin:-6px 0 -4px;cursor:pointer}
+.back-link:hover{text-decoration:underline}
 .card-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .btn-sm{font:inherit;font-family:var(--display);font-weight:600;font-size:.82rem;padding:6px 10px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer;text-decoration:none}
 .btn-sm:hover{border-color:var(--muted)}
@@ -976,19 +978,36 @@ function nzTip(o){const v=schoolVal(o.d),kind=o.hs?(o.gt?'Specialized':'High sch
   return '<small class="tip-d">'+(o.hs?esc(BORO[o.d[2]]||''):'District '+(+o.d.slice(0,2)))+' · '+kind+'</small><br>'+esc(o.n)+val}
 map.on('zoomend',buildNZ);buildNZ();
 function clearNZSel(){if(!nzSel)return;nzSel=null;buildNZ()}
-function selectNZ(d,fromClick){const o=nzGet(d);if(!o)return;markEngaged();
+function selectNZ(d,fromClick,back){const o=nzGet(d);if(!o)return;markEngaged();backTo=back||null;
   if(selected){selected.setStyle(style(selected.feature,false));selected=null;buildZS()}if(selLine){map.removeLayer(selLine);selLine=null}
   if(!nzShown(o)){LAY[nzKey(o)]=true;syncLayerBoxes();saveLay()}nzSel=d;buildNZ();
   let h=o.hs?'<div class="zt">'+(o.gt?'Specialized high school':'High school · no zone')+' · '+esc(BORO[d[2]]||'')+'</div><div class="kind nz"><b>'+(o.gt?'Specialized:':'Citywide choice:')+'</b> '+esc(nzPriority(o))+' <a href="'+mySchoolsUrl(d)+'" target="_blank" rel="noopener">Program rules on MySchools ↗</a></div>'+schoolBlock(d):'<div class="zt">'+(o.ms&&o.gt?'Citywide middle school':o.ms?'Middle school · no zone':o.gt?'Citywide G&amp;T school':'Non-zoned school')+' · District '+(+d.slice(0,2))+' · '+esc(BORO[d[2]]||'')+'</div><div class="kind nz"><b>'+(o.ms&&o.gt?'Citywide:':o.gt?'Citywide G&amp;T:':'No zone:')+'</b> '+esc(nzPriority(o))+(nzDemand(o)&&!o.ms?' Kindergarten: '+esc(nzDemand(o))+'.':'')+(o.gt&&!o.ms?' <a href="'+GT_URL+'" target="_blank" rel="noopener">How G&amp;T eligibility works ↗</a>':'')+'</div>'+schoolBlock(d);
   h+='<div class="card-actions"><button type="button" class="btn-sm" id="copy-link">Copy link to this school</button><button type="button" class="btn-sm to-map" id="to-map">↑ Back to map</button></div>';
-  card.className='card';card.innerHTML=h;setZoneHash(d);
+  if(backTo)h='<button type="button" class="back-link" id="back-link">← Back to '+esc(backTo.label)+'</button>'+h;
+  card.className='card';card.innerHTML=h;setZoneHash(d);if(backTo)document.getElementById('back-link').onclick=()=>history.back();
   document.getElementById('copy-link').onclick=e=>copyLink(e.currentTarget,pageLink(d));
   document.getElementById('to-map').onclick=()=>{if(phone.matches)setSheet(false);else document.getElementById('map').scrollIntoView({behavior:'smooth',block:'start'})};
   const ll=L.latLng(o.lat,o.lon);
   if(phone.matches){const ae=document.activeElement;if(ae&&ae.tagName==='INPUT')ae.blur();setPop('search',false);sheetLabel(o.n,o.hs?(o.gt?'Specialized high school':'High school')+' · '+(BORO[d[2]]||''):(o.ms&&o.gt?'Citywide middle school':o.ms?'Middle school, no zone':o.gt?'Citywide G&T':'Non-zoned')+' · District '+(+d.slice(0,2)));setSheet(true);aside.scrollTo({top:0});if(!fromClick)showLatLng(ll,15)}
   else if(!fromClick)map.setView(ll,Math.max(map.getZoom(),15))}
 // the zone card's "other options" list opens a non-zoned school
-document.getElementById('card').addEventListener('click',e=>{const b=e.target.closest('button[data-nz]');if(b)selectNZ(b.dataset.nz,false)});
+document.getElementById('card').addEventListener('click',e=>{const b=e.target.closest('button[data-nz]');if(!b)return;
+  const l=selected,p=l&&l.feature.properties,ds=p&&p.dbns||[];
+  drillIn(b.dataset.nz,l&&{kind:'zone',l,top:aside.scrollTop,label:ds.length===1?prefixOf(ds[0])+' '+(+ds[0].slice(3))+'’s zone':ds.length?'this zone':'District '+(+p.dist)})});
+// going back: a school opened from a zone's list or from search results gets a "← Back" link, and the browser's
+// Back button (or the phone's back gesture) does the same. Only these steps add a history entry; other clicks
+// replace the address, so Back doesn't replay every zone you tapped.
+let backTo=null;
+function drillIn(d,back){if(back){try{history.pushState({nsz:1},'','#'+level+'-'+d)}catch(e){back=null}}selectNZ(d,false,back)}
+function goBack(b){backTo=null;
+  if(b.kind==='zone'){select(b.l,false);const o=card.querySelector('details.opts');if(o)o.open=true;requestAnimationFrame(()=>{aside.scrollTop=b.top})}
+  // search: what was selected before the search comes back, with the results open again
+  else{if(b.l)select(b.l,false);else if(b.nz)selectNZ(b.nz,false);else{clearNZSel();card.className='card empty';card.textContent='Select a zone on the map, or search for a school, to see its zoned school.';sheetDefault()}
+    if(phone.matches)setPop('search',true);document.getElementById('t-school').click();q.focus();q.dispatchEvent(new Event('input'))}}
+window.addEventListener('popstate',()=>{if(backTo){goBack(backTo);return}
+  // otherwise follow the address, if it names a school on this level
+  const m=location.hash.match(/^#(es|ms|hs)-(\d{2}[KMQRX]\d{3})$/i);if(!m||m[1].toLowerCase()!==level)return;const dbn=m[2].toUpperCase();
+  const hit=byLayer.find(l=>l.feature.properties.dbns.includes(dbn));if(hit)select(hit,false);else if(nzGet(dbn))selectNZ(dbn,false)});
 
 // MySchools pages for each level (same patterns the DOE Snapshot links to)
 function mySchoolsUrl(d){d=encodeURIComponent(d);return level==='ms'?'https://www.myschools.nyc/en/schools/middle-school/'+d:level==='hs'?'https://www.myschools.nyc/en/schools/high-school/?dbn='+d:'https://www.myschools.nyc/en/schools/kindergarten/?dbn='+d}
@@ -1111,7 +1130,7 @@ function distAt(ll){const x=ll.lng,y=ll.lat;for(const [k,v] of Object.entries(DI
   let best=null,bd=Infinity,kx=Math.cos(y*Math.PI/180);for(const [k,v] of Object.entries(DIST))for(const r of v.r)for(const [xi,yi] of r){const dd=((xi-x)*kx)**2+(yi-y)**2;if(dd<bd){bd=dd;best=k}}
   return bd<4e-5?best:null}
 function select(l,fromClick,ll){
-  clearNZSel();
+  clearNZSel();backTo=null;
   markEngaged();
   if(selected)selected.setStyle(style(selected.feature,false));
   const p0=l.feature.properties,dk=!p0.dbns.length&&ll&&(!p0.dist||/,/.test(String(p0.dist)))?distAt(ll):null;
@@ -1164,7 +1183,7 @@ q.addEventListener('input',()=>{const v=q.value.trim().toLowerCase();if(v.length
     .filter(Boolean).sort((x,y)=>y.s-x.s||x.i-y.i).map(x=>x.o)
     .filter((o,i,a)=>{const key=x=>x.nz?'nz:'+x.nz:x.l.feature.properties.dbns.join(),k=key(o);return a.findIndex(x=>key(x)===k)===i}).slice(0,30);  // a zone split into pieces shows once
   res.innerHTML=hits.length?hits.map((o,i)=>{if(o.nz)return '<li><button type="button" data-i="'+i+'">'+esc(short(o.nz))+'<br><small>'+esc(o.nz)+' · '+esc(BORO[o.nz[2]])+' · '+(nzGet(o.nz).hs?(nzGet(o.nz).gt?'specialized':'high school'):nzGet(o.nz).gt?(nzGet(o.nz).ms?'citywide':'citywide G&amp;T'):nzGet(o.nz).ms?'no zone':'non-zoned')+'</small></button></li>';const p=o.l.feature.properties;return '<li><button type="button" data-i="'+i+'">'+esc(p.dbns.map(short).join(' / '))+'<br><small>'+esc(p.dbns.join(', '))+' · '+esc(BORO[p.boro])+'</small></button></li>'}).join(''):'<li><button type="button" disabled>No matching zone</button></li>';
-  res.hidden=false;res.querySelectorAll('button[data-i]').forEach(b=>b.onclick=()=>{const o=hits[+b.dataset.i];if(o.nz)selectNZ(o.nz,false);else select(o.l,false);res.hidden=true});setAct(res,0);
+  res.hidden=false;res.querySelectorAll('button[data-i]').forEach(b=>b.onclick=()=>{const o=hits[+b.dataset.i];if(o.nz)drillIn(o.nz,{kind:'search',label:'search results',l:selected,nz:nzSel});else select(o.l,false);res.hidden=true});setAct(res,0);
 });
 
 // coordinate check
