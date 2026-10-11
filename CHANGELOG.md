@@ -9,7 +9,7 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 ## Unreleased
 
 ### Added
-- Middle school map: a new "Screened" option under Color by shows which schools have at least one screened program (74 of about 480 middle schools). Click a school to see each program and how it admits students.
+- Middle and high school maps: a new "Screened" option under Color by shows how many of each school's programs are screened: all of them, some, or none. On the middle school map, 27 schools are fully screened and 47 have some screened programs. Click a school to see each program and how it admits students.
 
 ## 1.21.0 (2026-10-09)
 
