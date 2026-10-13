@@ -6,6 +6,14 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
+## Unreleased
+
+### Added
+- Middle and high school maps: a new "Screened" option under Color by shows how many of each school's programs are screened: all of them, some, or none. On the middle school map, 27 schools are fully screened and 47 have some screened programs. Click a school to see each program and how it admits students.
+
+### Fixed
+- The gray street map under the zones is back. The City moved its map tiles to a new address, so for a few days the map showed "Map Tile Service has moved" across every zone instead of streets and neighborhood names.
+
 ## 1.21.0 (2026-10-09)
 
 ### Added
