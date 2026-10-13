@@ -14,6 +14,13 @@ python3 -m http.server 8000           # preview at http://localhost:8000
 - Data years, citywide averages and color scales live once in `scripts/settings.py`; the build fills them into the map (`__SNAPSHOT__`-style placeholders) and the pages. The pages take the theme colors and the "Before you start" notice from `src/template.html`. Don't copy these values into either file.
 - Always run the full build before committing and commit the rebuilt outputs with the source change (`index.html`, `assets/`, `schools/`, `districts/`, `sitemap.xml`). GitHub Pages serves them as-is.
 - See README.md "Repo layout" for what each file in `data/` holds.
+- **Start with ARCHITECTURE.md**: a code map of where each part of the map and the build lives, plus known gotchas.
+
+## Branches
+
+- One branch per change, named for the work: `fix/<topic>`, `feature/<topic>` or `data/<topic>`, in short kebab-case (`fix/nyc-basemap-tiles`, `feature/ms-screened-color`, `data/2026-snapshot`).
+- Start each new change from an up-to-date `main`, even within the same session. Don't stack unrelated changes on one branch, so a fix can be released without waiting on a feature.
+- Never push to `main` directly; changes reach `main` through a pull request.
 
 ## Changelog and versions
 
@@ -21,6 +28,7 @@ python3 -m http.server 8000           # preview at http://localhost:8000
 - Write entries for parents, not developers: what they'll see on the map or page, in plain English. Match the existing entries.
 - Never edit `VERSION`, rename the Unreleased heading, create tags or run `scripts/release.sh`. Blake releases from his Mac after merging.
 - Update README.md when a change affects the repo layout, the build, or the "Refresh the data" steps.
+- Update ARCHITECTURE.md in the same commit when you add, rename, move or remove something it lists or that someone would need to find (a section of the template, a main function, a data file or array shape, a URL hash, a localStorage key, a script), or when you learn a new gotcha. Routine changes inside existing functions don't need an update.
 
 ## Data
 
