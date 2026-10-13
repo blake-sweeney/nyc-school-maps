@@ -686,10 +686,12 @@ const map=L.map('map',{preferCanvas:true,zoomSnap:.5,minZoom:9,maxZoom:18,attrib
 // Its street and place labels draw above the zones. If the tiles don't load, the map falls back to its own streets.
 let useBase=true,tileOk=0,tileErr=0;
 map.createPane('nycLabels').style.zIndex=456;map.getPane('nycLabels').style.pointerEvents='none';
-const NYC_TILES='https://maps.nyc.gov/xyz/1.0.0/carto/';
-const baseTiles=L.tileLayer(NYC_TILES+'basemap/{z}/{x}/{y}.jpg',{minZoom:10,maxZoom:18,className:'nyc-base'}).addTo(map);
-const labelTiles=L.tileLayer(NYC_TILES+'label/{z}/{x}/{y}.png8',{pane:'nycLabels',minZoom:10,maxZoom:18,className:'nyc-labels'}).addTo(map);
-L.control.attribution({prefix:false,position:'bottomright'}).addAttribution('Basemap © <a href="https://maps.nyc.gov/tiles/" target="_blank" rel="noopener">City of New York</a> (CC BY 4.0)').addTo(map);
+// Served by the NYC API portal (api-portal.nyc.gov, GeoServer Tile Services API). The key is meant to be public:
+// it's tied to info@nycschoolzones.com and only reads map tiles. Tiles are TMS, so rows count up from the bottom (tms:true).
+const NYC_KEY='55e87513137841dc8bcc1474ba215833',NYC_TILES='https://api.nyc.gov/geoserver/gwc/service/tms/1.0.0/carto%3A';
+const baseTiles=L.tileLayer(NYC_TILES+'basemap@EPSG%3A900913@jpg/{z}/{x}/{y}.jpg?Key='+NYC_KEY,{tms:true,minZoom:10,maxZoom:18,className:'nyc-base'}).addTo(map);
+const labelTiles=L.tileLayer(NYC_TILES+'label@EPSG%3A900913@png8/{z}/{x}/{y}.png8?Key='+NYC_KEY,{tms:true,pane:'nycLabels',minZoom:10,maxZoom:18,className:'nyc-labels'}).addTo(map);
+L.control.attribution({prefix:false,position:'bottomright'}).addAttribution('Basemap © <a href="https://finder.nyc.gov/nyc-lib/tiles/index.html" target="_blank" rel="noopener">City of New York</a> (CC BY 4.0)').addTo(map);
 baseTiles.on('tileload',()=>{tileOk++});
 baseTiles.on('tileerror',()=>{if(++tileErr>=6&&!tileOk)dropBase()});
 function dropBase(){if(!useBase)return;useBase=false;map.removeLayer(baseTiles);map.removeLayer(labelTiles);
