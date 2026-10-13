@@ -21,6 +21,7 @@ python3 -m http.server 8000           # preview at http://localhost:8000
 - One branch per change, named for the work: `fix/<topic>`, `feature/<topic>` or `data/<topic>`, in short kebab-case (`fix/nyc-basemap-tiles`, `feature/ms-screened-color`, `data/2026-snapshot`).
 - Start each new change from an up-to-date `main`, even within the same session. Don't stack unrelated changes on one branch, so a fix can be released without waiting on a feature.
 - Never push to `main` directly; changes reach `main` through a pull request.
+- Open work lives in GitHub Issues (`gh issue list`). When a PR finishes an issue, put "Fixes #N" in its description so merging closes it. If you find follow-up work you won't do now, suggest an issue for it instead of leaving a TODO in the code.
 
 ## Changelog and versions
 
