@@ -6,6 +6,11 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
+## Unreleased
+
+### Changed
+- School pages call their attendance, class size and similar section "School details", the same name as on the map's school cards.
+
 ## 1.23.0 (2026-10-16)
 
 ### Changed
