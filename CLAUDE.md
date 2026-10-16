@@ -34,7 +34,8 @@ python3 -m http.server 8000           # preview at http://localhost:8000
 ## Data
 
 - Files in `data/` come from city sources via `scripts/fetch_data.py`. Don't hand-edit them except the hand-checked lists the README names.
-- MySchools (myschools.nyc) and the School Quality Snapshot (tools.nycenet.edu) block non-browser requests. Don't try to fetch them from a session; those refreshes run through `scripts/browser/` in Blake's browser. If a task needs new data from them, say so and describe the browser step.
+- The cloud environment allows the city and state data hosts (tools.nycenet.edu, myschools.nyc, nycenet.edu, maps.schools.nyc, data.nysed.gov, data.ny.gov, schools.nyc.gov). As of October 2026, MySchools and the School Quality Snapshot answer scripted requests from a session (`fetch_data.py snapshot`, `charter-snapshot`), but they have blocked non-browser requests before. If a request is refused, don't work around it: use the browser steps in `scripts/browser/` (Blake runs them) and say so.
+- Some sources only work in a real browser: nyccharterschools.org and suny.edu sit behind Cloudflare's bot check, and www.nysed.gov serves an incomplete certificate chain. Ask Blake to look there rather than trying to get around it.
 - `data/*_raw.json` is gitignored; don't commit raw downloads.
 
 ## Testing

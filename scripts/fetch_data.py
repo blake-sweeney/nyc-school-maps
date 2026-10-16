@@ -450,7 +450,8 @@ def fetch_charters(lcgms_path=None, demographics_path=None):
     Grades are numbers, 0 for kindergarten. district is the community school district the building is in (charter
     DBNs start with 84 instead). The building code is LCGMS's, the same one DOE schools in that building have.
     "formerly": {dbn: the school's name in the Demographic Snapshot} for schools renamed since (Girls Prep Bronx
-    became Bronx Charter School for Excellence 6, for example). The Snapshot cuts names at 50 characters."""
+    became Bronx Charter School for Excellence 6, for example), for the card. The Snapshot cuts names at 50
+    characters."""
     loc = [r for r in read_lcgms(lcgms_path) if r.get("Managed By Name") == "Charter"
            and r.get("Status Description") == "Open" and r.get("Geographical District Code", "00").isdigit()
            and 1 <= int(r["Geographical District Code"]) <= 32]
@@ -532,128 +533,6 @@ def fetch_charters(lcgms_path=None, demographics_path=None):
     formerly = {o[0]: old_name(o[0]) for o in out if o[0] in enrolled and old_name(o[0]).split()[:2] != o[1].split()[:2]}
     save("charters.json", {"year": year, "source": "DOE LCGMS and Demographic Snapshot; NYC Planning GeoSearch",
                            "schools": out, "formerly": formerly})
-
-
-_ABBR = {"CS": "CHARTER SCHOOL", "SCH": "SCHOOL", "HS": "HIGH SCHOOL", "PREP": "PREPARATORY", "ACAD": "ACADEMY",
-         "HGTS": "HEIGHTS", "NY": "NEW YORK", "SCI": "SCIENCE", "I": "1", "II": "2", "III": "3", "IV": "4",
-         "V": "5", "LL": "2", "LLL": "3", "LV": "4"}  # NYSED's abbreviations, and roman numerals (LCGMS has "lll")
-_FILLER = {"CHARTER", "SCHOOL", "SCHOOLS", "THE", "OF", "FOR", "AND", "NYC", "NEW", "YORK", "PUBLIC", "CHARTE"}
-
-
-def _words(name):
-    """A school name as comparable words: abbreviations spelled out, filler words dropped."""
-    import re
-    out = []
-    for w in re.sub(r"[^A-Z0-9 ]", " ", (name or "").upper()).split():
-        out += _ABBR.get(w, w).split()
-    return [w for w in out if w not in _FILLER]
-
-
-def _similar(a, b):
-    import difflib
-    return difflib.SequenceMatcher(None, " ".join(_words(a)), " ".join(_words(b))).ratio()
-
-
-NYSED_SRC_URL = "https://data.nysed.gov/files/essa/24-25/SRC2025.zip"  # NYSED report card database (Access)
-
-
-def fetch_charter_tests(path=None):
-    """State test results for charter schools, which the DOE's test files leave out, from NYSED's report card
-    database (data.nysed.gov Downloads, "Report Card Database"). It's an Access file: this needs mdb-export,
-    from mdbtools (brew install mdbtools, or apt install mdbtools). Pass the downloaded zip, or let this
-    download it (about 400 MB, 1.6 GB unzipped; both are deleted afterward). Update NYSED_SRC_URL each year.
-    NYSED keys schools by BEDS code. LCGMS has one for each charter, but some are stale or in another format,
-    and the last six digits (the state's charter number) aren't unique. So, in order: charter_fixes.json (hand-
-    checked), the same code, the same name (this year's, or last year's from charters.json "formerly", since
-    NYSED names lag renames), then the same charter number with a similar name. Check what it prints.
-    charter_tests.json: {"year": ..., "schools": {dbn: [ELA tested, ELA proficient, Math tested, Math proficient]}},
-    over every tested grade (3-8), as the School Quality Snapshot reports district schools (load_tests in
-    build.py turns those into the same four numbers). The year is the spring of the tests: "2025" is 2024-25,
-    the year the Snapshot's SNAPSHOT_YEAR "2025" covers. Math is the
-    grade 3-8 state test only, as in the DOE's files: 8th graders who took the Algebra I Regents instead aren't
-    counted (NYSED's own "MATH3_8" and "Combined" rows include them)."""
-    import csv
-    import io
-    import re
-    import shutil
-    import subprocess
-    import zipfile
-    if not shutil.which("mdb-export"):
-        sys.exit("needs mdb-export: brew install mdbtools (Mac) or apt install mdbtools")
-    zpath = os.path.expanduser(path) if path else os.path.join(DATA, "_src.zip")
-    if not path:
-        req = urllib.request.Request(NYSED_SRC_URL, headers={"User-Agent": "nyc-school-maps"})
-        with urllib.request.urlopen(req, timeout=1800) as r, open(zpath, "wb") as f:
-            shutil.copyfileobj(r, f)
-    with zipfile.ZipFile(zpath) as z:
-        name = next(n for n in z.namelist() if n.lower().endswith(".mdb"))
-        mdb = z.extract(name, DATA)
-    try:
-        tables = {t: list(csv.DictReader(io.StringIO(subprocess.run(
-            ["mdb-export", mdb, t], capture_output=True, text=True, check=True).stdout)))
-            for t in ("Annual EM ELA", "Annual EM MATH")}
-    finally:
-        os.remove(mdb)
-        if not path:
-            os.remove(zpath)
-
-    info = _load("charters.json", {})
-    charters, formerly = info.get("schools", []), info.get("formerly", {})
-    lcgms = {r["ATS System Code"]: r.get("BEDS Number", "").strip() for r in read_lcgms()
-             if r.get("Managed By Name") == "Charter"}
-    rows = tables["Annual EM ELA"] + tables["Annual EM MATH"]
-    year = max(r["YEAR"] for r in rows)
-    nyc = {r["ENTITY_CD"]: r["ENTITY_NAME"] for r in rows if r["YEAR"] == year
-           and r["ENTITY_CD"][:2] in ("30", "31", "32", "33", "34", "35") and r["ENTITY_CD"][-6:-4] == "86"}
-    found = _load("charter_fixes.json", {}).get("beds", {})  # hand-checked: schools the rules below can't pair
-    found = {d: c for d, c in found.items() if c in nyc}
-    used = set(found.values())
-    names = lambda d, n: [n] + ([formerly[d]] if d in formerly else [])
-    by_words = {}
-    for code, n in nyc.items():
-        by_words.setdefault(tuple(_words(n)), []).append(code)
-    for d, n, *_ in charters:  # 1. the same code
-        if d not in found and lcgms.get(d) in nyc and lcgms[d] not in used:
-            found[d] = lcgms[d]
-            used.add(found[d])
-    for d, n, *_ in charters:  # 2. the same name (this year's or last year's), abbreviations spelled out
-        if d not in found:
-            hits = {c for x in names(d, n) for c in by_words.get(tuple(_words(x)), []) if c not in used}
-            if len(hits) == 1:
-                found[d] = hits.pop()
-                used.add(found[d])
-    for d, n, *_ in charters:  # 3. the same charter number (last six digits) and a similar name
-        code = lcgms.get(d, "")
-        if d not in found and code[-6:-4] == "86":
-            hits = [c for c in nyc if c[-6:] == code[-6:] and c not in used
-                    and max(_similar(nyc[c], x) for x in names(d, n)) >= 0.7]
-            if len(hits) == 1:
-                found[d] = hits[0]
-                used.add(hits[0])
-    dbn_for = {c: d for d, c in found.items()}
-
-    out = {}
-    for table, i in (("Annual EM ELA", 0), ("Annual EM MATH", 2)):
-        for r in tables[table]:
-            g = r["ASSESSMENT_NAME"][-1:]
-            dbn = dbn_for.get(r["ENTITY_CD"])
-            if not dbn or r["YEAR"] != year or r["SUBGROUP_NAME"] != "All Students" or g not in "345678" \
-                    or not r["NUM_TESTED"].isdigit() or not r["NUM_PROF"].isdigit() \
-                    or not re.fullmatch(r"(ELA|MATH)[3-8]", r["ASSESSMENT_NAME"]):
-                continue  # other years, groups or grade spans, and counts hidden for privacy ("s")
-            row = out.setdefault(dbn, [0, 0, 0, 0])
-            row[i] += int(r["NUM_TESTED"])
-            row[i + 1] += int(r["NUM_PROF"])
-    tested = lambda c: set(c[6]) & {3, 4, 5, 6, 7, 8}
-    none = [c[0] for c in charters if tested(c) and c[0] not in out]
-    print(f"  {year}: results for {len(out)} charters")
-    extra = sorted(n for c, n in nyc.items() if c not in used)
-    if extra:
-        print("  NYSED results not matched to an open charter (closed, or add it to charter_fixes.json): "
-              + "; ".join(extra))
-    if none:
-        print(f"  teach grades 3-8 now but have no {year} results (most were too new to test): {', '.join(none)}")
-    save("charter_tests.json", {"year": year, "source": "NYSED report card database", "schools": out})
 
 
 def fetch_neighborhoods():
@@ -1259,10 +1138,6 @@ if __name__ == "__main__":
     if args[:1] == ["charter-snapshot"]:  # straight from the Snapshot API; snapshot-raw also covers charters
         print("-- charter-snapshot")
         fetch_charter_snapshot()
-        sys.exit()
-    if args[:1] == ["charter-tests"]:  # NYSED's report card database; pass the zip if you've downloaded it
-        print("-- charter-tests")
-        fetch_charter_tests(args[1] if len(args) > 1 else None)
         sys.exit()
     if args[:1] == ["charters"] and len(args) == 3:  # from a saved LCGMS export and Demographic Snapshot
         print("-- charters (from files)")

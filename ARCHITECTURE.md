@@ -23,7 +23,7 @@ fetch_data.py ──> data/*.json   (yearly refresh; MySchools + Snapshot go thr
   `TABS_JS`), the sitemap and shared CSS. It reads the same trimmed data `build.py` builds. `LOCAL_FIX` and `relative()`
   make links work from `file://`.
 - `scripts/neighborhoods.py`: one page per neighborhood, listing the zones that cover it.
-- `scripts/fetch_data.py`: one command per source (`zones`, `myschools`, `snapshot-job`, `snapshot-raw`, `admissions`, `charters`, `charter-snapshot`, `charter-tests`, …).
+- `scripts/fetch_data.py`: one command per source (`zones`, `myschools`, `snapshot-job`, `snapshot-raw`, `admissions`, `charters`, `charter-snapshot`, …).
   The README's "Refresh the data" section is the checklist.
 
 ## src/template.html
@@ -61,6 +61,6 @@ The script runs top to bottom in roughly this order:
 - **Firefox hover flicker** on underlined links: the school name link is always underlined.
 - **High schools don't give district priority**, so the district split in grade 9 admissions is hidden on purpose (`hasD` in `admHtml`).
 - **Charter DBNs start with `84`, not the district** (`84K125`). Anything that reads the district from `dbn.slice(0,2)` will say "District 84" for a charter; take it from `charters.json` (the district the building is in) instead. Charter grade spans also cross levels: one school can belong on the elementary, middle and high school maps.
-- **Charters in the Snapshot:** most have an Instruction rating, but only about half have Safety and Families ratings (schools that take the NYC School Survey). Their test results differ slightly from NYSED's for a few schools; use the Snapshot's, like district schools. A charter can have both an EMS and an HS report.
+- **Charters in the Snapshot:** most have an Instruction rating, but only about half have Safety and Families ratings (schools that take the NYC School Survey). The DOE's own test result files leave charters out; their test results come only from the Snapshot, like district schools'. (NYSED's report card database has them too but counts test-takers a little differently.) A charter can have both an EMS and an HS report.
 - **Charter locations: trust LCGMS addresses, not the Find a School map's points.** The map's points for charters that moved are years old (one was 5 km off). GeoSearch can also swap in a nearby street when given a ZIP code, so `fetch_charters` searches by address and city and checks the house number.
 - **One rating format everywhere:** numbers ("3.7 / 4") via `chip(r, 1)`, never words mixed with numbers.
