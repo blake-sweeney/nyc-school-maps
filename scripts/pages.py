@@ -577,7 +577,7 @@ def page_html(d, dbn, streets, site_url, goat, nbi=None):
         ("Dual-language program", e(x[4]) if len(x) > 4 and x[4] else None),
     ])
     if facts:
-        sections.append("<h2>School facts</h2>" + facts + more(
+        sections.append("<h2>School details</h2>" + facts + more(
             ext(f"https://www.schools.nyc.gov/schools/{dbn[2:]}", "School page: contacts, hours, bell schedule")))
     if lv == "es" and pk:
         if pk[0] or pk[2]:
