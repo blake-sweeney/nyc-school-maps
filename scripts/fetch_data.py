@@ -1117,6 +1117,64 @@ def _snapshot_groups():
     return es_z | ms_z | hs_z, hs_z, es_nz, ms_nz, hs_all
 
 
+def _charter_reports():
+    """{dbn: Snapshot report types to try} for charters.json: elementary/middle (then early childhood, for K-2
+    schools) if the school teaches any of K-8, now or once fully grown, and high school if any of 9-12."""
+    out = {}
+    for c in _load("charters.json", {}).get("schools", []):
+        g = set(c[6]) | set(c[7])
+        out[c[0]] = ([["EMS", "EC"]] if g & set(range(9)) else []) + ([["HS"]] if g & {9, 10, 11, 12} else [])
+    return out
+
+
+def _charter_record(rec):
+    """One charter's Snapshot reports ({report type: {varname: value}}) -> its charter_snapshot.json entry."""
+    out = {}
+    for key, order in (("EMS", ("EMS", "EC")), ("HS", ("HS",))):
+        rt = next((t for t in order if rec.get(t)), None)
+        if rt:
+            r, x, o, t = snapshot_record(rec[rt], rt)
+            out[key] = {"r": r, "x": x, **({"t": t} if t else {}), **({"o": o} if o else {})}
+            if rt == "HS":
+                out[key]["hs"] = {k: val for k, val in rec[rt].items() if k in HS_SNAPSHOT_KEEP
+                                  or k.startswith("val_pct_cer_6mo_") or k.startswith("ccpc_co_")}
+    return out
+
+
+def _save_charter_snapshot(snap):
+    wanted = _charter_reports()
+    out = {d: e for d in sorted(wanted) if d in snap and (e := _charter_record(snap[d]))}
+    rated = sum(1 for e in out.values() for v in e.values() if v["r"][2] is not None)
+    print(f"  charters: {len(out)} of {len(wanted)} have a Snapshot page, {rated} reports with an Instruction rating")
+    save("charter_snapshot.json", {"year": SNAPSHOT_YEAR, "schools": out})
+
+
+def fetch_charter_snapshot():
+    """charter_snapshot.json straight from the Snapshot API, for when it doesn't block scripts (it didn't in
+    2026). Otherwise the browser step covers charters too: snapshot-job, then snapshot-raw.
+    charter_snapshot.json: {"year": SNAPSHOT_YEAR, "schools": {dbn: {"EMS": {...}, "HS": {...}}}}, one entry per
+    report the school has (a K-12 charter can have both). Each is {"r": ratings, "x": extra, "t": tests,
+    "o": high school outcomes}, the rows snapshot_record makes (as in ms_snapshot.json), and for the high school
+    report "hs": the same values as hs_snapshot.json."""
+    def one(item):
+        dbn, wants = item
+        rec = {}
+        for order in wants:
+            for rt in order:
+                try:
+                    rows = get_json(f"{SNAPSHOT_API}/{SNAPSHOT_YEAR}/{dbn}/{rt}")
+                except Exception:
+                    continue
+                rows = list(rows.values()) if isinstance(rows, dict) else rows
+                if rows:
+                    rec[rt] = {r["varname"]: r["value"] for r in rows}
+                    break
+        return dbn, rec
+    with concurrent.futures.ThreadPoolExecutor(max_workers=6) as pool:
+        snap = {d: rec for d, rec in pool.map(one, sorted(_charter_reports().items())) if rec}
+    _save_charter_snapshot(snap)
+
+
 def snapshot_job(out=None):
     """Write ~/Downloads/snapshot_job.js: scripts/browser/snapshot.js with this year's list of schools filled in."""
     zoned, hs_z, es_nz, ms_nz, hs_all = _snapshot_groups()
@@ -1127,6 +1185,8 @@ def snapshot_job(out=None):
             wants.append(["HS", "EMS"])
         if (d in zoned and d not in hs_z) or d in es_nz or d in ms_nz:
             wants.append(["EMS", "EC"])
+        jobs[d] = wants
+    for d, wants in _charter_reports().items():
         jobs[d] = wants
     with open(os.path.join(BROWSER, "snapshot.js"), encoding="utf-8") as f:
         js = f.read()
@@ -1144,7 +1204,8 @@ HS_SNAPSHOT_KEEP = ("avg_sat", "val_ccr_4yr_all", "cavg_ccr_4yr_all", "val_pct_c
 def import_snapshot(path):
     """Turn snapshot_raw.json (from snapshot_job.js) into the Snapshot files in data/: snapshot_ratings.json,
     snapshot_extra.json, hs_outcomes.json and snapshot_tests.json for zoned schools; nonzoned_snapshot.json and
-    ms_snapshot.json for schools without zones; hs_snapshot.json (SAT, readiness, where graduates went) for high schools."""
+    ms_snapshot.json for schools without zones; hs_snapshot.json (SAT, readiness, where graduates went) for high schools;
+    charter_snapshot.json for charters (see fetch_charter_snapshot)."""
     with open(os.path.expanduser(path), encoding="utf-8") as f:
         raw = json.load(f)
     snap = raw["schools"]
@@ -1182,6 +1243,7 @@ def import_snapshot(path):
     save("ms_snapshot.json", ms)
     save("hs_snapshot.json", {"source": f"{raw.get('source', 'DOE School Quality Snapshot')} (HS report), "
                                         f"tools.nycenet.edu/snapshot, fetched {raw.get('fetched', '')}", "schools": hs})
+    _save_charter_snapshot(snap)
 
 
 if __name__ == "__main__":
@@ -1193,6 +1255,10 @@ if __name__ == "__main__":
     if args[:1] == ["classsize"] and len(args) == 2:  # from a downloaded report
         print("-- classsize (from file)")
         fetch_class_size(args[1])
+        sys.exit()
+    if args[:1] == ["charter-snapshot"]:  # straight from the Snapshot API; snapshot-raw also covers charters
+        print("-- charter-snapshot")
+        fetch_charter_snapshot()
         sys.exit()
     if args[:1] == ["charter-tests"]:  # NYSED's report card database; pass the zip if you've downloaded it
         print("-- charter-tests")

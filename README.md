@@ -17,7 +17,7 @@ An interactive map of New York City's elementary (kindergarten), middle and high
 - **Kindergarten admissions (zone card):** seats, true applicants and offers for fall 2023–2025, from the DOE's Local Law 72 reports; refresh with `python3 scripts/fetch_data.py kadmissions <files...>`
 - **Grade 6 and grade 9 admissions (middle and high school cards):** the same Local Law 72 files (`data/ms_admissions.json`, `data/hs_admissions.json`); refresh all three grades with `python3 scripts/fetch_data.py admissions <files...>`
 - **Pre-K and 3-K (zone card):** seats, applicants and offers at each elementary school (applicants who didn't get a choice they ranked higher, as for kindergarten), from the DOE's Local Law 72 admissions report
-- **Charter schools (not on the map yet):** the charter schools open now, with locations, grades and last year's enrollment, from the DOE's LCGMS school list and Demographic Snapshot (`data/charters.json`), and their state test results from NYSED's report card database (`data/charter_tests.json`)
+- **Charter schools (not on the map yet):** the charter schools open now, with locations, grades and last year's enrollment, from the DOE's LCGMS school list and Demographic Snapshot (`data/charters.json`); their School Quality Snapshot pages (`data/charter_snapshot.json`); and state test results from NYSED's report card database (`data/charter_tests.json`)
 - **Class size (zone card):** average kindergarten, grades 1–5 and core-subject class sizes, from the DOE's class size report
 - **Colors:** a red → orange → yellow → teal ramp, checked against common forms of color blindness (deuteranopia, protanopia)
 - **Streets:** a "Major streets" toggle (highways, main roads and truck routes) and an "All streets" toggle (every street, shown once you zoom in to street level), with names along the lines
@@ -147,7 +147,7 @@ Ratings, test scores, graduation, SAT, college readiness, where graduates went, 
 3. Open [tools.nycenet.edu/snapshot](https://tools.nycenet.edu/snapshot/), open the console, paste all of `snapshot_job.js` and press Enter. It takes a few minutes and downloads `snapshot_raw.json`.
 4. `python3 scripts/fetch_data.py snapshot-raw ~/Downloads/snapshot_raw.json`
 
-This writes `snapshot_ratings.json`, `snapshot_extra.json`, `snapshot_tests.json`, `hs_outcomes.json`, `nonzoned_snapshot.json`, `ms_snapshot.json` and `hs_snapshot.json`. If your connection isn't blocked, `python3 scripts/fetch_data.py snapshot` still fetches the zoned schools directly.
+This writes `snapshot_ratings.json`, `snapshot_extra.json`, `snapshot_tests.json`, `hs_outcomes.json`, `nonzoned_snapshot.json`, `ms_snapshot.json`, `hs_snapshot.json` and `charter_snapshot.json` (charters come from `charters.json`, step 6, so run that first). If the Snapshot doesn't block your connection, `python3 scripts/fetch_data.py charter-snapshot` fetches just the charters directly. If your connection isn't blocked, `python3 scripts/fetch_data.py snapshot` still fetches the zoned schools directly.
 
 ### 4. Admissions: kindergarten, grade 6, grade 9, pre-K and 3-K (each fall or winter, for the previous fall)
 
@@ -171,13 +171,14 @@ If the DOE site is blocked, download the school-level report from [class size re
 ### 6. Charter schools (each fall; test scores once NYSED posts them, usually late summer)
 
 ```sh
-python3 scripts/fetch_data.py charters        # which charters are open, where, grades, enrollment
-python3 scripts/fetch_data.py charter-tests   # their state test results (needs mdbtools: brew install mdbtools)
+python3 scripts/fetch_data.py charters           # which charters are open, where, grades, enrollment
+python3 scripts/fetch_data.py charter-snapshot   # their Snapshot ratings, tests, attendance, graduation (or step 3)
+python3 scripts/fetch_data.py charter-tests      # state test results from NYSED (needs mdbtools: brew install mdbtools)
 ```
 
 `charters` writes `charters.json` from the DOE's live school list ([LCGMS](https://infohub.nyced.org/in-our-schools/operations/lcgms)), so it already has schools opening this fall; addresses are placed with NYC Planning's GeoSearch, and enrollment by grade comes from the DOE's [Demographic Snapshot](https://infohub.nyced.org/reports/students-and-schools/school-quality/information-and-data-overview) (update `DEMOGRAPHICS_URL` in `fetch_data.py` when a new year's file appears). Read what it prints: it names charters it left out (no location found: look up the school on [schools.nyc.gov](https://www.schools.nyc.gov/) and add a point to `points` in `data/charter_fixes.json`; or marked open but with no students last year). If the DOE sites are blocked, save both files in a browser and pass them: `fetch_data.py charters <LCGMS .xls> <snapshot .xlsx>`.
 
-`charter-tests` writes `charter_tests.json`. The DOE's test files leave charters out, so this reads NYSED's report card database from [data.nysed.gov](https://data.nysed.gov/downloads.php) (about 400 MB; update `NYSED_SRC_URL` each year). Pass the zip if you've already downloaded it. NYSED's school codes don't always line up with the DOE's, so check what it prints: if a charter's results go unmatched, add its DBN and NYSED code to `beds` in the hand-checked `data/charter_fixes.json`.
+`charter-tests` writes `charter_tests.json`. The Snapshot has test results for most charters (and the map should prefer them, since district schools' results come from it too); the DOE's own test files leave charters out, so this reads NYSED's report card database from [data.nysed.gov](https://data.nysed.gov/downloads.php) (about 400 MB; update `NYSED_SRC_URL` each year). Pass the zip if you've already downloaded it. NYSED's school codes don't always line up with the DOE's, so check what it prints: if a charter's results go unmatched, add its DBN and NYSED code to `beds` in the hand-checked `data/charter_fixes.json`.
 
 ### 7. Building use, the SCA "Blue Book" (once a year)
 
