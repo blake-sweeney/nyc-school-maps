@@ -566,8 +566,10 @@ def fetch_charter_tests(path=None):
     and the last six digits (the state's charter number) aren't unique. So, in order: charter_fixes.json (hand-
     checked), the same code, the same name (this year's, or last year's from charters.json "formerly", since
     NYSED names lag renames), then the same charter number with a similar name. Check what it prints.
-    charter_tests.json: {"year": ..., "es": {dbn: [ELA tested, ELA proficient, Math tested, Math proficient]},
-    "ms": {...}}: the same rows as state_tests.json (grades 3-5) and ms_state_tests.json (grades 6-8). Math is the
+    charter_tests.json: {"year": ..., "schools": {dbn: [ELA tested, ELA proficient, Math tested, Math proficient]}},
+    over every tested grade (3-8), as the School Quality Snapshot reports district schools (load_tests in
+    build.py turns those into the same four numbers). The year is the spring of the tests: "2025" is 2024-25,
+    the year the Snapshot's SNAPSHOT_YEAR "2025" covers. Math is the
     grade 3-8 state test only, as in the DOE's files: 8th graders who took the Algebra I Regents instead aren't
     counted (NYSED's own "MATH3_8" and "Combined" rows include them)."""
     import csv
@@ -630,7 +632,7 @@ def fetch_charter_tests(path=None):
                 used.add(hits[0])
     dbn_for = {c: d for d, c in found.items()}
 
-    out = {"es": {}, "ms": {}}
+    out = {}
     for table, i in (("Annual EM ELA", 0), ("Annual EM MATH", 2)):
         for r in tables[table]:
             g = r["ASSESSMENT_NAME"][-1:]
@@ -639,19 +641,19 @@ def fetch_charter_tests(path=None):
                     or not r["NUM_TESTED"].isdigit() or not r["NUM_PROF"].isdigit() \
                     or not re.fullmatch(r"(ELA|MATH)[3-8]", r["ASSESSMENT_NAME"]):
                 continue  # other years, groups or grade spans, and counts hidden for privacy ("s")
-            row = out["es" if g in "345" else "ms"].setdefault(dbn, [0, 0, 0, 0])
+            row = out.setdefault(dbn, [0, 0, 0, 0])
             row[i] += int(r["NUM_TESTED"])
             row[i + 1] += int(r["NUM_PROF"])
     tested = lambda c: set(c[6]) & {3, 4, 5, 6, 7, 8}
-    none = [c[0] for c in charters if tested(c) and c[0] not in out["es"] and c[0] not in out["ms"]]
-    print(f"  {year}: grades 3-5 for {len(out['es'])} charters, grades 6-8 for {len(out['ms'])}")
+    none = [c[0] for c in charters if tested(c) and c[0] not in out]
+    print(f"  {year}: results for {len(out)} charters")
     extra = sorted(n for c, n in nyc.items() if c not in used)
     if extra:
         print("  NYSED results not matched to an open charter (closed, or add it to charter_fixes.json): "
               + "; ".join(extra))
     if none:
         print(f"  teach grades 3-8 now but have no {year} results (most were too new to test): {', '.join(none)}")
-    save("charter_tests.json", {"year": year, "source": "NYSED report card database", **out})
+    save("charter_tests.json", {"year": year, "source": "NYSED report card database", "schools": out})
 
 
 def fetch_neighborhoods():
