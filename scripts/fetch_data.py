@@ -4,7 +4,7 @@
 """Download fresh source data into data/. Standard library only.
 
     python3 scripts/fetch_data.py            # everything
-    python3 scripts/fetch_data.py zones      # just one: zones | tests | snapshot | streets | neighborhoods
+    python3 scripts/fetch_data.py zones      # just one: zones | tests | snapshot | streets | neighborhoods | charters
 
 Then rebuild the page with:  python3 scripts/build.py
 
@@ -400,6 +400,77 @@ def fetch_class_size(path=None):
     save("class_size.json", out)
 
 
+DEMOGRAPHICS_URL = ("https://infohub.nyced.org/docs/default-source/default-document-library/"
+                    "demographic-snapshot-2021-22-to-2025-26-public.xlsx")  # DOE Demographic Snapshot, School tab
+FACILITIES_DATASET = "ji82-xba5"  # NYC Planning Facilities Database (charter sites come from the DOE's LCGMS)
+
+
+def fetch_charters(path=None):
+    """Charter schools open this school year, from two sources that each hold half of what we need:
+    the DOE Demographic Snapshot (School tab) lists every school by DBN with enrollment by grade, including
+    charters (DBNs starting 84), but no address; NYC Planning's Facilities Database has each charter's address,
+    point and district (from the DOE's location system, LCGMS), but no DBN. They're joined on the school name.
+    The Snapshot cuts names off at 50 characters and turns dashes into "?", so names compare on letters and
+    digits only, over the first 50 characters. Where that still leaves more than one school (numbered campuses
+    like "... II", "... III"), the 2019-20 location list's address decides, then elimination.
+    Pass a downloaded copy of the Snapshot if the DOE site is blocked:  fetch_data.py charters ~/Downloads/file.xlsx
+    charters.json: {"year": "2025-26", "source": ..., "schools": [[dbn, name, address, lat, lon, district,
+    [enrollment in K, 1, ..., 12], total enrollment], ...]}. district is the community school district the
+    building is in (charter DBNs don't carry it)."""
+    import re
+    if not path:
+        path = os.path.join(DATA, "_demographics.xlsx")
+        req = urllib.request.Request(DEMOGRAPHICS_URL, headers={"User-Agent": "nyc-school-maps"})
+        with urllib.request.urlopen(req, timeout=300) as r, open(path, "wb") as f:
+            f.write(r.read())
+    rows = read_xlsx(os.path.expanduser(path))["School"]
+    head = rows[0]
+    col = {k: head.index(k) for k in ("DBN", "School Name", "Year", "Total Enrollment", "Grade K", "Grade 12")}
+    year = max(r[col["Year"]] for r in rows[1:] if len(r) > col["Year"] and r[col["Year"]])
+    num = lambda v: int(float(v)) if v not in (None, "") else 0
+    snap = {r[col["DBN"]]: r for r in rows[1:]
+            if len(r) > col["Grade 12"] and str(r[col["DBN"]]).startswith("84") and r[col["Year"]] == year}
+
+    key = lambda s: re.sub(r"[^a-z0-9]", "", (s or "")[:50].lower())
+    by_name = {}
+    for dbn, r in snap.items():
+        by_name.setdefault(key(r[col["School Name"]]), []).append(dbn)
+    sites = soql(FACILITIES_DATASET, "datasource='doe_lcgms' AND factype like '%CHARTER%'")
+    old = {r["system_code"]: (r.get("primary_address_line_1") or "").upper()
+           for r in soql(LOCATIONS_DATASET, "managed_by_name='Charter'")}
+
+    found, unsure = {}, []
+    for s in sites:
+        if not s.get("latitude") or float(s["latitude"]) == 0:
+            continue
+        cands = by_name.get(key(s.get("opname"))) or by_name.get(key(s.get("facname"))) or []
+        if len(cands) > 1:
+            cands = [d for d in cands if old.get(d) == (s.get("address") or "").upper()] or cands
+        if len(cands) == 1:
+            found.setdefault(cands[0], s)
+        elif cands:
+            unsure.append((s, cands))
+    for s, cands in unsure:  # numbered campuses the address didn't settle: the one name left over
+        left = [d for d in cands if d not in found]
+        if len(left) == 1:
+            found[left[0]] = s
+
+    out = []
+    for dbn in sorted(found):
+        s, r = found[dbn], snap[dbn]
+        grades = [num(v) for v in r[col["Grade K"]:col["Grade 12"] + 1]]
+        out.append([dbn, s.get("opname") or s["facname"], (s.get("address") or "").title(),
+                    round(float(s["latitude"]), 6), round(float(s["longitude"]), 6),
+                    int(s["schooldist"]) if (s.get("schooldist") or "").isdigit() else None,
+                    grades, num(r[col["Total Enrollment"]])])
+    missing = sorted(set(snap) - set(found))
+    print(f"  {year}: {len(snap)} charter schools enrolled, {len(out)} placed on the map")
+    if missing:
+        print("  no location for: " + ", ".join(f"{d} {snap[d][col['School Name']]}" for d in missing))
+    save("charters.json", {"year": year, "source": "DOE Demographic Snapshot; NYC Planning Facilities Database",
+                           "schools": out})
+
+
 def fetch_neighborhoods():
     """Neighborhood boundaries for the neighborhood pages: NYC Planning's 2020 Neighborhood Tabulation Areas.
     Writes neighborhoods.json: {NTA code: {"n": name, "b": borough, "p": [polygons as [outer ring, holes...]]}}.
@@ -428,7 +499,7 @@ def fetch_neighborhoods():
 
 
 STEPS = {"zones": fetch_zones, "tests": fetch_tests, "snapshot": fetch_snapshot, "streets": fetch_streets,
-         "classsize": fetch_class_size, "neighborhoods": fetch_neighborhoods}
+         "classsize": fetch_class_size, "neighborhoods": fetch_neighborhoods, "charters": fetch_charters}
 
 def fetch_prek(path):
     """Pre-K and 3-K seats, applicants and offers per school, from the DOE's Local Law 72 admissions report.
@@ -937,6 +1008,10 @@ if __name__ == "__main__":
     if args[:1] == ["classsize"] and len(args) == 2:  # from a downloaded report
         print("-- classsize (from file)")
         fetch_class_size(args[1])
+        sys.exit()
+    if args[:1] == ["charters"] and len(args) == 2:  # from a downloaded Demographic Snapshot
+        print("-- charters (from file)")
+        fetch_charters(args[1])
         sys.exit()
     if args[:1] == ["prek"] and len(args) == 2:  # from the downloaded Local Law 72 admissions file
         print("-- prek (from file)")

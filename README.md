@@ -17,6 +17,7 @@ An interactive map of New York City's elementary (kindergarten), middle and high
 - **Kindergarten admissions (zone card):** seats, true applicants and offers for fall 2023–2025, from the DOE's Local Law 72 reports; refresh with `python3 scripts/fetch_data.py kadmissions <files...>`
 - **Grade 6 and grade 9 admissions (middle and high school cards):** the same Local Law 72 files (`data/ms_admissions.json`, `data/hs_admissions.json`); refresh all three grades with `python3 scripts/fetch_data.py admissions <files...>`
 - **Pre-K and 3-K (zone card):** seats, applicants and offers at each elementary school (applicants who didn't get a choice they ranked higher, as for kindergarten), from the DOE's Local Law 72 admissions report
+- **Charter schools (not on the map yet):** this year's charter schools, their enrollment by grade and locations, from the DOE's Demographic Snapshot and NYC Planning's Facilities Database (`data/charters.json`; refresh with `python3 scripts/fetch_data.py charters`)
 - **Class size (zone card):** average kindergarten, grades 1–5 and core-subject class sizes, from the DOE's class size report
 - **Colors:** a red → orange → yellow → teal ramp, checked against common forms of color blindness (deuteranopia, protanopia)
 - **Streets:** a "Major streets" toggle (highways, main roads and truck routes) and an "All streets" toggle (every street, shown once you zoom in to street level), with names along the lines
@@ -167,17 +168,25 @@ python3 scripts/fetch_data.py classsize
 
 If the DOE site is blocked, download the school-level report from [class size reports](https://infohub.nyced.org/reports/government-reports/class-size-reports) and pass the file.
 
-### 6. Building use, the SCA "Blue Book" (once a year)
+### 6. Charter schools (each summer, when the DOE posts a new Demographic Snapshot)
+
+```sh
+python3 scripts/fetch_data.py charters
+```
+
+Writes `charters.json`: every charter school open this school year, with its address, point, district and enrollment by grade. The list and enrollment come from the DOE's [Demographic Snapshot](https://infohub.nyced.org/reports/students-and-schools/school-quality/information-and-data-overview) (update `DEMOGRAPHICS_URL` in `fetch_data.py` when the file name changes to a new year); the addresses from NYC Planning's [Facilities Database](https://data.cityofnewyork.us/d/ji82-xba5). The two are joined on school name, so read what the step prints: it names any charter it couldn't place. If the DOE site is blocked, download the Snapshot and pass the file.
+
+### 7. Building use, the SCA "Blue Book" (once a year)
 
 Download the Classic Edition PDF from the [SCA](https://www.nycsca.org/Community/Capital-Plan-Reports-Data), then `python3 scripts/fetch_data.py utilization <file.pdf>` (needs `pdftotext`), and set `BLUE_BOOK_LABEL` in `scripts/settings.py`.
 
-### 7. Hand-checked lists (each fall, a few minutes each)
+### 8. Hand-checked lists (each fall, a few minutes each)
 
 - `data/citywide_ms.json`: citywide middle schools (open to students from anywhere in NYC). Compare against [InsideSchools](https://insideschools.org/insidetools/citywide-middle-schools) and update the list of DBNs and the `source` note.
 - `data/shsat_cutoffs.json`: lowest SHSAT score offered a seat at each of the 8 test schools, for the newest year and the one before. Published after offers come out in late winter; update `year`, `cut` and `source`.
 - Citywide G&T kindergarten schools come from MySchools in step 2; check the five still make sense.
 
-### 8. Rarely
+### 9. Rarely
 
 - District lines (only if the boundaries change): `python3 scripts/fetch_data.py districts <file.geojson>`, from [School Districts](https://data.cityofnewyork.us/d/8ugf-3d8u) (Export → GeoJSON).
 - Streets: `python3 scripts/fetch_data.py streets`.
