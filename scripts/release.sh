@@ -18,7 +18,6 @@ for a in "$@"; do
   case "$a" in
     major|minor|patch) part="$a" ;;
     --dry-run|-n) dry=1 ;;
-    --yes|-y) yes=1 ;;
     -h|--help) usage ;;
     *) echo "Unknown argument: $a"; usage ;;
   esac
@@ -75,15 +74,6 @@ git tag -a "$tag" -m "$tag"
 echo "Committed and tagged $tag locally."
 
 # --- push ----------------------------------------------------------------------------------------
-if [ "$yes" != 1 ]; then
-  read -r -p "Push $tag to GitHub now? [y/N] " ok
-  case "$ok" in
-    y|Y|yes) ;;
-    *) echo "Not pushed. When ready: git push origin main && git push origin $tag"
-       echo "To undo instead: git tag -d $tag && git reset --hard HEAD~1"
-       exit 0 ;;
-  esac
-fi
 git push --quiet origin main
 git push --quiet origin "$tag"
 echo "Pushed $tag. GitHub Pages will update in a minute or two."
