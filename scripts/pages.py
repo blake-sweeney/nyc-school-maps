@@ -433,7 +433,11 @@ a{color:var(--hl)}
 a:focus-visible,.go:focus-visible{outline:2px solid var(--hl);outline-offset:2px}
 .top{background:var(--panel);border-bottom:1px solid var(--line)}
 .top .in{max-width:760px;margin:0 auto;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px}
-.top .nav{display:flex;gap:16px}
+.top .nav{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:2px 16px;text-align:right;min-width:0}
+.top .nav a{padding:3px 0}
+.top .brand{white-space:nowrap}
+/* school pages: on phones the district and neighborhood links get their own row under the site name */
+@media (max-width:560px){.top .in:has(.place){flex-wrap:wrap;row-gap:4px}.top .nav.place{width:100%;justify-content:flex-start;text-align:left}}
 .brand{font-family:var(--display);font-weight:700;color:var(--fg);text-decoration:none}
 main{max-width:760px;margin:0 auto;padding:22px 16px 48px;display:flex;flex-direction:column;gap:22px}
 .kicker{font-family:var(--display);font-weight:600;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
@@ -767,6 +771,8 @@ def page_html(d, dbn, streets, site_url, goat, nbi=None):
     meta = " · ".join(x2 for x2 in [kind, f"District {dist}", boro, grades_txt] if x2)
     hn = (nbi or {}).get("home", {}).get(dbn)
     home_nb = f' · in <a href="/neighborhoods/{e(nbi["nbs"][hn]["slug"])}/">{e(nbi["nbs"][hn]["name"])}</a>' if hn else ""
+    # the same neighborhood in the header, next to the district: where you'd look for "more schools around here"
+    home_top = f'<a href="/neighborhoods/{e(nbi["nbs"][hn]["slug"])}/">{e(nbi["nbs"][hn]["name"])} schools</a>' if hn else ""
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -790,7 +796,7 @@ def page_html(d, dbn, streets, site_url, goat, nbi=None):
 <link rel="stylesheet" href="/schools/style.css">
 </head>
 <body>
-<header class="top"><div class="in"><a class="brand" href="/">NYC School Zones</a><a href="/districts/{e(dist)}/">District {e(dist)} schools</a></div></header>
+<header class="top"><div class="in"><a class="brand" href="/">NYC School Zones</a><nav class="nav place"><a href="/districts/{e(dist)}/">District {e(dist)} schools</a>{home_top}</nav></div></header>
 <main>
 <div>
 <div class="kicker">{e(meta)}</div>
