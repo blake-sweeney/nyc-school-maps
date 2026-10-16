@@ -6,7 +6,7 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
-## Unreleased
+## 1.26.0 (2026-10-16)
 
 ### Added
 - School pages link to the school's neighborhood page at the top, next to the link to its district's schools ("Bedford-Stuyvesant (East) schools").
