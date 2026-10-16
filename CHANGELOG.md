@@ -10,6 +10,7 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 
 ### Changed
 - School pages show the DOE's Instruction, Safety and Families ratings as numbers ("3 / 4"), like the overall rating, and so do the map's labels and hover boxes when coloring by one of them.
+- Three charter schools with dual-language programs now show them on the map and their pages, like district schools: New York French-American (French), LEEP Dual Language Academy and American Dream (Spanish). The DOE doesn't list charter programs, so these are checked by hand; other charters still show as "no data" under Color by > Dual language.
 
 ### Fixed
 - Nine school pages had no neighborhood link because their building sits just outside every neighborhood's boundary, like the five schools on the Franklin K. Lane campus by Cypress Hills Cemetery. They now link to the nearest neighborhood in their borough (Cypress Hills, for that campus), and its page lists them.

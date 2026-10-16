@@ -607,7 +607,7 @@ const DL_LANGS=[['Spanish','#2f6db5'],['Chinese','#d1495b'],['French','#7b5ea7']
   DL_OTHER='#c06fb0',DL_MULTI='#35b9d6';
 function dlKey(l){return DL_LANGS.some(x=>x[0]===l)?l:'Other'}
 // '' = no dual language, a language name, 'multi'; null = no Snapshot data
-function zoneDl(dbns){if(!dbns.some(d=>X[d]&&!CHX[d]))return null;const ks=new Set();  // charters: no dual language data
+function zoneDl(dbns){if(!dbns.some(d=>X[d]&&!(CHX[d]&&!dualLang(d))))return null;const ks=new Set();  // charters: only a hand-checked few
   for(const d of dbns){const v=dualLang(d);if(!v)continue;const ls=v.split(',').map(x=>x.trim()).filter(Boolean);if(ls.length>1)return 'multi';ks.add(dlKey(ls[0]))}
   return ks.size>1?'multi':ks.size?[...ks][0]:''}
 function dlColor(k){return k==='multi'?DL_MULTI:k==='Other'?DL_OTHER:(DL_LANGS.find(x=>x[0]===k)||[0,DL_OTHER])[1]}
@@ -705,7 +705,7 @@ function admHtml(d,lv,noHead){lv=lv||'es';const src=lv==='es'?KA:(LV[lv]&&LV[lv]
 const UTIL_BINS=[[69.5,'#fde0c5'],[89.5,'#f8b98b'],[99.5,'#ee8a50'],[109.5,'#d4582a'],[Infinity,'#a32f12']];
 const utilColor=v=>UTIL_BINS.find(b=>v<b[0])[1];
 function zoneUtil(dbns){let e=0,c=0;for(const d of dbns){const u=U[d];if(u){e+=u[1];c+=u[2]}}return c?100*e/c:null}
-function zoneProg(dbns,m){if(!dbns.some(d=>X[d]&&!(m==='dl'&&CHX[d])))return null;return dbns.some(d=>m==='gt'?hasGT(d):dualLang(d))}
+function zoneProg(dbns,m){if(!dbns.some(d=>X[d]&&!(m==='dl'&&CHX[d]&&!dualLang(d))))return null;return dbns.some(d=>m==='gt'?hasGT(d):dualLang(d))}
 function schoolRating(d,m){const r=R[d];if(!r)return null;if(m==='comp'){const v=[r[2],r[3],r[4]].filter(x=>x!=null);return v.length?v.reduce((a,b)=>a+b,0)/v.length:null}return r[RK[m]]??null}
 function zoneRating(dbns,m){const v=dbns.map(d=>schoolRating(d,m)).filter(x=>x!=null);return v.length?v.reduce((a,b)=>a+b,0)/v.length:null}
 // ratings share the test color ramp: 1->5%, 2->50%, 3->75%, 4->95%

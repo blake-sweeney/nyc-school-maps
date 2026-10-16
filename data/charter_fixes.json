@@ -1,5 +1,5 @@
 {
- "source": "Hand-checked charter points for addresses that don't geocode (fetch_data.py charters). Check each fall; remove schools that have closed.",
+ "source": "Hand-checked charter fixes. points: for addresses that don't geocode (fetch_data.py charters). dual_language: the DOE's data lists no charter dual-language programs, so these are checked by hand against each school's own or the state's description, and the map and pages show them like district schools' programs (build.py). Check each fall; remove schools that have closed.",
  "points": {
   "84Q385": [
    40.73793,
@@ -10,6 +10,20 @@
    40.82086,
    -73.92901,
    "LCGMS and schools.nyc.gov say 101 East 150 Street, which isn't in the city's address data; the building is 586 River Avenue."
+  ]
+ },
+ "dual_language": {
+  "84M483": [
+   "French",
+   "French-English immersion: about 80% of K-2 classes in French, then split between the two languages. NYSED annual report 2021-22 (nysed.gov/sites/default/files/programs/charter-schools/ny-french-american-ar2122.pdf)"
+  ],
+  "84K930": [
+   "Spanish",
+   "Two-way 90:10 immersion: 90% Spanish in kindergarten, 50/50 by grade 4 (leepschools.org)"
+  ],
+  "84X471": [
+   "Spanish",
+   "Dual-language Spanish/English, grades 6-12. NYSED renewal site visit report, March 2024 (nysed.gov/sites/default/files/programs/charter-schools/renewal-site-visit-report-american-dream-cs-3-18-24.pdf)"
   ]
  }
 }

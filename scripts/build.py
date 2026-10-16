@@ -266,6 +266,7 @@ def add_charters(d):
     [district], 0, [], 0, ""], the district being the one the building is in (charter DBNs start with 84).
     They're kept apart from NZ so the school, district and neighborhood pages (which read NZ) leave them out.
     CHX: {dbn: [grades now, grades when fully grown ("0K,01,..." like S[].g), enrollment, former name or None]}.
+    Dual language programs come from the hand-checked charter_fixes.json ("dual_language"), into X[4] as the Snapshot's.
     Ratings, facts and tests come from the elementary/middle Snapshot report; high school outcomes from the high
     school one. A charter with both keeps its high school ratings in HS.CHR / HS.CHX for the high school view."""
     info = load("charters.json") if os.path.exists(os.path.join(DATA, "charters.json")) else None
@@ -273,6 +274,8 @@ def add_charters(d):
         return
     snap = load("charter_snapshot.json")["schools"] if os.path.exists(os.path.join(DATA, "charter_snapshot.json")) else {}
     formerly = info.get("formerly", {})
+    fixes = load("charter_fixes.json") if os.path.exists(os.path.join(DATA, "charter_fixes.json")) else {}
+    dual = {k: v[0] for k, v in fixes.get("dual_language", {}).items()}  # hand-checked: the DOE lists none for charters
     code = lambda gs: ",".join("0K" if g == 0 else f"{g:02d}" for g in gs)
     d["CHX"], d["CH"] = {}, []
     for key in ("MS", "HS"):
@@ -297,6 +300,12 @@ def add_charters(d):
             d["X"].setdefault(dbn, hsr["x"])
         if dbn not in d["X"] and total:
             d["X"][dbn] = [total]
+        if dbn in dual:  # the extra field for dual language programs (X[4], as from the Snapshot)
+            x = d["X"].setdefault(dbn, [total])
+            x.extend([None] * (5 - len(x)))
+            x[4] = dual[dbn]
+            if hsr and ems:
+                hsr["x"] = hsr["x"][:4] + [dual[dbn]] + hsr["x"][5:]
         t = snapshot_tests_row(ems and ems.get("t"))
         if set(now) & {0, 1, 2, 3, 4, 5}:
             d["CH"].append(row)
