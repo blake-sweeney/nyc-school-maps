@@ -17,7 +17,6 @@ import settings
 from settings import SNAPSHOT_LABEL
 
 BORO = {"M": "Manhattan", "K": "Brooklyn", "Q": "Queens", "X": "Bronx", "R": "Staten Island"}
-RLAB = {1: "Needs Improvement", 2: "Fair", 3: "Good", 4: "Excellent"}
 LEVEL_NAME = {"es": "Elementary school", "ms": "Middle school", "hs": "High school"}
 MNAME = {"O": "Open", "Z": "Zone priority", "S": "Screened", "SA": "Screened + assessment", "A": "Audition",
          "T": "Talent test", "L": "Language program"}
@@ -320,9 +319,9 @@ def ratings_html(dbn, r):
         return "–" if v is None else swatch(rate_color(v), e(txt))
     return ('<h2>DOE ratings</h2>' + facts_rows([
         ("Overall (average)", chip(overall, f"{overall:.1f} / 4")),
-        ("Instruction and performance", chip(r[2], RLAB.get(r[2]))),
-        ("Safety and school climate", chip(r[3], RLAB.get(r[3]))),
-        ("Relationships with families", chip(r[4], RLAB.get(r[4]))),
+        ("Instruction and performance", chip(r[2], f"{r[2]} / 4")),  # numbers, like the map: never the DOE's words
+        ("Safety and school climate", chip(r[3], f"{r[3]} / 4")),
+        ("Relationships with families", chip(r[4], f"{r[4]} / 4")),
     ]) + f'<p class="src">The DOE’s own ratings, from its {SNAPSHOT_LABEL} School Quality Snapshot.</p>')
 
 

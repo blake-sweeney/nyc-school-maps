@@ -6,6 +6,11 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
+## Unreleased
+
+### Changed
+- School pages show the DOE's Instruction, Safety and Families ratings as numbers ("3 / 4"), like the overall rating, and so do the map's labels and hover boxes when coloring by one of them.
+
 ## 1.26.0 (2026-10-16)
 
 ### Added

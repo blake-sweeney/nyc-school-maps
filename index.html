@@ -623,7 +623,7 @@ async function loadLevel(lv){if(LV[lv])return true;if(!ASSETS[lv])return false;
     LV[lv]={F:x.features,T:x.T||{},S:x.schools,P:x.P||{},A:x.A||{},NZ:allNZ(x,lv),CUT:x.CUT||null,CHR:x.CHR||{},CHX:x.CHX||{}};if(x.R)Object.entries(x.R).forEach(([k,v])=>{if(!R[k])R[k]=v});if(x.X)Object.entries(x.X).forEach(([k,v])=>{if(!X[k])X[k]=v});regNZ(LV[lv].NZ);return true}
   catch(e){alertLoad();return false}finally{document.body.style.cursor=''}}
 function alertLoad(){const m=document.getElementById('llmsg');if(m){m.textContent='Couldn’t load that part of the map. Check your connection and try again.';m.hidden=false}}
-const RK={ip:2,ss:3,rf:4},RNAME={ip:'Instruction and Performance',ss:'Safety and School Climate',rf:'Relationships with Families'},RLAB={1:'Needs Improvement',2:'Fair',3:'Good',4:'Excellent'};
+const RK={ip:2,ss:3,rf:4},RNAME={ip:'Instruction and Performance',ss:'Safety and School Climate',rf:'Relationships with Families'};
 const isRate=m=>m==='comp'||m in RK;
 // extra Snapshot fields: [enrollment, attendance %, teachers 3+ yrs %, principal yrs, dual language, ELL %, IEP %, economic need %, admissions, median distance mi]
 const X=D.X||{};
@@ -780,7 +780,7 @@ function short(d){const s=S[d];if(!s)return 'School '+d;return s.n}
 // one school's value under the current coloring (null if none)
 function schoolVal(d){if(metric==='util')return zoneUtil([d]);if(isRate(metric))return zoneRating([d],metric);if(metric==='enr')return zoneEnroll([d]);if(metric==='iep')return zoneIep([d]);
   if(metric==='pk')return pkCat(d);if(metric==='scr')return scrCat(d);if(isOut(metric))return zoneOut([d],metric);if(isProg(metric)){const v=zoneProg([d],metric);return v==null?null:v?1:0}if(metric==='none')return null;return pct([d],metric)}
-function fmtVal(v,short){if(v==null)return '–';if(isRate(metric))return metric==='comp'?v.toFixed(1):(short?String(Math.round(v)):RLAB[Math.round(v)]);
+function fmtVal(v,short){if(v==null)return '–';if(isRate(metric))return metric==='comp'||!Number.isInteger(v)?v.toFixed(1):String(v);  // numbers, never the DOE's words
   if(metric==='pk')return ['no pre-K','pre-K','pre-K + 3-K'][v];if(metric==='scr')return SCR_LAB[v];if(metric==='util')return Math.round(v)+'% full';if(isOut(metric)&&OUT[metric].abs)return String(Math.round(v));if(metric==='enr')return Math.round(v).toLocaleString();if(metric==='iep')return Math.round(v)+'%';if(isProg(metric))return v?'yes':'no';return Math.round(v)+'%'}
 function distTag(p){const d=p.dist&&String(p.dist).split(',').map(Number).filter(Boolean);return d&&d.length?'District '+d.join(' / '):''}
 const NONRES=/park|cemeter|golf|airport|island|beach|zoo|garden|reservoir/i;
@@ -1097,7 +1097,7 @@ function grades(g,d){if(!g)return '';let l=g.split(',').filter(x=>x!=='3K'&&x!==
   const a=l.map(x=>x==='3K'?'3-K':x==='PK'?'Pre-K':x==='0K'?'K':String(+x));return a.length>1?a[0]+'–'+a[a.length-1]:a[0]}
 const card=document.getElementById('card');
 function row(lbl,n,p){if(!n)return '';const v=100*p/n;return '<span>'+lbl+'</span><span class="bar"><i style="width:'+v.toFixed(1)+'%;background:'+scoreColor(v)+'"></i></span><b>'+Math.round(v)+'%</b>'}
-function chip(r,num){return r==null?'<span class="chip">n/a</span>':'<span class="chip"><i style="background:'+rateColor(r)+'"></i>'+(Number.isInteger(r)&&!num?RLAB[r]:r.toFixed(1)+' / 4')+'</span>'}
+function chip(r,num){return r==null?'<span class="chip">n/a</span>':'<span class="chip"><i style="background:'+rateColor(r)+'"></i>'+r.toFixed(1)+' / 4'+'</span>'}
 function tagsHtml(d){const x=X[d];if(!x)return '';const tags=[];if(hasGT(d))tags.push('Gifted &amp; Talented');if(x[4])tags.push('Dual language: '+esc(x[4]));
   return tags.length?'<div class="tags">'+tags.map(s=>'<span class="tag">'+s+'</span>').join('')+'</div>':''}
 function factsHtml(d){const x=X[d]||[],c=CS[d]||{},u=U[d];if(!X[d]&&!CS[d]&&!u)return '';
