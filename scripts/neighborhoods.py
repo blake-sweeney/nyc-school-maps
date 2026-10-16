@@ -10,8 +10,8 @@ import os
 import re
 
 import settings
-from pages import (CH_APPLY, OUT_STOPS, SORT_JS, TABS_JS, TEST_STOPS, all_schools, charter_district, e, in_polys,
-                   rate_color, rating, relative, rings_of, school_table, shell)
+from pages import (BORO, CH_APPLY, OUT_STOPS, SORT_JS, TABS_JS, TEST_STOPS, all_schools, charter_district,
+                   district_boro, e, in_polys, rate_color, rating, relative, rings_of, school_table, shell)
 
 # Zones are matched to neighborhoods by sampling points on a grid of about 60 m. A zone is listed on a
 # neighborhood's page when it covers at least MIN_NB of the neighborhood, or at least MIN_ZONE of the zone
@@ -148,6 +148,26 @@ def index(d, raw):
                 home[dbn] = code
                 nb.setdefault("in", []).append(dbn)
                 break
+    # a building just outside every neighborhood (on a park, a cemetery's edge or a wide street, like Franklin K. Lane
+    # High School's campus by Cypress Hills Cemetery): the nearest neighborhood within 300 m, in the school's own
+    # borough if one is that close
+    for dbn, (x, y) in school_points(d).items():
+        if dbn in home:
+            continue
+        near = []
+        for code, nb in nbs.items():
+            b = nb["bbox"]
+            if b[0] - .004 <= x <= b[2] + .004 and b[1] - .003 <= y <= b[3] + .003:
+                m = min(math.hypot((x - px) * 84000, (y - py) * 111000)
+                        for poly in nb["polys"] for ring in poly for px, py in ring)
+                if m <= 300:
+                    near.append((m, code))
+        if near:
+            boro = district_boro(charter_district(d, dbn)) if dbn.startswith("84") else BORO.get(dbn[2])
+            same = [nc for nc in near if nbs[nc[1]]["boro"] == boro]
+            code = min(same or near)[1]
+            home[dbn] = code
+            nbs[code].setdefault("in", []).append(dbn)
     # neighbors: a boundary point within about 40 m of the other's boundary
     pts = {c: [p for poly in nb["polys"] for p in poly[0]] for c, nb in nbs.items()}
     tol = 0.0005

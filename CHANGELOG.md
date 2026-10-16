@@ -11,6 +11,9 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 ### Changed
 - School pages show the DOE's Instruction, Safety and Families ratings as numbers ("3 / 4"), like the overall rating, and so do the map's labels and hover boxes when coloring by one of them.
 
+### Fixed
+- Nine school pages had no neighborhood link because their building sits just outside every neighborhood's boundary, like the five schools on the Franklin K. Lane campus by Cypress Hills Cemetery. They now link to the nearest neighborhood in their borough (Cypress Hills, for that campus), and its page lists them.
+
 ## 1.26.0 (2026-10-16)
 
 ### Added
