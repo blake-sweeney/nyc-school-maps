@@ -8,6 +8,9 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 
 ## Unreleased
 
+### Added
+- Charter schools are on the map: all 285 open in NYC this fall, each as a small square on the elementary, middle and high school maps for the grades it teaches. Click one to see how admission works: by lottery only, with priority for siblings and families in the school's district, and no screening (no tests, grades, interviews or auditions). The card links to the common charter application, which is separate from MySchools. Most charters have DOE ratings, test scores and other School Quality Snapshot details, and they color with everything else under Color by. Turn them on or off under Map layers, or search for "charter".
+
 ### Changed
 - School pages call their attendance, class size and similar section "School details", the same name as on the map's school cards.
 
