@@ -901,9 +901,9 @@ function selSize(sz){return Math.max(sz*SEL_SIZE,sz+3)}
 // zoned schools: a circle in the school's color at its building; click to open its zone (works with zones hidden too)
 map.createPane('zsPane').style.zIndex=461;
 const zsGroup=L.layerGroup().addTo(map);
-// school markers show from zoom 12 in (about a district across); farther out the zones carry the colors, with their stronger fill.
+// school markers show from zoom 13 in (a few neighborhoods across); farther out the zones carry the colors, with their stronger fill.
 // The selected school's marker always shows.
-function markersByZoom(){return map.getZoom()>=12}  // a function, so the zone style can call it before this line runs
+function markersByZoom(){return map.getZoom()>=13}  // a function, so the zone style can call it before this line runs
 function zsOn(){return !!LAY.zs&&markersByZoom()}
 function zsTip(d){const v=schoolVal(d),val=v==null||isProg(metric)&&!v?'':' · '+(isProg(metric)?progTxt(d):fmtVal(v));
   return '<small class="tip-d">District '+(+d.slice(0,2))+' · Zoned</small><br>'+esc(short(d))+val}
@@ -988,7 +988,7 @@ function nzAt(k){return NZ.filter(o=>nzShown(o)&&nzSpot(o)===k)}
 // small when zoomed out (the whole city), full size once you're looking at a neighborhood
 // zoomed all the way out, markers and zone lines shrink: half size at zoom 9, three quarters at 10, full from 11
 function farScale(){return Math.min(1,Math.max(.5,.5+(map.getZoom()-9)*.25))}
-// markers appear at zoom 12 at half size and grow to full size by 14 (farther out only the selected school's shows)
+// markers appear at zoom 13 at three-quarter size and reach full size at 14 (farther out only the selected school's shows)
 function markerScale(){return Math.min(1,Math.max(.5,.5+(map.getZoom()-12)*.25))}
 function nzSize(){const z=map.getZoom();return (z<11.5?8:z<12.5?10:z<13.5?13:z<14.5?16:20)*markerScale()}
 function buildNZ(){nzGroup.clearLayers();document.getElementById('nz-key').hidden=!nzOn();buildZS();document.getElementById('nz-key').hidden=!nzOn()&&!zsOn();document.getElementById('zsk-item').hidden=!zsOn();document.getElementById('nzk-item').hidden=!(nzOn()&&LAY[level==='hs'?'hsnz':'nz']);document.getElementById('gtk-item').hidden=!(nzOn()&&LAY.gt&&NZ.some(o=>o.gt));if(!nzWanted())return;const sz=nzSize(),near=markersByZoom();
