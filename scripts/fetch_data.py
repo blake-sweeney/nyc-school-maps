@@ -4,7 +4,7 @@
 """Download fresh source data into data/. Standard library only.
 
     python3 scripts/fetch_data.py            # everything
-    python3 scripts/fetch_data.py zones      # just one: zones | tests | snapshot | streets | neighborhoods
+    python3 scripts/fetch_data.py zones      # just one: zones | tests | snapshot | streets | neighborhoods | charters
 
 Then rebuild the page with:  python3 scripts/build.py
 
@@ -400,6 +400,141 @@ def fetch_class_size(path=None):
     save("class_size.json", out)
 
 
+DEMOGRAPHICS_URL = ("https://infohub.nyced.org/docs/default-source/default-document-library/"
+                    "demographic-snapshot-2021-22-to-2025-26-public.xlsx")  # DOE Demographic Snapshot, School tab
+LCGMS_URL = "https://www.nycenet.edu/PublicApps/LCGMS.aspx"  # the DOE's live list of every school location
+PLUTO_DATASET = "64uk-42ks"       # NYC Planning PLUTO (tax lots), for addresses GeoSearch can't find
+
+
+def read_lcgms(path=None):
+    """The DOE's LCGMS export: one dict per school location, as of today. The page is an ASP.NET form, so
+    this posts back its download button; pass a file saved from the page instead if that fails. The
+    "spreadsheet" it sends is a UTF-16 HTML table."""
+    import html
+    import http.cookiejar
+    import re
+    if path:
+        with open(os.path.expanduser(path), "rb") as f:
+            raw = f.read()
+    else:
+        opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
+        page = opener.open(LCGMS_URL, timeout=60).read().decode("utf-8", "replace")
+        form = dict(re.findall(r'<input[^>]*name="([^"]+)"[^>]*value="([^"]*)"', page))
+        form["__EVENTTARGET"] = "ctl00$ContentPlaceHolder1$LCGMSDataDownload$Button1"
+        form["__EVENTARGUMENT"] = ""
+        req = urllib.request.Request(LCGMS_URL, data=urllib.parse.urlencode(form).encode(),
+                                     headers={"User-Agent": "nyc-school-maps"})
+        raw = opener.open(req, timeout=300).read()
+    text = raw.decode("utf-16") if raw[:2] in (b"\xff\xfe", b"\xfe\xff") else raw.decode("utf-8", "replace")
+    cell = lambda c: " ".join(html.unescape(re.sub(r"<[^>]+>", "", c)).split())
+    rows = [[cell(c) for c in re.findall(r"<td[^>]*>(.*?)</td>", tr, re.S | re.I)]
+            for tr in re.split(r"<tr[^>]*>", text, flags=re.I)[1:]]
+    return [dict(zip(rows[0], r)) for r in rows[1:] if len(r) == len(rows[0])]
+
+
+def fetch_charters(lcgms_path=None, demographics_path=None):
+    """Charter schools open now, with a point for each and last year's enrollment.
+    - Which schools, their DBN, address, grades and district: the DOE's LCGMS (read_lcgms), as of the day you run
+      this, so it already has schools opening this fall. LCGMS keeps a few defunct schools marked "Open", so a
+      school is kept only if it had students in the latest Demographic Snapshot or opened in that school year or
+      later; the rest are printed for a look.
+    - Points: each school's LCGMS address, geocoded with NYC Planning's GeoSearch, or the center of its tax lot
+      (PLUTO) when GeoSearch can't find the address, or a hand-checked point from charter_fixes.json. (The Find a School map's points are years out of date for
+      charters that moved.) The district is the one the point falls in, from
+      districts.json; LCGMS's own district code is wrong for some charters.
+    - Enrollment by grade: the DOE Demographic Snapshot (School tab), which includes charters.
+    If the DOE sites are blocked, save the two files in a browser and pass them:
+        fetch_data.py charters ~/Downloads/LCGMS_SchoolData_*.xls ~/Downloads/demographic-snapshot-*.xlsx
+    charters.json: {"year": enrollment year, "schools": [[dbn, name, address, lat, lon, district, grades now,
+    grades when fully grown, building code, [enrollment in K, 1, ..., 12] or None, total or None], ...]}.
+    Grades are numbers, 0 for kindergarten. district is the community school district the building is in (charter
+    DBNs start with 84 instead). The building code is LCGMS's, the same one DOE schools in that building have.
+    "formerly": {dbn: the school's name in the Demographic Snapshot} for schools renamed since (Girls Prep Bronx
+    became Bronx Charter School for Excellence 6, for example), for the card. The Snapshot cuts names at 50
+    characters."""
+    loc = [r for r in read_lcgms(lcgms_path) if r.get("Managed By Name") == "Charter"
+           and r.get("Status Description") == "Open" and r.get("Geographical District Code", "00").isdigit()
+           and 1 <= int(r["Geographical District Code"]) <= 32]
+
+    if not demographics_path:
+        demographics_path = os.path.join(DATA, "_demographics.xlsx")
+        req = urllib.request.Request(DEMOGRAPHICS_URL, headers={"User-Agent": "nyc-school-maps"})
+        with urllib.request.urlopen(req, timeout=300) as r, open(demographics_path, "wb") as f:
+            f.write(r.read())
+    rows = read_xlsx(os.path.expanduser(demographics_path))["School"]
+    col = {k: rows[0].index(k) for k in ("DBN", "School Name", "Year", "Total Enrollment", "Grade K", "Grade 12")}
+    year = max(r[col["Year"]] for r in rows[1:] if len(r) > col["Year"] and r[col["Year"]])
+    num = lambda v: int(float(v)) if v not in (None, "") else 0
+    enrolled = {r[col["DBN"]]: r for r in rows[1:] if len(r) > col["Grade 12"] and r[col["Year"]] == year
+                and str(r[col["DBN"]]).startswith("84")}
+
+    def opened(r):  # "Jul  1 2026" -> 2026
+        y = r.get("Open Date", "").split()[-1:]
+        return int(y[0]) if y and y[0].isdigit() else 0
+
+    keep, dropped = [], []
+    for r in loc:
+        (keep if r["ATS System Code"] in enrolled or opened(r) >= int(year[:4]) else dropped).append(r)
+
+    def geocode(r):  # with the city, not the ZIP: GeoSearch sometimes swaps in a nearby street for a ZIP
+        q = urllib.parse.urlencode({"text": f"{r['Primary Address']}, {r['City']}", "size": 1})
+        ft = get_json(f"https://geosearch.planninglabs.nyc/v2/search?{q}").get("features", [])
+        num = r["Primary Address"].split()[0]
+        ok = {num} | (set(num.split("-")) if r["Location Code"][0] != "Q" else set())  # "1166-1182" is a range
+        if ft and ft[0]["properties"].get("label", "").split()[0] in ok:
+            return round(ft[0]["geometry"]["coordinates"][1], 6), round(ft[0]["geometry"]["coordinates"][0], 6)
+        bbl = r.get("Borough Block Lot", "").strip()  # not found, or a different house number: the tax lot's center
+        if bbl.isdigit() and int(bbl):
+            lot = soql(PLUTO_DATASET, f"bbl={bbl}", 1)
+            if lot and lot[0].get("latitude"):
+                return round(float(lot[0]["latitude"]), 6), round(float(lot[0]["longitude"]), 6)
+        return None
+    fixed = _load("charter_fixes.json", {}).get("points", {})  # hand-checked points for addresses that don't geocode
+    with concurrent.futures.ThreadPoolExecutor(8) as ex:
+        points = dict(zip([r["Location Code"] for r in keep],
+                          ex.map(lambda r: tuple(fixed[r["ATS System Code"]][:2]) if r["ATS System Code"] in fixed
+                                 else geocode(r), keep)))
+
+    def inside(x, y, ring):
+        c = False
+        for i in range(len(ring)):
+            (x1, y1), (x2, y2) = ring[i - 1], ring[i]
+            if (y1 > y) != (y2 > y) and x < (x2 - x1) * (y - y1) / (y2 - y1) + x1:
+                c = not c
+        return c
+    districts = _load("districts.json", {})
+    district_at = lambda lat, lon: next((int(d) for d, v in districts.items()
+                                         if any(inside(lon, lat, ring) for ring in v["r"])), None)
+
+    grades = lambda s: [0 if g == "0K" else int(g) for g in s.split(",") if g == "0K" or g.isdigit()]
+    out, unplaced = [], []
+    for r in sorted(keep, key=lambda r: r["ATS System Code"]):
+        dbn, pt = r["ATS System Code"], points.get(r["Location Code"])
+        if not pt:
+            unplaced.append(dbn)
+            continue
+        e = enrolled.get(dbn)
+        out.append([dbn, r["Location Name"], r["Primary Address"].title(), pt[0], pt[1],
+                    district_at(*pt) or int(r["Geographical District Code"]), grades(r["Grades"]), grades(r["Grades Final"]),
+                    r["Building Code"], [num(v) for v in e[col["Grade K"]:col["Grade 12"] + 1]] if e else None,
+                    num(e[col["Total Enrollment"]]) if e else None])
+    print(f"  {len(out)} charter schools open, {sum(1 for o in out if o[9] is None)} of them new since {year}")
+    if unplaced:
+        print("  no location for the address (add a point to charter_fixes.json), left out: "
+              + "; ".join(f"{r['ATS System Code']} {r['Primary Address']}, {r['City']}" for r in keep
+                          if r["ATS System Code"] in unplaced))
+    if dropped:
+        print("  marked open in LCGMS but had no students in " + year + ", left out: "
+              + "; ".join(f"{r['ATS System Code']} {r['Location Name']}" for r in dropped))
+    gone = sorted(set(enrolled) - {r["ATS System Code"] for r in loc})
+    if gone:
+        print(f"  enrolled in {year} but no longer open: {', '.join(gone)}")
+    old_name = lambda d: enrolled[d][col["School Name"]].replace("\ufffd", "–")  # the Snapshot garbles dashes
+    formerly = {o[0]: old_name(o[0]) for o in out if o[0] in enrolled and old_name(o[0]).split()[:2] != o[1].split()[:2]}
+    save("charters.json", {"year": year, "source": "DOE LCGMS and Demographic Snapshot; NYC Planning GeoSearch",
+                           "schools": out, "formerly": formerly})
+
+
 def fetch_neighborhoods():
     """Neighborhood boundaries for the neighborhood pages: NYC Planning's 2020 Neighborhood Tabulation Areas.
     Writes neighborhoods.json: {NTA code: {"n": name, "b": borough, "p": [polygons as [outer ring, holes...]]}}.
@@ -428,7 +563,7 @@ def fetch_neighborhoods():
 
 
 STEPS = {"zones": fetch_zones, "tests": fetch_tests, "snapshot": fetch_snapshot, "streets": fetch_streets,
-         "classsize": fetch_class_size, "neighborhoods": fetch_neighborhoods}
+         "classsize": fetch_class_size, "neighborhoods": fetch_neighborhoods, "charters": fetch_charters}
 
 def fetch_prek(path):
     """Pre-K and 3-K seats, applicants and offers per school, from the DOE's Local Law 72 admissions report.
@@ -861,6 +996,64 @@ def _snapshot_groups():
     return es_z | ms_z | hs_z, hs_z, es_nz, ms_nz, hs_all
 
 
+def _charter_reports():
+    """{dbn: Snapshot report types to try} for charters.json: elementary/middle (then early childhood, for K-2
+    schools) if the school teaches any of K-8, now or once fully grown, and high school if any of 9-12."""
+    out = {}
+    for c in _load("charters.json", {}).get("schools", []):
+        g = set(c[6]) | set(c[7])
+        out[c[0]] = ([["EMS", "EC"]] if g & set(range(9)) else []) + ([["HS"]] if g & {9, 10, 11, 12} else [])
+    return out
+
+
+def _charter_record(rec):
+    """One charter's Snapshot reports ({report type: {varname: value}}) -> its charter_snapshot.json entry."""
+    out = {}
+    for key, order in (("EMS", ("EMS", "EC")), ("HS", ("HS",))):
+        rt = next((t for t in order if rec.get(t)), None)
+        if rt:
+            r, x, o, t = snapshot_record(rec[rt], rt)
+            out[key] = {"r": r, "x": x, **({"t": t} if t else {}), **({"o": o} if o else {})}
+            if rt == "HS":
+                out[key]["hs"] = {k: val for k, val in rec[rt].items() if k in HS_SNAPSHOT_KEEP
+                                  or k.startswith("val_pct_cer_6mo_") or k.startswith("ccpc_co_")}
+    return out
+
+
+def _save_charter_snapshot(snap):
+    wanted = _charter_reports()
+    out = {d: e for d in sorted(wanted) if d in snap and (e := _charter_record(snap[d]))}
+    rated = sum(1 for e in out.values() for v in e.values() if v["r"][2] is not None)
+    print(f"  charters: {len(out)} of {len(wanted)} have a Snapshot page, {rated} reports with an Instruction rating")
+    save("charter_snapshot.json", {"year": SNAPSHOT_YEAR, "schools": out})
+
+
+def fetch_charter_snapshot():
+    """charter_snapshot.json straight from the Snapshot API, for when it doesn't block scripts (it didn't in
+    2026). Otherwise the browser step covers charters too: snapshot-job, then snapshot-raw.
+    charter_snapshot.json: {"year": SNAPSHOT_YEAR, "schools": {dbn: {"EMS": {...}, "HS": {...}}}}, one entry per
+    report the school has (a K-12 charter can have both). Each is {"r": ratings, "x": extra, "t": tests,
+    "o": high school outcomes}, the rows snapshot_record makes (as in ms_snapshot.json), and for the high school
+    report "hs": the same values as hs_snapshot.json."""
+    def one(item):
+        dbn, wants = item
+        rec = {}
+        for order in wants:
+            for rt in order:
+                try:
+                    rows = get_json(f"{SNAPSHOT_API}/{SNAPSHOT_YEAR}/{dbn}/{rt}")
+                except Exception:
+                    continue
+                rows = list(rows.values()) if isinstance(rows, dict) else rows
+                if rows:
+                    rec[rt] = {r["varname"]: r["value"] for r in rows}
+                    break
+        return dbn, rec
+    with concurrent.futures.ThreadPoolExecutor(max_workers=6) as pool:
+        snap = {d: rec for d, rec in pool.map(one, sorted(_charter_reports().items())) if rec}
+    _save_charter_snapshot(snap)
+
+
 def snapshot_job(out=None):
     """Write ~/Downloads/snapshot_job.js: scripts/browser/snapshot.js with this year's list of schools filled in."""
     zoned, hs_z, es_nz, ms_nz, hs_all = _snapshot_groups()
@@ -871,6 +1064,8 @@ def snapshot_job(out=None):
             wants.append(["HS", "EMS"])
         if (d in zoned and d not in hs_z) or d in es_nz or d in ms_nz:
             wants.append(["EMS", "EC"])
+        jobs[d] = wants
+    for d, wants in _charter_reports().items():
         jobs[d] = wants
     with open(os.path.join(BROWSER, "snapshot.js"), encoding="utf-8") as f:
         js = f.read()
@@ -888,7 +1083,8 @@ HS_SNAPSHOT_KEEP = ("avg_sat", "val_ccr_4yr_all", "cavg_ccr_4yr_all", "val_pct_c
 def import_snapshot(path):
     """Turn snapshot_raw.json (from snapshot_job.js) into the Snapshot files in data/: snapshot_ratings.json,
     snapshot_extra.json, hs_outcomes.json and snapshot_tests.json for zoned schools; nonzoned_snapshot.json and
-    ms_snapshot.json for schools without zones; hs_snapshot.json (SAT, readiness, where graduates went) for high schools."""
+    ms_snapshot.json for schools without zones; hs_snapshot.json (SAT, readiness, where graduates went) for high schools;
+    charter_snapshot.json for charters (see fetch_charter_snapshot)."""
     with open(os.path.expanduser(path), encoding="utf-8") as f:
         raw = json.load(f)
     snap = raw["schools"]
@@ -926,6 +1122,7 @@ def import_snapshot(path):
     save("ms_snapshot.json", ms)
     save("hs_snapshot.json", {"source": f"{raw.get('source', 'DOE School Quality Snapshot')} (HS report), "
                                         f"tools.nycenet.edu/snapshot, fetched {raw.get('fetched', '')}", "schools": hs})
+    _save_charter_snapshot(snap)
 
 
 if __name__ == "__main__":
@@ -937,6 +1134,14 @@ if __name__ == "__main__":
     if args[:1] == ["classsize"] and len(args) == 2:  # from a downloaded report
         print("-- classsize (from file)")
         fetch_class_size(args[1])
+        sys.exit()
+    if args[:1] == ["charter-snapshot"]:  # straight from the Snapshot API; snapshot-raw also covers charters
+        print("-- charter-snapshot")
+        fetch_charter_snapshot()
+        sys.exit()
+    if args[:1] == ["charters"] and len(args) == 3:  # from a saved LCGMS export and Demographic Snapshot
+        print("-- charters (from files)")
+        fetch_charters(args[1], args[2])
         sys.exit()
     if args[:1] == ["prek"] and len(args) == 2:  # from the downloaded Local Law 72 admissions file
         print("-- prek (from file)")

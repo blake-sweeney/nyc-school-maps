@@ -7,3 +7,4 @@ __pycache__/
 
 # Raw downloads (only the processed files in data/ are needed)
 data/*_raw.json
+data/_*

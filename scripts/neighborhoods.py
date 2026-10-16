@@ -10,8 +10,8 @@ import os
 import re
 
 import settings
-from pages import (OUT_STOPS, SORT_JS, TABS_JS, TEST_STOPS, all_schools, e, in_polys, rate_color, rating, relative,
-                   rings_of, school_table, shell)
+from pages import (CH_APPLY, OUT_STOPS, SORT_JS, TABS_JS, TEST_STOPS, all_schools, charter_district, e, in_polys,
+                   rate_color, rating, relative, rings_of, school_table, shell)
 
 # Zones are matched to neighborhoods by sampling points on a grid of about 60 m. A zone is listed on a
 # neighborhood's page when it covers at least MIN_NB of the neighborhood, or at least MIN_ZONE of the zone
@@ -82,7 +82,7 @@ def school_points(d):
         for dbn, s in src.get("schools", {}).items():
             if s.get("lat"):
                 out[dbn] = (s["lon"], s["lat"])
-        for row in src.get("NZ", []):
+        for row in src.get("NZ", []) + src.get("CH", []):  # schools without a zone, and charters
             if row[3]:
                 out.setdefault(row[0], (row[4], row[3]))
     return out
@@ -250,6 +250,7 @@ def write(d, nbi, root, site_url, goat):
             "hs": [("Grad", lambda x: (O.get(x) or [None])[0], lambda v: f"{v}%", OUT_STOPS["grad"]),
                    ("SAT", lambda x: (Q.get(x) or [None])[0], str, OUT_STOPS["sat"]),
                    ("Readiness", lambda x: (Q.get(x) or [None, None])[1], str, OUT_STOPS["ccr"])]}
+    R_hs = {**R, **(HS.get("CHR") or {})}  # K-12 charters: their high school report's ratings on the high school tab
     with open(os.path.join(root, "schools", "style.css"), "a", encoding="utf-8") as f:
         f.write(NB_CSS.strip() + "\n")
     src = {"es": d.get("features", []), "ms": MS.get("features", []), "hs": HS.get("features", [])}
@@ -290,11 +291,13 @@ def write(d, nbi, root, site_url, goat):
                 for x in dbns:
                     if x in names:
                         zoned[x] = max(zoned.get(x, 0), share)
-            others = [x for x in located if x not in zoned and info.get(x, {}).get(lv) and
+            others = [x for x in located if x not in zoned and info.get(x, {}).get(lv) not in (None, "charter") and
                       (lv == "hs" or "hs" not in info[x] or lv == "ms")]
             if lv == "hs":  # every high school located here, zoned or not
-                others = [x for x in located if "hs" in info.get(x, {}) and x not in zoned]
-            counts[lv] = len(zoned) + len(others)
+                others = [x for x in located if info.get(x, {}).get("hs") not in (None, "charter") and x not in zoned]
+            # charters located here, on each level whose grades they teach (a K-12 charter takes kindergartners)
+            charters = [x for x in located if info.get(x, {}).get(lv) == "charter"]
+            counts[lv] = len(zoned) + len(others) + len(charters)
             n_zoned[lv] = zoned
 
             def zone_note(x, zoned=zoned):
@@ -328,6 +331,14 @@ def write(d, nbi, root, site_url, goat):
             if others:
                 h += (f'<h2>{"High schools" if lv == "hs" else word.capitalize() + " schools without a zone"} in {e(name)}</h2>'
                       + school_table(others, names, R, cols[lv], other_note))
+            if charters:
+                cd = sorted({str(charter_district(d, x)) for x in charters}, key=int)
+                h += (f'<h2>Charter schools in {e(name)}</h2>'
+                      + school_table(charters, names, R_hs if lv == "hs" else R, cols[lv])
+                      + '<p class="src">Charter schools admit by lottery, with priority to siblings and then to families '
+                        f'in the school’s district ({and_list([f"District {k}" for k in cd])}). They can’t screen: no tests, '
+                        'grades, interviews or auditions. Families apply through the <a href="' + CH_APPLY + '" target="_blank" '
+                        'rel="noopener">common charter application ↗</a>, not MySchools.</p>')
             if not h:
                 h = ("<p>No high school zones cover this neighborhood, and no high schools are located in it. "
                      "Any NYC student can apply to high schools across the city.</p>" if lv == "hs" else
@@ -359,7 +370,7 @@ def write(d, nbi, root, site_url, goat):
         near = [nbs[c] for c in nb["near"]]
         body = (f'<div><div class="kicker">{e(boro)} neighborhood</div><h1>{e(name)} school zones</h1>'
                 f'<p class="lede">Public elementary, middle and high schools for families in {e(name)}: zoned schools, '
-                'schools without a zone and high schools, with ratings and test scores.</p></div>'
+                'schools without a zone, high schools and charter schools, with ratings and test scores.</p></div>'
                 f'<section class="card"><h2>The neighborhood</h2><p>{lede}</p></section>'
                 '<div class="lvtabs" role="tablist" aria-label="School level">'
                 + "".join(f'<button type="button" role="tab" id="tab-{lv}" aria-controls="p-{lv}" '
@@ -370,7 +381,7 @@ def write(d, nbi, root, site_url, goat):
                 + (f'<section class="card"><h2>Nearby neighborhoods</h2><p>{" · ".join(link(n) for n in near)}</p></section>' if near else ""))
         title = f"{name} School Zones ({boro}): Zoned Elementary, Middle & High Schools | NYC School Zones"
         desc = (f"Which public schools serve {name}, {boro}? The zoned elementary and middle schools, high schools and "
-                "other schools nearby, with DOE ratings and test scores, on a free map of every NYC school zone.")
+                "other schools nearby, charter schools included, with DOE ratings and test scores, on a free map of every NYC school zone.")
         canon = f"{site_url}neighborhoods/{nb['slug']}/"
         out = os.path.join(root, "neighborhoods", nb["slug"])
         os.makedirs(out, exist_ok=True)
