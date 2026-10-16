@@ -747,11 +747,11 @@ function syncNames(){if(!useBase)return;if(LAY.names&&!map.hasLayer(labelTiles))
 function baseFade(){const z=map.getZoom();baseTiles.setOpacity(z<11.5?.45:z<12.5?.7:1);labelTiles.setOpacity(z<12?.75:1)}
 function isDark(){const th=document.documentElement.dataset.theme;return th==='dark'||(th!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)}
 // a bit more solid in dark mode, where see-through colors over the dark basemap look muddy
-// zone fill: full color when zoomed all the way out (no markers), fading to a light wash by zoom 12 where the
+// zone fill: full color when zoomed all the way out (no markers), fading to a light wash by zoom 13 where the
 // markers appear, then a touch lighter as you zoom in. With "Zoned schools" switched off the zones keep more color.
 function zoneAlpha(){if(!useBase)return .78;const z=map.getZoom();
   if(!LAY.zs){const a=z<11.5?.8:z<12.5?.7:z<13.5?.6:.5;return isDark()?Math.min(a+.15,.9):a}
-  const a=Math.min(.9,(z<=9?.8:z<12?.8-(z-9)*(.8-.36)/3:z<12.5?.36:z<13.5?.35:z<14.5?.34:.33)*1.36);return isDark()?Math.min(a+.08,.9):a}
+  const a=Math.min(.9,(z<=9?.8:z<13?.8-(z-9)*(.8-.36)/4:z<13.5?.36:z<14.5?.345:.33)*1.36);return isDark()?Math.min(a+.08,.9):a}
 const SEL_FILL=.2;  // the selected zone's extra fill
 map.on('zoomend',()=>{baseFade();if(useBase&&typeof restyle==='function')restyle()});baseFade();
 const renderer=L.canvas({padding:.3,tolerance:2});
