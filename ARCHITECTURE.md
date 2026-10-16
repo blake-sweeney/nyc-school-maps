@@ -16,7 +16,7 @@ fetch_data.py ──> data/*.json   (yearly refresh; MySchools + Snapshot go thr
 ```
 
 - `scripts/settings.py`: which year's data the site shows (`SNAPSHOT_YEAR`, `PREK_LABEL`, …). Shared by every script. Change values here only.
-- `scripts/build.py` `add_charters()`: charter rows (`CH` per level, `CHX`, `HS.CHR`/`CHX`) from `charters.json` and `charter_snapshot.json`. Kept out of `NZ` on purpose: pages.py reads `CH` separately (charter wording, the building's district); the neighborhood pages still leave charters out.
+- `scripts/build.py` `add_charters()`: charter rows (`CH` per level, `CHX`, `HS.CHR`/`CHX`) from `charters.json` and `charter_snapshot.json`. Kept out of `NZ` on purpose: pages.py and neighborhoods.py read `CH` separately (charter wording, the building's district, their own "Charter schools" tables).
 - `scripts/build.py` `main()`: loads each data file, trims it to the compact arrays the page uses, and fills the
   template's `__PLACEHOLDERS__`. Comments above each block give the array shapes, e.g. `NZ` rows, `P` programs, `Q` high
   school SAT/readiness/destinations. **If you change a shape here, change its reader in the template and in pages.py.**
