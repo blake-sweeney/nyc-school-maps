@@ -43,7 +43,7 @@ The script runs top to bottom in roughly this order:
 | Coloring | `schoolVal`, `fillFor`, `style`, `rampColor`/`STOPS`, `scoreColor`, `rateColor`, `OUT` (high school ranges), `zoneRating`, `zoneOut`, `zonePk`, `zoneScr`, `zoneDl`/`DL_LANGS` (dual language by language), `zoneUtil`, `buildStripes` (multi-school zones) |
 | Zones and selection | `makeLayer`, `lineStyle`, `makeSel`, `restyleSel`, `select` (the main click handler), `distAt` (no-zone areas pick the district under the click) |
 | Streets | `buildStreets`, `buildLocal`/`decodeLocal`, `syncStreets`, `drawStreetLabels` |
-| Markers | `nzSize` (size by zoom), `markerScale`, `farScale`, `selSize`, `buildZS` (zoned bullseyes), `buildDots`, `sizeDots`, `markersByZoom` |
+| Markers | `nzSize` (size by zoom), `markerScale`, `farScale`, `selSize`, `buildZS` (zoned bullseyes), `buildDots`, `sizeDots`, `markersByZoom`, `pairs` / `pairOn` / `pairGap` (a school without a zone in a zoned school's building: side by side, both labeled) |
 | Labels | `drawLabels` (collision-avoiding: marker names first, then zone labels, biggest zones first) |
 | Districts | `buildDistricts`, `buildDistFill`, `drawDistNums`, `syncDistricts` |
 | School card | `schoolBlock`, `sec`/`SEC_KEY` (open/closed sections remembered), `rateSec`, `testSec`, `outSec`, `admSec`, `esAdmHtml`, `admHtml`, `cutSec`, `progSec`/`progHtml`, `destHtml`, `advHtml`, `factsHtml`, `chip` |

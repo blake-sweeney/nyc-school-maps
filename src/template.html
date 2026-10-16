@@ -258,7 +258,8 @@ aside>*{flex-shrink:0}
 .sw i.dk{border:0;border-radius:0;height:0;width:18px;border-top:3.5px solid var(--fg);box-shadow:0 0 0 1.5px var(--panel);align-self:center}
 .dnum{font-family:var(--display);font-weight:700;font-size:26px;line-height:1;color:var(--fg);opacity:.55;text-align:center;white-space:nowrap;pointer-events:none;text-shadow:0 0 3px var(--panel),0 0 6px var(--panel),0 0 10px var(--panel)}
 .dnum small{display:block;font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:600}
-#nz-key .sw{display:flex;flex-wrap:nowrap;gap:4px 14px;white-space:nowrap}
+#nz-key .sw{display:flex;flex-wrap:wrap;gap:4px 14px;white-space:nowrap}
+#nz-key .sw>span{flex:none}
 .nzk{display:inline-block;width:9px;height:9px;transform:rotate(45deg);background:var(--fg);border:1.5px solid var(--panel);box-shadow:0 0 0 1px var(--fg);margin:0 3px}
 .sw i.nzk{border-radius:0;flex:none;width:8px;height:8px;margin:0 3px 0 2px}
 .sw i.gtk{border:0;border-radius:0;width:13px;height:13px}
@@ -606,7 +607,7 @@ const DL_LANGS=[['Spanish','#2f6db5'],['Chinese','#d1495b'],['French','#7b5ea7']
   DL_OTHER='#c06fb0',DL_MULTI='#35b9d6';
 function dlKey(l){return DL_LANGS.some(x=>x[0]===l)?l:'Other'}
 // '' = no dual language, a language name, 'multi'; null = no Snapshot data
-function zoneDl(dbns){if(!dbns.some(d=>X[d]))return null;const ks=new Set();
+function zoneDl(dbns){if(!dbns.some(d=>X[d]&&!CHX[d]))return null;const ks=new Set();  // charters: no dual language data
   for(const d of dbns){const v=dualLang(d);if(!v)continue;const ls=v.split(',').map(x=>x.trim()).filter(Boolean);if(ls.length>1)return 'multi';ks.add(dlKey(ls[0]))}
   return ks.size>1?'multi':ks.size?[...ks][0]:''}
 function dlColor(k){return k==='multi'?DL_MULTI:k==='Other'?DL_OTHER:(DL_LANGS.find(x=>x[0]===k)||[0,DL_OTHER])[1]}
@@ -652,11 +653,10 @@ function distOf(d){const o=NZ.find(x=>x.d===d&&x.ch);return o?o.pd[0]:+d.slice(0
 function boroOf(d){if(!CHX[d])return BORO[d[2]]||'';const k=distOf(d);return k<=6?'Manhattan':k<=12?'Bronx':k<=23||k===32?'Brooklyn':k<=30?'Queens':'Staten Island'}
 // charters: how to apply, what they can't do, and what changed
 const CH_APPLY='https://nyccharterschools.org/apply-to-a-charter-school/';
-function chBlock(o){const x=CHX[o.d]||[],now=(x[0]||'').split(','),fin=(x[1]||'').split(','),
-    gf=fin.length>now.length&&now.every(g=>fin.includes(g))?grades(x[1]):'';  // LCGMS's "when fully grown" can be stale
+function chBlock(o){const x=CHX[o.d]||[];
   return '<div class="kind nz ch"><b>Charter school:</b> free and public, run by an independent nonprofit. '+esc(nzPriority(o))+
     ' Apply through the <a href="'+CH_APPLY+'" target="_blank" rel="noopener">common charter application ↗</a> or on the school’s own site, by April 1 for most schools. It’s separate from MySchools: applying doesn’t affect your MySchools application.'+
-    (gf?' Growing to grades '+esc(gf)+'.':'')+(x[3]?' Formerly '+esc(x[3])+'.':'')+'</div>'}
+    (x[3]?' Formerly '+esc(x[3])+'.':'')+'</div>'}
 regNZ(NZ_ES);
 [['ms',MSD],['hs',HSD]].forEach(([lv,x])=>{if(!x||!LV[lv])return;Object.assign(LV[lv],{P:x.P||{},A:x.A||{},NZ:allNZ(x,lv),CUT:x.CUT||null,CHR:x.CHR||{},CHX:x.CHX||{}});
   if(x.R)Object.entries(x.R).forEach(([k,v])=>{if(!R[k])R[k]=v});if(x.X)Object.entries(x.X).forEach(([k,v])=>{if(!X[k])X[k]=v});regNZ(LV[lv].NZ)});
@@ -705,7 +705,7 @@ function admHtml(d,lv,noHead){lv=lv||'es';const src=lv==='es'?KA:(LV[lv]&&LV[lv]
 const UTIL_BINS=[[69.5,'#fde0c5'],[89.5,'#f8b98b'],[99.5,'#ee8a50'],[109.5,'#d4582a'],[Infinity,'#a32f12']];
 const utilColor=v=>UTIL_BINS.find(b=>v<b[0])[1];
 function zoneUtil(dbns){let e=0,c=0;for(const d of dbns){const u=U[d];if(u){e+=u[1];c+=u[2]}}return c?100*e/c:null}
-function zoneProg(dbns,m){if(!dbns.some(d=>X[d]))return null;return dbns.some(d=>m==='gt'?hasGT(d):dualLang(d))}
+function zoneProg(dbns,m){if(!dbns.some(d=>X[d]&&!(m==='dl'&&CHX[d])))return null;return dbns.some(d=>m==='gt'?hasGT(d):dualLang(d))}
 function schoolRating(d,m){const r=R[d];if(!r)return null;if(m==='comp'){const v=[r[2],r[3],r[4]].filter(x=>x!=null);return v.length?v.reduce((a,b)=>a+b,0)/v.length:null}return r[RK[m]]??null}
 function zoneRating(dbns,m){const v=dbns.map(d=>schoolRating(d,m)).filter(x=>x!=null);return v.length?v.reduce((a,b)=>a+b,0)/v.length:null}
 // ratings share the test color ramp: 1->5%, 2->50%, 3->75%, 4->95%
@@ -744,7 +744,7 @@ const renderer=L.canvas({padding:.3,tolerance:2});
 function short(d){const s=S[d];if(!s)return 'School '+d;return s.n}
 // one school's value under the current coloring (null if none)
 function schoolVal(d){if(metric==='util')return zoneUtil([d]);if(isRate(metric))return zoneRating([d],metric);if(metric==='enr')return zoneEnroll([d]);if(metric==='iep')return zoneIep([d]);
-  if(metric==='pk')return pkCat(d);if(metric==='scr')return scrCat(d);if(isOut(metric))return zoneOut([d],metric);if(isProg(metric))return zoneProg([d],metric)?1:0;if(metric==='none')return null;return pct([d],metric)}
+  if(metric==='pk')return pkCat(d);if(metric==='scr')return scrCat(d);if(isOut(metric))return zoneOut([d],metric);if(isProg(metric)){const v=zoneProg([d],metric);return v==null?null:v?1:0}if(metric==='none')return null;return pct([d],metric)}
 function fmtVal(v,short){if(v==null)return '–';if(isRate(metric))return metric==='comp'?v.toFixed(1):(short?String(Math.round(v)):RLAB[Math.round(v)]);
   if(metric==='pk')return ['no pre-K','pre-K','pre-K + 3-K'][v];if(metric==='scr')return SCR_LAB[v];if(metric==='util')return Math.round(v)+'% full';if(isOut(metric)&&OUT[metric].abs)return String(Math.round(v));if(metric==='enr')return Math.round(v).toLocaleString();if(metric==='iep')return Math.round(v)+'%';if(isProg(metric))return v?'yes':'no';return Math.round(v)+'%'}
 function distTag(p){const d=p.dist&&String(p.dist).split(',').map(Number).filter(Boolean);return d&&d.length?'District '+d.join(' / '):''}
@@ -894,9 +894,20 @@ function zsOn(){return !!LAY.zs&&markersByZoom()}
 function zsTip(d){const v=schoolVal(d),val=v==null||isProg(metric)&&!v?'':' · '+(isProg(metric)?progTxt(d):fmtVal(v));
   return '<small class="tip-d">District '+(+d.slice(0,2))+' · Zoned</small><br>'+esc(short(d))+val}
 function zsSelected(d){return selected&&selected.feature.properties.dbns.includes(d)}
+// a school without a zone (or a charter) in the same building as a zoned school: {dbn: its partner}, both ways.
+// Their markers sit side by side and both get a label, instead of one covering the other.
+let PAIR=null,PAIR_LV=null;
+function pairs(){if(PAIR&&PAIR_LV===level)return PAIR;PAIR={};PAIR_LV=level;const zoned=new Set(byLayer.flatMap(l=>l.feature.properties.dbns));
+  const zs=Object.entries(LV[level].S).filter(([d,s])=>s.lat&&zoned.has(d)),spots={};NZ.forEach(o=>{const k=nzSpot(o);spots[k]=(spots[k]||0)+1});
+  NZ.forEach(o=>{if(spots[nzSpot(o)]>1)return;let best=null,bd=25;  // within 25 m; schools already fanned out are left alone
+    for(const [d,s] of zs){const m=Math.hypot((s.lat-o.lat)*111000,(s.lon-o.lon)*84000);if(m<bd&&!PAIR[d]){bd=m;best=d}}
+    if(best){PAIR[o.d]=best;PAIR[best]=o.d}});return PAIR}
+function pairOn(nzD){const o=nzGet(nzD);return !!(o&&LAY.zs&&nzShown(o)&&markersByZoom())}
+const pairGap=()=>nzSize()*.5+1;  // each marker moves this far sideways
 function buildZS(){zsGroup.clearLayers();if(!LAY.zs||typeof nzSize!=='function')return;const near=markersByZoom();const sz=nzSize()*ZS_SIZE,zoned=new Set(byLayer.flatMap(l=>l.feature.properties.dbns));
   Object.entries(LV[level].S).forEach(([d,s])=>{if(!s.lat||!zoned.has(d))return;const sel=zsSelected(d);if(!near&&!sel)return;const z=sel?selSize(sz):sz;
-    const m=L.marker([s.lat,s.lon],{pane:'zsPane',keyboard:false,zIndexOffset:sel?1000:0,icon:L.divIcon({className:'',html:'<div class="zsm'+(sel?' sel':'')+'" style="--c:'+nzFill(d)+'"></div>',iconSize:[z,z],iconAnchor:[z/2,z/2]})});
+    const off=pairs()[d]&&pairOn(pairs()[d])?pairGap():0;  // shares a building with a school without a zone: step left
+    const m=L.marker([s.lat,s.lon],{pane:'zsPane',keyboard:false,zIndexOffset:sel?1000:0,icon:L.divIcon({className:'',html:'<div class="zsm'+(sel?' sel':'')+'" style="--c:'+nzFill(d)+'"></div>',iconSize:[z,z],iconAnchor:[z/2+off,z/2]})});
     m.bindTooltip(()=>zsTip(d),{direction:'top',offset:[0,-z/2]});
     m.on('click',()=>{const l=byLayer.find(x=>x.feature.properties.dbns.includes(d));if(l)select(l,true)});m.addTo(zsGroup)})}
 function buildDots(){buildZS()}
@@ -919,7 +930,9 @@ function drawLabels(){labels.clearLayers();const z=map.getZoom();if(z<12)return;
     if(grp.length>1){put(ll,grp.length+' schools','zl nzl',lift(o)+nzSize()*.75+grp.length*1.5-6);return}
     const v=metric!=='none'&&!isProg(metric)?schoolVal(o.d):null;
     const nm=/^(P\.?S\.?|I\.?S\.?|M\.?S\.?|J\.?H\.?S\.?)(\s*\/\s*(I|M)\.?S\.?)?\s*[KMQRX]?\d/i.test(o.n)?prefixOf(o.d)+' '+(+o.d.slice(3)):shortName(o.n,o.ch?32:24);
-    put(ll,esc(nm)+(v!=null?' · '+fmtVal(v):''),'zl nzl',lift(o)-6)})}
+    put(ll,esc(nm)+(v!=null?' · '+fmtVal(v):''),'zl nzl',lift(o)-6);
+    // the zoned school in the same building gets its own label, under the markers
+    const zd=pairs()[o.d];if(zd&&pairOn(o.d)){const zv=metric!=='none'&&!isProg(metric)?schoolVal(zd):null;put(ll,prefixOf(zd)+' '+(+zd.slice(3))+(zv!=null?' · '+fmtVal(zv):''),'zl',-Math.round(nzSize()/2+10))}})}
   if(LAY.zones&&z>=13)byLayer.filter(l=>l.feature.properties.dbns.length).sort((a,c)=>(c.feature.properties.ar||0)-(a.feature.properties.ar||0)).forEach(l=>{const p=l.feature.properties;if(z<14&&p.ar<1.2)return;const ll=L.latLng(p.lp);if(!b.contains(ll))return;
     const n=p.dbns.length,d0=p.dbns[0];
     let txt=level==='hs'?((S[d0]&&S[d0].n)||d0).replace(/\s*High\s*School.*$/i,'').replace(/\s*Campus$/i,'')
@@ -980,7 +993,8 @@ function nzSize(){const z=map.getZoom();return (z<11.5?8:z<12.5?10:z<13.5?13:z<1
 function buildNZ(){nzGroup.clearLayers();document.getElementById('nz-key').hidden=!nzOn();buildZS();document.getElementById('nz-key').hidden=!nzOn()&&!zsOn();document.getElementById('zsk-item').hidden=!zsOn();document.getElementById('nzk-item').hidden=!(nzOn()&&LAY[level==='hs'?'hsnz':'nz']);document.getElementById('gtk-item').hidden=!(nzOn()&&LAY.gt&&NZ.some(o=>o.gt));document.getElementById('chk-item').hidden=!(nzOn()&&LAY.ch&&NZ.some(o=>o.ch));if(!nzWanted())return;const sz=nzSize(),near=markersByZoom();
   const groups={};NZ.forEach(o=>{if(nzShown(o)&&(near||nzSel===o.d))(groups[nzSpot(o)]=groups[nzSpot(o)]||[]).push(o)});
   NZ.forEach(o=>{if(!nzShown(o)||!near&&nzSel!==o.d)return;const b=nzSize()*(o.gt?STAR_SIZE:NZ_SIZE),sz=nzSel===o.d?selSize(b):b;
-    const g=groups[nzSpot(o)],i=g.indexOf(o),r=g.length>1&&map.getZoom()>=12?nzSize()*.75+g.length*1.5:0,ang=2*Math.PI*i/g.length-Math.PI/2,dx=r*Math.cos(ang),dy=r*Math.sin(ang);
+    const g=groups[nzSpot(o)],i=g.indexOf(o),r=g.length>1&&map.getZoom()>=12?nzSize()*.75+g.length*1.5:0,ang=2*Math.PI*i/g.length-Math.PI/2,dy=r*Math.sin(ang),
+      dx=r*Math.cos(ang)+(pairs()[o.d]&&pairOn(o.d)?pairGap():0);  // next to a zoned school in the same building: step right
     const m=L.marker([o.lat,o.lon],{pane:'nzPane',keyboard:false,zIndexOffset:nzSel===o.d?1000:0,
       icon:L.divIcon({className:'',html:o.gt?gtStar(nzFill(o.d),nzSel===o.d):'<div class="'+(o.ch?'chm':'nzm')+(nzSel===o.d?' sel':'')+'" style="--c:'+nzFill(o.d)+'"></div>',iconSize:[sz,sz],iconAnchor:[sz/2-dx,sz/2-dy]})});
     m.bindTooltip(()=>nzTip(o),{direction:'top',offset:[0,-sz/2]});m.on('click',()=>selectNZ(o.d,true));m.addTo(nzGroup)})}
@@ -1318,7 +1332,7 @@ async function setLevel(lv){if(lv===level)return;if(!LV[lv]&&!(await loadLevel(l
   map.removeLayer(layer);map.removeLayer(zoneLines);byLayer=[];
   layer=makeLayer().addTo(map);layer.eachLayer(l=>byLayer.push(l));
   zoneLines=L.geoJSON(F,{style:lineStyle,interactive:false}).addTo(map);syncZoneLines();
-  chReports(lv);nzSel=null;NZ=lv==='es'?NZ_ES:(LV[lv].NZ||[]);buildDots();sizeDots();buildIdx();buildNZ();syncLayerBoxes();res.hidden=true;llmsg.hidden=true;
+  chReports(lv);PAIR=null;nzSel=null;NZ=lv==='es'?NZ_ES:(LV[lv].NZ||[]);buildDots();sizeDots();buildIdx();buildNZ();syncLayerBoxes();res.hidden=true;llmsg.hidden=true;
   const tx=LEVEL_TXT[lv],nZ=lv==='es'?F.length:new Set(F.flatMap(f=>f.properties.dbns)).size;
   document.getElementById('badge').textContent=tx.badge;document.getElementById('lvl-chip').textContent={es:'K–5',ms:'6–8',hs:'9–12'}[lv];document.getElementById('h1').textContent=tx.h1;document.getElementById('sub').textContent=tx.sub(nZ);
   document.getElementById('lvl-sum').textContent=tx.sum;document.getElementById('lvl-note').innerHTML=tx.note||'';
