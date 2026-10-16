@@ -186,7 +186,7 @@ Download the Classic Edition PDF from the [SCA](https://www.nycsca.org/Community
 - `data/citywide_ms.json`: citywide middle schools (open to students from anywhere in NYC). Compare against [InsideSchools](https://insideschools.org/insidetools/citywide-middle-schools) and update the list of DBNs and the `source` note.
 - `data/shsat_cutoffs.json`: lowest SHSAT score offered a seat at each of the 8 test schools, for the newest year and the one before. Published after offers come out in late winter; update `year`, `cut` and `source`.
 - Citywide G&T kindergarten schools come from MySchools in step 2; check the five still make sense.
-- `data/charter_fixes.json`: charter points for addresses that don't geocode (see step 6). Remove schools that have closed.
+- `data/charter_fixes.json`: charter points for addresses that don't geocode (see step 6), and charter dual-language programs (`dual_language`), which the DOE doesn't list: check each against the school's site or its NYSED annual report and note the source. Remove schools that have closed.
 
 ### 9. Rarely
 

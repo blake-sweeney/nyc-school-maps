@@ -588,7 +588,7 @@ async function loadLevel(lv){if(LV[lv])return true;if(!ASSETS[lv])return false;
     LV[lv]={F:x.features,T:x.T||{},S:x.schools,P:x.P||{},A:x.A||{},NZ:allNZ(x,lv),CUT:x.CUT||null,CHR:x.CHR||{},CHX:x.CHX||{}};if(x.R)Object.entries(x.R).forEach(([k,v])=>{if(!R[k])R[k]=v});if(x.X)Object.entries(x.X).forEach(([k,v])=>{if(!X[k])X[k]=v});regNZ(LV[lv].NZ);return true}
   catch(e){alertLoad();return false}finally{document.body.style.cursor=''}}
 function alertLoad(){const m=document.getElementById('llmsg');if(m){m.textContent='Couldn’t load that part of the map. Check your connection and try again.';m.hidden=false}}
-const RK={ip:2,ss:3,rf:4},RNAME={ip:'Instruction and Performance',ss:'Safety and School Climate',rf:'Relationships with Families'},RLAB={1:'Needs Improvement',2:'Fair',3:'Good',4:'Excellent'};
+const RK={ip:2,ss:3,rf:4},RNAME={ip:'Instruction and Performance',ss:'Safety and School Climate',rf:'Relationships with Families'};
 const isRate=m=>m==='comp'||m in RK;
 // extra Snapshot fields: [enrollment, attendance %, teachers 3+ yrs %, principal yrs, dual language, ELL %, IEP %, economic need %, admissions, median distance mi]
 const X=D.X||{};
@@ -607,7 +607,7 @@ const DL_LANGS=[['Spanish','#2f6db5'],['Chinese','#d1495b'],['French','#7b5ea7']
   DL_OTHER='#c06fb0',DL_MULTI='#35b9d6';
 function dlKey(l){return DL_LANGS.some(x=>x[0]===l)?l:'Other'}
 // '' = no dual language, a language name, 'multi'; null = no Snapshot data
-function zoneDl(dbns){if(!dbns.some(d=>X[d]&&!CHX[d]))return null;const ks=new Set();  // charters: no dual language data
+function zoneDl(dbns){if(!dbns.some(d=>X[d]&&!(CHX[d]&&!dualLang(d))))return null;const ks=new Set();  // charters: only a hand-checked few
   for(const d of dbns){const v=dualLang(d);if(!v)continue;const ls=v.split(',').map(x=>x.trim()).filter(Boolean);if(ls.length>1)return 'multi';ks.add(dlKey(ls[0]))}
   return ks.size>1?'multi':ks.size?[...ks][0]:''}
 function dlColor(k){return k==='multi'?DL_MULTI:k==='Other'?DL_OTHER:(DL_LANGS.find(x=>x[0]===k)||[0,DL_OTHER])[1]}
@@ -673,6 +673,11 @@ function nzOptions(dist,skip,open){if(!dist)return '';const hs=level==='hs';
     l.map(o=>'<li><button type="button" data-nz="'+o.d+'"><span class="on">'+esc(o.n)+'<small>'+esc((o.gt?'Specialized · ':'')+(nzDemand(o)||'No demand data'))+'</small></span>'+chip(schoolRating(o.d,'comp'),1)+'</button></li>').join('')+'</ul></details>';
   return (open?'':'<hr class="sep">')+'<details class="opts"'+(open?' open':'')+'><summary>'+(open?'':'Other options: ')+l.length+(level==='ms'?' middle school'+(l.length>1?'s':'')+' without zones <small>in District '+dist+'</small>':' non-zoned school'+(l.length>1?'s':'')+' <small>with District '+dist+' priority</small>')+'</summary><ul>'+
     l.map(o=>'<li><button type="button" data-nz="'+o.d+'"><span class="on">'+esc(o.n)+'<small>'+esc(nzDemand(o)||'No demand data')+'</small></span>'+chip(schoolRating(o.d,'comp'),1)+'</button></li>').join('')+'</ul></details>'}
+// the zone card's charter list: this level's charters whose lottery gives priority to the district, best rated first
+function chOptions(dist){if(!dist)return '';const l=NZ.filter(o=>o.ch&&o.pd[0]===dist);if(!l.length)return '';
+  l.sort((a,b)=>(schoolRating(b.d,'comp')??0)-(schoolRating(a.d,'comp')??0));
+  return '<details class="opts"><summary>Charter schools: '+l.length+' <small>with District '+dist+' priority</small></summary><p class="opts-note">Admission is by lottery only, with priority to siblings and then District '+dist+' families. Charter schools can’t screen. <a href="'+CH_APPLY+'" target="_blank" rel="noopener">How to apply ↗</a></p><ul>'+
+    l.map(o=>'<li><button type="button" data-nz="'+o.d+'"><span class="on">'+esc(o.n)+'<small>'+esc(CHX[o.d]&&CHX[o.d][0]?'Grades '+grades(CHX[o.d][0]):'Charter school')+'</small></span>'+chip(schoolRating(o.d,'comp'),1)+'</button></li>').join('')+'</ul></details>'}
 // middle school programs from the MySchools directory: how each admits students and last year's demand
 const MNAME={O:'Open',Z:'Zone priority',S:'Screened',SA:'Screened + assessment',A:'Audition',T:'Talent test',L:'Language program'};
 const HNAME={S:'Screened (grades)',SA:'Screened + assessment',SL:'Screened: language & academics',E:'Ed. Opt. (mixed academic levels)',A:'Audition',O:'Open',L:'Language program',T:'SHSAT test',ZG:'Zoned guarantee',ZP:'Zoned priority',TR:'Transfer school (older students)',D75:'District 75 special education',ASD:'Autism (ASD) or ACES program'};
@@ -705,7 +710,7 @@ function admHtml(d,lv,noHead){lv=lv||'es';const src=lv==='es'?KA:(LV[lv]&&LV[lv]
 const UTIL_BINS=[[69.5,'#fde0c5'],[89.5,'#f8b98b'],[99.5,'#ee8a50'],[109.5,'#d4582a'],[Infinity,'#a32f12']];
 const utilColor=v=>UTIL_BINS.find(b=>v<b[0])[1];
 function zoneUtil(dbns){let e=0,c=0;for(const d of dbns){const u=U[d];if(u){e+=u[1];c+=u[2]}}return c?100*e/c:null}
-function zoneProg(dbns,m){if(!dbns.some(d=>X[d]&&!(m==='dl'&&CHX[d])))return null;return dbns.some(d=>m==='gt'?hasGT(d):dualLang(d))}
+function zoneProg(dbns,m){if(!dbns.some(d=>X[d]&&!(m==='dl'&&CHX[d]&&!dualLang(d))))return null;return dbns.some(d=>m==='gt'?hasGT(d):dualLang(d))}
 function schoolRating(d,m){const r=R[d];if(!r)return null;if(m==='comp'){const v=[r[2],r[3],r[4]].filter(x=>x!=null);return v.length?v.reduce((a,b)=>a+b,0)/v.length:null}return r[RK[m]]??null}
 function zoneRating(dbns,m){const v=dbns.map(d=>schoolRating(d,m)).filter(x=>x!=null);return v.length?v.reduce((a,b)=>a+b,0)/v.length:null}
 // ratings share the test color ramp: 1->5%, 2->50%, 3->75%, 4->95%
@@ -745,7 +750,7 @@ function short(d){const s=S[d];if(!s)return 'School '+d;return s.n}
 // one school's value under the current coloring (null if none)
 function schoolVal(d){if(metric==='util')return zoneUtil([d]);if(isRate(metric))return zoneRating([d],metric);if(metric==='enr')return zoneEnroll([d]);if(metric==='iep')return zoneIep([d]);
   if(metric==='pk')return pkCat(d);if(metric==='scr')return scrCat(d);if(isOut(metric))return zoneOut([d],metric);if(isProg(metric)){const v=zoneProg([d],metric);return v==null?null:v?1:0}if(metric==='none')return null;return pct([d],metric)}
-function fmtVal(v,short){if(v==null)return '–';if(isRate(metric))return metric==='comp'?v.toFixed(1):(short?String(Math.round(v)):RLAB[Math.round(v)]);
+function fmtVal(v,short){if(v==null)return '–';if(isRate(metric))return metric==='comp'||!Number.isInteger(v)?v.toFixed(1):String(v);  // numbers, never the DOE's words
   if(metric==='pk')return ['no pre-K','pre-K','pre-K + 3-K'][v];if(metric==='scr')return SCR_LAB[v];if(metric==='util')return Math.round(v)+'% full';if(isOut(metric)&&OUT[metric].abs)return String(Math.round(v));if(metric==='enr')return Math.round(v).toLocaleString();if(metric==='iep')return Math.round(v)+'%';if(isProg(metric))return v?'yes':'no';return Math.round(v)+'%'}
 function distTag(p){const d=p.dist&&String(p.dist).split(',').map(Number).filter(Boolean);return d&&d.length?'District '+d.join(' / '):''}
 const NONRES=/park|cemeter|golf|airport|island|beach|zoo|garden|reservoir/i;
@@ -1018,14 +1023,14 @@ function selectNZ(d,fromClick,back){const o=nzGet(d);if(!o)return;markEngaged();
 // the zone card's "other options" list opens a non-zoned school
 document.getElementById('card').addEventListener('click',e=>{const b=e.target.closest('button[data-nz]');if(!b)return;
   const l=selected,p=l&&l.feature.properties,ds=p&&p.dbns||[];
-  drillIn(b.dataset.nz,l&&{kind:'zone',l,top:aside.scrollTop,label:ds.length===1?prefixOf(ds[0])+' '+(+ds[0].slice(3))+'’s zone':ds.length?'this zone':'District '+(+p.dist)})});
+  drillIn(b.dataset.nz,l&&{kind:'zone',l,top:aside.scrollTop,di:[...card.querySelectorAll('details.opts')].indexOf(b.closest('details')),label:ds.length===1?prefixOf(ds[0])+' '+(+ds[0].slice(3))+'’s zone':ds.length?'this zone':'District '+(+p.dist)})});
 // going back: a school opened from a zone's list or from search results gets a "← Back" link, and the browser's
 // Back button (or the phone's back gesture) does the same. Only these steps add a history entry; other clicks
 // replace the address, so Back doesn't replay every zone you tapped.
 let backTo=null;
 function drillIn(d,back){if(back){try{history.pushState({nsz:1},'','#'+level+'-'+d)}catch(e){back=null}}selectNZ(d,false,back)}
 function goBack(b){backTo=null;
-  if(b.kind==='zone'){select(b.l,false);const o=card.querySelector('details.opts');if(o)o.open=true;requestAnimationFrame(()=>{aside.scrollTop=b.top})}
+  if(b.kind==='zone'){select(b.l,false);const o=card.querySelectorAll('details.opts')[Math.max(0,b.di||0)];if(o)o.open=true;requestAnimationFrame(()=>{aside.scrollTop=b.top})}
   // search: what was selected before the search comes back, with the results open again
   else{if(b.l)select(b.l,false);else if(b.nz)selectNZ(b.nz,false);else{clearNZSel();card.className='card empty';card.textContent='Select a zone on the map, or search for a school, to see its zoned school.';sheetDefault()}
     if(phone.matches)setPop('search',true);document.getElementById('t-school').click();q.focus();q.dispatchEvent(new Event('input'))}}
@@ -1062,7 +1067,7 @@ function grades(g,d){if(!g)return '';let l=g.split(',').filter(x=>x!=='3K'&&x!==
   const a=l.map(x=>x==='3K'?'3-K':x==='PK'?'Pre-K':x==='0K'?'K':String(+x));return a.length>1?a[0]+'–'+a[a.length-1]:a[0]}
 const card=document.getElementById('card');
 function row(lbl,n,p){if(!n)return '';const v=100*p/n;return '<span>'+lbl+'</span><span class="bar"><i style="width:'+v.toFixed(1)+'%;background:'+scoreColor(v)+'"></i></span><b>'+Math.round(v)+'%</b>'}
-function chip(r,num){return r==null?'<span class="chip">n/a</span>':'<span class="chip"><i style="background:'+rateColor(r)+'"></i>'+(Number.isInteger(r)&&!num?RLAB[r]:r.toFixed(1)+' / 4')+'</span>'}
+function chip(r,num){return r==null?'<span class="chip">n/a</span>':'<span class="chip"><i style="background:'+rateColor(r)+'"></i>'+r.toFixed(1)+' / 4'+'</span>'}
 function tagsHtml(d){const x=X[d];if(!x)return '';const tags=[];if(hasGT(d))tags.push('Gifted &amp; Talented');if(x[4])tags.push('Dual language: '+esc(x[4]));
   return tags.length?'<div class="tags">'+tags.map(s=>'<span class="tag">'+s+'</span>').join('')+'</div>':''}
 function factsHtml(d){const x=X[d]||[],c=CS[d]||{},u=U[d];if(!X[d]&&!CS[d]&&!u)return '';
@@ -1166,11 +1171,11 @@ function select(l,fromClick,ll){
   let h='<div class="zt">'+(p.dist&&+p.dist?'District '+esc(p.dist)+' · ':'')+esc(BORO[p.boro]||'')+'</div>';
   if(p.dbns.length>1)h+='<div class="kind">'+kindText(p)+'</div>';
   if(!p.dbns.length){h+='<div class="school"><span class="nm">'+LEVEL_TXT[level].noZone+'</span></div>';if(level==='ms'&&/District/.test(p.remarks||''))h+='<div class="note">Students here apply to middle schools through <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a>.</div>';if(level==='hs')h+='<div class="note">Students here apply to high schools citywide through <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a>.</div>';
-    if(p.dist&&+p.dist){h+='<a class="dist-page" href="districts/'+(+p.dist)+'/'+(LOCAL?'index.html':'')+'">All District '+(+p.dist)+' schools →</a>';h+=nzOptions(+p.dist,[],true)}}
+    if(p.dist&&+p.dist){h+='<a class="dist-page" href="districts/'+(+p.dist)+'/'+(LOCAL?'index.html':'')+'">All District '+(+p.dist)+' schools →</a>';h+=nzOptions(+p.dist,[],true)+chOptions(+p.dist)}}
   else{h+=p.dbns.map(schoolBlock).join('');
     h+='<a class="confirm" href="https://schoolsearch.schools.nyc/" target="_blank" rel="noopener">Confirm your exact address on schoolsearch.schools.nyc ↗</a>';
     h+='<div class="card-actions"><button type="button" class="btn-sm" id="copy-link">Copy link to '+(p.dbns.length>1?'these schools':'this school')+'</button><button type="button" class="btn-sm to-map" id="to-map">↑ Back to map</button></div>';
-    const opts=level==='es'||level==='ms'?nzOptions(+p.dist,p.dbns):'';h+=opts||'<hr class="sep">';
+    const opts=level==='es'||level==='ms'?nzOptions(+p.dist,p.dbns):'';h+=(opts||'<hr class="sep">')+chOptions(+p.dist);
     if(p.dist&&+p.dist)h+='<a class="dist-page" href="districts/'+(+p.dist)+'/'+(LOCAL?'index.html':'')+'">All District '+(+p.dist)+' schools →</a>'}
   if(p.remarks&&!/^Citywide High School Choice$/i.test(p.remarks))h+='<div class="note">'+esc(p.remarks)+'</div>';
 

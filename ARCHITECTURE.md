@@ -38,7 +38,7 @@ The script runs top to bottom in roughly this order:
 | Per-school data | `R` ratings, `S` tests, `O`/`Q` high school outcomes, `X` Snapshot extras, `CS` class size, `U` building use, `PK` pre-K/3-K, `KA` kindergarten admissions, `P` programs |
 | Layer toggles | `LAY`, `LAY_KEY` (localStorage `nsz-layers-v1`), `saveLay`, `applyLayers`, `syncZoneLines`, `clearZoneSel` |
 | Schools without a zone | `nzGet`, `regNZ`, `nzOptions`, `nzPriority`, `nzDemand`, `buildNZ`, `nzTip`, `selectNZ`, `gtStar` |
-| Charter schools | `CHX` (grades, enrollment, former name), `allNZ` (charter `CH` rows join `NZ`, flagged `o.ch`), `chBlock` (lottery card text, `CH_APPLY`), `distOf` / `boroOf` (district and borough from the row, not the DBN), `chReports` (K–12 charters: high school ratings in the high school view), `.chm` squares, layer key `ch` |
+| Charter schools | `CHX` (grades, enrollment, former name), `allNZ` (charter `CH` rows join `NZ`, flagged `o.ch`), `chBlock` (lottery card text, `CH_APPLY`), `chOptions` (the zone card's charter list), `distOf` / `boroOf` (district and borough from the row, not the DBN), `chReports` (K–12 charters: high school ratings in the high school view), `.chm` squares, layer key `ch` |
 | Basemap | `NYC_KEY`, `NYC_TILES`, `baseTiles`, `labelTiles`, `dropBase` (falls back to our own streets), `baseFade` |
 | Coloring | `schoolVal`, `fillFor`, `style`, `rampColor`/`STOPS`, `scoreColor`, `rateColor`, `OUT` (high school ranges), `zoneRating`, `zoneOut`, `zonePk`, `zoneScr`, `zoneDl`/`DL_LANGS` (dual language by language), `zoneUtil`, `buildStripes` (multi-school zones) |
 | Zones and selection | `makeLayer`, `lineStyle`, `makeSel`, `restyleSel`, `select` (the main click handler), `distAt` (no-zone areas pick the district under the click) |

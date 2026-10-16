@@ -6,6 +6,18 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
+## Unreleased
+
+### Added
+- A zone's card on the map now lists the charter schools whose lottery gives priority to that district, under "Charter schools", best rated first. Tap one to see its card, and "Back" returns to the zone with the list open.
+
+### Changed
+- School pages show the DOE's Instruction, Safety and Families ratings as numbers ("3 / 4"), like the overall rating, and so do the map's labels and hover boxes when coloring by one of them.
+- Three charter schools with dual-language programs now show them on the map and their pages, like district schools: New York French-American (French), LEEP Dual Language Academy and American Dream (Spanish). The DOE doesn't list charter programs, so these are checked by hand; other charters still show as "no data" under Color by > Dual language.
+
+### Fixed
+- Nine school pages had no neighborhood link because their building sits just outside every neighborhood's boundary, like the five schools on the Franklin K. Lane campus by Cypress Hills Cemetery. They now link to the nearest neighborhood in their borough (Cypress Hills, for that campus), and its page lists them.
+
 ## 1.26.0 (2026-10-16)
 
 ### Added
