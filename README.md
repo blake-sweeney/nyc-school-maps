@@ -175,9 +175,9 @@ python3 scripts/fetch_data.py charters        # which charters are open, where, 
 python3 scripts/fetch_data.py charter-tests   # their state test results (needs mdbtools: brew install mdbtools)
 ```
 
-`charters` writes `charters.json` from the DOE's live school list ([LCGMS](https://infohub.nyced.org/in-our-schools/operations/lcgms)), so it already has schools opening this fall; addresses are placed with NYC Planning's GeoSearch, and enrollment by grade comes from the DOE's [Demographic Snapshot](https://infohub.nyced.org/reports/students-and-schools/school-quality/information-and-data-overview) (update `DEMOGRAPHICS_URL` in `fetch_data.py` when a new year's file appears). Read what it prints: it names charters it left out (no location found, or marked open but with no students last year). If the DOE sites are blocked, save both files in a browser and pass them: `fetch_data.py charters <LCGMS .xls> <snapshot .xlsx>`.
+`charters` writes `charters.json` from the DOE's live school list ([LCGMS](https://infohub.nyced.org/in-our-schools/operations/lcgms)), so it already has schools opening this fall; addresses are placed with NYC Planning's GeoSearch, and enrollment by grade comes from the DOE's [Demographic Snapshot](https://infohub.nyced.org/reports/students-and-schools/school-quality/information-and-data-overview) (update `DEMOGRAPHICS_URL` in `fetch_data.py` when a new year's file appears). Read what it prints: it names charters it left out (no location found: look up the school on [schools.nyc.gov](https://www.schools.nyc.gov/) and add a point to `points` in `data/charter_fixes.json`; or marked open but with no students last year). If the DOE sites are blocked, save both files in a browser and pass them: `fetch_data.py charters <LCGMS .xls> <snapshot .xlsx>`.
 
-`charter-tests` writes `charter_tests.json`. The DOE's test files leave charters out, so this reads NYSED's report card database from [data.nysed.gov](https://data.nysed.gov/downloads.php) (about 400 MB; update `NYSED_SRC_URL` each year). Pass the zip if you've already downloaded it. NYSED's school codes don't always line up with the DOE's, so check what it prints: if a charter's results go unmatched, add its DBN and NYSED code to the hand-checked `data/charter_beds.json`.
+`charter-tests` writes `charter_tests.json`. The DOE's test files leave charters out, so this reads NYSED's report card database from [data.nysed.gov](https://data.nysed.gov/downloads.php) (about 400 MB; update `NYSED_SRC_URL` each year). Pass the zip if you've already downloaded it. NYSED's school codes don't always line up with the DOE's, so check what it prints: if a charter's results go unmatched, add its DBN and NYSED code to `beds` in the hand-checked `data/charter_fixes.json`.
 
 ### 7. Building use, the SCA "Blue Book" (once a year)
 
@@ -188,7 +188,7 @@ Download the Classic Edition PDF from the [SCA](https://www.nycsca.org/Community
 - `data/citywide_ms.json`: citywide middle schools (open to students from anywhere in NYC). Compare against [InsideSchools](https://insideschools.org/insidetools/citywide-middle-schools) and update the list of DBNs and the `source` note.
 - `data/shsat_cutoffs.json`: lowest SHSAT score offered a seat at each of the 8 test schools, for the newest year and the one before. Published after offers come out in late winter; update `year`, `cut` and `source`.
 - Citywide G&T kindergarten schools come from MySchools in step 2; check the five still make sense.
-- `data/charter_beds.json`: charters whose NYSED school code doesn't match LCGMS's (see step 6). Remove entries for schools that have closed.
+- `data/charter_fixes.json`: charter points for addresses that don't geocode, and NYSED school codes that don't match LCGMS's (see step 6). Remove schools that have closed.
 
 ### 9. Rarely
 

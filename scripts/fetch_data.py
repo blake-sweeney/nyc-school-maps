@@ -439,7 +439,7 @@ def fetch_charters(lcgms_path=None, demographics_path=None):
       school is kept only if it had students in the latest Demographic Snapshot or opened in that school year or
       later; the rest are printed for a look.
     - Points: each school's LCGMS address, geocoded with NYC Planning's GeoSearch, or the center of its tax lot
-      (PLUTO) when GeoSearch can't find the address. (The Find a School map's points are years out of date for
+      (PLUTO) when GeoSearch can't find the address, or a hand-checked point from charter_fixes.json. (The Find a School map's points are years out of date for
       charters that moved.) The district is the one the point falls in, from
       districts.json; LCGMS's own district code is wrong for some charters.
     - Enrollment by grade: the DOE Demographic Snapshot (School tab), which includes charters.
@@ -488,8 +488,11 @@ def fetch_charters(lcgms_path=None, demographics_path=None):
             if lot and lot[0].get("latitude"):
                 return round(float(lot[0]["latitude"]), 6), round(float(lot[0]["longitude"]), 6)
         return None
+    fixed = _load("charter_fixes.json", {}).get("points", {})  # hand-checked points for addresses that don't geocode
     with concurrent.futures.ThreadPoolExecutor(8) as ex:
-        points = dict(zip([r["Location Code"] for r in keep], ex.map(geocode, keep)))
+        points = dict(zip([r["Location Code"] for r in keep],
+                          ex.map(lambda r: tuple(fixed[r["ATS System Code"]][:2]) if r["ATS System Code"] in fixed
+                                 else geocode(r), keep)))
 
     def inside(x, y, ring):
         c = False
@@ -516,7 +519,7 @@ def fetch_charters(lcgms_path=None, demographics_path=None):
                     num(e[col["Total Enrollment"]]) if e else None])
     print(f"  {len(out)} charter schools open, {sum(1 for o in out if o[9] is None)} of them new since {year}")
     if unplaced:
-        print("  no location for the address, left out: "
+        print("  no location for the address (add a point to charter_fixes.json), left out: "
               + "; ".join(f"{r['ATS System Code']} {r['Primary Address']}, {r['City']}" for r in keep
                           if r["ATS System Code"] in unplaced))
     if dropped:
@@ -560,7 +563,7 @@ def fetch_charter_tests(path=None):
     from mdbtools (brew install mdbtools, or apt install mdbtools). Pass the downloaded zip, or let this
     download it (about 400 MB, 1.6 GB unzipped; both are deleted afterward). Update NYSED_SRC_URL each year.
     NYSED keys schools by BEDS code. LCGMS has one for each charter, but some are stale or in another format,
-    and the last six digits (the state's charter number) aren't unique. So, in order: charter_beds.json (hand-
+    and the last six digits (the state's charter number) aren't unique. So, in order: charter_fixes.json (hand-
     checked), the same code, the same name (this year's, or last year's from charters.json "formerly", since
     NYSED names lag renames), then the same charter number with a similar name. Check what it prints.
     charter_tests.json: {"year": ..., "es": {dbn: [ELA tested, ELA proficient, Math tested, Math proficient]},
@@ -600,7 +603,7 @@ def fetch_charter_tests(path=None):
     year = max(r["YEAR"] for r in rows)
     nyc = {r["ENTITY_CD"]: r["ENTITY_NAME"] for r in rows if r["YEAR"] == year
            and r["ENTITY_CD"][:2] in ("30", "31", "32", "33", "34", "35") and r["ENTITY_CD"][-6:-4] == "86"}
-    found = _load("charter_beds.json", {}).get("beds", {})  # hand-checked: schools the rules below can't pair
+    found = _load("charter_fixes.json", {}).get("beds", {})  # hand-checked: schools the rules below can't pair
     found = {d: c for d, c in found.items() if c in nyc}
     used = set(found.values())
     names = lambda d, n: [n] + ([formerly[d]] if d in formerly else [])
@@ -644,7 +647,7 @@ def fetch_charter_tests(path=None):
     print(f"  {year}: grades 3-5 for {len(out['es'])} charters, grades 6-8 for {len(out['ms'])}")
     extra = sorted(n for c, n in nyc.items() if c not in used)
     if extra:
-        print("  NYSED results not matched to an open charter (closed, or add it to charter_beds.json): "
+        print("  NYSED results not matched to an open charter (closed, or add it to charter_fixes.json): "
               + "; ".join(extra))
     if none:
         print(f"  teach grades 3-8 now but have no {year} results (most were too new to test): {', '.join(none)}")

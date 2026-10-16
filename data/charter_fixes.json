@@ -1,0 +1,6 @@
+{"source": "Hand-checked fixes for fetch_data.py charters / charter-tests. Check each fall; remove schools that have closed.",
+ "beds": {"84M702": "310500860804"},
+ "points": {
+  "84Q385": [40.73793, -73.883528, "79-20 Queens Boulevard (schools.nyc.gov); LCGMS has 79-17 51 Avenue, the other side of the same block. Neither geocodes."],
+  "84X638": [40.82086, -73.92901, "LCGMS and schools.nyc.gov say 101 East 150 Street, which isn't in the city's address data; the building is 586 River Avenue."]
+ }}
