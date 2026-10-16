@@ -6,7 +6,7 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
-## Unreleased
+## 1.27.0 (2026-10-16)
 
 ### Added
 - A zone's card on the map now lists the charter schools whose lottery gives priority to that district, under "Charter schools", best rated first. Tap one to see its card, and "Back" returns to the zone with the list open.
