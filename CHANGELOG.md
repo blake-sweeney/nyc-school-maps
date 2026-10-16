@@ -6,6 +6,11 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
+## Unreleased
+
+### Changed
+- Coloring the map by Dual language now shows the language: Spanish, Chinese, French, Russian, Italian and Polish each have their own color, rarer languages share one, and schools with programs in two or more languages have their own. Hovering a zone or school names its languages.
+
 ## 1.22.0 (2026-10-13)
 
 ### Added

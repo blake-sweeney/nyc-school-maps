@@ -536,7 +536,7 @@ aside>*{flex-shrink:0}
         <p class="hint" id="scr-hint"></p>
       </div>
       <div class="legend" id="leg-prog" hidden>
-        <div class="sw"><span><i style="background:#2f6db5"></i><span id="prog-yes">Has the program</span></span><span><i class="off"></i>Doesn’t</span></div>
+        <div class="sw" id="prog-sw"><span><i style="background:#2f6db5"></i><span id="prog-yes">Has the program</span></span><span><i class="off"></i>Doesn’t</span></div>
         <p class="hint" id="prog-hint"></p>
       </div>
       <div class="legend" id="leg-iep" hidden>
@@ -629,6 +629,16 @@ const IEP_BINS=[[17,'#e0f1ee'],[22,'#a6dbd0'],[27,'#5fb8a8'],[32,'#2a8a7e'],[Inf
 const iepColor=v=>IEP_BINS.find(b=>v<b[0])[1];
 const hasGT=d=>!!(X[d]&&X[d][8]&&X[d][8].includes('G&T'));
 const dualLang=d=>X[d]&&X[d][4]||null;
+// dual language by language: the common ones get their own color, the rest share "Other"; a school (or shared zone)
+// with two or more languages gets its own color too
+const DL_LANGS=[['Spanish','#2f6db5'],['Chinese','#d1495b'],['French','#7b5ea7'],['Russian','#e09f3e'],['Italian','#3a9d6e'],['Polish','#8c6d46']],
+  DL_OTHER='#c06fb0',DL_MULTI='#35b9d6';
+function dlKey(l){return DL_LANGS.some(x=>x[0]===l)?l:'Other'}
+// '' = no dual language, a language name, 'multi'; null = no Snapshot data
+function zoneDl(dbns){if(!dbns.some(d=>X[d]))return null;const ks=new Set();
+  for(const d of dbns){const v=dualLang(d);if(!v)continue;const ls=v.split(',').map(x=>x.trim()).filter(Boolean);if(ls.length>1)return 'multi';ks.add(dlKey(ls[0]))}
+  return ks.size>1?'multi':ks.size?[...ks][0]:''}
+function dlColor(k){return k==='multi'?DL_MULTI:k==='Other'?DL_OTHER:(DL_LANGS.find(x=>x[0]===k)||[0,DL_OTHER])[1]}
 function zoneIep(dbns){const v=dbns.map(d=>X[d]&&X[d][6]).filter(x=>x!=null);return v.length?v.reduce((a,b)=>a+b,0)/v.length:null}
 const isProg=m=>m==='gt'||m==='dl';
 // middle and high schools: how many of a school's programs are screened (admission by grades, sometimes an assessment):
@@ -638,6 +648,7 @@ function scrCat(d){const P=((LV[level]&&LV[level].P||{})[d]||[]).filter(p=>p[1]!
   const n=P.filter(p=>SCR_CODES.includes(p[1])).length;return n?n===P.length?2:1:0}
 function zoneScr(dbns){const v=dbns.map(scrCat).filter(x=>x!=null);return v.length?Math.max(...v):null}
 const progWord=m=>m==='gt'?'G&T':'dual language';
+const progTxt=d=>metric==='dl'&&dualLang(d)?dualLang(d)+' dual language':'has '+progWord(metric);
 // pre-K and 3-K (Local Law 72): 0 neither, 1 pre-K only (or 3-K only), 2 both; a zone with several schools shows the most
 const PK_COL=['var(--off)','#9ecae1','#2b6fae'],PK_LAB=['No pre-K or 3-K','Pre-K only','Pre-K and 3-K'];
 function pkCat(d){const p=PK[d];if(!p)return null;return (p[0]?1:0)+(p[2]?1:0)}
@@ -755,7 +766,7 @@ const NONRES=/park|cemeter|golf|airport|island|beach|zoo|garden|reservoir/i;
 function noZoneHere(p){return !p.dbns.length&&!NONRES.test(p.remarks||'')}
 function tipHtml(f){const p=f.properties;const dt=distTag(p);
   if(!p.dbns.length)return noZoneHere(p)?(dt?'<small class="tip-d">'+dt+'</small><br>':'')+(level==='hs'?'No zoned high school here<br><small>Students apply citywide through MySchools</small>':'No zoned school here<br><small>Students apply through MySchools</small>'):esc(p.remarks||LEVEL_TXT[level].noZone);
-  const val=d=>{const v=schoolVal(d);return v==null||isProg(metric)&&!v?'':' · '+(isProg(metric)?'has '+progWord(metric):fmtVal(v))};
+  const val=d=>{const v=schoolVal(d);return v==null||isProg(metric)&&!v?'':' · '+(isProg(metric)?progTxt(d):fmtVal(v))};
   return (dt?'<small class="tip-d">'+dt+'</small><br>':'')+p.dbns.map(d=>esc(short(d))+val(d)).join('<br>')}
 function psNum(f){const p=f.properties;return p.dbns.length?p.label||p.dbns[0].slice(3):''}
 // proficiency for a zone: pooled across its schools that have results
@@ -777,7 +788,7 @@ const isOut=m=>m in OUT;
 const outColor=(m,v)=>rampColor(v,OUT[m].stops);
 function zoneOut(dbns,m){const v=dbns.map(d=>outVal(d,m)).filter(x=>x!=null);return v.length?v.reduce((a,b)=>a+b,0)/v.length:null}
 function rgb(c){return 'rgb('+c.map(Math.round).join(',')+')'}
-function fillFor(f){const p=f.properties;if(!p.dbns.length)return css('--land');if(metric==='none')return css('--z'+p.c);if(metric==='pk'){const v=zonePk(p.dbns);return v==null?css('--nodata'):v?PK_COL[v]:css('--off')}if(metric==='scr'){const v=zoneScr(p.dbns);return v==null?css('--nodata'):v?SCR_COL[v]:css('--off')}if(metric==='enr'){const n=zoneEnroll(p.dbns);return n==null?css('--nodata'):enrColor(n)}if(isProg(metric)){const h=zoneProg(p.dbns,metric);return h==null?css('--nodata'):h?'#2f6db5':css('--off')}if(metric==='iep'){const v=zoneIep(p.dbns);return v==null?css('--nodata'):iepColor(v)}if(metric==='util'){const v=zoneUtil(p.dbns);return v==null?css('--nodata'):utilColor(v)}if(isOut(metric)){const v=zoneOut(p.dbns,metric);return v==null?css('--nodata'):outColor(metric,v)}if(isRate(metric)){const r=zoneRating(p.dbns,metric);return r==null?css('--nodata'):rateColor(r)}const v=pct(p.dbns,metric);return v==null?css('--nodata'):scoreColor(v)}
+function fillFor(f){const p=f.properties;if(!p.dbns.length)return css('--land');if(metric==='none')return css('--z'+p.c);if(metric==='pk'){const v=zonePk(p.dbns);return v==null?css('--nodata'):v?PK_COL[v]:css('--off')}if(metric==='scr'){const v=zoneScr(p.dbns);return v==null?css('--nodata'):v?SCR_COL[v]:css('--off')}if(metric==='enr'){const n=zoneEnroll(p.dbns);return n==null?css('--nodata'):enrColor(n)}if(metric==='dl'){const k=zoneDl(p.dbns);return k==null?css('--nodata'):k?dlColor(k):css('--off')}if(isProg(metric)){const h=zoneProg(p.dbns,metric);return h==null?css('--nodata'):h?'#2f6db5':css('--off')}if(metric==='iep'){const v=zoneIep(p.dbns);return v==null?css('--nodata'):iepColor(v)}if(metric==='util'){const v=zoneUtil(p.dbns);return v==null?css('--nodata'):utilColor(v)}if(isOut(metric)){const v=zoneOut(p.dbns,metric);return v==null?css('--nodata'):outColor(metric,v)}if(isRate(metric)){const r=zoneRating(p.dbns,metric);return r==null?css('--nodata'):rateColor(r)}const v=pct(p.dbns,metric);return v==null?css('--nodata'):scoreColor(v)}
 function style(f,sel){const a=zoneAlpha();const empty=!f.properties.dbns.length;
   if(!LAY.zones)return{renderer,stroke:false,fillColor:'#000',fillOpacity:0};
   if(f.properties.dbns.length>1&&metric!=='none')return{renderer,stroke:false,fillColor:fillFor(f),fillOpacity:0};  // drawn as stripes
@@ -894,7 +905,7 @@ const zsGroup=L.layerGroup().addTo(map);
 // The selected school's marker always shows.
 function markersByZoom(){return map.getZoom()>=12}  // a function, so the zone style can call it before this line runs
 function zsOn(){return !!LAY.zs&&markersByZoom()}
-function zsTip(d){const v=schoolVal(d),val=v==null||isProg(metric)&&!v?'':' · '+(isProg(metric)?'has '+progWord(metric):fmtVal(v));
+function zsTip(d){const v=schoolVal(d),val=v==null||isProg(metric)&&!v?'':' · '+(isProg(metric)?progTxt(d):fmtVal(v));
   return '<small class="tip-d">District '+(+d.slice(0,2))+' · Zoned</small><br>'+esc(short(d))+val}
 function zsSelected(d){return selected&&selected.feature.properties.dbns.includes(d)}
 function buildZS(){zsGroup.clearLayers();if(!LAY.zs||typeof nzSize!=='function')return;const near=markersByZoom();const sz=nzSize()*ZS_SIZE,zoned=new Set(byLayer.flatMap(l=>l.feature.properties.dbns));
@@ -988,7 +999,7 @@ function buildNZ(){nzGroup.clearLayers();document.getElementById('nz-key').hidde
       icon:L.divIcon({className:'',html:o.gt?gtStar(nzFill(o.d),nzSel===o.d):'<div class="nzm'+(nzSel===o.d?' sel':'')+'" style="--c:'+nzFill(o.d)+'"></div>',iconSize:[sz,sz],iconAnchor:[sz/2-dx,sz/2-dy]})});
     m.bindTooltip(()=>nzTip(o),{direction:'top',offset:[0,-sz/2]});m.on('click',()=>selectNZ(o.d,true));m.addTo(nzGroup)})}
 function nzTip(o){const v=schoolVal(o.d),kind=o.hs?(o.gt?'Specialized':'High school'):o.ms?(o.gt?'Citywide':'No zone'):(o.gt?'Citywide G&T':'Non-zoned');
-  const val=v==null||isProg(metric)&&!v?'':' · '+(isProg(metric)?'has '+progWord(metric):fmtVal(v));
+  const val=v==null||isProg(metric)&&!v?'':' · '+(isProg(metric)?progTxt(d):fmtVal(v));
   return '<small class="tip-d">'+(o.hs?esc(BORO[o.d[2]]||''):'District '+(+o.d.slice(0,2)))+' · '+kind+'</small><br>'+esc(o.n)+val}
 map.on('zoomend',buildNZ);buildNZ();
 function clearNZSel(){if(!nzSel)return;nzSel=null;buildNZ()}
@@ -1261,7 +1272,10 @@ function syncLegend(){syncName();const lo=document.getElementById('leg-out');lo.
     document.getElementById('out-bar').style.background='linear-gradient(90deg,'+rgb(s[0][1])+' 0%,'+rgb(s[0][1])+' '+pct(s[0][0])+','+rgb(s[1][1])+' '+pct(s[1][0])+','+rgb(s[2][1])+' '+pct(s[2][0])+','+rgb(s[2][1])+' 100%)';
     document.getElementById('out-ticks').innerHTML=o.ticks.map((v,i)=>'<span style="left:'+outPos(metric,v)+'%">'+v+(i===o.ticks.length-1&&!o.abs?'%':'')+'</span>').join('');
     document.getElementById('out-hint').innerHTML=metric==='sat'?'Average SAT score (out of 1600) of the school’s test takers, from the 2024–25 School Quality Snapshot. Most NYC high schools average 780–1100. <span class="nd"></span> No data.':metric==='ccr'?'The DOE’s college and career readiness score (0–100): credit for each student who graduates meeting CUNY’s standard to skip remedial classes, passing AP or college-credit exams, and similar. NYC average: 54. From the 2024–25 School Quality Snapshot. <span class="nd"></span> No data.':metric==='grad'?'Share of students who graduate within 4 years, from the 2024–25 School Quality Snapshot. NYC average: 81%. The scale is narrower than for test scores because most zoned high schools graduate 75–95% of students. <span class="nd"></span> No data.':'Share of graduates who enrolled in college or a career program within 6 months, from the 2024–25 School Quality Snapshot. <span class="nd"></span> No data.'}
-  document.getElementById('leg-pk').hidden=metric!=='pk';document.getElementById('leg-scr').hidden=metric!=='scr';if(metric==='scr')document.getElementById('scr-hint').innerHTML='How many of each school’s programs are screened, from the MySchools '+(level==='hs'?'high':'middle')+' school directory. Screened programs rank applicants by their '+(level==='hs'?'7th':'4th')+'-grade report card grades; some also use an assessment. A school with some screened programs also has open, zone-priority or other programs; click it to see each one. Shared zones show the school with the most. <span class="nd"></span> No program data.';{const gs=document.getElementById('grp-src');if(gs&&metric==='pk')gs.textContent='DOE Local Law 72 report · fall 2025'}document.getElementById('leg-rate').hidden=!isRate(metric);document.getElementById('leg-test').hidden=!['both','ela','math'].includes(metric);document.getElementById('leg-prog').hidden=!isProg(metric);document.getElementById('leg-iep').hidden=metric!=='iep';document.getElementById('leg-util').hidden=metric!=='util';{const gs=document.getElementById('grp-src');if(gs&&['gt','dl','scr','iep','util'].includes(metric))gs.textContent=metric==='util'?'NYC SCA Blue Book · 2025–26':metric==='scr'?'MySchools '+(level==='hs'?'high':'middle')+' school directory':GROUP_SRC.programs}document.getElementById('prog-yes').textContent=metric==='gt'?'Has G&T':'Has dual language';document.getElementById('prog-hint').textContent=metric==='gt'?'District Gifted & Talented programs listed for the zoned school in the 2024–25 Snapshot (73 zoned schools). G&T seats aren’t assigned by zone: families apply separately, and admission rules have changed in recent years, so check MySchools for this year’s process.':'Dual-language programs at the zoned school (151 zoned schools), from the 2024–25 Snapshot. Click a zone to see the languages. Seats are usually by application, often with priority for zoned families.';
+  document.getElementById('leg-pk').hidden=metric!=='pk';document.getElementById('leg-scr').hidden=metric!=='scr';if(metric==='scr')document.getElementById('scr-hint').innerHTML='How many of each school’s programs are screened, from the MySchools '+(level==='hs'?'high':'middle')+' school directory. Screened programs rank applicants by their '+(level==='hs'?'7th':'4th')+'-grade report card grades; some also use an assessment. A school with some screened programs also has open, zone-priority or other programs; click it to see each one. Shared zones show the school with the most. <span class="nd"></span> No program data.';{const gs=document.getElementById('grp-src');if(gs&&metric==='pk')gs.textContent='DOE Local Law 72 report · fall 2025'}document.getElementById('leg-rate').hidden=!isRate(metric);document.getElementById('leg-test').hidden=!['both','ela','math'].includes(metric);document.getElementById('leg-prog').hidden=!isProg(metric);document.getElementById('leg-iep').hidden=metric!=='iep';document.getElementById('leg-util').hidden=metric!=='util';{const gs=document.getElementById('grp-src');if(gs&&['gt','dl','scr','iep','util'].includes(metric))gs.textContent=metric==='util'?'NYC SCA Blue Book · 2025–26':metric==='scr'?'MySchools '+(level==='hs'?'high':'middle')+' school directory':GROUP_SRC.programs}{const sw=document.getElementById('prog-sw');if(metric==='dl'){const seen=new Set(Object.keys(LV[level].S||{}).concat(NZ.map(o=>o.d)).map(d=>zoneDl([d])).filter(Boolean));
+  const items=DL_LANGS.map(x=>x[0]).concat(['Other','multi']).filter(k=>seen.has(k));
+  sw.innerHTML=items.map(k=>'<span><i style="background:'+dlColor(k)+'"></i>'+(k==='multi'?'Two or more':k)+'</span>').join('')+'<span><i class="off"></i>None</span>'}
+  else sw.innerHTML='<span><i style="background:#2f6db5"></i>'+(metric==='gt'?'Has G&amp;T':'Has dual language')+'</span><span><i class="off"></i>Doesn’t</span>'}document.getElementById('prog-hint').textContent=metric==='gt'?'District Gifted & Talented programs listed for the zoned school in the 2024–25 Snapshot (73 zoned schools). G&T seats aren’t assigned by zone: families apply separately, and admission rules have changed in recent years, so check MySchools for this year’s process.':'Dual-language programs at the zoned school (151 zoned schools), from the 2024–25 Snapshot. Each color is a language. “Two or more” means the school runs programs in more than one language. Seats are usually by application, often with priority for zoned families.';
   document.getElementById('rate-hint').innerHTML=(metric==='comp'?'Overall is the average of the three ratings, so zones blend between colors (3.3 sits between yellow and teal). ':'DOE rating for '+RNAME[metric]+'. ')+'Ratings are the DOE’s own. Shared zones average their schools. <span class="nd"></span> No rating.'}
 syncLegend();
 //METRIC
