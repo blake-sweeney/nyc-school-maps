@@ -217,6 +217,109 @@ def load_tests(fallback_name):
     return load(fallback_name)
 
 
+def hs_snapshot_rows(o, city_grad):
+    """One school's high school Snapshot values (hs_snapshot.json) -> (Q row or None, outcomes row or None).
+    Q: [average SAT, college & career readiness score, % in any advanced course, % in AP,
+        [CUNY 4-year, CUNY 2-year, NY public (SUNY etc.), NY private, out of state, for-profit, other] % of graduates,
+        AP subjects students passed]; outcomes: [4-year graduation %, college/career %, city graduation %]."""
+    def num(x):
+        try:
+            return float(str(x).split("/")[0].split(" (")[-1].rstrip("%)").lstrip("("))
+        except (ValueError, TypeError):
+            return None
+
+    def paren(x):  # "2776 (85%)" -> 85
+        m = re.search(r"\((<?)(\d+)%\)", str(x or ""))
+        return (0 if m.group(1) else int(m.group(2))) if m else None
+    DEST = ("coll_4yr", "coll_2yr", "coll_publ", "coll_priv", "coll_oost", "coll_prft", "other")
+    sat, ccr = num(o.get("avg_sat")), num(o.get("val_ccr_4yr_all"))
+    dest = [num(o.get(f"val_pct_cer_6mo_{k}_all")) for k in DEST]
+    aps, i = [], 1
+    while f"ccpc_co_{i}" in o:
+        nm = o[f"ccpc_co_{i}"] or ""
+        if nm.startswith("A.P.") and "Other" not in nm:
+            aps.append(nm[4:].strip())
+        i += 1
+    row = [int(sat) if sat else None, int(ccr) if ccr is not None else None,
+           paren(o.get("disp_str_advanced_enroll")), paren(o.get("disp_str_ap_enroll")),
+           [int(x) if x is not None else None for x in dest] if any(x is not None for x in dest) else None, aps]
+    g, c = num(o.get("val_grad_pct_4_all")), num(o.get("val_pct_cer_6mo_all"))
+    return (row if any(x is not None for x in row[:5]) or aps else None,
+            [int(g) if g is not None else None, int(c) if c is not None else None, city_grad]
+            if g is not None or c is not None else None)
+
+
+def snapshot_tests_row(t):
+    """Snapshot tests [ELA tested, ELA %, Math tested, Math %, ...] -> [ELA tested, proficient, Math tested, proficient],
+    or None. Tiny or hidden counts get a small weight (20), as in load_tests."""
+    if not t or (t[1] is None and t[3] is None):
+        return None
+    n_ela = t[0] or (20 if t[1] is not None else 0)
+    n_mth = t[2] or (20 if t[3] is not None else 0)
+    return [int(n_ela) if t[1] is not None else 0, round(n_ela * t[1] / 100) if t[1] is not None else 0,
+            int(n_mth) if t[3] is not None else 0, round(n_mth * t[3] / 100) if t[3] is not None else 0]
+
+
+def add_charters(d):
+    """Charter schools (data/charters.json, charter_snapshot.json), on each level whose grades they teach now.
+    CH rows (d["CH"], d["MS"]["CH"], d["HS"]["CH"]) have the NZ row shape: [dbn, name, address, lat, lon,
+    [district], 0, [], 0, ""], the district being the one the building is in (charter DBNs start with 84).
+    They're kept apart from NZ so the school, district and neighborhood pages (which read NZ) leave them out.
+    CHX: {dbn: [grades now, grades when fully grown ("0K,01,..." like S[].g), enrollment, former name or None]}.
+    Ratings, facts and tests come from the elementary/middle Snapshot report; high school outcomes from the high
+    school one. A charter with both keeps its high school ratings in HS.CHR / HS.CHX for the high school view."""
+    info = load("charters.json") if os.path.exists(os.path.join(DATA, "charters.json")) else None
+    if not info:
+        return
+    snap = load("charter_snapshot.json")["schools"] if os.path.exists(os.path.join(DATA, "charter_snapshot.json")) else {}
+    formerly = info.get("formerly", {})
+    code = lambda gs: ",".join("0K" if g == 0 else f"{g:02d}" for g in gs)
+    d["CHX"], d["CH"] = {}, []
+    for key in ("MS", "HS"):
+        if key in d:
+            d[key]["CH"] = []
+    if "HS" in d:
+        d["HS"]["CHR"], d["HS"]["CHX"] = {}, {}
+    city_grad = next((v[2] for v in d.get("HS", {}).get("O", {}).values() if v and len(v) > 2 and v[2] is not None), None)
+    for dbn, name, addr, lat, lon, dist, now, final, _bldg, _grades, total in info["schools"]:
+        if not now:
+            continue
+        d["CHX"][dbn] = [code(now), code(final), total, formerly.get(dbn)]
+        row = [dbn, name, addr, lat, lon, [dist], 0, [], 0, ""]
+        ems, hsr = snap.get(dbn, {}).get("EMS"), snap.get(dbn, {}).get("HS")
+        # LCGMS has the current name and address; the Snapshot's are last school year's
+        fix = lambda r: [name, addr] + r[2:]
+        if ems:
+            d["R"].setdefault(dbn, fix(ems["r"]))
+            d["X"].setdefault(dbn, ems["x"])
+        elif hsr:
+            d["R"].setdefault(dbn, fix(hsr["r"]))
+            d["X"].setdefault(dbn, hsr["x"])
+        if dbn not in d["X"] and total:
+            d["X"][dbn] = [total]
+        t = snapshot_tests_row(ems and ems.get("t"))
+        if set(now) & {0, 1, 2, 3, 4, 5}:
+            d["CH"].append(row)
+            if t:
+                d["T"][dbn] = t
+        if set(now) & {6, 7, 8} and "MS" in d:
+            d["MS"]["CH"].append(row)
+            if t:
+                d["MS"]["T"][dbn] = t
+        if set(now) & {9, 10, 11, 12} and "HS" in d:
+            d["HS"]["CH"].append(row)
+            if hsr:
+                q, oc = hs_snapshot_rows(hsr.get("hs", {}), city_grad)
+                if q:
+                    d["HS"].setdefault("Q", {})[dbn] = q
+                if oc:
+                    d["HS"]["O"][dbn] = oc
+                if ems:
+                    d["HS"]["CHR"][dbn], d["HS"]["CHX"][dbn] = fix(hsr["r"]), hsr["x"]
+    print(f"charter schools: {len(d['CH'])} elementary, {len(d.get('MS', {}).get('CH', []))} middle, "
+          f"{len(d.get('HS', {}).get('CH', []))} high school; {sum(1 for k in d['CHX'] if k in d['R'])} with Snapshot data")
+
+
 def main(standalone_path=None, pages=None):
     import datetime
     d = load("elem_zones.json")
@@ -373,34 +476,14 @@ def main(standalone_path=None, pages=None):
             #     [CUNY 4-year, CUNY 2-year, NY public (SUNY etc.), NY private, out of state, for-profit, other] % of graduates,
             #     AP subjects students passed]
             if os.path.exists(os.path.join(DATA, "hs_snapshot.json")):
-                def num(x):
-                    try:
-                        return float(str(x).split("/")[0].split(" (")[-1].rstrip("%)").lstrip("("))
-                    except (ValueError, TypeError):
-                        return None
-                def paren(x):  # "2776 (85%)" -> 85
-                    m = re.search(r"\((<?)(\d+)%\)", str(x or ""))
-                    return (0 if m.group(1) else int(m.group(2))) if m else None
-                DEST = ("coll_4yr", "coll_2yr", "coll_publ", "coll_priv", "coll_oost", "coll_prft", "other")
                 Q = {}
                 for dbn, o in load("hs_snapshot.json")["schools"].items():
-                    sat, ccr = num(o.get("avg_sat")), num(o.get("val_ccr_4yr_all"))
-                    dest = [num(o.get(f"val_pct_cer_6mo_{k}_all")) for k in DEST]
-                    aps, i = [], 1
-                    while f"ccpc_co_{i}" in o:
-                        nm = o[f"ccpc_co_{i}"] or ""
-                        if nm.startswith("A.P.") and "Other" not in nm:
-                            aps.append(nm[4:].strip())
-                        i += 1
-                    row = [int(sat) if sat else None, int(ccr) if ccr is not None else None,
-                           paren(o.get("disp_str_advanced_enroll")), paren(o.get("disp_str_ap_enroll")),
-                           [int(x) if x is not None else None for x in dest] if any(x is not None for x in dest) else None, aps]
-                    if any(x is not None for x in row[:5]) or aps:
+                    row, oc = hs_snapshot_rows(o, city_grad)
+                    if row:
                         Q[dbn] = row
                     # graduation and college/career enrollment straight from the Snapshot for schools not in hs_outcomes.json
-                    g, c = num(o.get("val_grad_pct_4_all")), num(o.get("val_pct_cer_6mo_all"))
-                    if dbn not in hs_outcomes_file and (g is not None or c is not None):
-                        outcomes[dbn] = [int(g) if g is not None else None, int(c) if c is not None else None, city_grad]
+                    if dbn not in hs_outcomes_file and oc:
+                        outcomes[dbn] = oc
                 d["HS"]["Q"] = Q
                 print(f"high school SAT/readiness/destinations: {sum(1 for r in Q.values() if r[0])} SAT, "
                       f"{sum(1 for r in Q.values() if r[1] is not None)} readiness, {sum(1 for r in Q.values() if r[4])} destinations")
@@ -409,6 +492,8 @@ def main(standalone_path=None, pages=None):
                 d["HS"]["CUT"] = {"y": c["year"], "c": c["cut"]}
             print(f"high schools without a zone: {len(d['HS']['NZ'])} ({sum(1 for r in d['HS']['NZ'] if r[8])} specialized), "
                   f"programs for {len(d['HS']['P'])} schools")
+
+    add_charters(d)
 
     # grade 6 and grade 9 admissions (Local Law 72), same record shape as kindergarten (see fetch_k_admissions)
     for key, name in (("MS", "ms_admissions.json"), ("HS", "hs_admissions.json")):

@@ -11,6 +11,16 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 ### Added
 - School pages link to the school's neighborhood page at the top, next to the link to its district's schools ("Bedford-Stuyvesant (East) schools").
 
+## 1.25.0 (2026-10-16)
+
+### Added
+- Charter schools are on the map: all 285 open in NYC this fall, each as a small square on the elementary, middle and high school maps for the grades it teaches. Click one to see how admission works: by lottery only, with priority for siblings and families in the school's district, and no screening (no tests, grades, interviews or auditions). The card links to the common charter application, which is separate from MySchools. Most charters have DOE ratings, test scores and other School Quality Snapshot details, and they color with everything else under Color by. Turn them on or off under Map layers, or search for "charter". Under Color by, Dual language shows charters as "no data": the DOE doesn't list charter language programs.
+- Every charter school has its own page, with how the lottery works, DOE ratings, test scores and, for schools with high school grades, graduation and college results. District pages list their charter schools on each level's tab, by the district the school's building is in, and neighborhood pages list the charter schools located in each neighborhood.
+
+### Fixed
+- When a school without a zone (or a charter) shares a building with a zoned school, their markers now sit side by side and both are labeled, instead of one hiding the other.
+- Hovering a non-zoned school while coloring by G&T or Dual language no longer stops the tooltip from showing.
+
 ## 1.24.0 (2026-10-16)
 
 ### Changed
