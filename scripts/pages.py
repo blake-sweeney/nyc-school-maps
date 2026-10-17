@@ -714,11 +714,12 @@ def page_html(d, dbn, streets, site_url, goat, nbi=None):
             kp = [[t.replace("{d}", str(dist))] for t in d.get("KPZ", [])]
         ka = k_adm_html(d.get("KA", {}).get(dbn), "es", dist, priority_html(dbn, "es", [["", kp]], std))
         sections.append(ka + more(ext(ms_url, "See your chances on MySchools"), ext(LL72_URL, "DOE admissions reports")) if ka else "")
-    if lv in ("ms", "hs"):
+    def prio(lv):  # grade 6 or 9 priority groups, one list per program
         pl = ((HS if lv == "hs" else MS).get("P") or {}).get(dbn) or []
-        ka = k_adm_html(((HS if lv == "hs" else MS).get("A") or {}).get(dbn), lv, dist,
-                        priority_html(dbn, lv, [[p[0] or "Main program", p[6], (HNAME if lv == "hs" else MNAME).get(p[1], p[1])]
-                                                for p in pl if len(p) > 6]))
+        return priority_html(dbn, lv, [[p[0] or "Main program", p[6], (HNAME if lv == "hs" else MNAME).get(p[1], p[1])]
+                                       for p in pl if len(p) > 6])
+    if lv in ("ms", "hs"):
+        ka = k_adm_html(((HS if lv == "hs" else MS).get("A") or {}).get(dbn), lv, dist, prio(lv))
         sections.append(ka + more(ext(ms_url, "See your chances on MySchools"), ext(LL72_URL, "DOE admissions reports")) if ka else "")
     progs = (HS.get("P") or {}).get(dbn) if lv == "hs" else (MS.get("P") or {}).get(dbn) if lv == "ms" else None
     pg = programs_html(dbn, progs, lv == "hs")
@@ -757,11 +758,11 @@ def page_html(d, dbn, streets, site_url, goat, nbi=None):
             t2 = (MS.get("T") or {}).get(dbn)
             if t2 and lv == "hs":
                 extra += tests_html(t2, "6–8").replace("<h2>State test scores</h2>", "<h2>Middle school test scores</h2>")
-            extra += k_adm_html((MS.get("A") or {}).get(dbn), "ms", dist)
+            extra += k_adm_html((MS.get("A") or {}).get(dbn), "ms", dist, prio("ms"))
             extra += programs_html(dbn, (MS.get("P") or {}).get(dbn), False)
             extra += extras_html((MS.get("EX") or {}).get(dbn), MS.get("EXV") or [])
         elif lv2 == "hs":
-            extra += k_adm_html((HS.get("A") or {}).get(dbn), "hs", dist)
+            extra += k_adm_html((HS.get("A") or {}).get(dbn), "hs", dist, prio("hs"))
             extra += programs_html(dbn, (HS.get("P") or {}).get(dbn), True)
         extra += more(f'<a href="{e(url2)}">See it on the {lvw2.lower()} school map →</a>', ext(myschools_url(dbn, lv2), f"{lvw2} school admissions on MySchools"))
         sections.append(extra)
