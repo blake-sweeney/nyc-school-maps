@@ -185,7 +185,7 @@ aside>*{flex-shrink:0}
 .adm td{font-family:var(--display);font-weight:600}
 .adm td:last-child{color:var(--muted);font-weight:500;min-width:3.2em}
 .adm .adm-note{margin:2px 0 0;font-size:.8rem}
-.prio-w{margin-top:6px}.prio-p{font-weight:600;margin-top:4px}
+.prio-w{margin-top:6px}.prio-p{font-weight:600;margin-top:4px}.prio-p small{font-weight:400;color:var(--muted)}
 .prio{list-style:none;counter-reset:prio;margin:0;padding:0}
 .prio li{counter-increment:prio;position:relative;padding:5px 0 5px 22px;border-top:1px solid var(--line)}
 .prio li::before{content:counter(prio);position:absolute;left:0;top:5px;width:16px;height:16px;border-radius:50%;background:var(--line);font-size:.68rem;font-weight:700;line-height:16px;text-align:center;font-variant-numeric:tabular-nums}
@@ -726,7 +726,7 @@ const HNAME={S:'Screened (grades)',SA:'Screened + assessment',SL:'Screened: lang
 const KP=D.KP||{};
 // a zoned school with kindergarten but no groups of its own yet gets the DOE's standard order (KPZ), flagged with a third field
 function prioList(d,lv){if(lv==='es')return KP[d]&&KP[d].length?[['',KP[d]]]:!nzGet(d)&&D.KPZ&&/0K/.test(S[d]&&S[d].g||'')?[['',D.KPZ.map(t=>[t.replace(/\{d\}/g,+d.slice(0,2))]),1]]:[];
-  return ((LV[lv]&&LV[lv].P||{})[d]||[]).filter(p=>p[6]&&p[6].length).map(p=>[p[0]||'Main program',p[6]])}
+  return ((LV[lv]&&LV[lv].P||{})[d]||[]).filter(p=>p[6]&&p[6].length).map(p=>[p[0]||'Main program',p[6],0,(lv==='hs'?HNAME:MNAME)[p[1]]||p[1]])}
 function prioName(d,lv,g,i){const m=/^D(\d+)$/.exec(g);return g==='N'?(i?'Everyone else in NYC':'Any NYC student'):g==='S'?'Siblings of students at the school':g==='C'?(lv==='hs'?'Continuing 8th graders':'Continuing students'):g==='Z'?'Students who live in the zone':g==='B'?(BORO[d[2]]||'Borough')+' students and residents':m?'District '+m[1]+' students and residents':g}
 function prioStep(d,lv,s,i){const n=v=>typeof v==='string'&&v[0]==='<'?'under '+v.slice(1):String(v),
     pct=(a,o)=>typeof a==='string'&&typeof o==='string'&&a[0]==='~'&&o[0]==='~'&&+a.slice(1)?' ('+Math.round(100*o.slice(1)/a.slice(1))+'%)':'',
@@ -737,7 +737,8 @@ function prioStep(d,lv,s,i){const n=v=>typeof v==='string'&&v[0]==='<'?'under '+
 // programs with no priority but "any NYC student" share one line; past three programs the rest fold away
 function prioHtml(d,lv){const L=prioList(d,lv);if(!L.length)return '';
   const open=L.filter(x=>x[1].length===1&&x[1][0][0]==='N'),lad=L.filter(x=>!open.includes(x)),solo=L.length===1;
-  const one=x=>(solo?'':'<div class="prio-p">'+esc(x[0])+'</div>')+'<ol class="prio">'+x[1].map((s,i)=>prioStep(d,lv,s,i)).join('')+'</ol>';
+  // each program's heading says how it admits students too: "Main program · Zone priority", "Screened Program · Screened"
+  const one=x=>(solo?'':'<div class="prio-p">'+esc(x[0])+(x[3]?' <small>· '+esc(x[3])+'</small>':'')+'</div>')+'<ol class="prio">'+x[1].map((s,i)=>prioStep(d,lv,s,i)).join('')+'</ol>';
   const top=lad.slice(0,lad.length>3?2:3),rest=lad.slice(top.length);
   const head=L[0][2]?'Zoned schools offer seats in this order, the DOE’s standard: families in the zone first, then others if seats are left. MySchools posts each school’s own groups, with last year’s results, when kindergarten applications open in December. <a href="https://www.schools.nyc.gov/enrollment/enroll-grade-by-grade/kindergarten" target="_blank" rel="noopener">DOE kindergarten admissions ↗</a>'
     :'Each group gets offers before the next. Last year’s applicants and offers, from MySchools.';

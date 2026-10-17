@@ -901,12 +901,38 @@ def _myschools_k(schools):
     print(f"  kindergarten: {len(nz)} non-zoned schools, {len(gt)} citywide G&T schools, {len(kp)} with priority groups")
 
 
-def _same_name(prog, school):
-    """Is this program just the school's main program (named after the school)?"""
+def _program_label(prog, school, dbn):
+    """A middle school program's name without the school's own name around it, when the name repeats all of it:
+    "J.H.S. 104 Simon Baruch Screened Program" -> "Screened Program", "David A. Boody (I.S. 228) Magnet Program (Dance)"
+    -> "Magnet Program (Dance)". '' when the name is only the school's: its main program. Otherwise MySchools' name."""
     import re
-    words = lambda s: set(re.findall(r"[a-z0-9]+", s.lower())) - {"the", "school", "of", "and", "for", "ms", "is", "ps", "jhs"}
-    p, s = words(prog), words(school)
-    return bool(p) and len(p & s) >= 0.6 * len(p)
+    def key(w):  # "M.S." -> "ms", "(I.S." -> "is", "074" -> "74"
+        w = w.lower().replace(".", "").strip("():,")
+        return str(int(w)) if w.isdigit() else w
+    skip = {"the", "school", "of", "and", "&", "for", "ms", "is", "ps", "jhs", "ps/is", "ps/ms", "-", "–", "/", ":", "",
+            "middle", "intermediate", dbn.lower(), str(int(dbn[3:])),  # the school's number: "(I.S. 240)", "67Q", "X127"
+            str(int(dbn[3:])) + dbn[2].lower(), dbn[2].lower() + str(int(dbn[3:])), dbn[2:].lower()}
+    need = {key(w) for w in re.findall(r"\S+", school)} - skip  # the school's own name: number and name words
+    toks = [(m.start(), m.end(), key(m.group())) for m in re.finditer(r"\S+", prog)]
+    i, j = 0, len(toks)
+    while i < j and toks[i][2] in need | skip:
+        i += 1
+    k = j  # a trailing school name only in parentheses: "STEM Program (I.S. 73)", not "Infinity Program at Shell Bank"
+    while k > i and toks[k - 1][2] in need | skip:
+        k -= 1
+    if k < j and prog[toks[k][0]] == "(":
+        j = k
+    if i == j:
+        return ""
+    if not need <= {t[2] for t in toks[:i] + toks[j:]}:
+        return prog
+    out = prog[toks[i][0]:toks[j - 1][1]].strip(" :-–,")
+    if out.startswith("(") and out.endswith(")") and out.count("(") == 1:
+        out = out[1:-1]  # "Mark Twain (I.S. 239) (Dance)" -> "Dance"
+        if out.isupper():
+            return ""  # the school's initials: "Academy of Applied Mathematics & Technology (AAMT)"
+    out += ")" * (out.count("(") - out.count(")"))
+    return out[:1].upper() + out[1:]
 
 
 def _myschools_ms(schools):
@@ -923,8 +949,9 @@ def _myschools_ms(schools):
         for q in ps:
             method = (q.get("admissions_method") or {}).get("name", "")
             pname = _strip_dbn(q["name"], q["program"]["code"])
-            if len(ps) == 1 or _same_name(pname, name):
-                pname = ""
+            pname = "" if len(ps) == 1 else _program_label(pname, name, dbn)
+            if not pname and len(ps) > 1 and any(not p[0] for p in progs):
+                pname = _strip_dbn(q["name"], q["program"]["code"])  # only one main program per school
             seats, apps, filled = _demand(q)
             progs.append([pname, MS_CODE.get(method, method), seats, apps, None if filled is None else int(filled),
                           1 if q.get("diversity_in_admission_1") else 0, _priority_groups(q)])
