@@ -935,10 +935,34 @@ def _program_label(prog, school, dbn):
     return out[:1].upper() + out[1:]
 
 
+def _ms_extras(x):
+    """A middle school's classes, sports and activities from its MySchools record: {"acc": accelerated and honors
+    classes, "art": arts courses, "el": electives, "sp": sports, "ac": clubs and activities}, each sorted, A-Z."""
+    import re
+    def acc(n):  # "Middle School Algebra ACC" -> "Algebra (accelerated)", "Math (Middle School Honors)" -> "Math (honors)"
+        n = re.sub(r"^Middle School (.+) ACC$", r"\1 (accelerated)", n)
+        n = re.sub(r"\s*\(Middle School\)$", "", n)
+        n = re.sub(r"\(Middle School (Honors|Accelerated)\)$", lambda m: "(" + m.group(1).lower() + ")", n)
+        return re.sub(r"^(Framework |Physical Setting/)", "", n)
+    def tidy(names):  # one of each, ignoring case; the first spelling wins, capitalized
+        out = {}
+        for n in names:
+            n = n.strip()
+            if n and n.lower() not in ("-", "none") and n.lower() not in out:
+                out[n.lower()] = n[:1].upper() + n[1:]
+        return sorted(out.values(), key=str.lower)
+    split = lambda t: (t or "").split(",")
+    return {"acc": tidy(acc(z["name"]) for z in x.get("advanced_placement_courses") or []),
+            "art": tidy(z["name"] for z in x.get("art_courses") or []),
+            "el": tidy(split(x.get("electives_description"))),
+            "sp": tidy([z["name"] for z in x.get("school_sports") or []] + split(x.get("sports_description"))),
+            "ac": tidy(split(x.get("activities_description")))}
+
+
 def _myschools_ms(schools):
     """ms_directory.json rows: [dbn, name, address, lat, lon,
     programs [[name ('' = the school's main program), method code, seats, applicants, all seats filled, diversity set-aside,
-               priority groups]]]"""
+               priority groups]], classes, sports and activities (_ms_extras)]"""
     out = []
     for x in schools:
         dbn = x["school"]["dbn"]
@@ -955,7 +979,7 @@ def _myschools_ms(schools):
             seats, apps, filled = _demand(q)
             progs.append([pname, MS_CODE.get(method, method), seats, apps, None if filled is None else int(filled),
                           1 if q.get("diversity_in_admission_1") else 0, _priority_groups(q)])
-        out.append([dbn, name, addr.upper(), lat, lon, progs])
+        out.append([dbn, name, addr.upper(), lat, lon, progs, _ms_extras(x)])
     save("ms_directory.json", out)
     print(f"  middle school: {len(out)} schools, {sum(1 for r in out if any(p[6] for p in r[5]))} with priority groups")
 

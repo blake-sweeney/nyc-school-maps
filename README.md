@@ -9,7 +9,7 @@ An interactive map of New York City's elementary (kindergarten), middle and high
 - **Crowding:** each school's enrollment as a share of its building capacity, from the SCA's Enrollment, Capacity & Utilization Report ("Blue Book")
 - **Neighborhoods:** [2020 Neighborhood Tabulation Areas](https://data.cityofnewyork.us/d/9nt8-h7nd), NYC Planning via NYC Open Data (refresh with `python3 scripts/fetch_data.py neighborhoods`)
 - **School district lines:** [School Districts](https://data.cityofnewyork.us/d/8ugf-3d8u), NYC Open Data (GeoJSON export; refresh with `python3 scripts/fetch_data.py districts <file.geojson>`)
-- **Middle schools and programs:** the MySchools middle school directory (`data/ms_directory.json`, programs, priorities, seats and applicants) and Snapshot pages for schools without zones (`data/ms_snapshot.json`), both read through a browser
+- **Middle schools and programs:** the MySchools middle school directory (`data/ms_directory.json`, programs, priorities, seats and applicants, classes, sports and activities) and Snapshot pages for schools without zones (`data/ms_snapshot.json`), both read through a browser
 - **High schools and programs:** the MySchools high school directory (`data/hs_directory.json`, programs, priorities, seats and applicants, ratings and graduation rates), read through a browser
 - **High school outcomes:** average SAT, college readiness, where graduates went and advanced courses from the 2024–25 School Quality Snapshot (`data/hs_snapshot.json`), read through a browser
 - **SHSAT cutoffs:** `data/shsat_cutoffs.json`, DOE figures as reported by Caddell Prep
