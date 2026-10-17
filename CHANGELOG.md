@@ -6,6 +6,16 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
+## Unreleased
+
+### Added
+- Middle and high school cards now show each program's priority groups under "Admissions, grade 6" or "Admissions, grade 9": who gets offers first (siblings, the district, the borough, the zone, then everyone else in NYC), in order, with how many applied and how many got offers in each group last year. At M.S. 255, for example, about 120 of 320 District 2 applicants got offers, and none of the roughly 90 from elsewhere in NYC did. Programs with a diversity set-aside show lunch-eligible applicants separately. School pages show the same list under their admissions numbers.
+- Kindergarten priority groups will show the same way under "Admissions, K" once MySchools posts them with kindergarten applications in December.
+
+### Changed
+- Middle school programs, seats and applicants are refreshed from MySchools with its latest numbers.
+- High school program lists no longer repeat each program's priorities in small print; they're in the admissions section now, with last year's results.
+
 ## 1.27.0 (2026-10-16)
 
 ### Added
