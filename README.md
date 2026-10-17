@@ -9,11 +9,11 @@ An interactive map of New York City's elementary (kindergarten), middle and high
 - **Crowding:** each school's enrollment as a share of its building capacity, from the SCA's Enrollment, Capacity & Utilization Report ("Blue Book")
 - **Neighborhoods:** [2020 Neighborhood Tabulation Areas](https://data.cityofnewyork.us/d/9nt8-h7nd), NYC Planning via NYC Open Data (refresh with `python3 scripts/fetch_data.py neighborhoods`)
 - **School district lines:** [School Districts](https://data.cityofnewyork.us/d/8ugf-3d8u), NYC Open Data (GeoJSON export; refresh with `python3 scripts/fetch_data.py districts <file.geojson>`)
-- **Middle schools and programs:** the MySchools middle school directory (`data/ms_directory.json`) and Snapshot pages for schools without zones (`data/ms_snapshot.json`), both read through a browser
+- **Middle schools and programs:** the MySchools middle school directory (`data/ms_directory.json`, programs, priorities, seats and applicants) and Snapshot pages for schools without zones (`data/ms_snapshot.json`), both read through a browser
 - **High schools and programs:** the MySchools high school directory (`data/hs_directory.json`, programs, priorities, seats and applicants, ratings and graduation rates), read through a browser
 - **High school outcomes:** average SAT, college readiness, where graduates went and advanced courses from the 2024–25 School Quality Snapshot (`data/hs_snapshot.json`), read through a browser
 - **SHSAT cutoffs:** `data/shsat_cutoffs.json`, DOE figures as reported by Caddell Prep
-- **Non-zoned schools (elementary):** the MySchools kindergarten directory (`data/nonzoned_k.json`) and their Snapshot pages (`data/nonzoned_snapshot.json`); both read through a browser, since those sites block scripts here
+- **Non-zoned schools (elementary):** the MySchools kindergarten directory (`data/nonzoned_k.json`; kindergarten priority groups for every school in `data/k_priority.json`) and their Snapshot pages (`data/nonzoned_snapshot.json`); both read through a browser, since those sites block scripts here
 - **Kindergarten admissions (zone card):** seats, true applicants and offers for fall 2023–2025, from the DOE's Local Law 72 reports; refresh with `python3 scripts/fetch_data.py kadmissions <files...>`
 - **Grade 6 and grade 9 admissions (middle and high school cards):** the same Local Law 72 files (`data/ms_admissions.json`, `data/hs_admissions.json`); refresh all three grades with `python3 scripts/fetch_data.py admissions <files...>`
 - **Pre-K and 3-K (zone card):** seats, applicants and offers at each elementary school (applicants who didn't get a choice they ranked higher, as for kindergarten), from the DOE's Local Law 72 admissions report
@@ -136,7 +136,7 @@ Programs, admissions methods, seats and applicants, priorities, schools without 
 1. Open any page on [myschools.nyc](https://www.myschools.nyc/), open the console, paste all of `scripts/browser/myschools.js` and press Enter. About a minute later you have `myschools_k.json`, `myschools_ms.json` and `myschools_hs.json` in Downloads.
 2. `python3 scripts/fetch_data.py myschools ~/Downloads/myschools_*.json`
 
-This writes `nonzoned_k.json`, `citywide_gt_k.json`, `ms_directory.json` and `hs_directory.json`. If MySchools hasn't opened the next year's kindergarten applications yet, pass only the middle and high school files.
+This writes `nonzoned_k.json`, `citywide_gt_k.json`, `k_priority.json`, `ms_directory.json` and `hs_directory.json`. If MySchools hasn't opened the next year's kindergarten applications yet, pass only the middle and high school files.
 
 ### 3. School Quality Snapshot (when a new year appears at [tools.nycenet.edu/snapshot](https://tools.nycenet.edu/snapshot/))
 

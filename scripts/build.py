@@ -249,6 +249,75 @@ def hs_snapshot_rows(o, city_grad):
             if g is not None or c is not None else None)
 
 
+BORO_NAME = {"M": "Manhattan", "K": "Brooklyn", "Q": "Queens", "X": "Bronx", "R": "Staten Island"}
+# "about 70" -> "~70", "fewer than 10" -> "<10", "no" -> 0; offers also "all", "most" (almost all), 0 (none)
+COUNT = r"no|none|all|almost all|about \d+|fewer than \d+|less than \d+|\d+"
+OUTCOME = re.compile(rf"There were ({COUNT}) (.*?)applicants(.*?)(?: and ({COUNT}) received offers last year)?\.?$")
+
+
+def _count(t):
+    if t in ("no", "none"):
+        return 0
+    if t in ("all", "almost all"):
+        return "all" if t == "all" else "most"
+    n = re.search(r"\d+", t).group()
+    return "~" + n if t.startswith("about") else "<" + n if t[0] in "fl" else int(n)
+
+
+# Kindergarten at a zoned school: the DOE's standard priority order ({d}: the school's district), from
+# schools.nyc.gov/enrollment/enroll-grade-by-grade/kindergarten. Shown until MySchools posts each school's own
+# groups (k_priority.json) when kindergarten applications open in December.
+K_ZONED_PRIORITY = ["Students who live in the zone and have a sibling at the school",
+                    "Other students who live in the zone",
+                    "Students who live in District {d} and have a sibling at the school",
+                    "Students who live outside the district and have a sibling at the school",
+                    "Students who live in District {d} and are in pre-K at the school",
+                    "Students who live outside the district and are in pre-K at the school",
+                    "Other students who live in District {d}",
+                    "Other students who live outside the district"]
+
+
+def priority_steps(groups, dbn):
+    """MySchools priority groups [[name, outcome sentence]] -> the steps the map and pages show, in order.
+    A step is [group, applicants, offers]: group "S" siblings, "C" continuing students, "B" the school's borough,
+    "D12" a district's students and residents, "Z" the zone, "N" every NYC resident, anything else as written;
+    applicants and offers as _count gives them. [group, 0] means no applicants, [group] no outcome given.
+    When the outcome is split (lunch-eligible applicants first, then the rest; or by district), the step is
+    [group, [who, applicants, offers], ...], who "f" (free or reduced-price lunch), "a" (the rest) or as written.
+    An outcome we can't read is kept as written: [group, None, sentence]."""
+    out = []
+    for name, desc in groups:
+        nm = re.sub(r"^(Priority to|Then to|Open to)\s+", "", (name or "").strip()).rstrip(".")
+        low, boro = nm.lower(), BORO_NAME[dbn[2]]
+        m = re.fullmatch(r"(?:all )?(?:students and residents of district (\d+)|district (\d+) students and residents|d(\d+) students and residents)", low)
+        g = ("N" if low == "new york city residents" else
+             "S" if low.startswith("applicants whose sibling") else
+             "C" if low in ("continuing students", "continuing 8th graders") else
+             "Z" if low in ("students who live in the zoned area", "residents of the middle school zone", "students residing in the zone") else
+             "B" if low in (f"{boro} students and residents".lower(), f"{boro} students or residents".lower(),
+                            f"students and residents of {boro}".lower(), f"students and residents of the {boro}".lower()) else
+             "D" + str(int(next(x for x in m.groups() if x))) if m else nm[:1].upper() + nm[1:])
+        if desc is None or not desc.strip():
+            out.append([g])
+            continue
+        parts = []
+        for sent in re.split(r"(?<=\.)\s*(?=There were)", desc.strip()):
+            o = OUTCOME.match(sent.strip())
+            if not o:
+                parts = None
+                break
+            pre, post = o.group(2).strip(), re.sub(r"\s*in this group\s*", " ", o.group(3)).strip()
+            who = "f" if "free or reduced" in post else "a" if pre == "additional" else " ".join(x for x in (pre, post) if x)
+            parts.append([who, _count(o.group(1)), *([_count(o.group(4))] if o.group(4) else [])])
+        if parts is None:
+            out.append([g, None, desc.strip()])
+        elif len(parts) == 1 and not parts[0][0]:
+            out.append([g, *parts[0][1:]])
+        else:
+            out.append([g, *parts])
+    return out
+
+
 def snapshot_tests_row(t):
     """Snapshot tests [ELA tested, ELA %, Math tested, Math %, ...] -> [ELA tested, proficient, Math tested, proficient],
     or None. Tiny or hidden counts get a small weight (20), as in load_tests."""
@@ -384,10 +453,13 @@ def main(standalone_path=None, pages=None):
                    "T": {k: v for k, v in ms_tests.items() if k in ms_zoned and (v[0] or v[2])}}
 
         # Middle school programs (MySchools directory) and choice schools with no zone. P: programs per school,
-        # [name ('' = the school's main program), method code, seats, applicants, all seats filled, diversity set-aside];
+        # [name ('' = the school's main program), method code, seats, applicants, all seats filled, diversity set-aside,
+        #  priority steps (priority_steps)];
         # NZ rows have the same shape as the elementary ones (no priority districts listed: middle schools give district priority)
         if os.path.exists(os.path.join(DATA, "ms_directory.json")):
             msdir = load("ms_directory.json")
+            for r in msdir:
+                r[5] = [p[:6] + [priority_steps(p[6] if len(p) > 6 else [], r[0])] for p in r[5]]
             snaps = {}
             for name in ("nonzoned_snapshot.json", "ms_snapshot.json"):
                 if os.path.exists(os.path.join(DATA, name)):
@@ -414,7 +486,8 @@ def main(standalone_path=None, pages=None):
                                          int(n_mth) if t[3] is not None else 0, round(n_mth * t[3] / 100) if t[3] is not None else 0]
                 elif dbn in ms_tests and (ms_tests[dbn][0] or ms_tests[dbn][2]):
                     d["MS"]["T"][dbn] = ms_tests[dbn]
-                d["MS"]["NZ"].append([dbn, name, addr, r[3], r[4], [], 0, r[5], 1 if dbn in citywide else 0])
+                # programs without their priority steps: the card reads those from P
+                d["MS"]["NZ"].append([dbn, name, addr, r[3], r[4], [], 0, [p[:6] for p in r[5]], 1 if dbn in citywide else 0])
             print(f"middle school choice schools (no zone): {len(d['MS']['NZ'])}, programs for {len(d['MS']['P'])} schools")
 
     # High school zones (optional): zoned-priority / zoned-guarantee programs, with Snapshot outcomes
@@ -426,14 +499,12 @@ def main(standalone_path=None, pages=None):
         d["HS"] = {"schools": hs["schools"], "features": hs["features"], "O": outcomes}
 
         # High school programs and every high school without a zone (MySchools high school directory).
-        # P: programs per school, [name, method code, seats, applicants, all seats filled, diversity set-aside, priority groups]
-        #   priority groups in order, NYC residents (everyone) left off: "C" continuing 8th graders, "B" the school's borough,
-        #   "Z" zoned students, anything else as written. NZ rows match the elementary/middle ones; the trailing flag marks the
+        # P: programs per school, [name, method code, seats, applicants, all seats filled, diversity set-aside,
+        #   priority steps (priority_steps)]. NZ rows match the elementary/middle ones; the trailing flag marks the
         #   9 specialized high schools (8 SHSAT schools + LaGuardia), and one more field holds a priority summary.
         if os.path.exists(os.path.join(DATA, "hs_directory.json")):
             hsdir = load("hs_directory.json")["schools"]
             hs_zoned = {x for f in hs["features"] for x in f["properties"]["dbns"]}
-            BORO = {"M": "Manhattan", "K": "Brooklyn", "Q": "Queens", "X": "Bronx", "R": "Staten Island"}
             MCODE = {"Screened": "S", "Screened With Assessment": "SA", "Screened: Language & Academics": "SL", "Ed. Opt.": "E",
                      "Audition": "A", "Open": "O", "Language Criteria": "L", "Test": "T", "Zoned Guarantee": "ZG",
                      "Zoned Priority": "ZP", "Transfer": "TR", "D75 Special Education Inclusive Services": "D75",
@@ -442,18 +513,11 @@ def main(standalone_path=None, pages=None):
             city_grad = next((v[2] for v in outcomes.values() if v and len(v) > 2 and v[2] is not None), None)
             d["HS"]["P"], d["HS"]["NZ"], d["HS"]["R"], d["HS"]["X"] = {}, [], {}, {}
             for o in hsdir:
-                dbn, boro = o["dbn"], BORO[o["dbn"][2]]
+                dbn, boro = o["dbn"], BORO_NAME[o["dbn"][2]]
                 progs = []
                 for q in o["p"]:
                     code = MCODE.get(q["m"], q["m"])
-                    pg = []
-                    for g in q["pg"]:
-                        nm = g[0]
-                        if nm == "New York City residents":
-                            continue
-                        pg.append("C" if nm == "Continuing 8th graders" else "B" if nm == boro + " students or residents"
-                                  else "Z" if nm == "Students who live in the zoned area" else nm)
-                    progs.append([q["n"], code, q["s"], q["ap"], 1 if q["f"] else 0, 1 if q["d1"] else 0, pg])
+                    progs.append([q["n"], code, q["s"], q["ap"], 1 if q["f"] else 0, 1 if q["d1"] else 0, priority_steps(q["pg"], dbn)])
                 progs.sort(key=lambda p: p[1] in SPECIAL)  # special education programs last
                 d["HS"]["P"][dbn] = progs
                 # ratings and outcomes from MySchools for schools the Snapshot files don't cover
@@ -467,7 +531,7 @@ def main(standalone_path=None, pages=None):
                     continue
                 shs = any(q["shs"] or q["lg"] for q in o["p"])
                 main = [p for p in progs if p[1] not in SPECIAL]
-                nb = sum(1 for p in main if "B" in p[6])
+                nb = sum(1 for p in main if any(g[0] == "B" for g in p[6]))
                 if shs:
                     pz = ""
                 elif main and nb == len(main):
@@ -476,9 +540,9 @@ def main(standalone_path=None, pages=None):
                     pz = "Some programs give priority to " + boro + " students and residents; the rest are open to all of NYC."
                 else:
                     pz = "Open to students from anywhere in NYC."
-                if not shs and any("C" in p[6] for p in main):
+                if not shs and any(g[0] == "C" for p in main for g in p[6]):
                     pz += " Continuing 8th graders get priority."
-                d["HS"]["NZ"].append([dbn, o["n"], o["a"], o["lat"], o["lon"], [], 0, progs, 1 if shs else 0, pz])
+                d["HS"]["NZ"].append([dbn, o["n"], o["a"], o["lat"], o["lon"], [], 0, [p[:6] for p in progs], 1 if shs else 0, pz])
             d["HS"]["O"] = outcomes
             # SAT, college readiness, where graduates went and advanced courses (2024-25 Snapshot, high school report).
             # Q: [average SAT, college & career readiness score, % in any advanced course, % in AP,
@@ -543,6 +607,14 @@ def main(standalone_path=None, pages=None):
         ka = load("k_admissions.json")
         d["KA"] = {k: ka[k] for k in sorted(es_all) if k in ka}
         print(f"kindergarten admissions: {len(d['KA'])} of {len(es_all)} elementary schools")
+
+    # Kindergarten priority groups (optional, MySchools kindergarten directory): KP {dbn: priority steps (priority_steps)};
+    # KPZ: the standard order at zoned schools, for schools MySchools hasn't posted groups for
+    d["KPZ"] = K_ZONED_PRIORITY
+    if os.path.exists(os.path.join(DATA, "k_priority.json")):
+        kp = load("k_priority.json")
+        d["KP"] = {k: priority_steps(kp[k], k) for k in sorted(es_all) if k in kp}
+        print(f"kindergarten priority groups: {len(d['KP'])} of {len(es_all)} elementary schools")
 
     with open(os.path.join(ROOT, "src", "template.html"), encoding="utf-8") as f:
         template = f.read()

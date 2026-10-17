@@ -854,18 +854,29 @@ def _addr(x):
     return a.get("address_1") or "", float(a.get("latitude") or 0) or None, float(a.get("longitude") or 0) or None
 
 
-def _strip_dbn(name):
+def _strip_dbn(name, code=None):
+    """Drop a trailing DBN, "(02M255)", or the given program code, "(K096SC)"."""
     import re
-    return re.sub(r"\s*\(\d\d[KMQRX]\d{3}\)\s*$", "", name or "").strip()
+    name = re.sub(r"\s*\(\d\d[KMQRX]\d{3}\)\s*$", "", name or "").strip()
+    return name[:-len(code) - 2].strip() if code and name.endswith(f"({code})") else name
+
+
+def _priority_groups(q):
+    """A program's priority groups in order, as MySchools words them: [[group, last year's applicants and offers]]."""
+    return [[z.get("name"), z.get("ge_priority_group_description")] for z in q.get("program_priority_groups") or []]
 
 
 def _myschools_k(schools):
     """nonzoned_k.json and citywide_gt_k.json rows:
     [dbn, name, address, lat, lon, priority districts, district residents only (1/0),
-     programs [[code, dual language (1/0), seats, applicants, all seats filled (1/0/None)]]]"""
+     programs [[code, dual language (1/0), seats, applicants, all seats filled (1/0/None)]]];
+    k_priority.json: {dbn: priority groups of the school's kindergarten program}, every school that lists them"""
     import re
-    nz, gt = [], []
+    nz, gt, kp = [], [], {}
     for x in schools:
+        main = next((q for q in x["programs"] if q["program"]["code"] == x["school"]["dbn"] + "KG"), None)
+        if main and _priority_groups(main):
+            kp[x["school"]["dbn"]] = _priority_groups(main)
         kind = {e.get("name") for e in x.get("eligibility") or []}
         if not kind & {"Non-Zoned School", "Citywide School"}:
             continue
@@ -886,7 +897,8 @@ def _myschools_k(schools):
         (gt if "Citywide School" in kind else nz).append(row)
     save("nonzoned_k.json", nz)
     save("citywide_gt_k.json", gt)
-    print(f"  kindergarten: {len(nz)} non-zoned schools, {len(gt)} citywide G&T schools")
+    save("k_priority.json", kp)
+    print(f"  kindergarten: {len(nz)} non-zoned schools, {len(gt)} citywide G&T schools, {len(kp)} with priority groups")
 
 
 def _same_name(prog, school):
@@ -899,7 +911,8 @@ def _same_name(prog, school):
 
 def _myschools_ms(schools):
     """ms_directory.json rows: [dbn, name, address, lat, lon,
-    programs [[name ('' = the school's main program), method code, seats, applicants, all seats filled, diversity set-aside]]]"""
+    programs [[name ('' = the school's main program), method code, seats, applicants, all seats filled, diversity set-aside,
+               priority groups]]]"""
     out = []
     for x in schools:
         dbn = x["school"]["dbn"]
@@ -909,15 +922,15 @@ def _myschools_ms(schools):
         progs = []
         for q in ps:
             method = (q.get("admissions_method") or {}).get("name", "")
-            pname = _strip_dbn(q["name"])
+            pname = _strip_dbn(q["name"], q["program"]["code"])
             if len(ps) == 1 or _same_name(pname, name):
                 pname = ""
             seats, apps, filled = _demand(q)
             progs.append([pname, MS_CODE.get(method, method), seats, apps, None if filled is None else int(filled),
-                          1 if q.get("diversity_in_admission_1") else 0])
+                          1 if q.get("diversity_in_admission_1") else 0, _priority_groups(q)])
         out.append([dbn, name, addr.upper(), lat, lon, progs])
     save("ms_directory.json", out)
-    print(f"  middle school: {len(out)} schools")
+    print(f"  middle school: {len(out)} schools, {sum(1 for r in out if any(p[6] for p in r[5]))} with priority groups")
 
 
 def _myschools_hs(schools, fetched):
@@ -937,7 +950,7 @@ def _myschools_hs(schools, fetched):
                           "shs": q["program"].get("is_shs"), "lg": q["program"].get("is_lg"),
                           "s": g.get("seats"), "ap": g.get("applicants"), "aps": g.get("applications_per_seat"),
                           "f": g.get("all_seats_filled"), "ws": w.get("seats"), "wa": w.get("applicants"),
-                          "pg": [[z.get("name"), z.get("ge_priority_group_description")] for z in q.get("program_priority_groups") or []],
+                          "pg": _priority_groups(q),
                           "d1": q.get("diversity_in_admission_1"), "sc": [z.get("name") for z in q.get("selection_criteria") or []]})
         out.append({"dbn": s["dbn"], "id": x.get("id"), "n": re.sub(r"\s*\(\w+\)$", "", x["name"]), "a": a.get("address_1"),
                     "boro": (s.get("district") or {}).get("borough"),
