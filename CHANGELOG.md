@@ -6,7 +6,7 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
-## Unreleased
+## 1.29.0 (2026-10-16)
 
 ### Added
 - Middle school cards have a new "Classes, sports & activities" section: the school's accelerated and honors classes (like Algebra or Biology, accelerated), arts courses, electives, sports teams and clubs, as the school lists them on MySchools. The summary line counts them ("8 advanced classes · 12 sports · 20 activities"). School pages show the same lists, including K–8 schools' pages under "Middle school grades".
