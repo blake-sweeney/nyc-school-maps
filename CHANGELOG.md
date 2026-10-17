@@ -6,7 +6,7 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
-## Unreleased
+## 1.28.1 (2026-10-16)
 
 ### Fixed
 - Middle schools with more than one program no longer label several of them "Main program". At J.H.S. 104, for example, the screened program now shows as "Screened Program", and the 15 programs at I.S. 228 show as "Magnet Program (Dance)", "Chinese Dual Language Program" and so on. Under "Priority groups", each program's name also says how it admits students ("Main program · Zone priority").
