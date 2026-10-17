@@ -465,6 +465,17 @@ def main(standalone_path=None, pages=None):
                 if os.path.exists(os.path.join(DATA, name)):
                     snaps.update(load(name))
             d["MS"]["P"] = {r[0]: r[5] for r in msdir}
+            # EX: classes, sports and activities per school as indexes into EXV (each name once): [accelerated and honors
+            #   classes, arts courses, electives, sports, clubs and activities]
+            exv, exi = [], {}
+            def ex_ix(n):
+                if n not in exi:
+                    exi[n] = len(exv)
+                    exv.append(n)
+                return exi[n]
+            d["MS"]["EX"] = {r[0]: [[ex_ix(n) for n in r[6][k]] for k in ("acc", "art", "el", "sp", "ac")]
+                             for r in msdir if len(r) > 6 and any(r[6].values())}
+            d["MS"]["EXV"] = exv
             d["MS"]["NZ"] = []
             # citywide middle schools (open to students from anywhere in the city) are marked with a trailing 1
             citywide = set(load("citywide_ms.json")["dbns"]) if os.path.exists(os.path.join(DATA, "citywide_ms.json")) else set()

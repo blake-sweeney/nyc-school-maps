@@ -442,6 +442,17 @@ def priority_html(dbn, lv, ladders, standard=False):
             'Last year’s applicants and offers in each group, from MySchools.</p>' + h)
 
 
+def extras_html(ex, vocab):
+    """Middle school classes, sports and activities, as the map card shows them (src/template.html exSec).
+    ex: [accelerated and honors classes, arts courses, electives, sports, clubs and activities] as indexes into vocab."""
+    if not ex:
+        return ""
+    groups = ("Accelerated and honors classes", "Arts courses", "Electives", "Sports", "Clubs and activities")
+    h = "".join(f'<h3 class="ex-h">{g}</h3><p>{e(", ".join(vocab[k] for k in l))}</p>' for g, l in zip(groups, ex) if l)
+    return ("<h2>Classes, sports and activities</h2>" + h +
+            '<p class="src">As the school lists them on MySchools.</p>')
+
+
 def k_adm_html(ka, lv="es", dist=None, prio=""):
     """Admissions for kindergarten, grade 6 or grade 9 (Local Law 72): seats, applicants, offers; middle schools also by
     district. prio: the priority groups (priority_html), shown under the numbers or on their own."""
@@ -524,6 +535,7 @@ h2{font-family:var(--display);font-weight:700;font-size:1.15rem;margin:0 0 8px}
 .dest{list-style:none;margin:10px 0 0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;font-size:.9rem}
 .dest li{display:flex;align-items:center;gap:8px}.dest li i{width:10px;height:10px;border-radius:2px;flex:none}.dest b{margin-left:auto;font-family:var(--display)}
 .progs{list-style:none;margin:0;padding:0}
+h3.ex-h{font-size:.95rem;margin:14px 0 2px}h3.ex-h+p{margin:0}
 h3.prio-h{font-size:1.05rem;margin:20px 0 6px}h3.prio-p{font-size:.95rem;margin:12px 0 4px}h3.prio-p small{font-weight:400;color:var(--muted)}
 .prio{list-style:none;counter-reset:prio;margin:0 0 8px;padding:0}
 .prio li{counter-increment:prio;position:relative;padding:8px 0 8px 30px;border-top:1px solid var(--line);font-size:.95rem}
@@ -702,15 +714,18 @@ def page_html(d, dbn, streets, site_url, goat, nbi=None):
             kp = [[t.replace("{d}", str(dist))] for t in d.get("KPZ", [])]
         ka = k_adm_html(d.get("KA", {}).get(dbn), "es", dist, priority_html(dbn, "es", [["", kp]], std))
         sections.append(ka + more(ext(ms_url, "See your chances on MySchools"), ext(LL72_URL, "DOE admissions reports")) if ka else "")
-    if lv in ("ms", "hs"):
+    def prio(lv):  # grade 6 or 9 priority groups, one list per program
         pl = ((HS if lv == "hs" else MS).get("P") or {}).get(dbn) or []
-        ka = k_adm_html(((HS if lv == "hs" else MS).get("A") or {}).get(dbn), lv, dist,
-                        priority_html(dbn, lv, [[p[0] or "Main program", p[6], (HNAME if lv == "hs" else MNAME).get(p[1], p[1])]
-                                                for p in pl if len(p) > 6]))
+        return priority_html(dbn, lv, [[p[0] or "Main program", p[6], (HNAME if lv == "hs" else MNAME).get(p[1], p[1])]
+                                       for p in pl if len(p) > 6])
+    if lv in ("ms", "hs"):
+        ka = k_adm_html(((HS if lv == "hs" else MS).get("A") or {}).get(dbn), lv, dist, prio(lv))
         sections.append(ka + more(ext(ms_url, "See your chances on MySchools"), ext(LL72_URL, "DOE admissions reports")) if ka else "")
     progs = (HS.get("P") or {}).get(dbn) if lv == "hs" else (MS.get("P") or {}).get(dbn) if lv == "ms" else None
     pg = programs_html(dbn, progs, lv == "hs")
     sections.append(pg + more(ext(ms_url, "Program details, open houses and your chances on MySchools")) if pg else "")
+    if lv == "ms":
+        sections.append(extras_html((MS.get("EX") or {}).get(dbn), MS.get("EXV") or []))
     # schools that span levels (K-8, 6-12): a card for each other level, with its zone or admissions and its programs
     for lv2, feats2, nz2 in levels:
         if lv2 == lv:
@@ -743,10 +758,11 @@ def page_html(d, dbn, streets, site_url, goat, nbi=None):
             t2 = (MS.get("T") or {}).get(dbn)
             if t2 and lv == "hs":
                 extra += tests_html(t2, "6–8").replace("<h2>State test scores</h2>", "<h2>Middle school test scores</h2>")
-            extra += k_adm_html((MS.get("A") or {}).get(dbn), "ms", dist)
+            extra += k_adm_html((MS.get("A") or {}).get(dbn), "ms", dist, prio("ms"))
             extra += programs_html(dbn, (MS.get("P") or {}).get(dbn), False)
+            extra += extras_html((MS.get("EX") or {}).get(dbn), MS.get("EXV") or [])
         elif lv2 == "hs":
-            extra += k_adm_html((HS.get("A") or {}).get(dbn), "hs", dist)
+            extra += k_adm_html((HS.get("A") or {}).get(dbn), "hs", dist, prio("hs"))
             extra += programs_html(dbn, (HS.get("P") or {}).get(dbn), True)
         extra += more(f'<a href="{e(url2)}">See it on the {lvw2.lower()} school map →</a>', ext(myschools_url(dbn, lv2), f"{lvw2} school admissions on MySchools"))
         sections.append(extra)
