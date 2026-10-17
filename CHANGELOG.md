@@ -6,6 +6,11 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
+## Unreleased
+
+### Changed
+- Color by no longer has a Crowding option. Each school's building use (how full it is) still shows under "School details" on its card and page.
+
 ## 1.29.0 (2026-10-16)
 
 ### Added
