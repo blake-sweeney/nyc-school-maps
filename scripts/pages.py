@@ -388,7 +388,8 @@ def programs_html(dbn, progs, hs):
 
 def priority_html(dbn, lv, ladders, standard=False):
     """Priority groups at the entry grade, as the map card shows them (src/template.html prioHtml): one numbered list
-    per program, with last year's applicants and offers in each group. ladders: [[program name, priority steps]].
+    per program, with last year's applicants and offers in each group. ladders: [[program name, priority steps,
+    how it admits students (optional)]].
     standard: the DOE's standard kindergarten order at a zoned school (build.py K_ZONED_PRIORITY), no results."""
     ladders = [x for x in ladders if x[1]]
     if not ladders:
@@ -424,7 +425,7 @@ def priority_html(dbn, lv, ladders, standard=False):
     open_ = [x for x in ladders if len(x[1]) == 1 and x[1][0][0] == "N"]
     lad = [x for x in ladders if x not in open_]
     solo = len(ladders) == 1
-    h = "".join(("" if solo else f'<h3 class="prio-p">{e(x[0])}</h3>') + '<ol class="prio">' + "".join(step(s, i) for i, s in enumerate(x[1])) + "</ol>"
+    h = "".join(("" if solo else f'<h3 class="prio-p">{e(x[0])}' + (f" <small>· {e(x[2])}</small>" if len(x) > 2 else "") + "</h3>") + '<ol class="prio">' + "".join(step(s, i) for i, s in enumerate(x[1])) + "</ol>"
                 for x in lad)
     if open_:
         h += ("<p>No priority groups: any NYC student can apply.</p>" if solo else
@@ -523,7 +524,7 @@ h2{font-family:var(--display);font-weight:700;font-size:1.15rem;margin:0 0 8px}
 .dest{list-style:none;margin:10px 0 0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;font-size:.9rem}
 .dest li{display:flex;align-items:center;gap:8px}.dest li i{width:10px;height:10px;border-radius:2px;flex:none}.dest b{margin-left:auto;font-family:var(--display)}
 .progs{list-style:none;margin:0;padding:0}
-h3.prio-h{font-size:1.05rem;margin:20px 0 6px}h3.prio-p{font-size:.95rem;margin:12px 0 4px}
+h3.prio-h{font-size:1.05rem;margin:20px 0 6px}h3.prio-p{font-size:.95rem;margin:12px 0 4px}h3.prio-p small{font-weight:400;color:var(--muted)}
 .prio{list-style:none;counter-reset:prio;margin:0 0 8px;padding:0}
 .prio li{counter-increment:prio;position:relative;padding:8px 0 8px 30px;border-top:1px solid var(--line);font-size:.95rem}
 .prio li::before{content:counter(prio);position:absolute;left:0;top:9px;width:20px;height:20px;border-radius:50%;background:var(--line);font-size:.75rem;font-weight:700;line-height:20px;text-align:center}
@@ -704,7 +705,8 @@ def page_html(d, dbn, streets, site_url, goat, nbi=None):
     if lv in ("ms", "hs"):
         pl = ((HS if lv == "hs" else MS).get("P") or {}).get(dbn) or []
         ka = k_adm_html(((HS if lv == "hs" else MS).get("A") or {}).get(dbn), lv, dist,
-                        priority_html(dbn, lv, [[p[0] or "Main program", p[6]] for p in pl if len(p) > 6]))
+                        priority_html(dbn, lv, [[p[0] or "Main program", p[6], (HNAME if lv == "hs" else MNAME).get(p[1], p[1])]
+                                                for p in pl if len(p) > 6]))
         sections.append(ka + more(ext(ms_url, "See your chances on MySchools"), ext(LL72_URL, "DOE admissions reports")) if ka else "")
     progs = (HS.get("P") or {}).get(dbn) if lv == "hs" else (MS.get("P") or {}).get(dbn) if lv == "ms" else None
     pg = programs_html(dbn, progs, lv == "hs")
