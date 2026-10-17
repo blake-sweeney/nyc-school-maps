@@ -10,7 +10,7 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 
 ### Added
 - Middle and high school cards now show each program's priority groups under "Admissions, grade 6" or "Admissions, grade 9": who gets offers first (siblings, the district, the borough, the zone, then everyone else in NYC), in order, with how many applied and how many got offers in each group last year. At M.S. 255, for example, about 120 of 320 District 2 applicants got offers, and none of the roughly 90 from elsewhere in NYC did. Programs with a diversity set-aside show lunch-eligible applicants separately. School pages show the same list under their admissions numbers.
-- Kindergarten priority groups will show the same way under "Admissions, K" once MySchools posts them with kindergarten applications in December.
+- Zoned elementary schools show the order they offer kindergarten seats in, under "Admissions, K": families in the zone with a sibling at the school, then the rest of the zone, then (if seats are left) siblings, pre-K students and other families from the district and beyond. This is the DOE's standard order for zoned schools. When kindergarten applications open in December, each school's own groups from MySchools, with last year's applicants and offers, will replace it.
 
 ### Changed
 - Middle school programs, seats and applicants are refreshed from MySchools with its latest numbers.

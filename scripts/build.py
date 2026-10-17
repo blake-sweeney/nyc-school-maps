@@ -264,6 +264,19 @@ def _count(t):
     return "~" + n if t.startswith("about") else "<" + n if t[0] in "fl" else int(n)
 
 
+# Kindergarten at a zoned school: the DOE's standard priority order ({d}: the school's district), from
+# schools.nyc.gov/enrollment/enroll-grade-by-grade/kindergarten. Shown until MySchools posts each school's own
+# groups (k_priority.json) when kindergarten applications open in December.
+K_ZONED_PRIORITY = ["Students who live in the zone and have a sibling at the school",
+                    "Other students who live in the zone",
+                    "Students who live in District {d} and have a sibling at the school",
+                    "Students who live outside the district and have a sibling at the school",
+                    "Students who live in District {d} and are in pre-K at the school",
+                    "Students who live outside the district and are in pre-K at the school",
+                    "Other students who live in District {d}",
+                    "Other students who live outside the district"]
+
+
 def priority_steps(groups, dbn):
     """MySchools priority groups [[name, outcome sentence]] -> the steps the map and pages show, in order.
     A step is [group, applicants, offers]: group "S" siblings, "C" continuing students, "B" the school's borough,
@@ -595,7 +608,9 @@ def main(standalone_path=None, pages=None):
         d["KA"] = {k: ka[k] for k in sorted(es_all) if k in ka}
         print(f"kindergarten admissions: {len(d['KA'])} of {len(es_all)} elementary schools")
 
-    # Kindergarten priority groups (optional, MySchools kindergarten directory): KP {dbn: priority steps (priority_steps)}
+    # Kindergarten priority groups (optional, MySchools kindergarten directory): KP {dbn: priority steps (priority_steps)};
+    # KPZ: the standard order at zoned schools, for schools MySchools hasn't posted groups for
+    d["KPZ"] = K_ZONED_PRIORITY
     if os.path.exists(os.path.join(DATA, "k_priority.json")):
         kp = load("k_priority.json")
         d["KP"] = {k: priority_steps(kp[k], k) for k in sorted(es_all) if k in kp}

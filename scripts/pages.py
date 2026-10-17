@@ -386,9 +386,10 @@ def programs_html(dbn, progs, hs):
             '<p class="src">How students get in, and last year’s seats and applicants, from MySchools.</p>')
 
 
-def priority_html(dbn, lv, ladders):
+def priority_html(dbn, lv, ladders, standard=False):
     """Priority groups at the entry grade, as the map card shows them (src/template.html prioHtml): one numbered list
-    per program, with last year's applicants and offers in each group. ladders: [[program name, priority steps]]."""
+    per program, with last year's applicants and offers in each group. ladders: [[program name, priority steps]].
+    standard: the DOE's standard kindergarten order at a zoned school (build.py K_ZONED_PRIORITY), no results."""
     ladders = [x for x in ladders if x[1]]
     if not ladders:
         return ""
@@ -431,6 +432,11 @@ def priority_html(dbn, lv, ladders):
     if any(isinstance(s[1], list) and s[1][0] == "f" for x in ladders for s in x[1] if len(s) > 1):
         h += ('<p class="src">Lunch-eligible: students who qualify for free or reduced-price lunch. '
               "Programs with a diversity set-aside give them priority for a share of seats.</p>")
+    if standard:
+        return ('<h3 class="prio-h">Priority groups</h3><p class="src">Zoned schools offer seats in this order, the DOE’s standard: '
+                'families in the zone first, then others if seats are left. MySchools posts each school’s own groups, with '
+                'last year’s results, when kindergarten applications open in December. <a href="https://www.schools.nyc.gov/'
+                'enrollment/enroll-grade-by-grade/kindergarten">DOE kindergarten admissions</a></p>' + h)
     return ('<h3 class="prio-h">Priority groups</h3><p class="src">Each group gets offers before the next. '
             'Last year’s applicants and offers in each group, from MySchools.</p>' + h)
 
@@ -689,7 +695,11 @@ def page_html(d, dbn, streets, site_url, goat, nbi=None):
                          if pk[0] or pk[2] else "")
                         + more(ext("https://www.myschools.nyc/en/", "Find pre-K and 3-K programs on MySchools")))
     if lv == "es":
-        ka = k_adm_html(d.get("KA", {}).get(dbn), "es", dist, priority_html(dbn, "es", [["", d.get("KP", {}).get(dbn)]]))
+        kp = d.get("KP", {}).get(dbn)
+        std = not kp and not nz and bool(feats) and "0K" in (s.get("g") or "")  # zoned, with K, no groups posted yet
+        if std:
+            kp = [[t.replace("{d}", str(dist))] for t in d.get("KPZ", [])]
+        ka = k_adm_html(d.get("KA", {}).get(dbn), "es", dist, priority_html(dbn, "es", [["", kp]], std))
         sections.append(ka + more(ext(ms_url, "See your chances on MySchools"), ext(LL72_URL, "DOE admissions reports")) if ka else "")
     if lv in ("ms", "hs"):
         pl = ((HS if lv == "hs" else MS).get("P") or {}).get(dbn) or []

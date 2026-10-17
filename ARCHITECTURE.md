@@ -20,7 +20,7 @@ fetch_data.py ──> data/*.json   (yearly refresh; MySchools + Snapshot go thr
 - `scripts/build.py` `main()`: loads each data file, trims it to the compact arrays the page uses, and fills the
   template's `__PLACEHOLDERS__`. Comments above each block give the array shapes, e.g. `NZ` rows, `P` programs, `Q` high
   school SAT/readiness/destinations. `priority_steps()` turns MySchools priority groups (names and "There were about 70
-  applicants…" sentences) into the compact steps `P` and `KP` carry. **If you change a shape here, change its reader in the template and in pages.py.**
+  applicants…" sentences) into the compact steps `P` and `KP` carry; `K_ZONED_PRIORITY` is the DOE's standard kindergarten order for zoned schools (`KPZ`). **If you change a shape here, change its reader in the template and in pages.py.**
 - `scripts/pages.py`: school pages (`page_html`; admissions `k_adm_html` with `priority_html`; charters: `charter_district`, `charter_how`, `CH_APPLY`, led by their lowest level), district pages (`write_districts`, `school_table`, `SORT_JS`,
   `TABS_JS`), the sitemap and shared CSS. It reads the same trimmed data `build.py` builds. `LOCAL_FIX` and `relative()`
   make links work from `file://`.
@@ -36,7 +36,7 @@ The script runs top to bottom in roughly this order:
 | Area | Look for |
 | - | - |
 | Data and levels | `D`, `MSD`, `HSD`, `LV` (per-level data: es / ms / hs), `loadLevel`, `getAsset` (loads assets/*.js by script tag so file:// works) |
-| Per-school data | `R` ratings, `S` tests, `O`/`Q` high school outcomes, `X` Snapshot extras, `CS` class size, `U` building use, `PK` pre-K/3-K, `KA` kindergarten admissions, `KP` kindergarten priority groups, `P` programs (`p[6]`: priority groups) |
+| Per-school data | `R` ratings, `S` tests, `O`/`Q` high school outcomes, `X` Snapshot extras, `CS` class size, `U` building use, `PK` pre-K/3-K, `KA` kindergarten admissions, `KP` kindergarten priority groups (`D.KPZ`: the DOE's standard order at zoned schools until MySchools posts them), `P` programs (`p[6]`: priority groups) |
 | Layer toggles | `LAY`, `LAY_KEY` (localStorage `nsz-layers-v1`), `saveLay`, `applyLayers`, `syncZoneLines`, `clearZoneSel` |
 | Schools without a zone | `nzGet`, `regNZ`, `nzOptions`, `nzPriority`, `nzDemand`, `buildNZ`, `nzTip`, `selectNZ`, `gtStar` |
 | Charter schools | `CHX` (grades, enrollment, former name), `allNZ` (charter `CH` rows join `NZ`, flagged `o.ch`), `chBlock` (lottery card text, `CH_APPLY`), `chOptions` (the zone card's charter list), `distOf` / `boroOf` (district and borough from the row, not the DBN), `chReports` (K–12 charters: high school ratings in the high school view), `.chm` squares, layer key `ch` |
@@ -67,5 +67,5 @@ The script runs top to bottom in roughly this order:
 - **Charters in the Snapshot:** most have an Instruction rating, but only about half have Safety and Families ratings (schools that take the NYC School Survey). The DOE's own test result files leave charters out; their test results come only from the Snapshot, like district schools'. (NYSED's report card database has them too but counts test-takers a little differently.) A charter can have both an EMS and an HS report.
 - **Charter locations: trust LCGMS addresses, not the Find a School map's points.** The map's points for charters that moved are years old (one was 5 km off). GeoSearch can also swap in a nearby street when given a ZIP code, so `fetch_charters` searches by address and city and checks the house number.
 - **MySchools program names can end in the program code**, like "Spanish Dual Language Program (Q235S)" or "(K096SC)". `_strip_dbn` in fetch_data.py takes the code to strip it.
-- **Kindergarten priority groups only appear once K applications open (December).** Until then `k_priority.json` is missing or empty and the cards show no priority list for kindergarten.
+- **Kindergarten priority groups only appear once K applications open (December).** Until then `k_priority.json` is missing or empty, and zoned schools with kindergarten show the DOE's standard order (`KPZ`) without results. Non-zoned schools show none: their priorities vary by school.
 - **One rating format everywhere:** numbers ("3.7 / 4") via `chip(r, 1)`, never words mixed with numbers.
