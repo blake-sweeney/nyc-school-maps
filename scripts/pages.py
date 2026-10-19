@@ -777,19 +777,22 @@ def page_html(d, dbn, streets, site_url, goat, nbi=None):
                      + more(ext(CH_APPLY, "How to apply to charter schools"), f'<a href="{e(map_url)}">See it on the map →</a>')
                      + '</div></section>')
     else:
+        # where the admissions tables list each program's priority groups, say so instead of summarizing them
+        listed = (f" Each program’s priority groups are listed under {'Grade 9' if lv == 'hs' else 'Grade 6'} admissions below."
+                  if lv in ("ms", "hs") and ms_progs(((HS if lv == "hs" else MS).get("P") or {}).get(dbn)) else "")
         if lv == "hs":
             if gt:
                 why = ("Admission is by SHSAT score only. Any NYC 8th or 9th grader can take the test."
                        if any(p[1] == "T" for p in (nz[7] or [])) else "Admission is by audition. Students from anywhere in NYC can apply.")
             else:
-                why = (nz[9] if nz and len(nz) > 9 and nz[9] else "Open to students from anywhere in NYC.") + \
-                    " There’s no zone: students apply through MySchools."
+                why = ("There’s no zone." + listed if listed else
+                       (nz[9] if nz and len(nz) > 9 and nz[9] else "Open to students from anywhere in NYC.") + " There’s no zone.")
         elif lv == "ms":
-            why = ("Open to students from anywhere in NYC." if gt else
-                   f"Students apply through MySchools. Most programs give priority to students who live in, or go to elementary school in, District {dist}.")
+            why = ("Open to students from anywhere in NYC." if gt else "There’s no zone.") + \
+                (listed or (" Most programs give priority to students who live or go to school in District " + str(dist) + "." if not gt else ""))
         else:
             why = "Open to children found eligible for Gifted & Talented, from anywhere in NYC." if gt else \
-                f"There’s no zone: families apply through MySchools, with priority to District {dist} residents."
+                f"There’s no zone. Priority goes to District {dist} residents."
         head = "How to get in" if gt else "No zone"
         zone_html = (f'<section class="card split"><div>{svg}</div><div><h2>{head}</h2><p>{e(why)}</p>'
                      + more(ext(ms_url, "Apply and see your chances on MySchools"),
@@ -900,8 +903,10 @@ def page_html(d, dbn, streets, site_url, goat, nbi=None):
                    + (f" The zone is shared with {', '.join(nice_name(S.get(m, {}).get('n', m)) for m in mates2)}." if mates2 else ""))
         else:
             gt2 = bool(nz2 and len(nz2) > 8 and nz2[8])
-            txt = (f"{lvw2} school grades have no zone" + (": open to students from anywhere in NYC." if gt2 else
-                   ". Students apply through MySchools" + (f", with priority to District {dist}." if lv2 != "hs" else ".")))
+            listed2 = ms_progs(((HS if lv2 == "hs" else MS).get("P") or {}).get(dbn))
+            txt = (f"{lvw2} school grades have no zone" + (": open to students from anywhere in NYC." if gt2 else ".")
+                   + (" Each program’s priority groups are listed below." if listed2 else
+                      f" Priority goes to District {dist}." if lv2 != "hs" and not gt2 else ""))
         extra = f"<h2>{lvw2} school grades</h2><p>{e(txt)}</p>"
         if lv2 == "ms":
             t2 = (MS.get("T") or {}).get(dbn)
