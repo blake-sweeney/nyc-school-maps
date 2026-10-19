@@ -153,11 +153,12 @@ aside>*{flex-shrink:0}
 .adm td:last-child{color:var(--muted);font-weight:500;min-width:3.2em}
 .adm .adm-note{margin:2px 0 0;font-size:.8rem}
 .ex{font-size:.85rem}.ex p{margin:2px 0 0}.ex-src{color:var(--muted);font-size:.75rem}
-.prio-w{margin-top:6px}.prio-p{font-weight:600;margin-top:4px}.prio-p small{font-weight:400;color:var(--muted)}
-.prio{list-style:none;counter-reset:prio;margin:0;padding:0}
-.prio li{counter-increment:prio;position:relative;padding:5px 0 5px 22px;border-top:1px solid var(--line)}
-.prio li::before{content:counter(prio);position:absolute;left:0;top:5px;width:16px;height:16px;border-radius:50%;background:var(--line);font-size:.68rem;font-weight:700;line-height:16px;text-align:center;font-variant-numeric:tabular-nums}
-.prio small{display:block;color:var(--muted);font-size:.78rem;font-variant-numeric:tabular-nums}
+.adm-p{font-weight:600;margin-top:8px}.adm-p small{font-weight:400;color:var(--muted)}
+.adm-t tr.all th,.adm-t tr.all td{font-weight:700}
+.adm-t .gn{display:inline-block;width:15px;height:15px;margin-right:6px;border-radius:50%;background:var(--line);font-style:normal;font-size:.66rem;font-weight:700;line-height:15px;text-align:center;vertical-align:1px}
+.adm-t tr.sub{border-top:0}.adm-t tr.sub th{padding-left:21px;color:var(--muted)}.adm-t tr.sub td{font-weight:500;color:var(--muted);padding-top:0}
+.adm-t tr.sub td[colspan]{text-align:left;white-space:normal;padding-left:21px;font-family:var(--body);font-size:.78rem}
+.adm-sp{list-style:none;margin:2px 0 0;padding:0}.adm-sp li{padding:4px 0;border-top:1px solid var(--line)}.adm-sp small{color:var(--muted)}
 .progs{display:flex;flex-direction:column;gap:4px;font-size:.85rem}
 .progs ul{list-style:none;margin:2px 0 0;padding:0}
 .progs li{display:flex;gap:10px;justify-content:space-between;padding:5px 0;border-top:1px solid var(--line)}
@@ -684,32 +685,48 @@ function chOptions(dist){if(!dist)return '';const l=NZ.filter(o=>o.ch&&o.pd[0]==
 // middle school programs from the MySchools directory: how each admits students and last year's demand
 const MNAME={O:'Open',Z:'Zone priority',S:'Screened',SA:'Screened + assessment',A:'Audition',T:'Talent test',L:'Language program',D75:'District 75 special education',ASD:'Autism (ASD) or ACES program'};
 const HNAME={S:'Screened (grades)',SA:'Screened + assessment',SL:'Screened: language & academics',E:'Ed. Opt. (mixed academic levels)',A:'Audition',O:'Open',L:'Language program',T:'SHSAT test',ZG:'Zoned guarantee',ZP:'Zoned priority',TR:'Transfer school (older students)',D75:'District 75 special education',ASD:'Autism (ASD) or ACES program'};
-// priority groups (MySchools, build.py priority_steps): who gets offers first at the entry grade, with last year's
-// applicants and offers in each group; kindergarten from KP, grade 6 and 9 per program from P (p[6])
+// admissions tables (MySchools, __MYSCHOOLS__): per program, a row for all students, then each priority group in the
+// order it gets offers (build.py priority_steps); the Local Law 72 table (admHtml) is the fallback and sits inside
+// "About this data". Kindergarten groups (KP) arrive with the December directory.
 const KP=D.KP||{};
-// a zoned school with kindergarten but no groups of its own yet gets the DOE's standard order (KPZ), flagged with a third field
-function prioList(d,lv){if(lv==='es')return KP[d]&&KP[d].length?[['',KP[d]]]:!nzGet(d)&&D.KPZ&&/0K/.test(S[d]&&S[d].g||'')?[['',D.KPZ.map(t=>[t.replace(/\{d\}/g,+d.slice(0,2))]),1]]:[];
-  return ((LV[lv]&&LV[lv].P||{})[d]||[]).filter(p=>p[6]&&p[6].length).map(p=>[p[0]||'Main program',p[6],0,(lv==='hs'?HNAME:MNAME)[p[1]]||p[1]])}
 function prioName(d,lv,g,i){const m=/^D(\d+)$/.exec(g);return g==='N'?(i?'Everyone else in NYC':'Any NYC student'):g==='S'?'Siblings of students at the school':g==='C'?(lv==='hs'?'Continuing 8th graders':'Continuing students'):g==='Z'?'Students who live in the zone':g==='B'?(BORO[d[2]]||'Borough')+' students and residents':m?'District '+m[1]+' students and residents':g}
-function prioStep(d,lv,s,i){const n=v=>typeof v==='string'&&v[0]==='<'?'under '+v.slice(1):String(v),
-    pct=(a,o)=>typeof a==='string'&&typeof o==='string'&&a[0]==='~'&&o[0]==='~'&&+a.slice(1)?' ('+Math.round(100*o.slice(1)/a.slice(1))+'%)':'',
-    res=(a,o)=>a===0?'no applicants':n(a)+' listed it'+(o==null?'':' · '+(o==='all'?'all':o==='most'?'almost all':o===0?'none':n(o))+' offered'+pct(a,o)),
-    who=w=>w==='f'?'Lunch-eligible':w==='a'?'Others':w[0].toUpperCase()+w.slice(1);
-  const r=s.length<2?'':s[1]===null?esc(s[2]):Array.isArray(s[1])?s.slice(1).map(p=>esc(who(p[0])+': '+res(p[1],p[2]))).join('<br>'):esc(res(s[1],s[2]));
-  return '<li><span>'+esc(prioName(d,lv,s[0],i))+'</span>'+(r?'<small>'+r+'</small>':'')+'</li>'}
-// programs with no priority but "any NYC student" share one line; past three programs the rest fold away
-function prioHtml(d,lv){const L=prioList(d,lv);if(!L.length)return '';
-  const open=L.filter(x=>x[1].length===1&&x[1][0][0]==='N'),lad=L.filter(x=>!open.includes(x)),solo=L.length===1;
-  // each program's heading says how it admits students too: "Main program · Zone priority", "Screened Program · Screened"
-  const one=x=>(solo?'':'<div class="prio-p">'+esc(x[0])+(x[3]?' <small>· '+esc(x[3])+'</small>':'')+'</div>')+'<ol class="prio">'+x[1].map((s,i)=>prioStep(d,lv,s,i)).join('')+'</ol>';
-  const top=lad.slice(0,lad.length>3?2:3),rest=lad.slice(top.length);
-  const head=L[0][2]?'Zoned schools offer seats in this order, the DOE’s standard: families in the zone first, then others if seats are left. MySchools posts each school’s own groups, with last year’s results, when kindergarten applications open in December. <a href="https://www.schools.nyc.gov/enrollment/enroll-grade-by-grade/kindergarten" target="_blank" rel="noopener">DOE kindergarten admissions ↗</a>'
-    :'Each group gets offers before the next. General education applicants and offers, __MYSCHOOLS__, from MySchools.';
-  return '<div class="adm prio-w"><div class="adm-h">Priority groups<span>'+head+'</span></div>'+top.map(one).join('')+
-    (rest.length?'<details class="more-progs"><summary>'+rest.length+' more program'+(rest.length>1?'s':'')+'</summary>'+rest.map(one).join('')+'</details>':'')+
-    (L.some(x=>x[1].some(s=>Array.isArray(s[1])&&s[1][0]==='f'))?'<p class="adm-note">Lunch-eligible: students who qualify for free or reduced-price lunch. Programs with a diversity set-aside give them priority for a share of seats.</p>':'')+
-    (open.length?'<p class="adm-note">'+(solo?'No priority groups: any NYC student can apply.':esc(open.length===L.length?'Every program':open.map(x=>x[0]).join(', '))+': no priority groups, any NYC student can apply.')+'</p>':'')+'</div>'}
-// a program's seats for students with disabilities: "64 seats · 42 listed it", "· all filled" when they were
+// MySchools counts: 12, "~70" (about), "<10" (fewer than 10), 0; offers also "all", "most" (almost all)
+const cnum=v=>typeof v==='number'?v:typeof v!=='string'?null:v[0]==='~'?+v.slice(1):v[0]==='<'?+v.slice(1)/2:null,
+  capx=v=>typeof v==='string'&&(v[0]==='~'||v[0]==='<'),
+  offNum=(a,o)=>o==='all'?cnum(a):o==='most'?(cnum(a)==null?null:.9*cnum(a)):o===0?0:cnum(o),
+  // a sum of rounded counts: "~265" (to the nearest 5), "<10" when small
+  approx=n=>n==null?null:n<10?'<10':'~'+Math.round(n/5)*5;
+// a group's applicants and offers, adding up its parts when MySchools splits them (lunch-eligible and others)
+function stepTotals(s){if(s.length<2||s[1]===null)return [null,null];if(!Array.isArray(s[1]))return [s[1],s.length>2?s[2]:null];
+  const P=s.slice(1),a=P.map(p=>cnum(p[1])),o=P.map(p=>offNum(p[1],p[2]));
+  const A=a.includes(null)?null:a.reduce((x,y)=>x+y,0),ex=P.every(p=>!capx(p[1]));
+  return [A==null?null:ex?A:approx(A),P.every(p=>p[2]==='all')?'all':P.every(p=>p[2]===0)?0:o.includes(null)?null:approx(o.reduce((x,y)=>x+y,0))]}
+function admRow(lab,a,o,cls){const t=v=>v==null?'—':typeof v==='number'?v.toLocaleString():v,
+    off=a===0?'':o==null?'—':o==='all'?'all':o==='most'?'almost all':o===0?'none':t(o),
+    an=cnum(a),on=offNum(a,o),pc=a===0||o==null||o===0||o==='most'?'':o==='all'?'all':an==null||on==null||(typeof a==='string'&&a[0]==='<')?'':on>=an?'all':(capx(a)||capx(o)?'~':'')+Math.round(100*on/an)+'%';
+  return '<tr'+(cls?' class="'+cls+'"':'')+'><th>'+lab+'</th><td>'+off+'</td><td>'+(a===0?'0':t(a))+'</td><td>'+pc+'</td></tr>'}
+// one program's table: all students, then the groups in order (lunch-eligible splits as sub-rows)
+function admTable(d,lv,steps,all,who){const n=steps.length,only=n===1&&steps[0][0]==='N';
+  const tot=steps.map(stepTotals),T=tot.filter(t=>t[0]!==0),
+    sumO=!T.length||T.some(t=>t[1]==null)?null:T.every(t=>t[1]==='all')?'all':T.every(t=>t[1]===0)?0:approx(T.reduce((x,t)=>x+offNum(t[0],t[1]),0)),
+    sumA=all!=null?all:tot.some(t=>cnum(t[0])==null)?null:approx(tot.reduce((x,t)=>x+cnum(t[0]),0));
+  let rows=admRow('All '+who,sumA,sumO,'all');
+  if(!only)steps.forEach((s,i)=>{const t=tot[i];rows+=admRow('<i class="gn">'+(i+1)+'</i>'+esc(prioName(d,lv,s[0],i)),t[0],t[1]);
+    if(s.length>1&&s[1]===null)rows+='<tr class="sub"><td colspan="4">'+esc(s[2])+'</td></tr>';
+    if(Array.isArray(s[1]))s.slice(1).forEach(p=>{rows+=admRow(p[0]==='f'?'lunch-eligible':p[0]==='a'?'others':esc(p[0]),p[1],p.length>2?p[2]:null,'sub')})});
+  return '<table class="adm-t"><thead><tr><th></th><th>Offers</th><th>Applied</th><th></th></tr></thead><tbody>'+rows+'</tbody></table>'}
+const SPECIAL=c=>c==='D75'||c==='ASD';
+// the programs a middle or high school table covers: MySchools numbers or priority groups, not the SHSAT-only ones
+function msProgs(d,lv){const P=(LV[lv]&&LV[lv].P||{})[d]||[];return P.filter(p=>!SPECIAL(p[1])&&p[1]!=='T'&&(p[3]!=null||p[6]&&p[6].length))}
+function msAdm(d,lv){const P=(LV[lv]&&LV[lv].P||{})[d]||[],R=msProgs(d,lv);if(!R.length)return '';const N=lv==='hs'?HNAME:MNAME,solo=R.length===1;
+  const head=p=>'<div class="adm-p">'+(solo?'':esc(p[0]||'Main program')+' ')+'<small>'+[N[p[1]]||p[1],p[2]!=null?p[2]+' seats'+(p[4]?', all filled':''):'',p[5]?'diversity set-aside':''].filter(Boolean).join(' · ')+'</small></div>';
+  const swdLine=p=>p[7]?'<p class="adm-note">Special ed seats: '+p[7]+(p[8]!=null?' · '+p[8]+' applied':'')+(p[9]?', all filled':'')+'</p>':'';
+  const one=p=>head(p)+admTable(d,lv,p[6]||[],p[3],'students')+swdLine(p);
+  const top=R.slice(0,R.length>3?2:3),rest=R.slice(top.length),sp=P.filter(p=>SPECIAL(p[1])&&(p[7]||p[2]));
+  return top.map(one).join('')+(rest.length?'<details class="more-progs"><summary>'+rest.length+' more program'+(rest.length>1?'s':'')+'</summary>'+rest.map(one).join('')+'</details>':'')+
+    (sp.length?'<div class="adm-p">Special education programs</div><ul class="adm-sp">'+sp.map(p=>'<li>'+esc(p[0]||'Main program')+' <small>· '+esc(N[p[1]]||p[1])+' · '+(p[7]||p[2])+' seats'+(p[8]!=null?' · '+p[8]+' applied':'')+'</small></li>').join('')+'</ul>':'')+
+    (R.some(p=>(p[6]||[]).some(s=>Array.isArray(s[1])&&s[1][0]==='f'))?'<p class="adm-note">Lunch-eligible: students who qualify for free or reduced-price lunch. Programs with a diversity set-aside give them priority for a share of seats.</p>':'')}
+// a program's seats for students with disabilities, in the fallback program list: "64 seats · 42 listed it"
 const swd=p=>p[7]+' seats'+(p[8]!=null?' · '+p[8]+' listed it':'')+(p[9]?' · all filled':'');
 function progHtml(d,inSec){const lp=LV[level],P=lp&&lp.P&&lp.P[d];if(!P||!P.length||P.length===1&&P[0][1]==='T')return '';const hs=level==='hs';
   const li=p=>'<li><span class="pn">'+esc(p[0]||'Main program')+'<small>'+esc((hs?HNAME:MNAME)[p[1]]||p[1])+(p[5]?' · diversity set-aside':'')+'</small></span><span class="pd">'+(p[2]||p[3]?p[2]+' seats · '+p[3]+' listed it'+(p[4]?'<small>all seats filled</small>':'')+(p[7]?'<small>Special ed: '+swd(p)+'</small>':'')
@@ -720,25 +737,30 @@ function progHtml(d,inSec){const lp=LV[level],P=lp&&lp.P&&lp.P[d];if(!P||!P.leng
 // specialized high schools: last two years' lowest SHSAT score offered a seat
 function cutHtml(d){const c=LV.hs&&LV.hs.CUT;if(level!=='hs'||!c||!c.c[d])return '';const v=c.c[d],y=+c.y;
   return '<div class="facts"><span>Lowest score offered a seat, fall '+y+'</span><b>'+v[0]+'</b><span>Fall '+(y-1)+'</span><b>'+v[1]+'</b><small>Scores run from about 200 to 800. Cutoffs shift each year with the applicant pool. As reported from DOE results by <a href="https://caddellprep.com/shsat/info/cut-off-scores/" target="_blank" rel="noopener">Caddell Prep</a>.</small></div>'}
-// grade 6 and grade 9 use the same Local Law 72 numbers as kindergarten (LV.ms.A, LV.hs.A)
-function admHtml(d,lv,noHead){lv=lv||'es';const src=lv==='es'?KA:(LV[lv]&&LV[lv].A)||{},k=src[d];if(!k)return '';const y=Object.keys(k).sort().pop();const r=k[y];if(!r)return '';
+// grade 6 and grade 9 use the same Local Law 72 numbers as kindergarten (LV.ms.A, LV.hs.A). bare: just the table and
+// its notes, to sit inside the MySchools tables' "About this data"
+function admHtml(d,lv,noHead,bare){lv=lv||'es';const src=lv==='es'?KA:(LV[lv]&&LV[lv].A)||{},k=src[d];if(!k)return '';const y=Object.keys(k).sort().pop();const r=k[y];if(!r)return '';
   const G={es:'Kindergarten',ms:'Grade 6',hs:'Grade 9'}[lv];
   const dist=+d.slice(0,2),fine=(a,b,t)=>b-a<=Math.max(4,.08*t);
   // one row: offers, applicants, share; a hidden count we can't pin to within a few shows as a dash
-  const row=(lab,o0,o1,t0,t1)=>{const ok=t1!=null&&fine(o0,o1,t1)&&fine(t0,t1,t1),ex=o0===o1&&t0===t1,
+  const row=(lab,o0,o1,t0,t1,cls)=>{const ok=t1!=null&&fine(o0,o1,t1)&&fine(t0,t1,t1),ex=o0===o1&&t0===t1,
       o=Math.round((o0+o1)/2),t=Math.round((t0+t1)/2),a=ex?'':'~';
-    return '<tr><th>'+lab+'</th>'+(ok?'<td>'+(o0===o1?'':'~')+o+'</td><td>'+(t0===t1?'':'~')+t+'</td><td>'+(!t?'':o>=t?'all':a+Math.round(100*o/t)+'%')+'</td>':'<td>—</td><td>'+(t0===t1?t:'—')+'</td><td></td>')+'</tr>'};
+    return '<tr'+(cls?' class="'+cls+'"':'')+'><th>'+lab+'</th>'+(ok?'<td>'+(o0===o1?'':'~')+o+'</td><td>'+(t0===t1?'':'~')+t+'</td><td>'+(!t?'':o>=t?'all':a+Math.round(100*o/t)+'%')+'</td>':'<td>—</td><td>'+(t0===t1?t:'—')+'</td><td></td>')+'</tr>'};
   // high schools don't give district priority, so the district split would mislead there
   const hasD=r.length>4&&lv!=='hs',who=lv==='es'?'families':'students';
-  let h='<div class="adm">'+(noHead?'':'<div class="adm-h">'+G+' admissions, fall '+y+'<span>'+r[0]+' seats</span></div>')+'<table><thead><tr><th></th><th>Offers</th><th>Applied</th><th></th></tr></thead><tbody>'+
-    row('All '+who,r[2],r[3],r[1],r[1])+
+  let h=(noHead?'':'<div class="adm-h">'+G+' admissions, fall '+y+'<span>'+r[0]+' seats</span></div>')+'<table class="adm-t"><thead><tr><th></th><th>Offers</th><th>Applied</th><th></th></tr></thead><tbody>'+
+    row('All '+who,r[2],r[3],r[1],r[1],'all')+
     (hasD?row('District '+dist,r[6],r[7],r[4],r[5])+row('Other districts',r[10],r[11],r[8],r[9]):'')+'</tbody></table>';
   if(lv==='es'&&hasD&&r[10]>0&&!nzGet(d))h+='<p class="adm-note">Some seats went to families from other districts, which usually means every zoned family who applied got one.</p>';
-  if(lv==='ms'&&hasD&&!prioList(d,lv).length)h+='<p class="adm-note">Most middle school programs fill seats with District '+dist+' students and residents first, then consider other districts.</p>';
-  const about=lv==='es'?'Applicants are families who listed the school and didn’t get a choice they ranked higher. Offers are seats offered. Offers can top applicants when the DOE places a child who didn’t list the school there, often at their zoned school. '+(nzGet(d)?'':'District '+dist+' mixes zoned and non-zoned families. ')
-    :'Applicants are students who listed the school (any of its programs) and didn’t get a choice they ranked higher. Offers are seats offered; they can top applicants when the DOE places students who didn’t get any of their choices. '+(lv==='ms'?'A district row counts students who live or go to school in that district. ':'Counts cover every program at the school. ')+
-      'Programs and priority groups come from MySchools for __MYSCHOOLS__ and count differently: general education and special ed seats apart, and every student who listed the program anywhere on their application. ';
-  return h+'<details class="adm-about"><summary>About this data</summary><p>'+about+'“—” means the DOE hid the count for privacy. Source: <a href="https://infohub.nyced.org/reports/government-reports" target="_blank" rel="noopener">DOE Local Law 72 reports</a>.</p></details></div>'}
+  if(lv==='ms'&&hasD&&!bare)h+='<p class="adm-note">Most middle school programs fill seats with District '+dist+' students and residents first, then consider other districts.</p>';
+  const about=(lv==='es'?'Applicants are families who listed the school and didn’t get a choice they ranked higher. Offers are seats offered. Offers can top applicants when the DOE places a child who didn’t list the school there, often at their zoned school. '+(nzGet(d)?'':'District '+dist+' mixes zoned and non-zoned families. ')
+    :'Applicants are students who listed the school (any of its programs) and didn’t get a choice they ranked higher. Offers are seats offered; they can top applicants when the DOE places students who didn’t get any of their choices. '+(lv==='ms'?'A district row counts students who live or go to school in that district. ':'Counts cover every program at the school. '))+
+    '“—” means the DOE hid the count for privacy. Source: <a href="https://infohub.nyced.org/reports/government-reports" target="_blank" rel="noopener">DOE Local Law 72 reports</a>.';
+  if(bare)return '<p>The DOE’s fall '+y+' report counts differently: every seat at the school ('+r[0].toLocaleString()+'), and only students who didn’t get a choice they ranked higher.</p>'+h+'<p>'+about+'</p>';
+  return '<div class="adm">'+h+'<details class="adm-about"><summary>About this data</summary><p>'+about+'</p></details></div>'}
+// the MySchools tables with their "About this data", holding the Local Law 72 table too
+function msAdmHtml(d,lv,body,who){return '<div class="adm">'+body+'<details class="adm-about"><summary>About this data</summary><p>Each priority group gets offers before the next. '+
+  'From MySchools, __MYSCHOOLS__: general education seats, and every '+(who==='families'?'family':'student')+' who listed the program anywhere on their application. MySchools rounds group counts (“~” about, “&lt;10” fewer than 10), so the “All '+who+'” offers add up the groups.</p>'+admHtml(d,lv,true,true)+'</details></div>'}
 function zoneProg(dbns,m){if(!dbns.some(d=>X[d]&&!(m==='dl'&&CHX[d]&&!dualLang(d))))return null;return dbns.some(d=>m==='gt'?hasGT(d):dualLang(d))}
 function schoolRating(d,m){const r=R[d];if(!r)return null;if(m==='comp'){const v=[r[2],r[3],r[4]].filter(x=>x!=null);return v.length?v.reduce((a,b)=>a+b,0)/v.length:null}return r[RK[m]]??null}
 function zoneRating(dbns,m){const v=dbns.map(d=>schoolRating(d,m)).filter(x=>x!=null);return v.length?v.reduce((a,b)=>a+b,0)/v.length:null}
@@ -1109,9 +1131,9 @@ function factsHtml(d){const x=X[d]||[],c=CS[d]||{},u=U[d];if(!X[d]&&!CS[d]&&!u&&
   const h=row('Attendance',x[1]!=null?x[1]+'%':null)+row('Teachers with 3+ years’ experience',x[2]!=null?x[2]+'%':null)+row('Principal’s years at school',x[3]!=null?(Math.round(x[3]*10)/10):null)+(level==='es'?row('Kindergarten class size',cs(c.k))+row('Grades 1–5 class size',cs(c.e)):row('Core class size',cs(level==='ms'?c.ms:c.hs)))+row('Building use (how full)',u?u[0]+'% of capacity':null)+row('Students with IEPs (special ed)',ofAll(d,2,x[6]))+row('English language learners',ofAll(d,1,x[5]))+row('Building accessibility',AC_TXT[AC[d]])+'';return h?'<div class="facts">'+h+'</div>':''}
 // school card: sections that open and close. Each viewer's choice is remembered in this browser; the Color by
 // metric also opens the section that shows it (without changing what's remembered).
-const SEC_KEY='nsz-card-v1',SEC={},SEC_FOR={scr:'progs',ip:'rate',ss:'rate',rf:'rate',ela:'tests',math:'tests',coll:'out',ccr:'out',sat:'out',iep:'facts'};
+const SEC_KEY='nsz-card-v1',SEC={},SEC_FOR={scr:'adm-',ip:'rate',ss:'rate',rf:'rate',ela:'tests',math:'tests',coll:'out',ccr:'out',sat:'out',iep:'facts'};
 try{Object.assign(SEC,JSON.parse(localStorage.getItem(SEC_KEY)||'{}'))}catch(e){}
-function sec(k,sum,body){return '<details class="sec" data-sec="'+k+'"'+(SEC[k]||SEC_FOR[metric]===k?' open':'')+'><summary>'+sum+'</summary><div class="sec-b">'+body+'</div></details>'}
+function sec(k,sum,body){return '<details class="sec" data-sec="'+k+'"'+(SEC[k]||SEC_FOR[metric]&&k.startsWith(SEC_FOR[metric])?' open':'')+'><summary>'+sum+'</summary><div class="sec-b">'+body+'</div></details>'}
 card.addEventListener('click',e=>{const s=e.target.closest('.sec>summary');if(!s)return;const k=s.parentNode.dataset.sec;
   SEC[k]=!s.parentNode.open;try{localStorage.setItem(SEC_KEY,JSON.stringify(SEC))}catch(err){}});
 function rateSec(d){const r=R[d];if(!r||r.slice(2,5).every(x=>x==null))return '<span class="meta">No __SNAPSHOT__ Snapshot ratings (often K–2 or new schools).</span>';
@@ -1124,11 +1146,13 @@ function testSec(d){const v=T[d];if(!v)return scoreHtml(d);
 // high school outcomes: the 4-year graduation rate up top, the other measures and where graduates went inside
 function outSec(d){const o=O[d],g=o&&o[OUT.grad.i];if(g==null)return outHtml(d);
   return sec('out','<span class="st">Graduation rate<small>Graduates in 4 years · NYC __CITY_GRAD__%</small></span><span class="chip"><i style="background:'+outColor('grad',g)+'"></i>'+Math.round(g)+'%</span>',outHtml(d))}
-// grade 6 or grade 9 admissions (Local Law 72): seats / applied up top, offers by district inside
-function admSec(d){const k=(LV[level]&&LV[level].A||{})[d],y=k&&Object.keys(k).sort().pop(),r=y&&k[y],pr=prioHtml(d,level);if(!r&&!pr)return '';
-  const g=level==='ms'?'6':'9';
-  if(!r)return sec('adm-'+g,'<span class="st">Admissions, grade '+g+'<small>Priority groups</small></span>',pr);
-  return sec('adm-'+g,'<span class="st">Admissions, grade '+g+'<small>Seats / applied, fall '+y+'</small></span><span class="sa">'+r[0].toLocaleString()+' / '+r[1].toLocaleString()+'</span>',admHtml(d,level,true)+pr)}
+// grade 6 or grade 9 admissions: the MySchools tables when the school has them (seats / applied up top, summed over its
+// programs), else the Local Law 72 table with its own year
+function admSec(d){const g=level==='ms'?'6':'9',R=msProgs(d,level);
+  if(R.length){const st=R.reduce((a,p)=>a+(p[2]||0),0),ap=R.reduce((a,p)=>a+(p[3]||0),0);
+    return sec('adm-'+g,'<span class="st">Admissions, grade '+g+'<small>Seats / applied, __MYSCHOOLS__</small></span><span class="sa">'+st.toLocaleString()+' / '+ap.toLocaleString()+'</span>',msAdmHtml(d,level,msAdm(d,level),'students'))}
+  const k=(LV[level]&&LV[level].A||{})[d],y=k&&Object.keys(k).sort().pop(),r=y&&k[y];if(!r)return '';
+  return sec('adm-'+g,'<span class="st">Admissions, grade '+g+'<small>Seats / applied, fall '+y+'</small></span><span class="sa">'+r[0].toLocaleString()+' / '+r[1].toLocaleString()+'</span>',admHtml(d,level,true))}
 // middle school classes, sports and activities (MySchools, LV.ms.EX as indexes into EXV): counts up top, the lists inside
 const EX_GROUPS=['Accelerated and honors classes','Arts courses','Electives','Sports','Clubs and activities'];
 function exSec(d){const lp=LV[level],x=lp&&lp.EX&&lp.EX[d];if(level!=='ms'||!x)return '';
@@ -1145,19 +1169,23 @@ function progSec(d){const P=(LV[level]&&LV[level].P||{})[d],h=progHtml(d,true);i
   return sec('progs','<span class="st">Programs<small>'+esc(how)+'</small></span><span class="sa">'+P.length+'</span>',h)}
 // admissions at an elementary school: one section per entry grade, kindergarten (KA, latest year) then pre-K and
 // 3-K (Local Law 72, __PREK__); the summary shows seats / applicants, the section the details
-function esAdmHtml(d){const pk=PK[d],ka=KA[d],ky=ka&&Object.keys(ka).sort().pop(),k=ky&&ka[ky],pr=prioHtml(d,'es');if(!pk&&!k&&!pr)return '';
+function esAdmHtml(d){const pk=PK[d],ka=KA[d],ky=ka&&Object.keys(ka).sort().pop(),k=ky&&ka[ky],kp=KP[d]&&KP[d].length?KP[d]:null;if(!pk&&!k&&!kp)return '';
   // "s": the report hides that count for privacy; the program is still offered
   const num=v=>typeof v==='number',show=v=>num(v)?v.toLocaleString():'—';
-  const one=(key,lab,yr,n,a,body)=>sec(key,'<span class="st">Admissions, '+lab+'<small>'+(yr?'Seats / applied, fall '+yr:'Priority groups')+'</small></span>'+(yr?'<span class="sa">'+show(n)+' / '+show(a)+'</span>':''),body);
+  const one=(key,lab,yr,n,a,body)=>sec(key,'<span class="st">Admissions, '+lab+'<small>'+(yr?'Seats / applied, fall '+yr:'Priority groups, __MYSCHOOLS__')+'</small></span>'+(yr?'<span class="sa">'+show(n)+' / '+show(a)+'</span>':''),body);
   const hidNote=(...v)=>v.some(x=>x==='s')?'<p class="adm-note">— Not published: the DOE hides small counts for privacy.</p>':'';
-  const early=(lab,n,a,o)=>'<div class="adm"><div class="facts"><span>Seats</span><b>'+show(n)+'</b><span>Applied</span><b>'+show(a)+'</b><span>Offers</span><b>'+show(o)+'</b></div>'+hidNote(n,a,o)+
+  const early=(lab,n,a,o)=>'<div class="adm"><table class="adm-t"><thead><tr><th></th><th>Offers</th><th>Applied</th><th></th></tr></thead><tbody><tr class="all"><th>All families</th><td>'+show(o)+'</td><td>'+show(a)+'</td><td>'+(num(o)&&num(a)&&a?(o>=a?'all':Math.round(100*o/a)+'%'):'')+'</td></tr></tbody></table>'+hidNote(n,a,o)+
     '<p class="adm-note">“Applied” counts families who listed the school and didn’t get a choice they ranked higher. '+lab[0].toUpperCase()+lab.slice(1)+' seats aren’t zoned: families apply through MySchools, and zoned families often get priority.</p><a href="https://www.myschools.nyc/en/" target="_blank" rel="noopener">Find '+lab+' programs on MySchools ↗</a></div>';
   const py='__PREK__'.replace(/\D/g,''),no=pk?[!pk[0]&&'pre-K',!pk[2]&&'3-K'].filter(Boolean):[];
   // a school without pre-K or 3-K: a short line under the sections, the full note inside the section just above it
   const noLine=no.length?'No '+no.join(' or ')+' at this school.':'';
   const noMore=no.length?'<div class="adm"><p class="adm-note">'+noLine+' Many seats are at nearby early childhood centers; <a href="https://www.myschools.nyc/en/" target="_blank" rel="noopener">MySchools</a> lists every program.</p></div>':'';
   const parts=[];
-  if(k||pr)parts.push(['adm-k','K',k?ky:'',k&&k[0],k&&k[1],(k?admHtml(d,'es',true):'')+pr]);
+  // kindergarten: MySchools' groups once they're posted (December), else the Local Law 72 table; zoned schools add how
+  // the zone gets priority
+  const zoned=!nzGet(d)?'<p class="adm-note">Zoned schools offer seats to families in the zone first (siblings first), then to others if seats are left. <a href="https://www.schools.nyc.gov/enrollment/enroll-grade-by-grade/kindergarten" target="_blank" rel="noopener">How kindergarten admissions work ↗</a></p>':'';
+  if(kp)parts.push(['adm-k','K','',null,null,msAdmHtml(d,'es',admTable(d,'es',kp,null,'families'),'families')]);
+  else if(k)parts.push(['adm-k','K',ky,k[0],k[1],admHtml(d,'es',true).replace('<details class="adm-about">',zoned+'<details class="adm-about">')]);
   if(pk&&pk[0])parts.push(['adm-pk','Pre-K',py,pk[0],pk[1],early('pre-K',pk[0],pk[1],pk[4])]);
   if(pk&&pk[2])parts.push(['adm-3k','3-K',py,pk[2],pk[3],early('3-K',pk[2],pk[3],pk[5])]);
   let h=parts.map((x,i)=>{const last=noLine&&i===parts.length-1,o=one(x[0],x[1],x[2],x[3],x[4],x[5]+(last?noMore:''));return last?o.replace('class="sec"','class="sec no-host"'):o}).join('');
@@ -1190,7 +1218,7 @@ function kindText(p){const n=p.dbns.length,k=zoneKind(p);
   return '<b>Shared zone:</b> families here get zoned priority at all '+n+' schools below and can rank any of them.'}
 // one school's details (zoned or not)
 function schoolBlock(d){const s=S[d],n=X[d]&&X[d][0]!=null?X[d][0].toLocaleString()+' students':'',gr=s&&s.g?'Grades '+esc(grades(s.g,d)):'',ch=!!CHX[d];
-  return '<div class="school"><span class="nm"><a class="nm-link" href="'+pageUrl(d)+'">'+esc(short(d))+'</a> <span class="dbn">('+esc(d)+')</span></span>'+addrHtml(d)+(gr||n?'<span class="meta">'+[gr,n].filter(Boolean).join(' · ')+'</span>':'')+tagsHtml(d)+(level==='hs'?zonedHtml(d):'')+'<hr class="sep">'+rateSec(d)+(level==='hs'?outSec(d):testSec(d))+(level==='es'?esAdmHtml(d):admSec(d)+cutSec(d)+progSec(d)+exSec(d))+(factsHtml(d)?sec('facts','<span class="st">School details</span>',factsHtml(d)):'')+'<hr class="sep">'+'<div class="links">'+'<a href="'+pageUrl(d)+'"><b>Full school page →</b></a>'+(ch?'<a href="'+CH_APPLY+'" target="_blank" rel="noopener"><b>How to apply to charter schools ↗</b></a>':'<a href="'+mySchoolsUrl(d)+'" target="_blank" rel="noopener"><b>MySchools: apply &amp; see your chances ↗</b></a>')+'<a href="https://www.schools.nyc.gov/schools/'+esc(d.slice(2))+'" target="_blank" rel="noopener">School website ↗</a></div></div>'}
+  return '<div class="school"><span class="nm"><a class="nm-link" href="'+pageUrl(d)+'">'+esc(short(d))+'</a> <span class="dbn">('+esc(d)+')</span></span>'+addrHtml(d)+(gr||n?'<span class="meta">'+[gr,n].filter(Boolean).join(' · ')+'</span>':'')+tagsHtml(d)+(level==='hs'?zonedHtml(d):'')+'<hr class="sep">'+rateSec(d)+(level==='hs'?outSec(d):testSec(d))+(level==='es'?esAdmHtml(d):admSec(d)+cutSec(d)+(msProgs(d,level).length?'':progSec(d))+exSec(d))+(factsHtml(d)?sec('facts','<span class="st">School details</span>',factsHtml(d)):'')+'<hr class="sep">'+'<div class="links">'+'<a href="'+pageUrl(d)+'"><b>Full school page →</b></a>'+(ch?'<a href="'+CH_APPLY+'" target="_blank" rel="noopener"><b>How to apply to charter schools ↗</b></a>':'<a href="'+mySchoolsUrl(d)+'" target="_blank" rel="noopener"><b>MySchools: apply &amp; see your chances ↗</b></a>')+'<a href="https://www.schools.nyc.gov/schools/'+esc(d.slice(2))+'" target="_blank" rel="noopener">School website ↗</a></div></div>'}
 // a big no-zone area (most of the city in the high school view) spans many districts: a click there selects
 // just the district under the click, outlined, instead of the whole area
 function distAt(ll){const x=ll.lng,y=ll.lat;for(const [k,v] of Object.entries(DIST)){let inside=false;
@@ -1335,7 +1363,7 @@ function showGroup(g){curGroup=g;
 let quietColor=false;
 document.querySelectorAll('input[name=metric]').forEach(r=>r.addEventListener('change',()=>{const s=r.closest('.seg[data-g]');if(s){lastPick[s.dataset.g]=r.value;showGroup(s.dataset.g)}
   if(!quietColor)markEngaged();metric=r.value;syncLegend();restyle();drawLabels();setColorParam();placePanel();
-  if(SEC_FOR[metric])card.querySelectorAll('.sec[data-sec="'+SEC_FOR[metric]+'"]').forEach(x=>{x.open=true});
+  if(SEC_FOR[metric])card.querySelectorAll('.sec[data-sec^="'+SEC_FOR[metric]+'"]').forEach(x=>{x.open=true});
   if(!quietColor&&phone.matches)setPanel(false)}));
 // the color choice rides along in the URL (?c=ela), so a shared link opens with the same coloring
 function setColorParam(){try{const u=new URL(location.href);if(metric==='comp')u.searchParams.delete('c');else u.searchParams.set('c',metric);history.replaceState(null,'',u.pathname+u.search+u.hash)}catch(e){}}

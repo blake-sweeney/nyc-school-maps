@@ -6,6 +6,12 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
+## Unreleased
+
+### Changed
+- Admissions on middle and high school cards are one table per program: a row for all students, then each priority group in the order it gets offers (siblings, the zone, the district, then everyone else), with how many applied and got offers last year. Lunch-eligible applicants show as indented rows under their group. Each program's seats, special ed seats and admissions method sit right above its table, so the separate Programs list is gone. The DOE's own report numbers are still there, under "About this data". School pages show the same tables.
+- Kindergarten, pre-K and 3-K admissions use the same simple table at every school. Zoned schools no longer list the DOE's eight-step priority order; one line explains that families in the zone come first, with a link to how kindergarten admissions work.
+
 ## 1.31.2 (2026-10-19)
 
 ### Changed
