@@ -757,11 +757,16 @@ function msProgs(d,lv){const P=(LV[lv]&&LV[lv].P||{})[d]||[];return P.filter(p=>
 function msAdm(d,lv){const P=(LV[lv]&&LV[lv].P||{})[d]||[],R=msProgs(d,lv);if(!R.length)return '';const N=lv==='hs'?HNAME:MNAME,solo=R.length===1;
   const head=p=>'<div class="adm-p">'+(solo?'':esc(p[0]||'Main program')+' ')+'<small>'+[N[p[1]]||p[1],p[2]!=null?p[2]+' seats'+(p[4]?', all filled':''):'',p[5]?'diversity set-aside':''].filter(Boolean).join(' · ')+'</small></div>';
   const swdLine=p=>p[7]?'<p class="adm-note">Special ed seats: '+p[7]+(p[8]!=null?' · '+p[8]+' applied':'')+(p[9]?', all filled':'')+'</p>':'';
-  const one=p=>head(p)+admTable(d,lv,p[6]||[],p[3],'students')+swdLine(p);
+  // true applicants (Local Law 72): the school's, not a program's, so under the table only when there's one program
+  const tr=trueApps(d,lv),trLine=tr?'<p class="adm-note">True applicants: '+tr[1].toLocaleString()+' <small>(fall '+tr[0]+' DOE report)</small></p>':'';
+  const one=p=>head(p)+admTable(d,lv,p[6]||[],p[3],'students')+(solo?trLine:'')+swdLine(p);
   const top=R.slice(0,R.length>3?2:3),rest=R.slice(top.length),sp=P.filter(p=>SPECIAL(p[1])&&(p[7]||p[2]));
-  return top.map(one).join('')+(rest.length?'<details class="more-progs"><summary>'+rest.length+' more program'+(rest.length>1?'s':'')+'</summary>'+rest.map(one).join('')+'</details>':'')+
-    (sp.length?'<div class="adm-p">Special education programs</div><ul class="adm-sp">'+sp.map(p=>'<li>'+esc(p[0]||'Main program')+' <small>· '+esc(N[p[1]]||p[1])+' · '+(p[7]||p[2])+' seats'+(p[8]!=null?' · '+p[8]+' applied':'')+'</small></li>').join('')+'</ul>':'')+
-    (R.some(p=>(p[6]||[]).some(s=>Array.isArray(s[1])&&s[1][0]==='f'))?'<p class="adm-note">Lunch-eligible: students who qualify for free or reduced-price lunch. Programs with a diversity set-aside give them priority for a share of seats.</p>':'')}
+  return top.map(one).join('')+(rest.length?'<details class="more-progs"><summary>'+rest.length+' more program'+(rest.length>1?'s':'')+'</summary>'+rest.map(one).join('')+'</details>':'')+(solo?'':trLine)+
+    (sp.length?'<div class="adm-p">Special education programs</div><ul class="adm-sp">'+sp.map(p=>'<li>'+esc(p[0]||'Main program')+' <small>· '+esc(N[p[1]]||p[1])+' · '+(p[7]||p[2])+' seats'+(p[8]!=null?' · '+p[8]+' applied':'')+'</small></li>').join('')+'</ul>':'')}
+// [year, true applicants] from the Local Law 72 report: students who listed the school and didn't get a choice ranked higher
+function trueApps(d,lv){const k=(lv==='es'?KA:(LV[lv]&&LV[lv].A)||{})[d],y=k&&Object.keys(k).sort().pop();return y&&k[y]&&k[y][1]!=null?[y,k[y][1]]:null}
+// does any table split a group into lunch-eligible applicants and others?
+const hasLunch=steps=>(steps||[]).some(s=>Array.isArray(s[1])&&s[1][0]==='f');
 // a program's seats for students with disabilities, in the fallback program list: "64 seats · 42 listed it"
 const swd=p=>p[7]+' seats'+(p[8]!=null?' · '+p[8]+' listed it':'')+(p[9]?' · all filled':'');
 function progHtml(d,inSec){const lp=LV[level],P=lp&&lp.P&&lp.P[d];if(!P||!P.length||P.length===1&&P[0][1]==='T')return '';const hs=level==='hs';
@@ -795,8 +800,11 @@ function admHtml(d,lv,noHead,bare){lv=lv||'es';const src=lv==='es'?KA:(LV[lv]&&L
   if(bare)return '<p>The DOE’s fall '+y+' report counts differently: every seat at the school ('+r[0].toLocaleString()+'), and only students who didn’t get a choice they ranked higher.</p>'+h+'<p>'+about+'</p>';
   return '<div class="adm">'+h+'<details class="adm-about"><summary>About this data</summary><p>'+about+'</p></details></div>'}
 // the MySchools tables with their "About this data", holding the Local Law 72 table too
-function msAdmHtml(d,lv,body,who){return '<div class="adm">'+body+'<details class="adm-about"><summary>About this data</summary><p>Each priority group gets offers before the next. '+
-  'From MySchools, fall 2026: general education seats, and every '+(who==='families'?'family':'student')+' who listed the program anywhere on their application. MySchools rounds group counts (“~” about, “&lt;10” fewer than 10), so the “All '+who+'” offers add up the groups.</p>'+admHtml(d,lv,true,true)+'</details></div>'}
+function msAdmHtml(d,lv,body,who){const lunch=lv==='es'?hasLunch(KP[d]):msProgs(d,lv).some(p=>hasLunch(p[6]));
+  return '<div class="adm">'+body+'<details class="adm-about"><summary>About this data</summary><p>Each priority group gets offers before the next. '+
+  'From MySchools, fall 2026: general education seats, and every '+(who==='families'?'family':'student')+' who listed the program anywhere on their application. MySchools rounds group counts (“~” about, “&lt;10” fewer than 10), so the “All '+who+'” offers add up the groups.</p>'+
+  (lunch?'<p>Lunch-eligible: students who qualify for free or reduced-price lunch. Programs with a diversity set-aside give them priority for a share of seats.</p>':'')+
+  (trueApps(d,lv)?'<p>True applicants are the '+who+' who listed the school and didn’t get a choice they ranked higher, from the DOE’s report below.</p>':'')+admHtml(d,lv,true,true)+'</details></div>'}
 function zoneProg(dbns,m){if(!dbns.some(d=>X[d]&&!(m==='dl'&&CHX[d]&&!dualLang(d))))return null;return dbns.some(d=>m==='gt'?hasGT(d):dualLang(d))}
 function schoolRating(d,m){const r=R[d];if(!r)return null;if(m==='comp'){const v=[r[2],r[3],r[4]].filter(x=>x!=null);return v.length?v.reduce((a,b)=>a+b,0)/v.length:null}return r[RK[m]]??null}
 function zoneRating(dbns,m){const v=dbns.map(d=>schoolRating(d,m)).filter(x=>x!=null);return v.length?v.reduce((a,b)=>a+b,0)/v.length:null}
@@ -1220,7 +1228,8 @@ function esAdmHtml(d){const pk=PK[d],ka=KA[d],ky=ka&&Object.keys(ka).sort().pop(
   // kindergarten: MySchools' groups once they're posted (December), else the Local Law 72 table; zoned schools add how
   // the zone gets priority
   const zoned=!nzGet(d)?'<p class="adm-note">Zoned schools offer seats to families in the zone first (siblings first), then to others if seats are left. <a href="https://www.schools.nyc.gov/enrollment/enroll-grade-by-grade/kindergarten" target="_blank" rel="noopener">How kindergarten admissions work ↗</a></p>':'';
-  if(kp)parts.push(['adm-k','K','',null,null,msAdmHtml(d,'es',admTable(d,'es',kp,null,'families'),'families')]);
+  const ktr=trueApps(d,'es');
+  if(kp)parts.push(['adm-k','K','',null,null,msAdmHtml(d,'es',admTable(d,'es',kp,null,'families')+(ktr?'<p class="adm-note">True applicants: '+ktr[1].toLocaleString()+' <small>(fall '+ktr[0]+' DOE report)</small></p>':''),'families')]);
   else if(k)parts.push(['adm-k','K',ky,k[0],k[1],admHtml(d,'es',true).replace('<details class="adm-about">',zoned+'<details class="adm-about">')]);
   if(pk&&pk[0])parts.push(['adm-pk','Pre-K',py,pk[0],pk[1],early('pre-K',pk[0],pk[1],pk[4])]);
   if(pk&&pk[2])parts.push(['adm-3k','3-K',py,pk[2],pk[3],early('3-K',pk[2],pk[3],pk[5])]);
