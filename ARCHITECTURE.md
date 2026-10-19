@@ -20,7 +20,7 @@ fetch_data.py ──> data/*.json   (yearly refresh; MySchools + Snapshot go thr
 - `scripts/build.py` `main()`: loads each data file, trims it to the compact arrays the page uses, and fills the
   template's `__PLACEHOLDERS__`. Comments above each block give the array shapes, e.g. `NZ` rows, `P` programs, `Q` high
   school SAT/readiness/destinations. `priority_steps()` turns MySchools priority groups (names and "There were about 70
-  applicants…" sentences) into the compact steps `P` and `KP` carry. **If you change a shape here, change its reader in the template and in pages.py.**
+  applicants…" sentences) into the compact steps `P` and `KP` carry, and `short_group()` shortens the group names schools word their own way ("Residents of the elementary school zone" → "Elementary school zone"). **If you change a shape here, change its reader in the template and in pages.py.**
 - `scripts/pages.py`: school pages (`page_html`; admissions `ms_adm_html` (MySchools tables per program, `adm_table`, `about_html`) or `k_adm_html` (Local Law 72, the fallback); `extras_html` (middle school classes, sports and activities); charters: `charter_district`, `charter_how`, `CH_APPLY`, led by their lowest level), district pages (`write_districts`, `school_table`, `SORT_JS`,
   `TABS_JS`), the sitemap and shared CSS. It reads the same trimmed data `build.py` builds. `LOCAL_FIX` and `relative()`
   make links work from `file://`.

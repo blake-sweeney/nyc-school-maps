@@ -724,7 +724,8 @@ const HNAME={S:'Screened (grades)',SA:'Screened + assessment',SL:'Screened: lang
 // order it gets offers (build.py priority_steps); the Local Law 72 table (admHtml) is the fallback and sits inside
 // "About this data". Kindergarten groups (KP) arrive with the December directory.
 const KP=D.KP||{};
-function prioName(d,lv,g,i){const m=/^D(\d+)$/.exec(g);return g==='N'?(i?'Everyone else in NYC':'Any NYC student'):g==='S'?'Siblings of students at the school':g==='C'?(lv==='hs'?'Continuing 8th graders':'Continuing students'):g==='Z'?'Students who live in the zone':g==='B'?(BORO[d[2]]||'Borough')+' students and residents':m?'District '+m[1]+' students and residents':g}
+// short names for the table rows (build.py short_group shortens the ones MySchools words its own way)
+function prioName(d,lv,g,i){const m=/^D(\d+)$/.exec(g);return g==='N'?(i?'Everyone else':'Anyone in NYC'):g==='S'?'Siblings':g==='C'?(lv==='hs'?'Continuing 8th graders':'Continuing students'):g==='Z'?'Zone residents':g==='B'?(BORO[d[2]]||'Borough'):m?'District '+m[1]:g}
 // MySchools counts: 12, "~70" (about), "<10" (fewer than 10), 0; offers also "all", "most" (almost all)
 const cnum=v=>typeof v==='number'?v:typeof v!=='string'?null:v[0]==='~'?+v.slice(1):v[0]==='<'?+v.slice(1)/2:null,
   capx=v=>typeof v==='string'&&(v[0]==='~'||v[0]==='<'),

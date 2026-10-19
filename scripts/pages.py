@@ -403,10 +403,10 @@ def programs_html(dbn, progs, hs):
 
 def prio_name(dbn, lv, g, i):
     m = re.fullmatch(r"D(\d+)", g)
-    return ({"N": "Everyone else in NYC" if i else "Any NYC student", "S": "Siblings of students at the school",
-             "C": "Continuing 8th graders" if lv == "hs" else "Continuing students", "Z": "Students who live in the zone",
-             "B": BORO.get(dbn[2], "Borough") + " students and residents"}.get(g)
-            or (f"District {m.group(1)} students and residents" if m else g))
+    return ({"N": "Everyone else" if i else "Anyone in NYC", "S": "Siblings",
+             "C": "Continuing 8th graders" if lv == "hs" else "Continuing students", "Z": "Zone residents",
+             "B": BORO.get(dbn[2], "Borough")}.get(g)
+            or (f"District {m.group(1)}" if m else g))
 
 
 def _cnum(v):  # MySchools counts: 12, "~70" (about), "<10" (fewer than 10; half for sums)

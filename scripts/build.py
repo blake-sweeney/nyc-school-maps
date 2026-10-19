@@ -264,6 +264,29 @@ def _count(t):
     return "~" + n if t.startswith("about") else "<" + n if t[0] in "fl" else int(n)
 
 
+def short_group(nm):
+    """A priority group MySchools words in its own way, shortened for a table row: "Residents of the elementary school
+    zone" -> "Elementary school zone", "District 25 and 28 students and residents" -> "Districts 25 and 28",
+    "Students attending PS 8, PS 153, or PS 173 and to residents of the middle school zone" -> "Attending PS 8, PS 153,
+    or PS 173, or zone residents". Anything else stays as written."""
+    rules = [(r"^Residents of the (.+?) (zones?)$", r"\1 \2"),
+             (r"^(?:Students and Residents of |Students and residents of )?(Districts? [\d ,&]+(?:and \d+)?)(?: students and residents)?$",
+              lambda m: re.sub(r"^District (?=\d+(?:,| and| &))", "Districts ", m.group(1).strip())),
+             (r"^Students and [Rr]esidents of (?:the )?(.+)$", r"\1"),
+             (r"^(Manhattan|Brooklyn|Queens|Bronx|Staten Island) students or residents$", r"\1"),
+             (r"^Students attending (?:or zoned to )?(.+?) and to residents of the middle school zone$", r"Attending \1, or zone residents"),
+             (r"^Students attending or zoned to (.+)$", r"Attending or zoned to \1"),
+             (r"^Students attending (.+)$", r"Attending \1"),
+             (r"^Students residing in the zone and residents of (.+)$", r"Zone residents and \1"),
+             (r"^Continuing (\d+)th grade students$", r"Continuing \1th graders"),
+             (r"^(\d+)th grade students who attend (.+)$", r"\1th graders at \2")]
+    for pat, rep in rules:
+        out = re.sub(pat, rep, nm)
+        if out != nm:
+            return out[:1].upper() + out[1:]
+    return nm
+
+
 def priority_steps(groups, dbn):
     """MySchools priority groups [[name, outcome sentence]] -> the steps the map and pages show, in order.
     A step is [group, applicants, offers]: group "S" siblings, "C" continuing students, "B" the school's borough,
@@ -283,7 +306,7 @@ def priority_steps(groups, dbn):
              "Z" if low in ("students who live in the zoned area", "residents of the middle school zone", "students residing in the zone") else
              "B" if low in (f"{boro} students and residents".lower(), f"{boro} students or residents".lower(),
                             f"students and residents of {boro}".lower(), f"students and residents of the {boro}".lower()) else
-             "D" + str(int(next(x for x in m.groups() if x))) if m else nm[:1].upper() + nm[1:])
+             "D" + str(int(next(x for x in m.groups() if x))) if m else short_group(nm[:1].upper() + nm[1:]))
         if desc is None or not desc.strip():
             out.append([g])
             continue
