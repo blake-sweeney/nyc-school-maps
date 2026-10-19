@@ -9,7 +9,10 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 ## Unreleased
 
 ### Added
-- School cards on the map have a new "Students" section: the school's students by race and ethnicity (Asian or Pacific Islander, Black, Hispanic, White, and everyone else), shown as a bar next to all NYC public schools, plus the share of students in poverty. The summary line gives the two largest groups and the poverty rate ("64% White · 15% Asian · 10% in poverty"). School pages show the same section. The numbers are from the DOE's 2025–26 Demographic Snapshot and cover elementary, middle, high and charter schools.
+- School cards on the map have a new "Demographics" section: who goes to the school, next to all NYC public schools. It shows students by race and ethnicity (Asian or Pacific Islander, Black, Hispanic, White, and everyone else) as a bar and a table, the split between girls and boys ("All boys" at single-sex schools), the share of students in poverty, and the DOE's economic need estimate (students facing hardship, counting temporary housing and where families live). The summary line gives the two largest groups and the poverty rate, and calls out schools that are mostly girls or boys ("88% girls · 61% Hispanic · 27% Black · 80% in poverty"). School pages show the same section. From the DOE's 2025–26 Demographic Snapshot, for elementary, middle, high and charter schools.
+
+### Changed
+- "Students with IEPs" and "English language learners" moved from School details into the new Demographics section, on the map's cards and on school pages. Coloring the map by IEPs now opens Demographics.
 
 ## 1.31.2 (2026-10-19)
 

@@ -452,8 +452,9 @@ def fetch_demographics(path=None):
         fetch_data.py demographics ~/Downloads/demographic-snapshot-*.xlsx
     demographics.json: {"year", "source", "city": row, "schools": {dbn: row}}, row = [total enrollment (3-K and
     pre-K included), Asian and Pacific Islander, Black, Hispanic, White, everyone else (multiracial, Native American,
-    not reported), % in poverty]. Groups are counts. Poverty is a whole percent, or ">95" / "<5" where the DOE hides
-    the number for privacy ("Above 95%", "Below 5%"). "city" is every NYC public school student, charters included."""
+    not reported), % in poverty, Economic Need Index, girls, boys]. Groups, girls and boys are counts (a few students
+    are neither). Poverty and the Economic Need Index are whole percents, or ">95" / "<5" where the DOE hides the number
+    for privacy ("Above 95%", "Below 5%"). "city" is every NYC public school student, charters included."""
     wb = read_demographics(path)
     num = lambda v: int(float(v)) if v not in (None, "") else 0
 
@@ -462,8 +463,8 @@ def fetch_demographics(path=None):
         tot = num(c("Total Enrollment"))
         g = [num(c("# " + k)) for k in DEMO_GROUPS]
         pov = c("% Poverty")
-        pov = {"Above 95%": ">95", "Below 5%": "<5"}.get(pov) or (round(100 * float(pov)) if pov not in (None, "") else None)
-        return [tot, *g, max(0, tot - sum(g)), pov]
+        pct = lambda v: {"Above 95%": ">95", "Below 5%": "<5"}.get(v) or (round(100 * float(v)) if v not in (None, "") else None)
+        return [tot, *g, max(0, tot - sum(g)), pct(pov), pct(c("Economic Need Index")), num(c("# Female")), num(c("# Male"))]
 
     rows = wb["School"]
     h = rows[0]
