@@ -6,7 +6,7 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
-## Unreleased
+## 1.33.0 (2026-10-19)
 
 ### Changed
 - Each school card says right under the school's name whether it's zoned ("Zoned:" or "No zone:"), with a "See this school's priority groups ↓" link that opens the admissions section and scrolls to it. Middle and high schools without a zone no longer show a short summary of who gets priority at the top of the card, since the full priority groups are one tap away. Non-zoned elementary schools keep their district priority note until MySchools posts kindergarten priority groups in December.
