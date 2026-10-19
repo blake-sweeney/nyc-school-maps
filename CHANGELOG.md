@@ -6,6 +6,11 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
+## Unreleased
+
+### Changed
+- On the map's school cards, an open section (like "Admissions, grade 6") now sits on a lightly shaded box, so it's easy to see where it ends and the next section begins.
+
 ## 1.30.0 (2026-10-19)
 
 ### Added
