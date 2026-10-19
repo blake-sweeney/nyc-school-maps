@@ -56,7 +56,9 @@ def zone_svg(dist_rings, zone_polys, other_polys, pt, w=560, h=420, pad=14):
     if pt:
         pts = pts + [pt]
     lat0 = sum(c[1] for c in pts) / len(pts)
-    kx = math.cos(math.radians(lat0))
+    # rounded: math.cos can differ in its last bit between macOS and Linux, which moved a few points across a pixel
+    # boundary and made the two builds disagree (#29)
+    kx = round(math.cos(math.radians(lat0)), 12)
     xs = [c[0] * kx for c in pts]
     ys = [c[1] for c in pts]
     x0, x1, y0, y1 = min(xs), max(xs), min(ys), max(ys)
