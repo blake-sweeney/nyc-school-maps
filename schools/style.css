@@ -56,7 +56,7 @@ h3.prio-h{font-size:1.05rem;margin:20px 0 6px}h3.prio-p{font-size:.95rem;margin:
 .prio li::before{content:counter(prio);position:absolute;left:0;top:9px;width:20px;height:20px;border-radius:50%;background:var(--line);font-size:.75rem;font-weight:700;line-height:20px;text-align:center}
 .prio small{display:block;color:var(--muted);font-size:.85rem;font-variant-numeric:tabular-nums}
 .progs li{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid var(--line);font-size:.95rem}
-.progs small{display:block;color:var(--muted);font-size:.8rem}.progs b{font-family:var(--display);white-space:nowrap;font-variant-numeric:tabular-nums}
+.progs small{display:block;color:var(--muted);font-size:.8rem}.progs b small{font-family:var(--body);font-weight:400;text-align:right}.progs b{font-family:var(--display);white-space:nowrap;font-variant-numeric:tabular-nums}
 .near{list-style:none;margin:0;padding:0;columns:2;column-gap:20px;font-size:.92rem}
 .near li{break-inside:avoid;margin:0 0 4px}
 @media (max-width:640px){.near{columns:1}.dest{grid-template-columns:1fr}.bar-row{grid-template-columns:minmax(0,1fr) 80px 48px}}

@@ -6,6 +6,16 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
+## Unreleased
+
+### Added
+- School details now say whether the school's building is fully, partially or not accessible, from MySchools, for elementary, middle and high schools.
+- Middle school program lists include District 75 and autism (ASD Nest, Horizon and ACES) programs, listed last, as high school lists already did.
+
+### Changed
+- Middle and high school program lists now say what their numbers count, so they don't look like they contradict the admissions numbers above them. Program seats and applicants come from MySchools for fall 2026 and cover general education seats and every student who listed the program ("219 seats · 433 listed it"). Each program now also shows its seats for students with disabilities, how many students listed them and whether they filled ("Special ed: 64 seats · 42 listed it"), so the seats add up to the admissions total. The admissions numbers are from the DOE's fall 2025 report and count only students who didn't get a choice they ranked higher; "About this data" explains the difference.
+- "Students with IEPs" and "English language learners" in School details are counts of students now, like "159 of 1,030 (15%)", not just a percentage.
+
 ## 1.29.1 (2026-10-16)
 
 ### Changed

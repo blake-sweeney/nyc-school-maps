@@ -10,6 +10,10 @@ SNAPSHOT_YEAR = "2025"
 SNAPSHOT_LABEL = f"{int(SNAPSHOT_YEAR) - 1}–{SNAPSHOT_YEAR[2:]}"   # "2024–25"
 # Pre-K and 3-K seats and applicants: the DOE's Local Law 72 admissions report (data/prek.json)
 PREK_LABEL = "fall 2025"
+# MySchools directories (data/ms_directory.json, hs_directory.json, k_priority.json): the admissions round their
+# "last year" seats, applicants and priority groups describe. The 2026-27 directories report fall 2026 admissions;
+# fetch_data.py warns when a download's school year doesn't match.
+MYSCHOOLS_LABEL = "fall 2026"
 # Building use: the SCA's Enrollment, Capacity & Utilization Report ("Blue Book", data/utilization.json)
 BLUE_BOOK_LABEL = "2025–26"
 

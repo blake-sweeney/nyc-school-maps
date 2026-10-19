@@ -32,7 +32,7 @@ ELA_DATASET = "iebs-5yhr"         # ELA Test Results 2013-2023
 MATH_DATASET = "74kb-55u9"        # Math Test Results 2013-2023
 TEST_YEAR = "2023"
 SNAPSHOT_API = "https://tools.nycenet.edu/api/v1/data/school/app/snapshot/all"
-from settings import SNAPSHOT_YEAR  # which School Quality Snapshot (scripts/settings.py)
+from settings import SNAPSHOT_YEAR, MYSCHOOLS_LABEL  # which Snapshot and MySchools year (scripts/settings.py)
 CENTERLINE_DATASET = "inkn-q76z"  # NYC Street Centerline (CSCL)
 NTA_DATASET = "9nt8-h7nd"         # 2020 Neighborhood Tabulation Areas (NYC Planning)
 
@@ -562,8 +562,53 @@ def fetch_neighborhoods():
 
 
 
+def fetch_snapshot_counts():
+    """English language learners and students with IEPs as counts (the Snapshot's ell_n, iep_n), for every school whose
+    Snapshot values we keep: snapshot_counts.json {dbn: {report type: [enrollment, ELL, IEP]}}. The enrollment is the
+    Snapshot's own, so build.py can match each count to the enrollment the card shows. Run after "snapshot",
+    "snapshot-raw" or "charter-snapshot"."""
+    jobs = {}  # (dbn, report type) from each file that feeds the cards' Snapshot facts
+
+    def add(path, pick):
+        if os.path.exists(os.path.join(DATA, path)):
+            with open(os.path.join(DATA, path), encoding="utf-8") as f:
+                d = json.load(f)
+                for dbn, v in (d["schools"] if "schools" in d else d).items():  # charter_snapshot.json wraps its schools
+                    for rt in pick(dbn, v):
+                        jobs[(dbn, rt)] = 1
+    ratings = {}
+    if os.path.exists(os.path.join(DATA, "snapshot_ratings.json")):
+        with open(os.path.join(DATA, "snapshot_ratings.json"), encoding="utf-8") as f:
+            ratings = json.load(f)
+    add("snapshot_extra.json", lambda dbn, v: [ratings[dbn][5]] if dbn in ratings and ratings[dbn][5] else [])
+    add("nonzoned_snapshot.json", lambda dbn, v: [v["r"][5]] if v.get("r") and v["r"][5] else [])
+    add("ms_snapshot.json", lambda dbn, v: [v["r"][5]] if v.get("r") and v["r"][5] else [])
+    add("charter_snapshot.json", lambda dbn, v: list(v))
+
+    def one(job):
+        dbn, rt = job
+        try:
+            rows = get_json(f"{SNAPSHOT_API}/{SNAPSHOT_YEAR}/{dbn}/{rt}")
+        except Exception:
+            return job, None
+        v = {r["varname"]: r["value"] for r in (rows.values() if isinstance(rows, dict) else rows)}
+        n = lambda k: int(float(v[k])) if str(v.get(k) or "").replace(".", "", 1).isdigit() else None
+        return job, [n("enrollment"), n("ell_n"), n("iep_n")]
+
+    out, missing = {}, 0
+    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:
+        for (dbn, rt), row in pool.map(one, sorted(jobs)):
+            if row and row[0] is not None:
+                out.setdefault(dbn, {})[rt] = row
+            else:
+                missing += 1
+    print(f"  {len(jobs)} Snapshot reports, {missing} without counts")
+    save("snapshot_counts.json", out)
+
+
 STEPS = {"zones": fetch_zones, "tests": fetch_tests, "snapshot": fetch_snapshot, "streets": fetch_streets,
-         "classsize": fetch_class_size, "neighborhoods": fetch_neighborhoods, "charters": fetch_charters}
+         "classsize": fetch_class_size, "neighborhoods": fetch_neighborhoods, "charters": fetch_charters,
+         "snapshot-counts": fetch_snapshot_counts}
 
 def fetch_prek(path):
     """Pre-K and 3-K seats, applicants and offers per school, from the DOE's Local Law 72 admissions report.
@@ -841,12 +886,20 @@ def fetch_utilization(path):
 BROWSER = os.path.join(ROOT, "scripts", "browser")
 SPECIAL_MS = ("ASD/ACES Program", "D75 Special Education Inclusive Services")
 MS_CODE = {"Open": "O", "Zone Priority": "Z", "Screened": "S", "Screened With Assessment": "SA", "Audition": "A",
-           "Talent Test": "T", "Language Criteria": "L"}
+           "Talent Test": "T", "Language Criteria": "L", "ASD/ACES Program": "ASD",
+           "D75 Special Education Inclusive Services": "D75"}
 
 
 def _demand(q):
     g = ((q.get("demand_last_year") or {}).get("general_education")) or {}
     return g.get("seats"), g.get("applicants"), g.get("all_seats_filled")
+
+
+def _swd_demand(q):
+    """Seats for students with disabilities, applicants for them and whether all were filled, which MySchools counts
+    apart from the general education ones."""
+    w = ((q.get("demand_last_year") or {}).get("students_with_disabilities")) or {}
+    return w.get("seats"), w.get("applicants"), None if w.get("all_seats_filled") is None else int(w["all_seats_filled"])
 
 
 def _addr(x):
@@ -962,7 +1015,9 @@ def _ms_extras(x):
 def _myschools_ms(schools):
     """ms_directory.json rows: [dbn, name, address, lat, lon,
     programs [[name ('' = the school's main program), method code, seats, applicants, all seats filled, diversity set-aside,
-               priority groups]], classes, sports and activities (_ms_extras)]"""
+               priority groups, seats for students with disabilities, their applicants, all filled]] (District 75 and
+               ASD/ACES programs too, whose seats are all for students with disabilities),
+     classes, sports and activities (_ms_extras)]"""
     out = []
     for x in schools:
         dbn = x["school"]["dbn"]
@@ -970,15 +1025,15 @@ def _myschools_ms(schools):
         name = _strip_dbn(x["name"])
         ps = [q for q in x["programs"] if (q.get("admissions_method") or {}).get("name") not in SPECIAL_MS]
         progs = []
-        for q in ps:
+        for q in ps + [q for q in x["programs"] if q not in ps]:  # District 75 and ASD/ACES programs last
             method = (q.get("admissions_method") or {}).get("name", "")
             pname = _strip_dbn(q["name"], q["program"]["code"])
-            pname = "" if len(ps) == 1 else _program_label(pname, name, dbn)
-            if not pname and len(ps) > 1 and any(not p[0] for p in progs):
+            pname = "" if len(ps) == 1 and q in ps else _program_label(pname, name, dbn)
+            if not pname and (q not in ps or any(not p[0] for p in progs)):
                 pname = _strip_dbn(q["name"], q["program"]["code"])  # only one main program per school
             seats, apps, filled = _demand(q)
             progs.append([pname, MS_CODE.get(method, method), seats, apps, None if filled is None else int(filled),
-                          1 if q.get("diversity_in_admission_1") else 0, _priority_groups(q)])
+                          1 if q.get("diversity_in_admission_1") else 0, _priority_groups(q), *_swd_demand(q)])
         out.append([dbn, name, addr.upper(), lat, lon, progs, _ms_extras(x)])
     save("ms_directory.json", out)
     print(f"  middle school: {len(out)} schools, {sum(1 for r in out if any(p[6] for p in r[5]))} with priority groups")
@@ -1000,7 +1055,7 @@ def _myschools_hs(schools, fetched):
             progs.append({"c": q["program"]["code"], "n": re.sub(r"\s*\(\w+\)$", "", q["name"]), "m": (q.get("admissions_method") or {}).get("name"),
                           "shs": q["program"].get("is_shs"), "lg": q["program"].get("is_lg"),
                           "s": g.get("seats"), "ap": g.get("applicants"), "aps": g.get("applications_per_seat"),
-                          "f": g.get("all_seats_filled"), "ws": w.get("seats"), "wa": w.get("applicants"),
+                          "f": g.get("all_seats_filled"), "ws": w.get("seats"), "wa": w.get("applicants"), "wf": w.get("all_seats_filled"),
                           "pg": _priority_groups(q),
                           "d1": q.get("diversity_in_admission_1"), "sc": [z.get("name") for z in q.get("selection_criteria") or []]})
         out.append({"dbn": s["dbn"], "id": x.get("id"), "n": re.sub(r"\s*\(\w+\)$", "", x["name"]), "a": a.get("address_1"),
@@ -1016,6 +1071,25 @@ def _myschools_hs(schools, fetched):
     print(f"  high school: {len(out)} schools")
 
 
+def import_accessibility(paths):
+    """Building accessibility from MySchools directory downloads (any of kindergarten, middle, high school), merged into
+    accessibility.json: {dbn: "F" fully accessible, "P" partially, "N" not accessible}. Merged, not replaced, so
+    importing only the middle and high school directories keeps the elementary schools from the kindergarten one."""
+    path = os.path.join(DATA, "accessibility.json")
+    acc = {}
+    if os.path.exists(path):
+        with open(path, encoding="utf-8") as f:
+            acc = json.load(f)
+    code = {"Fully Accessible": "F", "Partially Accessible": "P", "Not Accessible": "N"}
+    for p in paths:
+        with open(os.path.expanduser(p), encoding="utf-8") as f:
+            for x in json.load(f)["schools"]:
+                if x.get("accessibility") in code:
+                    acc[x["school"]["dbn"]] = code[x["accessibility"]]
+    save("accessibility.json", dict(sorted(acc.items())))
+    print(f"  accessibility: {len(acc)} schools")
+
+
 def import_myschools(paths):
     """Turn myschools_k.json / myschools_ms.json / myschools_hs.json (from scripts/browser/myschools.js) into
     nonzoned_k.json + citywide_gt_k.json, ms_directory.json and hs_directory.json."""
@@ -1025,6 +1099,10 @@ def import_myschools(paths):
         source, schools = raw.get("source", ""), raw["schools"]
         pid = source.rsplit(" ", 1)[-1]
         print(f"  {os.path.basename(path)}: {len(schools)} schools ({source})")
+        # the 2026-27 directory's "last year" is fall 2026 admissions: the site labels it settings.MYSCHOOLS_LABEL
+        sy = next((x["school"].get("school_year") for x in schools if x["school"].get("school_year")), "")
+        if sy[:4].isdigit() and sy[:4] not in MYSCHOOLS_LABEL:
+            print(f"  WARNING: this directory is the {sy}; set MYSCHOOLS_LABEL in scripts/settings.py to \"fall {sy[:4]}\"")
         if pid == "4":
             _myschools_k(schools)
         elif pid == "6":
@@ -1033,6 +1111,7 @@ def import_myschools(paths):
             _myschools_hs(schools, raw.get("fetched", ""))
         else:
             print(f"  skip {path}: not a kindergarten, middle or high school directory")
+    import_accessibility(paths)
 
 
 def _zoned(name):
@@ -1224,6 +1303,10 @@ if __name__ == "__main__":
     if args[:1] == ["myschools"] and len(args) >= 2:  # files from scripts/browser/myschools.js
         print("-- myschools (from browser downloads)")
         import_myschools(args[1:])
+        sys.exit()
+    if args[:1] == ["accessibility"] and len(args) >= 2:  # just building accessibility, from the same downloads
+        print("-- accessibility (from browser downloads)")
+        import_accessibility(args[1:])
         sys.exit()
     if args[:1] == ["snapshot-job"]:  # writes ~/Downloads/snapshot_job.js to paste into the browser
         snapshot_job(args[1] if len(args) > 1 else None)
