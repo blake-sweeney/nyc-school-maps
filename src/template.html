@@ -138,6 +138,14 @@ aside>*{flex-shrink:0}
 .dest li{display:flex;align-items:center;gap:6px;font-size:.8rem}.dest li i{width:9px;height:9px;border-radius:2px;flex:none}.dest li b{margin-left:auto;font-family:var(--display);font-variant-numeric:tabular-nums}
 .dest+.facts{margin-top:10px}
 .dest small{color:var(--muted);font-size:.75rem}
+.dm{display:grid;grid-template-columns:1fr auto auto;gap:3px 10px;align-items:center;font-size:.85rem;font-variant-numeric:tabular-nums}
+.dm .dbar{grid-column:1/-1;display:flex;gap:2px;background:none}.dm .dbar i{min-width:2px}.dm .dbar.city{height:6px;margin-bottom:4px}
+.dm .bl{grid-column:1/-1;font-size:.75rem;color:var(--muted);margin-top:2px}
+.dm .hd{font-size:.75rem;color:var(--muted);text-align:right}
+.dm .g{display:flex;align-items:center;gap:6px;min-width:0}.dm .g i{width:9px;height:9px;border-radius:2px;flex:none}
+.dm b{font-family:var(--display);font-weight:600;text-align:right}.dm .c{color:var(--muted);text-align:right}
+.dm .pov{border-top:1px solid var(--line);padding-top:4px;margin-top:2px}
+.dm small{grid-column:1/-1;color:var(--muted);font-size:.75rem;margin-top:2px}
 .scores small,.facts small{grid-column:1/-1;color:var(--muted)}
 .facts small{font-size:.75rem;margin-top:2px}
 .adm{display:flex;flex-direction:column;gap:4px;font-size:.85rem}
@@ -422,7 +430,7 @@ aside>*{flex-shrink:0}
       <p><a href="https://github.com/blake-sweeney/nyc-school-maps" target="_blank" rel="noopener">Source code</a> (AGPL-3.0)</p>
       <p class="asof">Zones: NYC DOE Find a School, __ZONES_DATE__ · Ratings, test scores and programs: DOE __SNAPSHOT__ School Quality Snapshot · Updated __UPDATED__ · <a href="https://github.com/blake-sweeney/nyc-school-maps/blob/main/CHANGELOG.md" target="_blank" rel="noopener">v__VERSION__</a></p>
       <details><summary>Data sources</summary>
-        <p>School zones from the DOE’s <a href="https://schoolsearch.schools.nyc/" target="_blank" rel="noopener">Find a School</a> map. Thanks to Jimmy Chion’s <a href="https://schoolzones.nyc/" target="_blank" rel="noopener">schoolzones.nyc</a> for pointing the way to the DOE’s current zone data. School names and addresses from the 2019–20 DOE location list. State test results, ratings, programs and current school names from the DOE’s <a href="https://tools.nycenet.edu/snapshot/" target="_blank" rel="noopener">__SNAPSHOT__ School Quality Snapshot</a>. Shared zones show the combined result of all their schools. Address lookup by NYC Planning’s GeoSearch.</p>
+        <p>School zones from the DOE’s <a href="https://schoolsearch.schools.nyc/" target="_blank" rel="noopener">Find a School</a> map. Thanks to Jimmy Chion’s <a href="https://schoolzones.nyc/" target="_blank" rel="noopener">schoolzones.nyc</a> for pointing the way to the DOE’s current zone data. School names and addresses from the 2019–20 DOE location list. State test results, ratings, programs and current school names from the DOE’s <a href="https://tools.nycenet.edu/snapshot/" target="_blank" rel="noopener">__SNAPSHOT__ School Quality Snapshot</a>. Students’ race, ethnicity and poverty from the DOE’s __DEMOGRAPHICS__ Demographic Snapshot. Shared zones show the combined result of all their schools. Address lookup by NYC Planning’s GeoSearch.</p>
       </details>
     </div>
   </aside>
@@ -588,13 +596,13 @@ async function loadLevel(lv){if(LV[lv])return true;if(!ASSETS[lv])return false;
   try{const x=await getAsset(lv);
     Object.entries(x.schools).forEach(([d,s])=>{S[d]=Object.assign({},s,S[d]||{})});snapNames(Object.keys(x.schools));
     if(x.O)Object.assign(O,x.O);if(x.Q)Object.assign(Q,x.Q);
-    LV[lv]={F:x.features,T:x.T||{},S:x.schools,P:x.P||{},A:x.A||{},EX:x.EX||{},EXV:x.EXV||[],NZ:allNZ(x,lv),CUT:x.CUT||null,CHR:x.CHR||{},CHX:x.CHX||{}};if(x.R)Object.entries(x.R).forEach(([k,v])=>{if(!R[k])R[k]=v});if(x.X)Object.entries(x.X).forEach(([k,v])=>{if(!X[k])X[k]=v});regNZ(LV[lv].NZ);return true}
+    LV[lv]={F:x.features,T:x.T||{},S:x.schools,P:x.P||{},A:x.A||{},EX:x.EX||{},EXV:x.EXV||[],NZ:allNZ(x,lv),CUT:x.CUT||null,CHR:x.CHR||{},CHX:x.CHX||{}};if(x.R)Object.entries(x.R).forEach(([k,v])=>{if(!R[k])R[k]=v});if(x.X)Object.entries(x.X).forEach(([k,v])=>{if(!X[k])X[k]=v});if(x.DM)Object.assign(DM,x.DM);regNZ(LV[lv].NZ);return true}
   catch(e){alertLoad();return false}finally{document.body.style.cursor=''}}
 function alertLoad(){const m=document.getElementById('llmsg');if(m){m.textContent='Couldn’t load that part of the map. Check your connection and try again.';m.hidden=false}}
 const RK={ip:2,ss:3,rf:4},RNAME={ip:'Instruction and Performance',ss:'Safety and School Climate',rf:'Relationships with Families'};
 const isRate=m=>m==='comp'||m in RK;
 // extra Snapshot fields: [enrollment, attendance %, teachers 3+ yrs %, principal yrs, dual language, ELL %, IEP %, economic need %, admissions, median distance mi]
-const X=D.X||{},XN=D.XN||{},AC=D.AC||{},AC_TXT={F:'Fully accessible',P:'Partially accessible',N:'Not accessible'};
+const X=D.X||{},XN=D.XN||{},DM=Object.assign({},D.DM,MSD&&MSD.DM,HSD&&HSD.DM),DMC=D.DMC,AC=D.AC||{},AC_TXT={F:'Fully accessible',P:'Partially accessible',N:'Not accessible'};
 // class size (DOE report, Feb 2025-26): k = kindergarten, e = grades 1-5, ms / hs = core classes. Shown in the zone card only: it isn't a quality measure, so it isn't a map color
 const CS=D.CS||{};
 const ENR_BINS=[[250,'#dbe9f6'],[400,'#9ecae1'],[550,'#5a9fcf'],[750,'#2b6fae'],[Infinity,'#0d3d78']];
@@ -1107,6 +1115,22 @@ function factsHtml(d){const x=X[d]||[],c=CS[d]||{},u=U[d];if(!X[d]&&!CS[d]&&!u&&
   const cs=v=>v!=null?Math.round(v)+' students':null;
   const row=(k,v)=>v==null?'':'<span>'+k+'</span><b>'+v+'</b>';
   const h=row('Attendance',x[1]!=null?x[1]+'%':null)+row('Teachers with 3+ years’ experience',x[2]!=null?x[2]+'%':null)+row('Principal’s years at school',x[3]!=null?(Math.round(x[3]*10)/10):null)+(level==='es'?row('Kindergarten class size',cs(c.k))+row('Grades 1–5 class size',cs(c.e)):row('Core class size',cs(level==='ms'?c.ms:c.hs)))+row('Building use (how full)',u?u[0]+'% of capacity':null)+row('Students with IEPs (special ed)',ofAll(d,2,x[6]))+row('English language learners',ofAll(d,1,x[5]))+row('Building accessibility',AC_TXT[AC[d]])+'';return h?'<div class="facts">'+h+'</div>':''}
+// who goes to the school (DOE Demographic Snapshot, __DEMOGRAPHICS__): DM rows are [enrollment, then counts in
+// DEMO_GROUPS order, then % in poverty or ">95" / "<5"], DMC the same for all of NYC
+const DEMO_GROUPS=__DEMO_GROUPS__;  // scripts/settings.py
+function dmPct(n,t){const q=t?100*n/t:0;return (q>0&&q<1?'<1':Math.round(q))+'%'}
+function dmPov(p){return p==null?'n/a':p==='>95'?'Over 95%':p==='<5'?'Under 5%':p+'%'}
+function demoSec(d){const m=DM[d];if(!m||!m[0])return '';const g=m.slice(1,1+DEMO_GROUPS.length),pv=m[1+DEMO_GROUPS.length],c=DMC;
+  const bar=(v,cl)=>'<div class="dbar'+(cl?' '+cl:'')+'">'+v.map((n,i)=>n?'<i style="flex:'+n+' 1 0;background:'+DEMO_GROUPS[i][1]+'"></i>':'').join('')+'</div>';
+  const top=g.map((n,i)=>[n,i]).filter(x=>x[1]<DEMO_GROUPS.length-1&&x[0]).sort((a,b)=>b[0]-a[0]).slice(0,2).map(x=>dmPct(x[0],m[0])+' '+DEMO_GROUPS[x[1]][0].split(' ')[0]);
+  const lab=DEMO_GROUPS.map(x=>x[0]+' '),aria=t=>' role="img" aria-label="'+t+'"';
+  const h='<div class="dm"><span class="bl">This school · '+m[0].toLocaleString()+' students</span>'+bar(g).replace('<div class="dbar"','<div class="dbar"'+aria(g.map((n,i)=>lab[i]+dmPct(n,m[0])).join(', ')))+
+    (c?'<span class="bl">All NYC public schools</span>'+bar(c.slice(1,1+DEMO_GROUPS.length),'city'):'')+
+    '<span></span><span class="hd">School</span><span class="hd">'+(c?'NYC':'')+'</span>'+
+    DEMO_GROUPS.map((x,i)=>'<span class="g"><i style="background:'+x[1]+'"></i>'+x[0]+'</span><b>'+dmPct(g[i],m[0])+'</b><span class="c">'+(c?dmPct(c[1+i],c[0]):'')+'</span>').join('')+
+    '<span class="g pov">Students in poverty</span><b class="pov">'+dmPov(pv)+'</b><span class="c pov">'+(c?dmPov(c[1+DEMO_GROUPS.length]):'')+'</span>'+
+    '<small>DOE Demographic Snapshot, __DEMOGRAPHICS__. Counts every student, 3-K and pre-K included. Poverty: families who qualify for free or reduced-price lunch or get HRA benefits (like SNAP)'+(CHX[d]?'; it can be undercounted at charter schools that don’t use DOE school food':'')+'.</small></div>';
+  return sec('demo','<span class="st">Students<small>'+top.concat(pv!=null?[dmPov(pv).replace('Over','over').replace('Under','under')+' in poverty']:[]).join(' · ')+'</small></span>',h)}
 // school card: sections that open and close. Each viewer's choice is remembered in this browser; the Color by
 // metric also opens the section that shows it (without changing what's remembered).
 const SEC_KEY='nsz-card-v1',SEC={},SEC_FOR={scr:'progs',ip:'rate',ss:'rate',rf:'rate',ela:'tests',math:'tests',coll:'out',ccr:'out',sat:'out',iep:'facts'};
@@ -1190,7 +1214,7 @@ function kindText(p){const n=p.dbns.length,k=zoneKind(p);
   return '<b>Shared zone:</b> families here get zoned priority at all '+n+' schools below and can rank any of them.'}
 // one school's details (zoned or not)
 function schoolBlock(d){const s=S[d],n=X[d]&&X[d][0]!=null?X[d][0].toLocaleString()+' students':'',gr=s&&s.g?'Grades '+esc(grades(s.g,d)):'',ch=!!CHX[d];
-  return '<div class="school"><span class="nm"><a class="nm-link" href="'+pageUrl(d)+'">'+esc(short(d))+'</a> <span class="dbn">('+esc(d)+')</span></span>'+addrHtml(d)+(gr||n?'<span class="meta">'+[gr,n].filter(Boolean).join(' · ')+'</span>':'')+tagsHtml(d)+(level==='hs'?zonedHtml(d):'')+'<hr class="sep">'+rateSec(d)+(level==='hs'?outSec(d):testSec(d))+(level==='es'?esAdmHtml(d):admSec(d)+cutSec(d)+progSec(d)+exSec(d))+(factsHtml(d)?sec('facts','<span class="st">School details</span>',factsHtml(d)):'')+'<hr class="sep">'+'<div class="links">'+'<a href="'+pageUrl(d)+'"><b>Full school page →</b></a>'+(ch?'<a href="'+CH_APPLY+'" target="_blank" rel="noopener"><b>How to apply to charter schools ↗</b></a>':'<a href="'+mySchoolsUrl(d)+'" target="_blank" rel="noopener"><b>MySchools: apply &amp; see your chances ↗</b></a>')+'<a href="https://www.schools.nyc.gov/schools/'+esc(d.slice(2))+'" target="_blank" rel="noopener">School website ↗</a></div></div>'}
+  return '<div class="school"><span class="nm"><a class="nm-link" href="'+pageUrl(d)+'">'+esc(short(d))+'</a> <span class="dbn">('+esc(d)+')</span></span>'+addrHtml(d)+(gr||n?'<span class="meta">'+[gr,n].filter(Boolean).join(' · ')+'</span>':'')+tagsHtml(d)+(level==='hs'?zonedHtml(d):'')+'<hr class="sep">'+rateSec(d)+(level==='hs'?outSec(d):testSec(d))+(level==='es'?esAdmHtml(d):admSec(d)+cutSec(d)+progSec(d)+exSec(d))+(factsHtml(d)?sec('facts','<span class="st">School details</span>',factsHtml(d)):'')+demoSec(d)+'<hr class="sep">'+'<div class="links">'+'<a href="'+pageUrl(d)+'"><b>Full school page →</b></a>'+(ch?'<a href="'+CH_APPLY+'" target="_blank" rel="noopener"><b>How to apply to charter schools ↗</b></a>':'<a href="'+mySchoolsUrl(d)+'" target="_blank" rel="noopener"><b>MySchools: apply &amp; see your chances ↗</b></a>')+'<a href="https://www.schools.nyc.gov/schools/'+esc(d.slice(2))+'" target="_blank" rel="noopener">School website ↗</a></div></div>'}
 // a big no-zone area (most of the city in the high school view) spans many districts: a click there selects
 // just the district under the click, outlined, instead of the whole area
 function distAt(ll){const x=ll.lng,y=ll.lat;for(const [k,v] of Object.entries(DIST)){let inside=false;

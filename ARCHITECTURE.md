@@ -21,11 +21,11 @@ fetch_data.py ──> data/*.json   (yearly refresh; MySchools + Snapshot go thr
   template's `__PLACEHOLDERS__`. Comments above each block give the array shapes, e.g. `NZ` rows, `P` programs, `Q` high
   school SAT/readiness/destinations. `priority_steps()` turns MySchools priority groups (names and "There were about 70
   applicants…" sentences) into the compact steps `P` and `KP` carry; `K_ZONED_PRIORITY` is the DOE's standard kindergarten order for zoned schools (`KPZ`). **If you change a shape here, change its reader in the template and in pages.py.**
-- `scripts/pages.py`: school pages (`page_html`; admissions `k_adm_html` with `priority_html`; `extras_html` (middle school classes, sports and activities); charters: `charter_district`, `charter_how`, `CH_APPLY`, led by their lowest level), district pages (`write_districts`, `school_table`, `SORT_JS`,
+- `scripts/pages.py`: school pages (`page_html`; admissions `k_adm_html` with `priority_html`; `extras_html` (middle school classes, sports and activities); `demo_html` ("Students"); charters: `charter_district`, `charter_how`, `CH_APPLY`, led by their lowest level), district pages (`write_districts`, `school_table`, `SORT_JS`,
   `TABS_JS`), the sitemap and shared CSS. It reads the same trimmed data `build.py` builds. `LOCAL_FIX` and `relative()`
   make links work from `file://`.
 - `scripts/neighborhoods.py`: one page per neighborhood, listing the zones that cover it.
-- `scripts/fetch_data.py`: one command per source (`zones`, `myschools`, `snapshot-job`, `snapshot-raw`, `snapshot-counts`, `accessibility`, `admissions`, `charters`, `charter-snapshot`, …).
+- `scripts/fetch_data.py`: one command per source (`zones`, `myschools`, `snapshot-job`, `snapshot-raw`, `snapshot-counts`, `accessibility`, `admissions`, `charters`, `demographics`, `charter-snapshot`, …).
   The README's "Refresh the data" section is the checklist.
 
 ## src/template.html
@@ -36,7 +36,7 @@ The script runs top to bottom in roughly this order:
 | Area | Look for |
 | - | - |
 | Data and levels | `D`, `MSD`, `HSD`, `LV` (per-level data: es / ms / hs), `loadLevel`, `getAsset` (loads assets/*.js by script tag so file:// works) |
-| Per-school data | `R` ratings, `S` tests, `O`/`Q` high school outcomes, `X` Snapshot extras, `CS` class size, `U` building use, `PK` pre-K/3-K, `KA` kindergarten admissions, `KP` kindergarten priority groups (`D.KPZ`: the DOE's standard order at zoned schools until MySchools posts them), `P` programs (`p[6]`: priority groups, `p[7..9]`: special ed seats, applicants, all filled; District 75 and ASD/ACES programs last), `XN` English learner and IEP counts, `AC` building accessibility, `EX`/`EXV` middle school classes, sports and activities (indexes into one name list) |
+| Per-school data | `R` ratings, `S` tests, `O`/`Q` high school outcomes, `X` Snapshot extras, `CS` class size, `U` building use, `PK` pre-K/3-K, `KA` kindergarten admissions, `KP` kindergarten priority groups (`D.KPZ`: the DOE's standard order at zoned schools until MySchools posts them), `P` programs (`p[6]`: priority groups, `p[7..9]`: special ed seats, applicants, all filled; District 75 and ASD/ACES programs last), `XN` English learner and IEP counts, `AC` building accessibility, `DM`/`DMC` race, ethnicity and poverty (school / all NYC; `MS.DM`, `HS.DM` merge in when a level loads), `EX`/`EXV` middle school classes, sports and activities (indexes into one name list) |
 | Layer toggles | `LAY`, `LAY_KEY` (localStorage `nsz-layers-v1`), `saveLay`, `applyLayers`, `syncZoneLines`, `clearZoneSel` |
 | Schools without a zone | `nzGet`, `regNZ`, `nzOptions`, `nzPriority`, `nzDemand`, `buildNZ`, `nzTip`, `selectNZ`, `gtStar` |
 | Charter schools | `CHX` (grades, enrollment, former name), `allNZ` (charter `CH` rows join `NZ`, flagged `o.ch`), `chBlock` (lottery card text, `CH_APPLY`), `chOptions` (the zone card's charter list), `distOf` / `boroOf` (district and borough from the row, not the DBN), `chReports` (K–12 charters: high school ratings in the high school view), `.chm` squares, layer key `ch` |
@@ -47,7 +47,7 @@ The script runs top to bottom in roughly this order:
 | Markers | `nzSize` (size by zoom), `markerScale`, `farScale`, `selSize`, `buildZS` (zoned bullseyes), `buildDots`, `sizeDots`, `markersByZoom`, `pairs` / `pairOn` / `pairGap` (a school without a zone in a zoned school's building: side by side, both labeled) |
 | Labels | `drawLabels` (collision-avoiding: marker names first, then zone labels, biggest zones first) |
 | Districts | `buildDistricts`, `buildDistFill`, `drawDistNums`, `syncDistricts` |
-| School card | `schoolBlock`, `sec`/`SEC_KEY` (open/closed sections remembered), `rateSec`, `testSec`, `outSec`, `admSec`, `esAdmHtml`, `admHtml`, `prioList`/`prioHtml` (priority groups inside the entry grade's admissions section), `cutSec`, `progSec`/`progHtml` (`swd` for special ed seats), `ofAll` ("159 of 1,030"), `exSec` (classes, sports and activities), `destHtml`, `advHtml`, `factsHtml`, `chip` |
+| School card | `schoolBlock`, `sec`/`SEC_KEY` (open/closed sections remembered), `rateSec`, `testSec`, `outSec`, `admSec`, `esAdmHtml`, `admHtml`, `prioList`/`prioHtml` (priority groups inside the entry grade's admissions section), `cutSec`, `progSec`/`progHtml` (`swd` for special ed seats), `ofAll` ("159 of 1,030"), `exSec` (classes, sports and activities), `demoSec` (the "Students" section; `DEMO_GROUPS` labels and colors from settings.py), `destHtml`, `advHtml`, `factsHtml`, `chip` |
 | Links | `pageUrl`/`pageLink` (school pages), `zoneUrl`/`setZoneHash`, `mySchoolsUrl`, `copyLink`, `drillIn`/`goBack` (history) |
 | Search | `buildIdx` (school names), `geo`/`GEO` (NYC Planning GeoSearch, no key), `locate` (point in zone), `listKeys` |
 | Color by | `METRIC_NAME`, `GROUP_SRC`, `showGroup`, `Legend`, `syncLegend`, `setColorParam`/`applyColorParam` (`?c=` in the URL) |

@@ -475,6 +475,41 @@ def of_all(n, x, i, j):
     return pct(x[j]) if x and len(x) > j else None
 
 
+def demo_pct(n, t):
+    q = 100 * n / t if t else 0
+    return f"{'<1' if 0 < q < 1 else round(q)}%"
+
+
+def demo_pov(p):
+    return "n/a" if p is None else {">95": "Over 95%", "<5": "Under 5%"}.get(p, f"{p}%")
+
+
+def demo_html(m, city, ch):
+    """Who goes to the school (build.py DM row; city: DMC), as on the map's card (src/template.html demoSec): race and
+    ethnicity bars for the school and all of NYC, then a table of both, then poverty."""
+    if not m or not m[0]:
+        return ""
+    k = len(settings.DEMO_GROUPS)
+
+    def dbar(row, cls=""):
+        return (f'<div class="dbar dm-bar{cls}">' + "".join(
+            f'<i style="flex:{n} 1 0;background:{c}"></i>' for n, (_, c) in zip(row[1:1 + k], settings.DEMO_GROUPS) if n)
+            + "</div>")
+    rows = "".join(f'<tr><th><i style="background:{c}"></i>{e(name)}</th><td>{demo_pct(m[1 + i], m[0])}</td>'
+                   f'<td>{demo_pct(city[1 + i], city[0]) if city else ""}</td></tr>'
+                   for i, (name, c) in enumerate(settings.DEMO_GROUPS))
+    rows += (f'<tr class="pov"><th>Students in poverty</th><td>{demo_pov(m[1 + k])}</td>'
+             f'<td>{demo_pov(city[1 + k]) if city else ""}</td></tr>')
+    return (f"<h2>Students, {settings.DEMOGRAPHICS_LABEL}</h2>"
+            f'<p class="dm-l">This school · {m[0]:,} students</p>' + dbar(m)
+            + (f'<p class="dm-l">All NYC public schools</p>' + dbar(city, " city") if city else "")
+            + '<table class="dm"><thead><tr><th></th><th>School</th><th>' + ("NYC" if city else "") + "</th></tr></thead>"
+            + f"<tbody>{rows}</tbody></table>"
+            + '<p class="src">DOE Demographic Snapshot. Counts every student, 3-K and pre-K included. Poverty: families who '
+              "qualify for free or reduced-price lunch or get HRA benefits (like SNAP)"
+            + ("; it can be undercounted at charter schools that don’t use DOE school food" if ch else "") + ".</p>")
+
+
 def k_adm_html(ka, lv="es", dist=None, prio=""):
     """Admissions for kindergarten, grade 6 or grade 9 (Local Law 72): seats, applicants, offers; middle schools also by
     district. prio: the priority groups (priority_html), shown under the numbers or on their own."""
@@ -558,6 +593,12 @@ h2{font-family:var(--display);font-weight:700;font-size:1.15rem;margin:0 0 8px}
 .dbar{display:flex;height:14px;border-radius:5px;overflow:hidden;background:var(--line)}.dbar i{display:block;height:100%}
 .dest{list-style:none;margin:10px 0 0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;font-size:.9rem}
 .dest li{display:flex;align-items:center;gap:8px}.dest li i{width:10px;height:10px;border-radius:2px;flex:none}.dest b{margin-left:auto;font-family:var(--display)}
+.dm-l{margin:10px 0 4px;font-size:.85rem;color:var(--muted)}.dm-bar{gap:2px;background:none}.dm-bar i{min-width:2px}.dm-bar.city{height:7px}
+table.dm{width:100%;border-collapse:collapse;margin-top:12px;font-size:.95rem;font-variant-numeric:tabular-nums}
+.dm th,.dm td{padding:4px 0;text-align:right;font-weight:400}.dm thead th{font-size:.82rem;color:var(--muted)}
+.dm tbody th{text-align:left;padding-right:12px}.dm th i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:8px}
+.dm td{font-family:var(--display);font-weight:700;padding-left:16px}.dm td+td{font-weight:400;color:var(--muted)}
+.dm tr.pov>*{border-top:1px solid var(--line);padding-top:8px}
 .progs{list-style:none;margin:0;padding:0}
 h3.ex-h{font-size:.95rem;margin:14px 0 2px}h3.ex-h+p{margin:0}
 h3.prio-h{font-size:1.05rem;margin:20px 0 6px}h3.prio-p{font-size:.95rem;margin:12px 0 4px}h3.prio-p small{font-weight:400;color:var(--muted)}
@@ -715,6 +756,8 @@ def page_html(d, dbn, streets, site_url, goat, nbi=None):
     if facts:
         sections.append("<h2>School details</h2>" + facts + more(
             ext(f"https://www.schools.nyc.gov/schools/{dbn[2:]}", "School page: contacts, hours, bell schedule")))
+    dm = {**HS.get("DM", {}), **MS.get("DM", {}), **d.get("DM", {})}.get(dbn)
+    sections.append(demo_html(dm, d.get("DMC"), ch))
     if lv == "es" and pk:
         if pk[0] or pk[2]:
             def offer(n, a, o):  # "s": the report hides that count for privacy; the program is still offered

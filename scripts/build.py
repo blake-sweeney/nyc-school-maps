@@ -54,9 +54,11 @@ def fill_settings(template):
     for k, v in {"__SNAPSHOT_YEAR__": settings.SNAPSHOT_YEAR, "__SNAPSHOT__": settings.SNAPSHOT_LABEL,
                  "__PREK__": settings.PREK_LABEL, "__MYSCHOOLS__": settings.MYSCHOOLS_LABEL,
                  "__CITY_GRAD__": str(settings.CITY_GRAD), "__CITY_READINESS__": str(settings.CITY_READINESS), "__BLUE_BOOK__": settings.BLUE_BOOK_LABEL,
+                 "__DEMOGRAPHICS__": settings.DEMOGRAPHICS_LABEL,
                  "__RATE_STOPS__": json.dumps(settings.RATE_STOPS, separators=(",", ":")),
                  "__TEST_STOPS__": json.dumps(settings.TEST_STOPS, separators=(",", ":")),
                  "__OUT_STOPS__": json.dumps(settings.OUT_STOPS, separators=(",", ":")),
+                 "__DEMO_GROUPS__": json.dumps(settings.DEMO_GROUPS, separators=(",", ":"), ensure_ascii=False),
                  "__TEST_GRADIENT__": gradient, "__TEST_TICKS__": ticks,
                  "__RED__": hexc(settings.RED), "__ORANGE__": hexc(settings.ORANGE),
                  "__YELLOW__": hexc(settings.YELLOW), "__GREEN__": hexc(settings.GREEN)}.items():
@@ -645,6 +647,24 @@ def main(standalone_path=None, pages=None):
     # Building accessibility (MySchools): AC {dbn: "F" fully, "P" partially, "N" not accessible}, every level
     if os.path.exists(os.path.join(DATA, "accessibility.json")):
         d["AC"] = load("accessibility.json")
+
+    # Who goes to each school (DOE Demographic Snapshot, settings.DEMOGRAPHICS_LABEL): DM {dbn: [enrollment, Asian
+    # and Pacific Islander, Black, Hispanic, White, everyone else, % in poverty or ">95" / "<5"]}. d["DM"] has the
+    # elementary map's schools; MS.DM and HS.DM the rest of their level's, loaded with it. DMC: the same row for every
+    # NYC public school student
+    if os.path.exists(os.path.join(DATA, "demographics.json")):
+        dm = load("demographics.json")
+        done, n = set(), 0
+        for lv in (d, d.get("MS"), d.get("HS")):
+            if lv is None:
+                continue
+            shown = {x for f in lv["features"] for x in f["properties"]["dbns"]}
+            shown |= {r[0] for r in lv.get("NZ", []) + lv.get("CH", [])}
+            lv["DM"] = {k: v for k, v in dm["schools"].items() if k in shown - done}
+            done |= shown
+            n += len(lv["DM"])
+        d["DMC"] = dm["city"]
+        print(f"demographics: {n} of {len(done)} schools")
 
     with open(os.path.join(ROOT, "src", "template.html"), encoding="utf-8") as f:
         template = f.read()

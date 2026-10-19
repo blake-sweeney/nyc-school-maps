@@ -16,6 +16,8 @@ PREK_LABEL = "fall 2025"
 MYSCHOOLS_LABEL = "fall 2026"
 # Building use: the SCA's Enrollment, Capacity & Utilization Report ("Blue Book", data/utilization.json)
 BLUE_BOOK_LABEL = "2025–26"
+# Race and ethnicity and poverty: the DOE's Demographic Snapshot (data/demographics.json), the school year it counts
+DEMOGRAPHICS_LABEL = "2025–26"
 
 # NYC-wide high school averages from that Snapshot, quoted next to each school's numbers
 CITY_GRAD = 81        # 4-year graduation rate, %
@@ -35,3 +37,8 @@ OUT_STOPS = {"grad": [[65, RED], [80, YELLOW], [95, GREEN]],     # 4-year gradua
              "coll": [[40, RED], [60, YELLOW], [80, GREEN]],     # college or career program (%)
              "ccr": [[35, RED], [55, YELLOW], [80, GREEN]],      # college readiness score
              "sat": [[800, RED], [950, YELLOW], [1200, GREEN]]}  # average SAT
+
+# Race and ethnicity bars on the cards and school pages: [label, color], in the order of a demographics.json row.
+# Categorical (no group is "better"), so none of the ramp colors above; checked for color blindness side by side.
+DEMO_GROUPS = [["Asian or Pacific Islander", "#2a78d6"], ["Black", "#eb6834"], ["Hispanic", "#1baf7a"], ["White", "#eda100"],
+               ["Multiracial, Native American or not reported", "#9aa5a0"]]
