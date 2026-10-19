@@ -6,6 +6,11 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
+## Unreleased
+
+### Changed
+- Middle and high school program lists now say what their numbers count, so they don't look like they contradict the admissions numbers above them. Program seats and applicants come from MySchools for fall 2026 and cover general education seats and every student who listed the program ("219 seats · 433 listed it"). Each program now also shows its seats for students with disabilities ("+64 special ed seats"), so the seats add up to the admissions total. The admissions numbers are from the DOE's fall 2025 report and count only students who didn't get a choice they ranked higher; "About this data" explains the difference.
+
 ## 1.29.1 (2026-10-16)
 
 ### Changed

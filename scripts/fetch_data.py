@@ -32,7 +32,7 @@ ELA_DATASET = "iebs-5yhr"         # ELA Test Results 2013-2023
 MATH_DATASET = "74kb-55u9"        # Math Test Results 2013-2023
 TEST_YEAR = "2023"
 SNAPSHOT_API = "https://tools.nycenet.edu/api/v1/data/school/app/snapshot/all"
-from settings import SNAPSHOT_YEAR  # which School Quality Snapshot (scripts/settings.py)
+from settings import SNAPSHOT_YEAR, MYSCHOOLS_LABEL  # which Snapshot and MySchools year (scripts/settings.py)
 CENTERLINE_DATASET = "inkn-q76z"  # NYC Street Centerline (CSCL)
 NTA_DATASET = "9nt8-h7nd"         # 2020 Neighborhood Tabulation Areas (NYC Planning)
 
@@ -849,6 +849,11 @@ def _demand(q):
     return g.get("seats"), g.get("applicants"), g.get("all_seats_filled")
 
 
+def _swd_seats(q):
+    """Seats for students with disabilities, which MySchools counts apart from the general education seats."""
+    return (((q.get("demand_last_year") or {}).get("students_with_disabilities")) or {}).get("seats")
+
+
 def _addr(x):
     a = (x["school"].get("address") or {})
     return a.get("address_1") or "", float(a.get("latitude") or 0) or None, float(a.get("longitude") or 0) or None
@@ -962,7 +967,7 @@ def _ms_extras(x):
 def _myschools_ms(schools):
     """ms_directory.json rows: [dbn, name, address, lat, lon,
     programs [[name ('' = the school's main program), method code, seats, applicants, all seats filled, diversity set-aside,
-               priority groups]], classes, sports and activities (_ms_extras)]"""
+               priority groups, seats for students with disabilities]], classes, sports and activities (_ms_extras)]"""
     out = []
     for x in schools:
         dbn = x["school"]["dbn"]
@@ -978,7 +983,7 @@ def _myschools_ms(schools):
                 pname = _strip_dbn(q["name"], q["program"]["code"])  # only one main program per school
             seats, apps, filled = _demand(q)
             progs.append([pname, MS_CODE.get(method, method), seats, apps, None if filled is None else int(filled),
-                          1 if q.get("diversity_in_admission_1") else 0, _priority_groups(q)])
+                          1 if q.get("diversity_in_admission_1") else 0, _priority_groups(q), _swd_seats(q)])
         out.append([dbn, name, addr.upper(), lat, lon, progs, _ms_extras(x)])
     save("ms_directory.json", out)
     print(f"  middle school: {len(out)} schools, {sum(1 for r in out if any(p[6] for p in r[5]))} with priority groups")
@@ -1025,6 +1030,10 @@ def import_myschools(paths):
         source, schools = raw.get("source", ""), raw["schools"]
         pid = source.rsplit(" ", 1)[-1]
         print(f"  {os.path.basename(path)}: {len(schools)} schools ({source})")
+        # the 2026-27 directory's "last year" is fall 2026 admissions: the site labels it settings.MYSCHOOLS_LABEL
+        sy = next((x["school"].get("school_year") for x in schools if x["school"].get("school_year")), "")
+        if sy[:4].isdigit() and sy[:4] not in MYSCHOOLS_LABEL:
+            print(f"  WARNING: this directory is the {sy}; set MYSCHOOLS_LABEL in scripts/settings.py to \"fall {sy[:4]}\"")
         if pid == "4":
             _myschools_k(schools)
         elif pid == "6":

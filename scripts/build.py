@@ -52,7 +52,7 @@ def fill_settings(template):
                 + ",".join(f"{hexc(c)} {v}%" for v, c in settings.TEST_STOPS) + f",{hexc(settings.TEST_STOPS[-1][1])} 100%)")
     ticks = "".join(f'<span style="left:{v}%">{v}{"%" if v == hi else ""}</span>' for v, _ in settings.TEST_STOPS)
     for k, v in {"__SNAPSHOT_YEAR__": settings.SNAPSHOT_YEAR, "__SNAPSHOT__": settings.SNAPSHOT_LABEL,
-                 "__PREK__": settings.PREK_LABEL,
+                 "__PREK__": settings.PREK_LABEL, "__MYSCHOOLS__": settings.MYSCHOOLS_LABEL,
                  "__CITY_GRAD__": str(settings.CITY_GRAD), "__CITY_READINESS__": str(settings.CITY_READINESS), "__BLUE_BOOK__": settings.BLUE_BOOK_LABEL,
                  "__RATE_STOPS__": json.dumps(settings.RATE_STOPS, separators=(",", ":")),
                  "__TEST_STOPS__": json.dumps(settings.TEST_STOPS, separators=(",", ":")),
@@ -454,12 +454,13 @@ def main(standalone_path=None, pages=None):
 
         # Middle school programs (MySchools directory) and choice schools with no zone. P: programs per school,
         # [name ('' = the school's main program), method code, seats, applicants, all seats filled, diversity set-aside,
-        #  priority steps (priority_steps)];
+        #  priority steps (priority_steps), seats for students with disabilities]; seats and applicants are general
+        #  education only, settings.MYSCHOOLS_LABEL;
         # NZ rows have the same shape as the elementary ones (no priority districts listed: middle schools give district priority)
         if os.path.exists(os.path.join(DATA, "ms_directory.json")):
             msdir = load("ms_directory.json")
             for r in msdir:
-                r[5] = [p[:6] + [priority_steps(p[6] if len(p) > 6 else [], r[0])] for p in r[5]]
+                r[5] = [p[:6] + [priority_steps(p[6] if len(p) > 6 else [], r[0]), p[7] if len(p) > 7 else None] for p in r[5]]
             snaps = {}
             for name in ("nonzoned_snapshot.json", "ms_snapshot.json"):
                 if os.path.exists(os.path.join(DATA, name)):
@@ -511,7 +512,7 @@ def main(standalone_path=None, pages=None):
 
         # High school programs and every high school without a zone (MySchools high school directory).
         # P: programs per school, [name, method code, seats, applicants, all seats filled, diversity set-aside,
-        #   priority steps (priority_steps)]. NZ rows match the elementary/middle ones; the trailing flag marks the
+        #   priority steps (priority_steps), seats for students with disabilities], as for middle school. NZ rows match the elementary/middle ones; the trailing flag marks the
         #   9 specialized high schools (8 SHSAT schools + LaGuardia), and one more field holds a priority summary.
         if os.path.exists(os.path.join(DATA, "hs_directory.json")):
             hsdir = load("hs_directory.json")["schools"]
@@ -528,7 +529,7 @@ def main(standalone_path=None, pages=None):
                 progs = []
                 for q in o["p"]:
                     code = MCODE.get(q["m"], q["m"])
-                    progs.append([q["n"], code, q["s"], q["ap"], 1 if q["f"] else 0, 1 if q["d1"] else 0, priority_steps(q["pg"], dbn)])
+                    progs.append([q["n"], code, q["s"], q["ap"], 1 if q["f"] else 0, 1 if q["d1"] else 0, priority_steps(q["pg"], dbn), q.get("ws")])
                 progs.sort(key=lambda p: p[1] in SPECIAL)  # special education programs last
                 d["HS"]["P"][dbn] = progs
                 # ratings and outcomes from MySchools for schools the Snapshot files don't cover

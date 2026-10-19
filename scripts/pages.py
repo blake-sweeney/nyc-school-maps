@@ -380,10 +380,14 @@ def programs_html(dbn, progs, hs):
         how = names.get(p[1], p[1])
         if p[5]:
             how += " · diversity set-aside"
-        seats = f"{p[2]} seats · {p[3]} applied" if p[2] else "no data"
-        lis.append(f'<li><span>{e(p[0] or "Main program")}<small>{e(how)}</small></span><b>{e(seats)}</b></li>')
+        seats = f"{p[2]} seats · {p[3]} listed it" if p[2] else "no data"
+        sub = " · ".join(x for x in (f"+{p[7]} special ed seats" if len(p) > 7 and p[7] else "",
+                                     "all seats filled" if p[2] and p[4] else "") if x)
+        lis.append(f'<li><span>{e(p[0] or "Main program")}<small>{e(how)}</small></span><b>{e(seats)}'
+                   + (f"<small>{e(sub)}</small>" if sub else "") + "</b></li>")
     return (f'<h2>{"High" if hs else "Middle"} school programs</h2><ul class="progs">{"".join(lis)}</ul>'
-            '<p class="src">How students get in, and last year’s seats and applicants, from MySchools.</p>')
+            f'<p class="src">How students get in, from MySchools: general education seats and every student who listed '
+            f'the program, {settings.MYSCHOOLS_LABEL}.</p>')
 
 
 def priority_html(dbn, lv, ladders, standard=False):
@@ -408,7 +412,7 @@ def priority_html(dbn, lv, ladders, standard=False):
     def res(a, o):
         if a == 0:
             return "no applicants"
-        t = n(a) + " applied"
+        t = n(a) + " listed it"
         if o is not None:
             t += " · " + ("all" if o == "all" else "almost all" if o == "most" else "none" if o == 0 else n(o)) + " offered"
             if isinstance(a, str) and isinstance(o, str) and a[0] == o[0] == "~" and int(a[1:]):
@@ -439,7 +443,7 @@ def priority_html(dbn, lv, ladders, standard=False):
                 'last year’s results, when kindergarten applications open in December. <a href="https://www.schools.nyc.gov/'
                 'enrollment/enroll-grade-by-grade/kindergarten">DOE kindergarten admissions</a></p>' + h)
     return ('<h3 class="prio-h">Priority groups</h3><p class="src">Each group gets offers before the next. '
-            'Last year’s applicants and offers in each group, from MySchools.</p>' + h)
+            f'General education applicants and offers in each group, {settings.MYSCHOOLS_LABEL}, from MySchools.</p>' + h)
 
 
 def extras_html(ex, vocab):
@@ -477,7 +481,9 @@ def k_adm_html(ka, lv="es", dist=None, prio=""):
             "ms": "" if prio else f"Most middle school programs fill seats with District {dist} students and residents first, then consider other districts.",
             "hs": "Counts cover every program at the school."}[lv]
     return (f"<h2>{G} admissions, fall {e(y)}</h2>" + facts_rows(rows) +
-            f'<p class="src">Applicants listed the school and didn’t get a choice they ranked higher. {e(note + " " if note else "")}DOE Local Law 72 report.</p>' + prio)
+            f'<p class="src">Applicants listed the school and didn’t get a choice they ranked higher. {e(note + " " if note else "")}DOE Local Law 72 report.'
+            + (f" Programs and priority groups come from MySchools for {settings.MYSCHOOLS_LABEL} and count differently: general "
+               "education seats only, and every student who listed the program." if lv != "es" else "") + "</p>" + prio)
 
 
 # ---------- one page ----------
@@ -542,7 +548,7 @@ h3.prio-h{font-size:1.05rem;margin:20px 0 6px}h3.prio-p{font-size:.95rem;margin:
 .prio li::before{content:counter(prio);position:absolute;left:0;top:9px;width:20px;height:20px;border-radius:50%;background:var(--line);font-size:.75rem;font-weight:700;line-height:20px;text-align:center}
 .prio small{display:block;color:var(--muted);font-size:.85rem;font-variant-numeric:tabular-nums}
 .progs li{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid var(--line);font-size:.95rem}
-.progs small{display:block;color:var(--muted);font-size:.8rem}.progs b{font-family:var(--display);white-space:nowrap;font-variant-numeric:tabular-nums}
+.progs small{display:block;color:var(--muted);font-size:.8rem}.progs b small{font-family:var(--body);font-weight:400;text-align:right}.progs b{font-family:var(--display);white-space:nowrap;font-variant-numeric:tabular-nums}
 .near{list-style:none;margin:0;padding:0;columns:2;column-gap:20px;font-size:.92rem}
 .near li{break-inside:avoid;margin:0 0 4px}
 @media (max-width:640px){.near{columns:1}.dest{grid-template-columns:1fr}.bar-row{grid-template-columns:minmax(0,1fr) 80px 48px}}
