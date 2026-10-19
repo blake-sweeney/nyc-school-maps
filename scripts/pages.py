@@ -486,11 +486,15 @@ def demo_pov(p):
 
 def demo_html(m, city, ch, iep=None, ell=None):
     """Demographics (build.py DM row; city: DMC), as on the map's card (src/template.html demoSec): race and ethnicity
-    bars for the school and all of NYC, a table of both, girls and boys, poverty and economic need, then the
-    Snapshot's IEP and English learner counts (of_all)."""
+    bars for the school and all of NYC, a table of both, girls and boys, poverty, economic need, IEPs and English
+    learners. iep, ell: the School Quality Snapshot's counts (of_all), only for a school the Demographic Snapshot
+    doesn't list."""
     m = m if m and m[0] else None
-    if not m and iep is None and ell is None:
-        return ""
+    if not m:
+        sn = [(lab, v) for lab, v in (("Students with IEPs (special ed)", iep), ("English language learners", ell)) if v is not None]
+        return "" if not sn else ('<h2>Demographics</h2><table class="dm"><tbody>' + "".join(
+            f'<tr><th>{lab}</th><td colspan="2">{v}</td></tr>' for lab, v in sn) + "</tbody></table>"
+            f'<p class="src">{SNAPSHOT_LABEL} School Quality Snapshot.</p>')
     k = len(settings.DEMO_GROUPS)
 
     def tr(label, v, cv="", cls=""):
@@ -502,14 +506,6 @@ def demo_html(m, city, ch, iep=None, ell=None):
         if not n or not r[k + 3] or not r[k + 4]:
             return None if not n else "All boys" if not r[k + 3] else "All girls"
         return f"{demo_pct(r[k + 3], n)} · {demo_pct(r[k + 4], n)}"
-    # the Snapshot's counts ("118 of 540 (22%)") have no NYC column: they span both, so the School column stays narrow
-    sn = [(lab, v) for lab, v in (("Students with IEPs (special ed)", iep), ("English language learners", ell)) if v is not None]
-    sn = "".join(("<tr class=\"pov\">" if m and i == 0 else "<tr>") + f'<th>{lab}</th><td colspan="2">{v}</td></tr>'
-                 for i, (lab, v) in enumerate(sn))
-    src = " IEPs and English learners: " + SNAPSHOT_LABEL + " School Quality Snapshot." if iep is not None or ell is not None else ""
-    if not m:
-        return ('<h2>Demographics</h2><table class="dm"><tbody>' + sn + "</tbody></table>"
-                + f'<p class="src">{src.strip()}</p>')
 
     def dbar(row, cls=""):
         return (f'<div class="dbar dm-bar{cls}">' + "".join(
@@ -521,18 +517,22 @@ def demo_html(m, city, ch, iep=None, ell=None):
     rows += tr("Girls · boys", both(m), city and both(city), "pov")
     rows += tr("Students in poverty", None if m[1 + k] is None else demo_pov(m[1 + k]), city and demo_pov(city[1 + k]))
     rows += tr("Economic need", None if m[2 + k] is None else demo_pov(m[2 + k]), city and demo_pov(city[2 + k]))
-    rows += sn
+    rows += tr(f"Students with IEPs (special ed)<small>{m[k + 5]:,} of {m[0]:,}</small>", demo_pct(m[k + 5], m[0]),
+               city and demo_pct(city[k + 5], city[0]), "pov")
+    rows += tr(f"English language learners<small>{m[k + 6]:,} of {m[0]:,}</small>", demo_pct(m[k + 6], m[0]),
+               city and demo_pct(city[k + 6], city[0]))
     return (f"<h2>Demographics</h2>"
             f'<p class="dm-l">This school · {m[0]:,} students</p>' + dbar(m)
             + (f'<p class="dm-l">All NYC public schools</p>' + dbar(city, " city") if city else "")
             + '<table class="dm"><thead><tr><th></th><th>School</th><th>' + ("NYC" if city else "") + "</th></tr></thead>"
             + f"<tbody>{rows}</tbody></table>"
-            + f'<p class="src">Race, ethnicity, girls and boys, poverty and economic need: DOE Demographic Snapshot, '
-              f"{settings.DEMOGRAPHICS_LABEL}, counting every student, 3-K and pre-K included. Poverty: families who "
+            + f'<p class="src">DOE Demographic Snapshot, {settings.DEMOGRAPHICS_LABEL}, counting every student, 3-K and '
+              "pre-K included. IEPs and English learners as of the end of the school year; pre-K students aren’t tested "
+              "for English, so the English learner share runs a little low at schools with pre-K. Poverty: families who "
               "qualify for free or reduced-price lunch or get HRA benefits (like SNAP)"
             + ("; it can be undercounted at charter schools that don’t use DOE school food" if ch else "")
             + ". Economic need: the DOE’s estimate of students facing hardship. Students in temporary housing or on HRA "
-              "benefits count fully; everyone else counts by the poverty rate where they live." + src + "</p>")
+              "benefits count fully; everyone else counts by the poverty rate where they live.</p>")
 
 
 def k_adm_html(ka, lv="es", dist=None, prio=""):
@@ -621,7 +621,7 @@ h2{font-family:var(--display);font-weight:700;font-size:1.15rem;margin:0 0 8px}
 .dm-l{margin:10px 0 4px;font-size:.85rem;color:var(--muted)}.dm-bar{gap:2px;background:none}.dm-bar i{min-width:2px}.dm-bar.city{height:7px}
 table.dm{width:100%;border-collapse:collapse;margin-top:12px;font-size:.95rem;font-variant-numeric:tabular-nums}
 .dm th,.dm td{padding:4px 0;text-align:right;font-weight:400}.dm thead th{font-size:.82rem;color:var(--muted)}
-.dm tbody th{text-align:left;padding-right:12px}.dm th i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:8px}
+.dm tbody th{text-align:left;padding-right:12px}.dm tbody th small{display:block;font-size:.82rem;color:var(--muted)}.dm th i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:8px}
 .dm td{font-family:var(--display);font-weight:700;padding-left:16px;white-space:nowrap}.dm td+td{font-weight:400;color:var(--muted)}
 .dm tr.pov>*{border-top:1px solid var(--line);padding-top:8px}
 .progs{list-style:none;margin:0;padding:0}

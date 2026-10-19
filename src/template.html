@@ -142,7 +142,7 @@ aside>*{flex-shrink:0}
 .dm .dbar{grid-column:1/-1;display:flex;gap:2px;background:none}.dm .dbar i{min-width:2px}.dm .dbar.city{height:6px;margin-bottom:4px}
 .dm .bl{grid-column:1/-1;font-size:.75rem;color:var(--muted);margin-top:2px}
 .dm .hd{font-size:.75rem;color:var(--muted);text-align:right}
-.dm .g{display:flex;align-items:center;gap:6px;min-width:0}.dm .g i{width:9px;height:9px;border-radius:2px;flex:none}
+.dm .g{display:flex;align-items:center;gap:6px;min-width:0}.dm .g small{display:block;font-size:.75rem;color:var(--muted)}.dm .g i{width:9px;height:9px;border-radius:2px;flex:none}
 .dm b{font-family:var(--display);font-weight:600;text-align:right;white-space:nowrap}.dm b.wide{grid-column:span 2}.dm .c{white-space:nowrap}.dm .c{color:var(--muted);text-align:right}
 .dm .pov{border-top:1px solid var(--line);padding-top:4px;margin-top:2px}
 .dm small{grid-column:1/-1;color:var(--muted);font-size:.75rem;margin-top:2px}
@@ -528,7 +528,7 @@ aside>*{flex-shrink:0}
       </div>
       <div class="legend" id="leg-iep" hidden>
         <div class="sw"><span><i style="background:#e0f1ee"></i>Under 17%</span><span><i style="background:#a6dbd0"></i>17–21%</span><span><i style="background:#5fb8a8"></i>22–26%</span><span><i style="background:#2a8a7e"></i>27–31%</span><span><i style="background:#0f5a54"></i>32% or more</span></div>
-        <p class="hint">Share of students with an IEP (an Individualized Education Program for special education services), __SNAPSHOT__. NYC schools typically range from about 15% to 30%. Higher means more students receiving services, not better or worse. Ask each school which settings it offers, like ICT (co-taught) and 12:1:1 classes. <span class="nd"></span> No data.</p>
+        <p class="hint">Share of students with an IEP (an Individualized Education Program for special education services), from the DOE’s __DEMOGRAPHICS__ Demographic Snapshot. NYC schools typically range from about 15% to 30%. Higher means more students receiving services, not better or worse. Ask each school which settings it offers, like ICT (co-taught) and 12:1:1 classes. <span class="nd"></span> No data.</p>
       </div>
       <div class="legend" id="leg-out" hidden>
         <div class="lbar" id="out-bar"></div>
@@ -622,7 +622,7 @@ function zoneDl(dbns){if(!dbns.some(d=>X[d]&&!(CHX[d]&&!dualLang(d))))return nul
   for(const d of dbns){const v=dualLang(d);if(!v)continue;const ls=v.split(',').map(x=>x.trim()).filter(Boolean);if(ls.length>1)return 'multi';ks.add(dlKey(ls[0]))}
   return ks.size>1?'multi':ks.size?[...ks][0]:''}
 function dlColor(k){return k==='multi'?DL_MULTI:k==='Other'?DL_OTHER:(DL_LANGS.find(x=>x[0]===k)||[0,DL_OTHER])[1]}
-function zoneIep(dbns){const v=dbns.map(d=>X[d]&&X[d][6]).filter(x=>x!=null);return v.length?v.reduce((a,b)=>a+b,0)/v.length:null}
+function zoneIep(dbns){const v=dbns.map(dmIep).filter(x=>x!=null);return v.length?v.reduce((a,b)=>a+b,0)/v.length:null}
 const isProg=m=>m==='gt'||m==='dl';
 // middle and high schools: how many of a school's programs are screened (admission by grades, sometimes an assessment):
 // 0 none, 1 some, 2 all; null when there's no program list. District 75 and autism programs don't count either way.
@@ -1115,22 +1115,23 @@ function factsHtml(d){const x=X[d]||[],c=CS[d]||{},u=U[d];if(!X[d]&&!CS[d]&&!u&&
   const cs=v=>v!=null?Math.round(v)+' students':null;
   const row=(k,v)=>v==null?'':'<span>'+k+'</span><b>'+v+'</b>';
   const h=row('Attendance',x[1]!=null?x[1]+'%':null)+row('Teachers with 3+ years’ experience',x[2]!=null?x[2]+'%':null)+row('Principal’s years at school',x[3]!=null?(Math.round(x[3]*10)/10):null)+(level==='es'?row('Kindergarten class size',cs(c.k))+row('Grades 1–5 class size',cs(c.e)):row('Core class size',cs(level==='ms'?c.ms:c.hs)))+row('Building use (how full)',u?u[0]+'% of capacity':null)+row('Building accessibility',AC_TXT[AC[d]])+'';return h?'<div class="facts">'+h+'</div>':''}
-// Demographics: who goes to the school (DOE Demographic Snapshot, __DEMOGRAPHICS__) plus the Snapshot's IEP and English
-// learner counts. DM rows are [enrollment, counts in DEMO_GROUPS order, % in poverty, Economic Need Index (both a
-// whole % or ">95" / "<5"), girls, boys]; DMC the same for all of NYC
+// Demographics: who goes to the school (DOE Demographic Snapshot, __DEMOGRAPHICS__). DM rows are [enrollment, counts in
+// DEMO_GROUPS order, % in poverty, Economic Need Index (both a whole % or ">95" / "<5"), girls, boys, students with
+// IEPs, English language learners]; DMC the same for all of NYC
 const DEMO_GROUPS=__DEMO_GROUPS__;  // scripts/settings.py
 function dmPct(n,t){const q=t?100*n/t:0;return (q>0&&q<1?'<1':Math.round(q))+'%'}
 function dmPov(p){return p==null?'n/a':p==='>95'?'Over 95%':p==='<5'?'Under 5%':p+'%'}
+// % of students with an IEP: the Demographic Snapshot's, else the School Quality Snapshot's (Color by special ed)
+function dmIep(d){const m=DM[d],k=DEMO_GROUPS.length;return m&&m[0]&&m[k+5]!=null?100*m[k+5]/m[0]:X[d]&&X[d][6]!=null?X[d][6]:null}
 // "All girls", "88% girls": only where one is at least 65%, for the summary line
 function dmSex(m){const k=DEMO_GROUPS.length,f=m[k+3],b=m[k+4];if(f==null||!(f+b))return '';
   return !b?'All girls':!f?'All boys':f/(f+b)>=.65?dmPct(f,f+b)+' girls':b/(f+b)>=.65?dmPct(b,f+b)+' boys':''}
 function demoSec(d){const m=DM[d]&&DM[d][0]?DM[d]:null,x=X[d]||[],c=DMC,k=DEMO_GROUPS.length;
-  const iep=ofAll(d,2,x[6]),ell=ofAll(d,1,x[5]);if(!m&&iep==null&&ell==null)return '';
+  // a school the Demographic Snapshot doesn't list (a few): the School Quality Snapshot's counts, "118 of 540 (22%)"
+  if(!m){const sn=[['Students with IEPs (special ed)',ofAll(d,2,x[6])],['English language learners',ofAll(d,1,x[5])]].filter(y=>y[1]!=null);
+    return sn.length?sec('demo','<span class="st">Demographics</span>','<div class="dm">'+sn.map(y=>'<span class="g">'+y[0]+'</span><b class="wide">'+y[1]+'</b>').join('')+'<small>__SNAPSHOT__ School Quality Snapshot.</small></div>'):''}
   const row=(lab,v,cv,cl)=>v==null?'':'<span class="g'+(cl?' '+cl:'')+'">'+lab+'</span><b'+(cl?' class="'+cl+'"':'')+'>'+v+'</b><span class="c'+(cl?' '+cl:'')+'">'+(cv||'')+'</span>';
   const both=r=>!(r[k+3]+r[k+4])?null:!r[k+4]?'All girls':!r[k+3]?'All boys':dmPct(r[k+3],r[k+3]+r[k+4])+' · '+dmPct(r[k+4],r[k+3]+r[k+4]);
-  // the Snapshot's counts ("118 of 540 (22%)") have no NYC column: they span both, so the School column stays narrow
-  const sn=[['Students with IEPs (special ed)',iep],['English language learners',ell]].filter(y=>y[1]!=null).map((y,i)=>'<span class="g'+(m&&!i?' pov':'')+'">'+y[0]+'</span><b class="wide'+(m&&!i?' pov':'')+'">'+y[1]+'</b>').join('');
-  if(!m)return sec('demo','<span class="st">Demographics</span>','<div class="dm">'+sn+'</div>');
   const g=m.slice(1,1+k),pv=m[1+k],en=m[2+k];
   const bar=(v,cl,lab)=>'<div class="dbar'+(cl?' '+cl:'')+'"'+(lab?' role="img" aria-label="'+lab+'"':'')+'>'+v.map((n,i)=>n?'<i style="flex:'+n+' 1 0;background:'+DEMO_GROUPS[i][1]+'"></i>':'').join('')+'</div>';
   const top=g.map((n,i)=>[n,i]).filter(y=>y[1]<k-1&&y[0]).sort((a,b)=>b[0]-a[0]).slice(0,2).map(y=>dmPct(y[0],m[0])+' '+DEMO_GROUPS[y[1]][0].split(' ')[0]);
@@ -1139,8 +1140,10 @@ function demoSec(d){const m=DM[d]&&DM[d][0]?DM[d]:null,x=X[d]||[],c=DMC,k=DEMO_G
     '<span></span><span class="hd">School</span><span class="hd">'+(c?'NYC':'')+'</span>'+
     DEMO_GROUPS.map((y,i)=>'<span class="g"><i style="background:'+y[1]+'"></i>'+y[0]+'</span><b>'+dmPct(g[i],m[0])+'</b><span class="c">'+(c?dmPct(c[1+i],c[0]):'')+'</span>').join('')+
     row('Girls · boys',both(m),c&&both(c),'pov')+
-    row('Students in poverty',pv!=null?dmPov(pv):null,c&&dmPov(c[1+k]))+row('Economic need',en!=null?dmPov(en):null,c&&dmPov(c[2+k]))+sn+
-    '<small>Race, ethnicity, girls and boys, poverty and economic need: DOE Demographic Snapshot, __DEMOGRAPHICS__, counting every student, 3-K and pre-K included. Poverty: families who qualify for free or reduced-price lunch or get HRA benefits (like SNAP)'+(CHX[d]?'; it can be undercounted at charter schools that don’t use DOE school food':'')+'. Economic need: the DOE’s estimate of students facing hardship. Students in temporary housing or on HRA benefits count fully; everyone else counts by the poverty rate where they live.'+(iep!=null||ell!=null?' IEPs and English learners: __SNAPSHOT__ School Quality Snapshot.':'')+'</small></div>';
+    row('Students in poverty',pv!=null?dmPov(pv):null,c&&dmPov(c[1+k]))+row('Economic need',en!=null?dmPov(en):null,c&&dmPov(c[2+k]))+
+    row('<span>Students with IEPs (special ed)<small>'+m[k+5].toLocaleString()+' of '+m[0].toLocaleString()+'</small></span>',dmPct(m[k+5],m[0]),c&&dmPct(c[k+5],c[0]),'pov')+
+    row('<span>English language learners<small>'+m[k+6].toLocaleString()+' of '+m[0].toLocaleString()+'</small></span>',dmPct(m[k+6],m[0]),c&&dmPct(c[k+6],c[0]))+
+    '<small>DOE Demographic Snapshot, __DEMOGRAPHICS__, counting every student, 3-K and pre-K included. IEPs and English learners as of the end of the school year; pre-K students aren’t tested for English, so the English learner share runs a little low at schools with pre-K. Poverty: families who qualify for free or reduced-price lunch or get HRA benefits (like SNAP)'+(CHX[d]?'; it can be undercounted at charter schools that don’t use DOE school food':'')+'. Economic need: the DOE’s estimate of students facing hardship. Students in temporary housing or on HRA benefits count fully; everyone else counts by the poverty rate where they live.</small></div>';
   return sec('demo','<span class="st">Demographics<small>'+[dmSex(m)].concat(top,pv!=null?[dmPov(pv).replace('Over','over').replace('Under','under')+' in poverty']:[]).filter(Boolean).join(' · ')+'</small></span>',h)}
 // school card: sections that open and close. Each viewer's choice is remembered in this browser; the Color by
 // metric also opens the section that shows it (without changing what's remembered).
@@ -1352,7 +1355,7 @@ function syncLegend(){syncName();const lo=document.getElementById('leg-out');lo.
     document.getElementById('out-bar').style.background='linear-gradient(90deg,'+rgb(s[0][1])+' 0%,'+rgb(s[0][1])+' '+pct(s[0][0])+','+rgb(s[1][1])+' '+pct(s[1][0])+','+rgb(s[2][1])+' '+pct(s[2][0])+','+rgb(s[2][1])+' 100%)';
     document.getElementById('out-ticks').innerHTML=o.ticks.map((v,i)=>'<span style="left:'+outPos(metric,v)+'%">'+v+(i===o.ticks.length-1&&!o.abs?'%':'')+'</span>').join('');
     document.getElementById('out-hint').innerHTML=metric==='sat'?'Average SAT score (out of 1600) of the school’s test takers, from the __SNAPSHOT__ School Quality Snapshot. Most NYC high schools average 780–1100. <span class="nd"></span> No data.':metric==='ccr'?'The DOE’s college and career readiness score (0–100): credit for each student who graduates meeting CUNY’s standard to skip remedial classes, passing AP or college-credit exams, and similar. NYC average: __CITY_READINESS__. From the __SNAPSHOT__ School Quality Snapshot. <span class="nd"></span> No data.':metric==='grad'?'Share of students who graduate within 4 years, from the __SNAPSHOT__ School Quality Snapshot. NYC average: __CITY_GRAD__%. The scale is narrower than for test scores because most zoned high schools graduate 75–95% of students. <span class="nd"></span> No data.':'Share of graduates who enrolled in college or a career program within 6 months, from the __SNAPSHOT__ School Quality Snapshot. <span class="nd"></span> No data.'}
-  document.getElementById('leg-pk').hidden=metric!=='pk';document.getElementById('leg-scr').hidden=metric!=='scr';if(metric==='scr')document.getElementById('scr-hint').innerHTML='How many of each school’s programs are screened, from the MySchools '+(level==='hs'?'high':'middle')+' school directory. Screened programs rank applicants by their '+(level==='hs'?'7th':'4th')+'-grade report card grades; some also use an assessment. A school with some screened programs also has open, zone-priority or other programs; click it to see each one. Shared zones show the school with the most. <span class="nd"></span> No program data.';{const gs=document.getElementById('grp-src');if(gs&&metric==='pk')gs.textContent='DOE Local Law 72 report · __PREK__'}document.getElementById('leg-rate').hidden=!isRate(metric);document.getElementById('leg-test').hidden=!['both','ela','math'].includes(metric);document.getElementById('leg-prog').hidden=!isProg(metric);document.getElementById('leg-iep').hidden=metric!=='iep';{const gs=document.getElementById('grp-src');if(gs&&['gt','dl','scr','iep'].includes(metric))gs.textContent=metric==='scr'?'MySchools '+(level==='hs'?'high':'middle')+' school directory':GROUP_SRC.programs}{const sw=document.getElementById('prog-sw');if(metric==='dl'){const seen=new Set(Object.keys(LV[level].S||{}).concat(NZ.map(o=>o.d)).map(d=>zoneDl([d])).filter(Boolean));
+  document.getElementById('leg-pk').hidden=metric!=='pk';document.getElementById('leg-scr').hidden=metric!=='scr';if(metric==='scr')document.getElementById('scr-hint').innerHTML='How many of each school’s programs are screened, from the MySchools '+(level==='hs'?'high':'middle')+' school directory. Screened programs rank applicants by their '+(level==='hs'?'7th':'4th')+'-grade report card grades; some also use an assessment. A school with some screened programs also has open, zone-priority or other programs; click it to see each one. Shared zones show the school with the most. <span class="nd"></span> No program data.';{const gs=document.getElementById('grp-src');if(gs&&metric==='pk')gs.textContent='DOE Local Law 72 report · __PREK__'}document.getElementById('leg-rate').hidden=!isRate(metric);document.getElementById('leg-test').hidden=!['both','ela','math'].includes(metric);document.getElementById('leg-prog').hidden=!isProg(metric);document.getElementById('leg-iep').hidden=metric!=='iep';{const gs=document.getElementById('grp-src');if(gs&&['gt','dl','scr','iep'].includes(metric))gs.textContent=metric==='scr'?'MySchools '+(level==='hs'?'high':'middle')+' school directory':metric==='iep'?'DOE Demographic Snapshot · __DEMOGRAPHICS__':GROUP_SRC.programs}{const sw=document.getElementById('prog-sw');if(metric==='dl'){const seen=new Set(Object.keys(LV[level].S||{}).concat(NZ.map(o=>o.d)).map(d=>zoneDl([d])).filter(Boolean));
   const items=DL_LANGS.map(x=>x[0]).concat(['Other','multi']).filter(k=>seen.has(k));
   sw.innerHTML=items.map(k=>'<span><i style="background:'+dlColor(k)+'"></i>'+(k==='multi'?'Two or more':k)+'</span>').join('')+'<span><i class="off"></i>None</span>'}
   else sw.innerHTML='<span><i style="background:#2f6db5"></i>'+(metric==='gt'?'Has G&amp;T':'Has dual language')+'</span><span><i class="off"></i>Doesn’t</span>'}document.getElementById('prog-hint').textContent=metric==='gt'?'District Gifted & Talented programs listed for the zoned school in the __SNAPSHOT__ Snapshot (73 zoned schools). G&T seats aren’t assigned by zone: families apply separately, and admission rules have changed in recent years, so check MySchools for this year’s process.':'Dual-language programs at the zoned school (151 zoned schools), from the __SNAPSHOT__ Snapshot. Each color is a language. “Two or more” means the school runs programs in more than one language. Seats are usually by application, often with priority for zoned families.';
