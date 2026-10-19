@@ -6,7 +6,7 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
-## Unreleased
+## 1.32.0 (2026-10-19)
 
 ### Added
 - The links at the bottom of each school card include the school's 2024–25 School Quality Snapshot report, next to MySchools and the school website.
