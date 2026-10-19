@@ -6,6 +6,8 @@ An interactive map of New York City's elementary (kindergarten), middle and high
 - **School Quality Snapshot (2024–25):** Instruction and Performance, Safety and School Climate, and Relationships with Families, each rated 1–4, plus an Overall average of the three
 - **State tests (2024–25 Snapshot):** share of students scoring proficient in ELA and Math (grades 3–5 for elementary, 6–8 for middle); high schools show 4-year graduation and college/career enrollment instead
 - **Programs:** gifted & talented, dual language and special education
+- **Students with IEPs and English language learners:** counts from the School Quality Snapshot (`data/snapshot_counts.json`)
+- **Building accessibility:** fully, partially or not accessible, from the MySchools directories (`data/accessibility.json`)
 - **Building use:** each school's enrollment as a share of its building capacity, from the SCA's Enrollment, Capacity & Utilization Report ("Blue Book")
 - **Neighborhoods:** [2020 Neighborhood Tabulation Areas](https://data.cityofnewyork.us/d/9nt8-h7nd), NYC Planning via NYC Open Data (refresh with `python3 scripts/fetch_data.py neighborhoods`)
 - **School district lines:** [School Districts](https://data.cityofnewyork.us/d/8ugf-3d8u), NYC Open Data (GeoJSON export; refresh with `python3 scripts/fetch_data.py districts <file.geojson>`)
@@ -136,7 +138,7 @@ Programs, admissions methods, seats and applicants, priorities, schools without 
 1. Open any page on [myschools.nyc](https://www.myschools.nyc/), open the console, paste all of `scripts/browser/myschools.js` and press Enter. About a minute later you have `myschools_k.json`, `myschools_ms.json` and `myschools_hs.json` in Downloads.
 2. `python3 scripts/fetch_data.py myschools ~/Downloads/myschools_*.json`
 
-This writes `nonzoned_k.json`, `citywide_gt_k.json`, `k_priority.json`, `ms_directory.json` and `hs_directory.json`. Then set `MYSCHOOLS_LABEL` in `scripts/settings.py` to the admissions round the directory's "last year" numbers describe (the 2026–27 directory: "fall 2026"); the import warns when it doesn't match. If MySchools hasn't opened the next year's kindergarten applications yet, pass only the middle and high school files.
+This writes `nonzoned_k.json`, `citywide_gt_k.json`, `k_priority.json`, `ms_directory.json`, `hs_directory.json` and `accessibility.json` (each school's building accessibility, merged across the directories you pass; `python3 scripts/fetch_data.py accessibility <files>` updates only that). Then set `MYSCHOOLS_LABEL` in `scripts/settings.py` to the admissions round the directory's "last year" numbers describe (the 2026–27 directory: "fall 2026"); the import warns when it doesn't match. If MySchools hasn't opened the next year's kindergarten applications yet, pass only the middle and high school files.
 
 ### 3. School Quality Snapshot (when a new year appears at [tools.nycenet.edu/snapshot](https://tools.nycenet.edu/snapshot/))
 
@@ -148,6 +150,8 @@ Ratings, test scores, graduation, SAT, college readiness, where graduates went, 
 4. `python3 scripts/fetch_data.py snapshot-raw ~/Downloads/snapshot_raw.json`
 
 This writes `snapshot_ratings.json`, `snapshot_extra.json`, `snapshot_tests.json`, `hs_outcomes.json`, `nonzoned_snapshot.json`, `ms_snapshot.json`, `hs_snapshot.json` and `charter_snapshot.json` (charters come from `charters.json`, step 6, so run that first). If the Snapshot doesn't block your connection, `python3 scripts/fetch_data.py charter-snapshot` fetches just the charters directly. If your connection isn't blocked, `python3 scripts/fetch_data.py snapshot` still fetches the zoned schools directly.
+
+Then `python3 scripts/fetch_data.py snapshot-counts` fetches each school's English language learners and students with IEPs as counts (`snapshot_counts.json`), for "159 of 1,030" in School details. It reads the files above, so run it last; it needs the Snapshot to answer scripted requests.
 
 ### 4. Admissions: kindergarten, grade 6, grade 9, pre-K and 3-K (each fall or winter, for the previous fall)
 

@@ -454,13 +454,14 @@ def main(standalone_path=None, pages=None):
 
         # Middle school programs (MySchools directory) and choice schools with no zone. P: programs per school,
         # [name ('' = the school's main program), method code, seats, applicants, all seats filled, diversity set-aside,
-        #  priority steps (priority_steps), seats for students with disabilities]; seats and applicants are general
-        #  education only, settings.MYSCHOOLS_LABEL;
+        #  priority steps (priority_steps), seats for students with disabilities, their applicants, all filled (1/0)];
+        #  seats and applicants are general education only, settings.MYSCHOOLS_LABEL; District 75 and ASD/ACES
+        #  programs come last, with special ed seats only;
         # NZ rows have the same shape as the elementary ones (no priority districts listed: middle schools give district priority)
         if os.path.exists(os.path.join(DATA, "ms_directory.json")):
             msdir = load("ms_directory.json")
             for r in msdir:
-                r[5] = [p[:6] + [priority_steps(p[6] if len(p) > 6 else [], r[0]), p[7] if len(p) > 7 else None] for p in r[5]]
+                r[5] = [p[:6] + [priority_steps(p[6] if len(p) > 6 else [], r[0])] + (p[7:10] + [None] * 3)[:3] for p in r[5]]
             snaps = {}
             for name in ("nonzoned_snapshot.json", "ms_snapshot.json"):
                 if os.path.exists(os.path.join(DATA, name)):
@@ -512,7 +513,8 @@ def main(standalone_path=None, pages=None):
 
         # High school programs and every high school without a zone (MySchools high school directory).
         # P: programs per school, [name, method code, seats, applicants, all seats filled, diversity set-aside,
-        #   priority steps (priority_steps), seats for students with disabilities], as for middle school. NZ rows match the elementary/middle ones; the trailing flag marks the
+        #   priority steps (priority_steps), seats for students with disabilities, their applicants, all filled],
+        #   as for middle school. NZ rows match the elementary/middle ones; the trailing flag marks the
         #   9 specialized high schools (8 SHSAT schools + LaGuardia), and one more field holds a priority summary.
         if os.path.exists(os.path.join(DATA, "hs_directory.json")):
             hsdir = load("hs_directory.json")["schools"]
@@ -529,7 +531,8 @@ def main(standalone_path=None, pages=None):
                 progs = []
                 for q in o["p"]:
                     code = MCODE.get(q["m"], q["m"])
-                    progs.append([q["n"], code, q["s"], q["ap"], 1 if q["f"] else 0, 1 if q["d1"] else 0, priority_steps(q["pg"], dbn), q.get("ws")])
+                    progs.append([q["n"], code, q["s"], q["ap"], 1 if q["f"] else 0, 1 if q["d1"] else 0, priority_steps(q["pg"], dbn),
+                                  q.get("ws"), q.get("wa"), None if q.get("wf") is None else int(q["wf"])])
                 progs.sort(key=lambda p: p[1] in SPECIAL)  # special education programs last
                 d["HS"]["P"][dbn] = progs
                 # ratings and outcomes from MySchools for schools the Snapshot files don't cover
@@ -627,6 +630,21 @@ def main(standalone_path=None, pages=None):
         kp = load("k_priority.json")
         d["KP"] = {k: priority_steps(kp[k], k) for k in sorted(es_all) if k in kp}
         print(f"kindergarten priority groups: {len(d['KP'])} of {len(es_all)} elementary schools")
+
+    # English language learners and students with IEPs as counts (Snapshot ell_n, iep_n): XN {dbn: [enrollment, ELL,
+    # IEP]}, only where the Snapshot report's enrollment is the one the card shows (X[0]), so "159 of 1,030" adds up
+    if os.path.exists(os.path.join(DATA, "snapshot_counts.json")):
+        counts = load("snapshot_counts.json")
+        d["XN"] = {}
+        for dbn, x in sorted({**d.get("HS", {}).get("X", {}), **d["X"]}.items()):
+            m = next((c for c in counts.get(dbn, {}).values() if x and c[0] == x[0]), None)
+            if m:
+                d["XN"][dbn] = m
+        print(f"English learner and IEP counts: {len(d['XN'])} of {len(d['X'])} schools with Snapshot facts")
+
+    # Building accessibility (MySchools): AC {dbn: "F" fully, "P" partially, "N" not accessible}, every level
+    if os.path.exists(os.path.join(DATA, "accessibility.json")):
+        d["AC"] = load("accessibility.json")
 
     with open(os.path.join(ROOT, "src", "template.html"), encoding="utf-8") as f:
         template = f.read()
