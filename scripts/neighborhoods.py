@@ -192,7 +192,7 @@ def level_map(nb, zones, lv, word, w=560, h=420, pad=14):
     outer = [r for p in nb["polys"] for r in p[:1]]
     pts = [c for r in outer for c in r]
     lat0 = sum(c[1] for c in pts) / len(pts)
-    kx = math.cos(math.radians(lat0))
+    kx = round(math.cos(math.radians(lat0)), 12)  # same on every platform, as in pages.zone_svg (#29)
     x0, x1 = min(c[0] for c in pts) * kx, max(c[0] for c in pts) * kx
     y0, y1 = min(c[1] for c in pts), max(c[1] for c in pts)
     sc = min((w - 2 * pad) / max(x1 - x0, 1e-9), (h - 2 * pad) / max(y1 - y0, 1e-9))
