@@ -153,6 +153,7 @@ aside>*{flex-shrink:0}
 .adm td:last-child{color:var(--muted);font-weight:500;min-width:3.2em}
 .adm .adm-note{margin:2px 0 0;font-size:.8rem}
 .ex{font-size:.85rem}.ex p{margin:2px 0 0}.ex-src{color:var(--muted);font-size:.75rem}
+.jump{margin:4px 0 0;font-size:.85rem}.jump a{color:var(--hl)}.sec{scroll-margin-top:8px}
 .adm-p{font-weight:600;margin-top:8px}.adm-p small{font-weight:400;color:var(--muted)}
 .adm-t tr.all th,.adm-t tr.all td{font-weight:700}
 .adm-t .gn{display:inline-block;width:15px;height:15px;margin-right:6px;border-radius:50%;background:var(--line);font-style:normal;font-size:.66rem;font-weight:700;line-height:15px;text-align:center;vertical-align:1px}
@@ -335,6 +336,7 @@ aside>*{flex-shrink:0}
   .app.sheet-open aside{transform:none}
   .sheet-head{display:flex;order:0;position:sticky;top:0;z-index:2;align-items:center;gap:10px;margin:0 -16px -4px;padding:9px 10px 9px 16px;background:var(--panel);border-bottom:1px solid var(--line);border-radius:16px 16px 0 0;cursor:pointer}
   .app:not(.sheet-open) .sheet-head{border-bottom-color:transparent}
+  .sec{scroll-margin-top:64px}  /* the "See … ↓" jump stops below the sticky sheet header */
   .sh-txt{flex:1;min-width:0;display:flex;flex-direction:column}
   #sheet-title{font-family:var(--display);font-weight:700;font-size:1rem;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   #sheet-sub{font-size:.78rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -665,7 +667,7 @@ regNZ(NZ_ES);
 [['ms',MSD],['hs',HSD]].forEach(([lv,x])=>{if(!x||!LV[lv])return;Object.assign(LV[lv],{P:x.P||{},A:x.A||{},EX:x.EX||{},EXV:x.EXV||[],NZ:allNZ(x,lv),CUT:x.CUT||null,CHR:x.CHR||{},CHX:x.CHX||{}});
   if(x.R)Object.entries(x.R).forEach(([k,v])=>{if(!R[k])R[k]=v});if(x.X)Object.entries(x.X).forEach(([k,v])=>{if(!X[k])X[k]=v});regNZ(LV[lv].NZ)});
 function nzDistricts(o){const ds=o.pd.length?o.pd:[+o.d.slice(0,2)];return ds}
-function nzPriority(o){if(o.ch)return 'Admission is by lottery only. Charter schools can’t screen: no tests, grades, interviews or auditions. Lottery priority usually goes to siblings, then to families who live in District '+o.pd[0]+'.';if(o.hs){if(o.gt)return o.pr.some(p=>p[1]==='T')?'Admission is by SHSAT score only. Any NYC 8th or 9th grader can take the test.':'Admission is by audition. Students from anywhere in NYC can apply.';return o.pz||'Open to students from anywhere in NYC.'}if(o.ms&&o.gt)return 'Open to students from anywhere in NYC, not just District '+(+o.d.slice(0,2))+'. Some give priority to continuing students, siblings or certain districts; MySchools lists each program’s rules.';if(o.ms)return 'Students apply through MySchools. Most middle school programs give priority to students who live in, or go to elementary school in, District '+(+o.d.slice(0,2))+'.';if(o.gt)return 'Open to children found eligible for G&T, from anywhere in NYC.'+(o.pd.length?' Priority to eligible children in Districts '+o.pd.slice(0,-1).join(', ')+' and '+o.pd[o.pd.length-1]+'.':'');const ds=nzDistricts(o),t=ds.length>1?'Districts '+ds.slice(0,-1).join(', ')+' and '+ds[ds.length-1]:'District '+ds[0];
+function nzPriority(o){if(o.ch)return 'Admission is by lottery only. Charter schools can’t screen: no tests, grades, interviews or auditions. Lottery priority usually goes to siblings, then to families who live in District '+o.pd[0]+'.';if(o.hs){if(o.gt)return o.pr.some(p=>p[1]==='T')?'Admission is by SHSAT score only. Any NYC 8th or 9th grader can take the test.':'Admission is by audition. Students from anywhere in NYC can apply.';return o.pz||'Open to students from anywhere in NYC.'}if(o.gt)return 'Open to children found eligible for G&T, from anywhere in NYC.'+(o.pd.length?' Priority to eligible children in Districts '+o.pd.slice(0,-1).join(', ')+' and '+o.pd[o.pd.length-1]+'.':'');const ds=nzDistricts(o),t=ds.length>1?'Districts '+ds.slice(0,-1).join(', ')+' and '+ds[ds.length-1]:'District '+ds[0];
   return o.only?'Only '+t+' residents can apply.':'Priority to '+t+' residents. Most non-zoned schools also give priority to siblings and current pre-K students.'}
 function nzDemand(o){if(o.ms||o.hs){const ok=o.pr.filter(p=>p[2]!=null&&p[1]!=='D75'&&p[1]!=='ASD');if(!ok.length)return '';const st=ok.reduce((a,p)=>a+p[2],0),ap=ok.reduce((a,p)=>a+p[3],0);return (o.pr.length>1?o.pr.length+' programs · ':'')+st+' general-ed seats · '+ap+' applicants, __MYSCHOOLS__'}
   const g=o.pr.find(p=>!p[1])||o.pr[0];if(!g||g[2]==null)return '';return g[2]+' seats · '+g[3]+' applicants last year'+(g[4]?' · all seats filled':'')}
@@ -1071,7 +1073,14 @@ function clearNZSel(){if(!nzSel)return;nzSel=null;buildNZ()}
 function selectNZ(d,fromClick,back){const o=nzGet(d);if(!o)return;markEngaged();backTo=back||null;
   if(selected){selected.setStyle(style(selected.feature,false));selected=null;buildZS()}if(selLine){map.removeLayer(selLine);selLine=null}
   if(!nzShown(o)){LAY[nzKey(o)]=true;syncLayerBoxes();saveLay()}nzSel=d;buildNZ();
-  let h=o.ch?'<div class="zt">Charter school · District '+o.pd[0]+' · '+esc(boroOf(d))+'</div>'+chBlock(o)+schoolBlock(d):o.hs?'<div class="zt">'+(o.gt?'Specialized high school':'High school · no zone')+' · '+esc(BORO[d[2]]||'')+'</div><div class="kind nz"><b>'+(o.gt?'Specialized:':'Citywide choice:')+'</b> '+esc(nzPriority(o))+' <a href="'+mySchoolsUrl(d)+'" target="_blank" rel="noopener">Program rules on MySchools ↗</a></div>'+schoolBlock(d):'<div class="zt">'+(o.ms&&o.gt?'Citywide middle school':o.ms?'Middle school · no zone':o.gt?'Citywide G&amp;T school':'Non-zoned school')+' · District '+(+d.slice(0,2))+' · '+esc(BORO[d[2]]||'')+'</div><div class="kind nz"><b>'+(o.ms&&o.gt?'Citywide:':o.gt?'Citywide G&amp;T:':'No zone:')+'</b> '+esc(nzPriority(o))+(nzDemand(o)&&!o.ms?' Kindergarten: '+esc(nzDemand(o))+'.':'')+(o.gt&&!o.ms?' <a href="'+GT_URL+'" target="_blank" rel="noopener">How G&amp;T eligibility works ↗</a>':'')+'</div>'+schoolBlock(d);
+  // the top box stays only where it says what the admissions tables don't: SHSAT or audition admission, elementary
+  // district priority and G&T eligibility (no kindergarten groups until December). Elsewhere each school's own line
+  // (jumpLine) says "No zone:" and links to its priority groups.
+  const jumpIn=jumpLine(d)?' '+jumpLink(d):'';
+  let h=o.ch?'<div class="zt">Charter school · District '+o.pd[0]+' · '+esc(boroOf(d))+'</div>'+chBlock(o)+schoolBlock(d)
+    :o.hs?'<div class="zt">'+(o.gt?'Specialized high school':'High school · no zone')+' · '+esc(BORO[d[2]]||'')+'</div>'+(o.gt?'<div class="kind nz"><b>Specialized:</b> '+esc(nzPriority(o))+jumpIn+'</div>'+schoolBlock(d,true):schoolBlock(d))
+    :o.ms?'<div class="zt">'+(o.gt?'Citywide middle school':'Middle school · no zone')+' · District '+(+d.slice(0,2))+' · '+esc(BORO[d[2]]||'')+'</div>'+schoolBlock(d)
+    :'<div class="zt">'+(o.gt?'Citywide G&amp;T school':'Non-zoned school')+' · District '+(+d.slice(0,2))+' · '+esc(BORO[d[2]]||'')+'</div><div class="kind nz"><b>'+(o.gt?'Citywide G&amp;T:':'No zone:')+'</b> '+esc(nzPriority(o))+(o.gt?' <a href="'+GT_URL+'" target="_blank" rel="noopener">How G&amp;T eligibility works ↗</a>':'')+jumpIn+'</div>'+schoolBlock(d,true);
   h+='<div class="card-actions"><button type="button" class="btn-sm" id="copy-link">Copy link to this school</button><button type="button" class="btn-sm to-map" id="to-map">↑ Back to map</button></div>';
   if(backTo)h='<button type="button" class="back-link" id="back-link">← Back to '+esc(backTo.label)+'</button>'+h;
   card.className='card';card.innerHTML=h;setZoneHash(d);if(backTo)document.getElementById('back-link').onclick=()=>history.back();
@@ -1143,6 +1152,9 @@ function factsHtml(d){const x=X[d]||[],c=CS[d]||{},u=U[d];if(!X[d]&&!CS[d]&&!u&&
 const SEC_KEY='nsz-card-v1',SEC={},SEC_FOR={scr:'adm-',ip:'rate',ss:'rate',rf:'rate',ela:'tests',math:'tests',coll:'out',ccr:'out',sat:'out',iep:'facts'};
 try{Object.assign(SEC,JSON.parse(localStorage.getItem(SEC_KEY)||'{}'))}catch(e){}
 function sec(k,sum,body){return '<details class="sec" data-sec="'+k+'"'+(SEC[k]||SEC_FOR[metric]&&k.startsWith(SEC_FOR[metric])?' open':'')+'><summary>'+sum+'</summary><div class="sec-b">'+body+'</div></details>'}
+card.addEventListener('click',e=>{const a=e.target.closest('.to-adm');if(!a)return;e.preventDefault();
+  const sec=card.querySelector('.school[data-d="'+a.dataset.d+'"] .sec[data-sec^="adm"]');if(!sec)return;sec.open=true;
+  const go=()=>sec.scrollIntoView({behavior:'smooth',block:'start'});if(phone.matches&&!sheetOpen()){setSheet(true);setTimeout(go,350)}else go()});
 card.addEventListener('click',e=>{const s=e.target.closest('.sec>summary');if(!s)return;const k=s.parentNode.dataset.sec;
   SEC[k]=!s.parentNode.open;try{localStorage.setItem(SEC_KEY,JSON.stringify(SEC))}catch(err){}});
 function rateSec(d){const r=R[d];if(!r||r.slice(2,5).every(x=>x==null))return '<span class="meta">No __SNAPSHOT__ Snapshot ratings (often K–2 or new schools).</span>';
@@ -1227,8 +1239,15 @@ function kindText(p){const n=p.dbns.length,k=zoneKind(p);
   if(k==='grade')return '<b>Split by grade:</b> which school depends on your child’s grade. See the note below.';
   return '<b>Shared zone:</b> families here get zoned priority at all '+n+' schools below and can rank any of them.'}
 // one school's details (zoned or not)
-function schoolBlock(d){const s=S[d],n=X[d]&&X[d][0]!=null?X[d][0].toLocaleString()+' students':'',gr=s&&s.g?'Grades '+esc(grades(s.g,d)):'',ch=!!CHX[d];
-  return '<div class="school"><span class="nm"><a class="nm-link" href="'+pageUrl(d)+'">'+esc(short(d))+'</a> <span class="dbn">('+esc(d)+')</span></span>'+addrHtml(d)+(gr||n?'<span class="meta">'+[gr,n].filter(Boolean).join(' · ')+'</span>':'')+tagsHtml(d)+(level==='hs'?zonedHtml(d):'')+'<hr class="sep">'+rateSec(d)+(level==='hs'?outSec(d):testSec(d))+(level==='es'?esAdmHtml(d):admSec(d)+cutSec(d)+(msProgs(d,level).length?'':progSec(d))+exSec(d))+(factsHtml(d)?sec('facts','<span class="st">School details</span>',factsHtml(d)):'')+'<hr class="sep">'+'<div class="links">'+'<a href="'+pageUrl(d)+'"><b>Full school page →</b></a>'+(ch?'<a href="'+CH_APPLY+'" target="_blank" rel="noopener"><b>How to apply to charter schools ↗</b></a>':'<a href="'+mySchoolsUrl(d)+'" target="_blank" rel="noopener"><b>MySchools: apply &amp; see your chances ↗</b></a>')+snapLink(d)+'<a href="https://www.schools.nyc.gov/schools/'+esc(d.slice(2))+'" target="_blank" rel="noopener">School website ↗</a></div></div>'}
+// the line under a school's name that jumps to its admissions section, "Zoned: See this school's priority groups ↓";
+// none for charters (lottery) or schools without one. noJump: the card's top box already carries the link (nzBox)
+function jumpLine(d,noJump){if(noJump||CHX[d])return '';const lv=level,o=nzGet(d),ms=lv!=='es'&&msProgs(d,lv).length;
+  if(lv==='es'?!(KA[d]||KP[d]):!ms&&!((LV[lv]&&LV[lv].A||{})[d]))return '';
+  return '<p class="jump"><b>'+(!o?'Zoned':o.gt?(lv==='hs'?'Specialized':'Citywide'):'No zone')+':</b> '+jumpLink(d)+'</p>'}
+function jumpLink(d){const pg=level==='es'?(KP[d]?'priority groups':'kindergarten admissions'):msProgs(d,level).length?'priority groups':'admissions';
+  return '<a href="#" class="to-adm" data-d="'+esc(d)+'">See this school’s '+pg+' ↓</a>'}
+function schoolBlock(d,noJump){const s=S[d],n=X[d]&&X[d][0]!=null?X[d][0].toLocaleString()+' students':'',gr=s&&s.g?'Grades '+esc(grades(s.g,d)):'',ch=!!CHX[d];
+  return '<div class="school" data-d="'+esc(d)+'"><span class="nm"><a class="nm-link" href="'+pageUrl(d)+'">'+esc(short(d))+'</a> <span class="dbn">('+esc(d)+')</span></span>'+addrHtml(d)+(gr||n?'<span class="meta">'+[gr,n].filter(Boolean).join(' · ')+'</span>':'')+tagsHtml(d)+(level==='hs'?zonedHtml(d):'')+jumpLine(d,noJump)+'<hr class="sep">'+rateSec(d)+(level==='hs'?outSec(d):testSec(d))+(level==='es'?esAdmHtml(d):admSec(d)+cutSec(d)+(msProgs(d,level).length?'':progSec(d))+exSec(d))+(factsHtml(d)?sec('facts','<span class="st">School details</span>',factsHtml(d)):'')+'<hr class="sep">'+'<div class="links">'+'<a href="'+pageUrl(d)+'"><b>Full school page →</b></a>'+(ch?'<a href="'+CH_APPLY+'" target="_blank" rel="noopener"><b>How to apply to charter schools ↗</b></a>':'<a href="'+mySchoolsUrl(d)+'" target="_blank" rel="noopener"><b>MySchools: apply &amp; see your chances ↗</b></a>')+snapLink(d)+'<a href="https://www.schools.nyc.gov/schools/'+esc(d.slice(2))+'" target="_blank" rel="noopener">School website ↗</a></div></div>'}
 // the school's Snapshot report with the card's other links, as under "Overall rating" (rateSec), when it has ratings
 function snapLink(d){const r=R[d];if(!r||r.slice(2,5).every(x=>x==null))return '';
   return '<a href="https://tools.nycenet.edu/snapshot/__SNAPSHOT_YEAR__/'+esc(d)+'/'+esc(r[5]||'EMS')+'/" target="_blank" rel="noopener">__SNAPSHOT__ School Quality Snapshot ↗</a>'}
