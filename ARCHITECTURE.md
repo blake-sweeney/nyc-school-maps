@@ -53,6 +53,7 @@ The script runs top to bottom in roughly this order:
 | Color by | `METRIC_NAME`, `GROUP_SRC`, `showGroup`, `Legend`, `syncLegend`, `setColorParam`/`applyColorParam` (`?c=` in the URL) |
 | Level switch | `setLevel` (es / ms / hs) |
 | Opening from a link | `openFromHash`: `#es-15K321`, `#ms-02M104`, `#hs-28Q440`, `#es-d15` (district), `#middle`, `#high` |
+| Theme | `THEME_KEY` (localStorage `nsz-theme-v1`: `light`/`dark`, absent = auto), the inline script after `<title>` that sets `data-theme` before drawing, `syncThemePick`, `retheme` |
 | Phones | `setSheet`/`sheetOpen` (bottom sheet), `PhoneBar`, `POPS`/`setPop`, `placeUI`, `measurePeek` |
 
 ## Gotchas we learned the hard way
