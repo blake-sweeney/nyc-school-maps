@@ -100,6 +100,15 @@ def point_in_ring(pt, ring):
     return inside
 
 
+DIRECTIONS = {"N", "S", "E", "W", "NORTH", "SOUTH", "EAST", "WEST"}
+
+
+def zip_key(addr):
+    """House number and street name, the way zipKey in the template reads them: "250 WEST 127 STREET" -> "250 127", "348A DEISIUS STREET" -> "348 DEISIUS"."""
+    w = re.sub(r"(\d)(ST|ND|RD|TH)\b", r"\1", str(addr).upper().replace(",", " ")).split()
+    return " ".join([re.sub(r"[A-Z]+$", "", w[0]) if w else "", next((x for x in w[1:] if x not in DIRECTIONS), "")])
+
+
 def prepare_zones(d):
     feats = d["features"]
 
@@ -454,6 +463,11 @@ def main(standalone_path=None, pages=None):
     color_districts(d["DIST"])
     d["ST"] = load("streets.json") if os.path.exists(os.path.join(DATA, "streets.json")) else []
     d["LS"] = load("local_streets.json") if os.path.exists(os.path.join(DATA, "local_streets.json")) else {"n": [], "l": []}
+    # ZIP codes for the cards (fetch_data.py zips): {dbn: "ZIP house-number street"}; the card shows the ZIP only
+    # when its own address has the same house number and street (zipKey in the template), since its address can
+    # come from another source than LCGMS's
+    if os.path.exists(os.path.join(DATA, "zips.json")):
+        d["ZIP"] = {k: f"{z} {zip_key(a)}" for k, (a, z) in load("zips.json")["zips"].items()}
     # park outlines for the green tint over the basemap (fetch_data.py parks): {"p": [[ring, ...] per park]}
     if os.path.exists(os.path.join(DATA, "parks.json")):
         d["PARKS"] = load("parks.json")

@@ -581,6 +581,19 @@ def fetch_charters(lcgms_path=None, demographics_path=None):
                            "schools": out, "formerly": formerly})
 
 
+def fetch_zips(lcgms_path=None):
+    """Each school's ZIP code, for the cards, from the DOE's LCGMS (read_lcgms): the postal ZIP of the school's
+    primary address. Writes zips.json: {"fetched": date, "zips": {dbn: [LCGMS address, ZIP]}}. The address is kept
+    so the map shows a ZIP only next to the same address (a card's address can come from another source, and a few
+    schools have moved or use another entrance). If the DOE site is blocked, save the LCGMS export in a browser and
+    pass it: fetch_data.py zips ~/Downloads/LCGMS_SchoolData_*.xls"""
+    import datetime
+    zips = {r["ATS System Code"]: [r["Primary Address"], r["Zip"]] for r in read_lcgms(lcgms_path)
+            if r.get("ATS System Code") and len(r.get("Zip", "")) == 5 and r["Zip"].isdigit()}
+    print(f"  {len(zips)} schools with a ZIP code")
+    save("zips.json", {"source": "DOE LCGMS", "fetched": datetime.date.today().isoformat(), "zips": dict(sorted(zips.items()))})
+
+
 def fetch_neighborhoods():
     """Neighborhood boundaries for the neighborhood pages: NYC Planning's 2020 Neighborhood Tabulation Areas.
     Writes neighborhoods.json: {NTA code: {"n": name, "b": borough, "p": [polygons as [outer ring, holes...]]}}.
@@ -732,7 +745,7 @@ def fetch_parks():
 STEPS = {"zones": fetch_zones, "tests": fetch_tests, "snapshot": fetch_snapshot, "streets": fetch_streets,
          "classsize": fetch_class_size, "neighborhoods": fetch_neighborhoods, "charters": fetch_charters,
          "snapshot-counts": fetch_snapshot_counts, "colocation": fetch_colocation, "demographics": fetch_demographics,
-         "parks": fetch_parks}
+         "parks": fetch_parks, "zips": fetch_zips}
 
 def fetch_prek(path):
     """Pre-K and 3-K seats, applicants and offers per school, from the DOE's Local Law 72 admissions report.
@@ -1409,6 +1422,10 @@ if __name__ == "__main__":
     if args[:1] == ["charters"] and len(args) == 3:  # from a saved LCGMS export and Demographic Snapshot
         print("-- charters (from files)")
         fetch_charters(args[1], args[2])
+        sys.exit()
+    if args[:1] == ["zips"] and len(args) == 2:  # from a saved LCGMS export
+        print("-- zips (from file)")
+        fetch_zips(args[1])
         sys.exit()
     if args[:1] == ["demographics"] and len(args) == 2:  # from a saved Demographic Snapshot
         print("-- demographics (from file)")

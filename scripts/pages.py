@@ -158,9 +158,10 @@ def nice_street(name):
 
 
 def nice_addr(a):
-    """'180 7 AVENUE' -> '180 7th Avenue'"""
-    a = title_case(a)
-    return re.sub(r"\b(\d+) (Avenue|Street|Place|Road|Drive|Terrace|Court|Lane)\b", lambda m: ordinal(m.group(1)) + " " + m.group(2), a)
+    """'180 7 AVENUE' -> '180 7th Avenue'. The house number stays as it is: '99 Terrace View Avenue', '3000 Avenue X'."""
+    num, _, street = title_case(a).partition(" ")
+    return " ".join(x for x in [num, re.sub(r"\b(\d+) (Avenue|Street|Place|Road|Drive|Terrace|Court|Lane)\b",
+                                              lambda m: ordinal(m.group(1)) + " " + m.group(2), street)] if x)
 
 
 def nice_name(n):

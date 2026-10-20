@@ -617,9 +617,6 @@ const isRate=m=>m==='comp'||m in RK;
 const X=D.X||{},XN=D.XN||{},DM=Object.assign({},D.DM,MSD&&MSD.DM,HSD&&HSD.DM),DMC=D.DMC,AC=D.AC||{},CO=D.CO||{},AC_TXT={F:'Fully accessible',P:'Partially accessible',N:'Not accessible'};
 // class size (DOE report, Feb 2025-26): k = kindergarten, e = grades 1-5, ms / hs = core classes. Shown in the zone card only: it isn't a quality measure, so it isn't a map color
 const CS=D.CS||{};
-const ENR_BINS=[[250,'#dbe9f6'],[400,'#9ecae1'],[550,'#5a9fcf'],[750,'#2b6fae'],[Infinity,'#0d3d78']];
-function zoneEnroll(dbns){const v=dbns.map(d=>X[d]&&X[d][0]).filter(x=>x!=null);return v.length?v.reduce((a,b)=>a+b,0)/v.length:null}
-const enrColor=n=>ENR_BINS.find(b=>n<b[0])[1];
 const IEP_BINS=[[17,'#e0f1ee'],[22,'#a6dbd0'],[27,'#5fb8a8'],[32,'#2a8a7e'],[Infinity,'#0f5a54']];
 const iepColor=v=>IEP_BINS.find(b=>v<b[0])[1];
 const hasGT=d=>!!(X[d]&&X[d][8]&&X[d][8].includes('G&T'));
@@ -806,8 +803,8 @@ map.createPane('nycLabels').style.zIndex=456;map.getPane('nycLabels').style.poin
 // Served by the NYC API portal (api-portal.nyc.gov, GeoServer Tile Services API). The key is meant to be public:
 // it's tied to info@nycschoolzones.com and only reads map tiles. Tiles are TMS, so rows count up from the bottom (tms:true).
 const NYC_KEY='55e87513137841dc8bcc1474ba215833',NYC_TILES='https://api.nyc.gov/geoserver/gwc/service/tms/1.0.0/carto%3A';
-const baseTiles=L.tileLayer(NYC_TILES+'basemap@EPSG%3A900913@jpg/{z}/{x}/{y}.jpg?Key='+NYC_KEY,{tms:true,minZoom:10,maxZoom:18,className:'nyc-base'}).addTo(map);
-const labelTiles=L.tileLayer(NYC_TILES+'label@EPSG%3A900913@png8/{z}/{x}/{y}.png8?Key='+NYC_KEY,{tms:true,pane:'nycLabels',minZoom:10,maxZoom:18,className:'nyc-labels'}).addTo(map);
+const baseTiles=L.tileLayer(NYC_TILES+'basemap@EPSG%3A900913@jpg/{z}/{x}/{y}.jpg?Key='+NYC_KEY,{tms:true,maxZoom:18,className:'nyc-base'}).addTo(map);
+const labelTiles=L.tileLayer(NYC_TILES+'label@EPSG%3A900913@png8/{z}/{x}/{y}.png8?Key='+NYC_KEY,{tms:true,pane:'nycLabels',maxZoom:18,className:'nyc-labels'}).addTo(map);
 L.control.attribution({prefix:false,position:'bottomright'}).addAttribution('Basemap © <a href="https://finder.nyc.gov/nyc-lib/tiles/index.html" target="_blank" rel="noopener">City of New York</a> (CC BY 4.0)').addTo(map);
 baseTiles.on('tileload',()=>{tileOk++});
 baseTiles.on('tileerror',()=>{if(++tileErr>=6&&!tileOk)dropBase()});
@@ -831,9 +828,8 @@ function syncParks(){const on=useBase&&!!LAY.parks;document.getElementById('map'
   if(show&&!parksBuilt){if(D.PARKS){buildParks(D.PARKS)}else if(ASSETS.parks&&!parksLoading){parksLoading=true;getAsset('parks').then(j=>{buildParks(j);syncParks()}).catch(()=>{parksLoading=false})}}
   if(show&&parksBuilt&&!map.hasLayer(parkGroup))parkGroup.addTo(map);if(!show&&map.hasLayer(parkGroup))map.removeLayer(parkGroup)}
 map.on('zoomend',syncParks);
-// the basemap fades in as you zoom in; zone colors get more see-through so streets and parks show
+// the basemap shows at full strength at every zoom; zone colors get more see-through as you zoom in so streets and parks show
 function syncNames(){if(!useBase)return;if(LAY.names&&!map.hasLayer(labelTiles))labelTiles.addTo(map);if(!LAY.names&&map.hasLayer(labelTiles))map.removeLayer(labelTiles)}
-function baseFade(){const z=map.getZoom();baseTiles.setOpacity(z<11.5?.45:z<12.5?.7:1);labelTiles.setOpacity(z<12?.75:1)}
 function isDark(){const th=document.documentElement.dataset.theme;return th==='dark'||(th!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)}
 // a bit more solid in dark mode, where see-through colors over the dark basemap look muddy
 // zone fill: full color when zoomed all the way out (no markers), fading to a light wash by zoom 13 where the
@@ -842,14 +838,14 @@ function zoneAlpha(){if(!useBase)return .78;const z=map.getZoom();
   if(!LAY.zs){const a=z<11.5?.8:z<12.5?.7:z<13.5?.6:.5;return isDark()?Math.min(a+.15,.9):a}
   const a=Math.min(.9,(z<=9?.8:z<13?.8-(z-9)*(.8-.36)/4:z<13.5?.36:z<14.5?.345:.33)*1.36);return isDark()?Math.min(a+.08,.9):a}
 const SEL_FILL=.2;  // the selected zone's extra fill
-map.on('zoomend',()=>{baseFade();if(useBase&&typeof restyle==='function')restyle()});baseFade();
+map.on('zoomend',()=>{if(useBase&&typeof restyle==='function')restyle()});
 const renderer=L.canvas({padding:.3,tolerance:2});
 function short(d){const s=S[d];if(!s)return 'School '+d;return s.n}
 // one school's value under the current coloring (null if none)
-function schoolVal(d){if(isRate(metric))return zoneRating([d],metric);if(metric==='enr')return zoneEnroll([d]);if(metric==='iep')return zoneIep([d]);
+function schoolVal(d){if(isRate(metric))return zoneRating([d],metric);if(metric==='iep')return zoneIep([d]);
   if(metric==='pk')return pkCat(d);if(metric==='scr')return scrCat(d);if(isOut(metric))return zoneOut([d],metric);if(isProg(metric)){const v=zoneProg([d],metric);return v==null?null:v?1:0}if(metric==='none')return null;return pct([d],metric)}
 function fmtVal(v,short){if(v==null)return '–';if(isRate(metric))return metric==='comp'||!Number.isInteger(v)?v.toFixed(1):String(v);  // numbers, never the DOE's words
-  if(metric==='pk')return ['no pre-K','pre-K','pre-K + 3-K'][v];if(metric==='scr')return SCR_LAB[v];if(isOut(metric)&&OUT[metric].abs)return String(Math.round(v));if(metric==='enr')return Math.round(v).toLocaleString();if(metric==='iep')return Math.round(v)+'%';if(isProg(metric))return v?'yes':'no';return Math.round(v)+'%'}
+  if(metric==='pk')return ['no pre-K','pre-K','pre-K + 3-K'][v];if(metric==='scr')return SCR_LAB[v];if(isOut(metric)&&OUT[metric].abs)return String(Math.round(v));if(metric==='iep')return Math.round(v)+'%';if(isProg(metric))return v?'yes':'no';return Math.round(v)+'%'}
 function distTag(p){const d=p.dist&&String(p.dist).split(',').map(Number).filter(Boolean);return d&&d.length?'District '+d.join(' / '):''}
 const NONRES=/park|cemeter|golf|airport|island|beach|zoo|garden|reservoir/i;
 function noZoneHere(p){return !p.dbns.length&&!NONRES.test(p.remarks||'')}
@@ -877,7 +873,7 @@ const isOut=m=>m in OUT;
 const outColor=(m,v)=>rampColor(v,OUT[m].stops);
 function zoneOut(dbns,m){const v=dbns.map(d=>outVal(d,m)).filter(x=>x!=null);return v.length?v.reduce((a,b)=>a+b,0)/v.length:null}
 function rgb(c){return 'rgb('+c.map(Math.round).join(',')+')'}
-function fillFor(f){const p=f.properties;if(!p.dbns.length)return css('--land');if(metric==='none')return css('--z'+p.c);if(metric==='pk'){const v=zonePk(p.dbns);return v==null?css('--nodata'):v?PK_COL[v]:css('--off')}if(metric==='scr'){const v=zoneScr(p.dbns);return v==null?css('--nodata'):v?SCR_COL[v]:css('--off')}if(metric==='enr'){const n=zoneEnroll(p.dbns);return n==null?css('--nodata'):enrColor(n)}if(metric==='dl'){const k=zoneDl(p.dbns);return k==null?css('--nodata'):k?dlColor(k):css('--off')}if(isProg(metric)){const h=zoneProg(p.dbns,metric);return h==null?css('--nodata'):h?'#2f6db5':css('--off')}if(metric==='iep'){const v=zoneIep(p.dbns);return v==null?css('--nodata'):iepColor(v)}if(isOut(metric)){const v=zoneOut(p.dbns,metric);return v==null?css('--nodata'):outColor(metric,v)}if(isRate(metric)){const r=zoneRating(p.dbns,metric);return r==null?css('--nodata'):rateColor(r)}const v=pct(p.dbns,metric);return v==null?css('--nodata'):scoreColor(v)}
+function fillFor(f){const p=f.properties;if(!p.dbns.length)return css('--land');if(metric==='none')return css('--z'+p.c);if(metric==='pk'){const v=zonePk(p.dbns);return v==null?css('--nodata'):v?PK_COL[v]:css('--off')}if(metric==='scr'){const v=zoneScr(p.dbns);return v==null?css('--nodata'):v?SCR_COL[v]:css('--off')}if(metric==='dl'){const k=zoneDl(p.dbns);return k==null?css('--nodata'):k?dlColor(k):css('--off')}if(isProg(metric)){const h=zoneProg(p.dbns,metric);return h==null?css('--nodata'):h?'#2f6db5':css('--off')}if(metric==='iep'){const v=zoneIep(p.dbns);return v==null?css('--nodata'):iepColor(v)}if(isOut(metric)){const v=zoneOut(p.dbns,metric);return v==null?css('--nodata'):outColor(metric,v)}if(isRate(metric)){const r=zoneRating(p.dbns,metric);return r==null?css('--nodata'):rateColor(r)}const v=pct(p.dbns,metric);return v==null?css('--nodata'):scoreColor(v)}
 function style(f,sel){const a=zoneAlpha();const empty=!f.properties.dbns.length;
   if(!LAY.zones)return{renderer,stroke:false,fillColor:'#000',fillOpacity:0};
   if(f.properties.dbns.length>1&&metric!=='none')return{renderer,stroke:false,fillColor:fillFor(f),fillOpacity:0};  // drawn as stripes
@@ -1282,8 +1278,13 @@ function esAdmHtml(d){const pk=PK[d],ka=KA[d],ky=ka&&Object.keys(ka).sort().pop(
   if(noLine)h+='<p class="adm-none">'+noLine+'</p>';
   return h}
 // street address with a copy button (for maps apps and forms)
-function addrHtml(d){const s=S[d];if(!s||!s.a)return '';const full=title(s.a)+', '+boroOf(d)+', NY';
-  return '<span class="addr">'+esc(title(s.a))+', '+esc(boroOf(d))+'<button type="button" class="copy-addr" data-copy="'+esc(full)+'" aria-label="Copy address: '+esc(full)+'">Copy</button></span>'}
+// ZIP from LCGMS (D.ZIP: "ZIP house-number street"), shown only when it's for the same address as the card's
+const ZIP=D.ZIP||{};
+function zipKey(a){const w=String(a).toUpperCase().replace(/,/g,' ').replace(/(\d)(ST|ND|RD|TH)\b/g,'$1').split(/\s+/).filter(Boolean);
+  return (w[0]||'').replace(/[A-Z]+$/,'')+' '+(w.slice(1).find(x=>!/^(N|S|E|W|NORTH|SOUTH|EAST|WEST)$/.test(x))||'')}
+function zipOf(d){const z=ZIP[d],s=S[d];return z&&s&&s.a&&z.slice(6)===zipKey(s.a)?z.slice(0,5):''}
+function addrHtml(d){const s=S[d];if(!s||!s.a)return '';const z=zipOf(d),full=title(s.a)+', '+boroOf(d)+', NY'+(z?' '+z:'');
+  return '<span class="addr">'+esc(title(s.a))+', '+esc(boroOf(d))+(z?' '+z:'')+'<button type="button" class="copy-addr" data-copy="'+esc(full)+'" aria-label="Copy address: '+esc(full)+'">Copy</button></span>'}
 function outHtml(d){const o=O[d];if(!o)return '<span class="meta">No __SNAPSHOT__ graduation data.</span>';
   const r=(lbl,m)=>{const v=o[OUT[m].i];return v==null?'':'<span>'+lbl+'</span><span class="bar"><i style="width:'+v+'%;background:'+outColor(m,v)+'"></i></span><b>'+Math.round(v)+'%</b>'};
   const q=Q[d]||[],ab=(lbl,m,txt)=>{const v=outVal(d,m);return v==null?'':'<span>'+lbl+'</span><span class="bar"><i style="width:'+outPos(m,v).toFixed(1)+'%;background:'+outColor(m,v)+'"></i></span><b>'+(txt?txt(v):Math.round(v))+'</b>'};

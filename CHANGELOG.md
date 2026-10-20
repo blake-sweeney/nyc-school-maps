@@ -11,6 +11,22 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 ### Added
 - School details has two new rows on the map's cards and on school pages. "Median home distance" says how far from the school half its students live ("1.5 miles"). "Shares its building with" lists the other schools in the same building, District 75 and charter schools included, with links on school pages. Both come from the DOE's 2024–25 School Quality Snapshot. This helps most at charter schools that don't report attendance or teacher experience to the DOE, where School details used to show only the number of students.
 
+## 1.41.0 (2026-10-20)
+
+### Fixed
+- School pages no longer turn a building number into a street number: "3000 Avenue X" and "99 Terrace View Avenue" used to read "3000th Avenue X" and "99th Terrace View Avenue". This fixes 33 schools, mostly on Brooklyn's lettered avenues.
+
+## 1.40.0 (2026-10-20)
+
+### Added
+- School cards on the map show the school's ZIP code after its address ("180 7 Avenue, Brooklyn 11215"), and the Copy button copies it too, so the address pastes straight into a maps app or a form. ZIP codes come from the DOE's list of school locations; a card leaves the ZIP out when that list has a different address for the school.
+
+## 1.39.0 (2026-10-20)
+
+### Changed
+- The background map now stays visible at every zoom. It no longer fades as you zoom out, and it still shows when you zoom all the way out to the whole city.
+- Behind the scenes: removed leftover code for coloring the map by enrollment, an option the map no longer offers.
+
 ## 1.38.1 (2026-10-20)
 
 ### Changed
