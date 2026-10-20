@@ -6,7 +6,7 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
-## Unreleased
+## 1.36.0 (2026-10-20)
 
 ### Added
 - A "Theme: Auto · Light · Dark" switch at the bottom of the side panel and of every school, district and neighborhood page. Auto follows your device; Light or Dark sticks in this browser across the whole site.
