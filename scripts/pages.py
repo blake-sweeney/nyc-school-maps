@@ -908,7 +908,7 @@ def page_html(d, dbn, streets, site_url, goat, nbi=None):
         ("Students", f"{dm[0]:,}" if dm and dm[0] else f"{x[0]:,}" if x and x[0] else None),
         ("Attendance", pct(x[1]) if len(x) > 1 else None),
         ("Teachers with 3+ years’ experience", pct(x[2]) if len(x) > 2 else None),
-        ("Median distance from home", f"{x[9]:g} mile{'' if x[9] == 1 else 's'}" if len(x) > 9 and x[9] is not None else None),
+        ("Median home distance", f"{x[9]:g} mile{'' if x[9] == 1 else 's'}" if len(x) > 9 and x[9] is not None else None),
         ("Kindergarten class size", f"{round(cs['k'])} students" if cs.get("k") else None),
         ("Grades 1–5 class size", f"{round(cs['e'])} students" if cs.get("e") else None),
         ("Core class size", f"{round(cs[lv])} students" if lv in ("ms", "hs") and cs.get(lv) else None),
