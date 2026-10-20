@@ -5,7 +5,7 @@
 #   scripts/release.sh minor      # 1.13.0 -> 1.14.0  (a new feature)
 #   scripts/release.sh major      # 1.13.0 -> 2.0.0   (a new kind of view)
 #   scripts/release.sh minor --dry-run   # show what would happen, change nothing
-#   scripts/release.sh minor --yes       # don't ask before pushing
+#   scripts/release.sh minor -i          # ask before changing anything (right after showing the changelog)
 #
 # Before running: commit your work, and describe it under a "## Unreleased" heading at the top of
 # CHANGELOG.md. The script renames that heading to the new version and today's date.
@@ -13,11 +13,12 @@ set -euo pipefail
 
 usage() { sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'; exit 1; }
 
-part="" dry=0 yes=0
+part="" dry=0 ask=0
 for a in "$@"; do
   case "$a" in
     major|minor|patch) part="$a" ;;
     --dry-run|-n) dry=1 ;;
+    -i|--interactive) ask=1 ;;
     -h|--help) usage ;;
     *) echo "Unknown argument: $a"; usage ;;
   esac
@@ -54,6 +55,7 @@ echo "Changelog for this release:"
 awk '/^## Unreleased/{on=1;next} /^## /{if(on)exit} on' CHANGELOG.md | sed 's/^/  /'
 echo
 if [ "$dry" = 1 ]; then echo "(dry run: nothing changed)"; exit 0; fi
+if [ "$ask" = 1 ]; then read -r -p "Release $tag? [y/N] " ans; [[ "$ans" =~ ^[Yy] ]] || { echo "Stopped: nothing changed."; exit 0; }; fi
 
 # --- bump, rebuild, commit, tag ------------------------------------------------------------------
 printf '%s\n' "$new" > VERSION
