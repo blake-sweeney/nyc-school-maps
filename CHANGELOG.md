@@ -6,7 +6,7 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
-## Unreleased
+## 1.42.1 (2026-10-20)
 
 ### Fixed
 - Seven schools show their current address on the map's cards and on their school pages, and the page's directions link goes there too. Before, they showed last year's. Four of them moved: Mott Hall II (03M862), New Design Middle School (05M514), Brooklyn Brownstone School (16K628) and The Young Women's Leadership School of Staten Island (31R085). The other three are in the same building under its other street address. The build now checks every school's address against the DOE's current list of school locations.
