@@ -9,7 +9,7 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 ## Unreleased
 
 ### Added
-- School details has two new rows on the map's cards and on school pages. "How far students live (median)" says how far from the school half its students live ("1.5 miles"). "Shares its building with" lists the other schools in the same building, District 75 and charter schools included, with links on school pages. Both come from the DOE's 2024–25 School Quality Snapshot. This helps most at charter schools that don't report attendance or teacher experience to the DOE, where School details used to show only the number of students.
+- School details has two new rows on the map's cards and on school pages. "Median student distance" says how far from the school half its students live ("1.5 miles"). "Shares its building with" lists the other schools in the same building, District 75 and charter schools included, with links on school pages. Both come from the DOE's 2024–25 School Quality Snapshot. This helps most at charter schools that don't report attendance or teacher experience to the DOE, where School details used to show only the number of students.
 
 ## 1.38.1 (2026-10-20)
 
