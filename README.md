@@ -105,13 +105,13 @@ The site's version is in `VERSION` and shows in the footer next to the "Updated"
 
 1. Work on a branch, like `git checkout -b admissions-data`, and test locally (see "Run it locally"), including on your phone.
 2. As you go, describe the changes under a `## Unreleased` heading at the top of `CHANGELOG.md`. Leave `VERSION` alone.
-3. Merge to `main`, then release:
+3. Merge to `main`, then release. From anywhere, including a phone: on GitHub open **Actions → Release → Run workflow**, pick patch, minor or major (tick "Dry run" to only preview) and run it. Or from a computer:
 
 ```sh
 scripts/release.sh minor     # or patch, or major
 ```
 
-The script checks that everything is committed and up to date with GitHub, bumps `VERSION`, renames `## Unreleased` to the new version and today's date, rebuilds the site (the footer shows the version), commits, tags (`v1.14.0`) and pushes the commit and tag. It shows the changelog and asks before pushing; add `--dry-run` to only preview, or `--yes` to skip the question.
+Both do the same thing (the workflow, `.github/workflows/release.yml`, runs this script on GitHub): check that everything is committed and up to date with GitHub, bump `VERSION`, rename `## Unreleased` to the new version and today's date (New York time), rebuild the site (the footer shows the version), commit, tag (`v1.14.0`) and push the commit and tag. Add `--dry-run` to only preview. The workflow also asks GitHub Pages to rebuild, since a push made by a workflow may not start a deploy on its own.
 
 ## Link previews
 

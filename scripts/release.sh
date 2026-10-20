@@ -18,6 +18,7 @@ for a in "$@"; do
   case "$a" in
     major|minor|patch) part="$a" ;;
     --dry-run|-n) dry=1 ;;
+    --yes|-y) yes=1 ;;
     -h|--help) usage ;;
     *) echo "Unknown argument: $a"; usage ;;
   esac
