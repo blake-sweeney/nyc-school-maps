@@ -21,6 +21,7 @@ Steps:
 """
 import collections
 import json
+import math
 import re
 import os
 from html import escape
@@ -107,6 +108,82 @@ def zip_key(addr):
     """House number and street name, the way zipKey in the template reads them: "250 WEST 127 STREET" -> "250 127", "348A DEISIUS STREET" -> "348 DEISIUS"."""
     w = re.sub(r"(\d)(ST|ND|RD|TH)\b", r"\1", str(addr).upper().replace(",", " ")).split()
     return " ".join([re.sub(r"[A-Z]+$", "", w[0]) if w else "", next((x for x in w[1:] if x not in DIRECTIONS), "")])
+
+
+def fix_addresses(d):
+    """Check school addresses against the DOE's live location list (zips.json from LCGMS) and add the cards' ZIP codes.
+    - The Snapshot's address is last school year's. When it differs from LCGMS's and a current source (Find a School,
+      a MySchools directory) has LCGMS's, the school has moved or goes by its building's other street address: its
+      R and NZ rows get this year's address, which the map's cards and the school pages show.
+    - d["ZIP"] = {dbn: "ZIP house-number street"}: the card shows the ZIP next to an address with that house number
+      and street (zipKey in the template). "ZIP *" when the school's map point is on or next to LCGMS's tax lot,
+      so the same building under another entrance's address ("103 West 107 Street" for 104 West 108 Street) gets
+      it too. A school LCGMS doesn't list (a program LCGMS files under another DBN) takes the ZIP of the LCGMS
+      school at the same address."""
+    if not os.path.exists(os.path.join(DATA, "zips.json")):
+        return
+    lcgms = load("zips.json")["zips"]
+    levels = [d] + [d[k] for k in ("MS", "HS") if k in d]
+    points = collections.defaultdict(list)
+    for lv in levels:
+        for dbn, s in lv.get("schools", {}).items():
+            points[dbn].append((s.get("lat"), s.get("lon")))
+        for r in lv.get("NZ", []) + lv.get("CH", []):
+            points[r[0]].append((r[3], r[4]))
+    # this year's addresses, straight from the files: the NZ rows above already carry the Snapshot's
+    current = collections.defaultdict(list)
+    for name in ("elem_zones.json", "ms_zones.json", "hs_zones.json"):
+        if os.path.exists(os.path.join(DATA, name)):
+            for dbn, s in load(name)["schools"].items():
+                current[dbn].append(s.get("a"))
+    for name in ("nonzoned_k.json", "ms_directory.json"):
+        if os.path.exists(os.path.join(DATA, name)):
+            for r in load(name):
+                current[r[0]].append(r[2])
+    if os.path.exists(os.path.join(DATA, "hs_directory.json")):
+        for s in load("hs_directory.json")["schools"]:
+            current[s["dbn"]].append(s["a"])
+
+    moved = set()
+
+    def check(dbn, addr):  # this year's address in place of addr, when LCGMS says the school moved, else None
+        if dbn not in lcgms or not addr or zip_key(addr) == zip_key(lcgms[dbn][0]):
+            return None
+        return next((a for a in current[dbn] if a and zip_key(a) == zip_key(lcgms[dbn][0])), None)
+    for lv in levels:
+        for R in (lv.get("R", {}), lv.get("CHR", {})):
+            for dbn, r in R.items():
+                now = check(dbn, r[1])
+                if now:
+                    moved.add(f"{dbn} {r[1]} -> {now}")
+                    r[1] = now
+        for r in lv.get("NZ", []):
+            now = check(r[0], r[2])
+            if now:
+                moved.add(f"{r[0]} {r[2]} -> {now}")
+                r[2] = now
+    if moved:
+        print(f"addresses: {len(moved)} schools get this year's address in place of the Snapshot's: {'; '.join(sorted(moved))}")
+
+    def near(dbn, lat, lon, m=200):
+        return lat is not None and any(a and b and math.hypot((a - lat) * 111320, (b - lon) * 84300) < m
+                                       for a, b in points[dbn])
+    by_addr = {(dbn[2], zip_key(a)): z for dbn, (a, z, *_) in lcgms.items()}
+    d["ZIP"] = {}
+    for dbn, (a, z, lat, lon) in lcgms.items():
+        if dbn not in points:  # no card on the map
+            continue
+        d["ZIP"][dbn] = f"{z} {'*' if near(dbn, lat, lon) else zip_key(a)}"
+    for dbn in sorted(set(current) - set(lcgms)):
+        for a in current[dbn]:
+            z = a and by_addr.get((dbn[2], zip_key(a)))
+            if z:
+                d["ZIP"][dbn] = f"{z} {zip_key(a)}"
+                break
+    far = sorted(dbn for dbn, (a, z, lat, lon) in lcgms.items() if lat is not None and points[dbn]
+                 and not near(dbn, lat, lon, 300))
+    if far:
+        print(f"addresses: {len(far)} schools' map points are over 300 m from their LCGMS tax lot: {', '.join(far)}")
 
 
 def prepare_zones(d):
@@ -463,11 +540,6 @@ def main(standalone_path=None, pages=None):
     color_districts(d["DIST"])
     d["ST"] = load("streets.json") if os.path.exists(os.path.join(DATA, "streets.json")) else []
     d["LS"] = load("local_streets.json") if os.path.exists(os.path.join(DATA, "local_streets.json")) else {"n": [], "l": []}
-    # ZIP codes for the cards (fetch_data.py zips): {dbn: "ZIP house-number street"}; the card shows the ZIP only
-    # when its own address has the same house number and street (zipKey in the template), since its address can
-    # come from another source than LCGMS's
-    if os.path.exists(os.path.join(DATA, "zips.json")):
-        d["ZIP"] = {k: f"{z} {zip_key(a)}" for k, (a, z) in load("zips.json")["zips"].items()}
     # park outlines for the green tint over the basemap (fetch_data.py parks): {"p": [[ring, ...] per park]}
     if os.path.exists(os.path.join(DATA, "parks.json")):
         d["PARKS"] = load("parks.json")
@@ -701,6 +773,8 @@ def main(standalone_path=None, pages=None):
             n += len(lv["DM"])
         d["DMC"] = dm["city"]
         print(f"demographics: {n} of {len(done)} schools")
+
+    fix_addresses(d)
 
     with open(os.path.join(ROOT, "src", "template.html"), encoding="utf-8") as f:
         template = f.read()
