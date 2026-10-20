@@ -6,7 +6,7 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
-## Unreleased
+## 1.35.0 (2026-10-19)
 
 ### Added
 - The map has a little color under the zones: parks are a soft green and water a soft blue, so it's easier to tell a park from a block of homes. Turn it off with "Parks & water color" in the layers menu.
