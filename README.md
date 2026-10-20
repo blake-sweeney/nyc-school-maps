@@ -26,7 +26,7 @@ An interactive map of New York City's elementary (kindergarten), middle and high
 - **Parks and water:** parks tinted green (NYC Parks outlines, `data/parks.json`) and water tinted blue on the gray city basemap, with a "Parks & water color" layer toggle
 - **Streets:** a "Major streets" toggle (highways, main roads and truck routes) and an "All streets" toggle (every street, shown once you zoom in to street level), with names along the lines
 
-The site is a static `index.html` plus four data files in `assets/`. The page has the elementary data built in and fetches middle school, high school, all-streets and park data only when someone needs them, which keeps the first load to about 1.8 MB. There is no server or back end.
+The site is a static `index.html` plus four data files in `assets/`. The page has the elementary data built in and fetches middle school, high school, all-streets and park data only when someone needs them, which keeps the first load to about 0.9 MB over the network (the 2.6 MB page compresses to about 0.65 MB; the rest is the map library, fonts and the opening map tiles). There is no server or back end.
 
 To get a single file with everything inline (for example, to open by double-clicking or to email), run `python3 scripts/build.py --standalone path/to/nyc-school-zones.html`.
 
