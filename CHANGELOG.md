@@ -9,7 +9,7 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 ## Unreleased
 
 ### Added
-- A "Theme: Auto · Light · Dark" switch at the bottom of the side panel. Auto follows your device; Light or Dark sticks in this browser.
+- A "Theme: Auto · Light · Dark" switch at the bottom of the side panel and of every school, district and neighborhood page. Auto follows your device; Light or Dark sticks in this browser across the whole site.
 
 ## 1.35.0 (2026-10-19)
 
