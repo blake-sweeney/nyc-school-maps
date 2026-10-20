@@ -6,7 +6,7 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
-## Unreleased
+## 1.38.0 (2026-10-20)
 
 ### Changed
 - On a charter school's card on the map, the explanation of how charter schools work (lottery admission, the separate application and its deadline) now starts folded into one line, "Charter school: lottery admission, separate application", so the school's ratings show up first. Tap the line to read it all.
