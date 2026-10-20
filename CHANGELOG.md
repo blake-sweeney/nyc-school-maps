@@ -20,6 +20,7 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 
 ### Changed
 - The background map now stays visible at every zoom. It no longer fades as you zoom out, and it still shows when you zoom all the way out to the whole city.
+- Behind the scenes: removed leftover code for coloring the map by enrollment, an option the map no longer offers.
 
 ## 1.38.1 (2026-10-20)
 
