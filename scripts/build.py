@@ -110,21 +110,50 @@ def zip_key(addr):
     return " ".join([re.sub(r"[A-Z]+$", "", w[0]) if w else "", next((x for x in w[1:] if x not in DIRECTIONS), "")])
 
 
-def apply_moves(d):
-    """Schools that moved to a building MySchools and the Snapshot don't show yet (data/school_fixes.json, checked by
-    hand): the new address and point everywhere the school appears, and no facts about the old building (building
-    use U, accessibility AC, shared building CO, including other schools' CO lists)."""
-    if not os.path.exists(os.path.join(DATA, "school_fixes.json")):
-        return
-    moved = load("school_fixes.json").get("moved", {})
+def school_fixes():
+    return load("school_fixes.json") if os.path.exists(os.path.join(DATA, "school_fixes.json")) else {}
+
+
+def drop_closed(z):
+    """Take schools the DOE has closed (school_fixes.json "closed") out of a zone file that still lists them. A shared
+    zone then belongs to the school that's left; a zone with no school left becomes a "no zoned school" area, in the
+    DOE's own words for those."""
+    closed = set(school_fixes().get("closed", {}))
+    for f in z["features"]:
+        p = f["properties"]
+        if closed & set(p["dbns"]):
+            p["dbns"] = [x for x in p["dbns"] if x not in closed]
+            if len(p["dbns"]) <= 1:
+                p["label"] = None
+            if not p["dbns"]:
+                p["remarks"] = f"Zoned to District {int(p['dist'])}. No zoned school. Contact 718-935-2009 for more information."
+            elif (p.get("remarks") or "").startswith("Shared Zone") and len(p["dbns"]) == 1:
+                p["remarks"] = None
+    for dbn in closed:
+        z["schools"].pop(dbn, None)
+
+
+def apply_school_fixes(d):
+    """Hand-checked fixes from data/school_fixes.json (closed schools are dropped earlier, in prepare_zones):
+    - "moved": schools in a building MySchools and the Snapshot don't show yet get the new address and point
+      everywhere the school appears, and no facts about the old building (building use U, accessibility AC,
+      shared building CO, including other schools' CO lists).
+    - "points": a better point for a school whose address is right, or none (null) for a virtual school, which then
+      has a card and a page but no marker."""
+    fixes = school_fixes()
+    moved, points = fixes.get("moved", {}), fixes.get("points", {})
     levels = [d] + [d[k] for k in ("MS", "HS") if k in d]
-    for dbn, m in moved.items():
+    for dbn, m in {**points, **moved}.items():
         for lv in levels:
             if dbn in lv.get("schools", {}):
-                lv["schools"][dbn].update(a=m["a"], lat=m["lat"], lon=m["lon"])
+                lv["schools"][dbn].update(lat=m["lat"], lon=m["lon"], **({"a": m["a"]} if "a" in m else {}))
             for r in lv.get("NZ", []) + lv.get("CH", []):
                 if r[0] == dbn:
-                    r[2], r[3], r[4] = m["a"], m["lat"], m["lon"]
+                    r[3], r[4] = m["lat"], m["lon"]
+                    if "a" in m:
+                        r[2] = m["a"]
+    for dbn, m in moved.items():
+        for lv in levels:
             for k in ("R", "CHR"):
                 if dbn in lv.get(k, {}):
                     lv[k][dbn][1] = m["a"]
@@ -136,13 +165,18 @@ def apply_moves(d):
                 co[other] = [x for x in co[other] if x[0] != dbn]
                 if not co[other]:
                     del co[other]
-    # a reminder once MySchools has caught up
+    # reminders once the city's files have caught up
     listed = {r[0]: r[2] for r in load("ms_directory.json")} if os.path.exists(os.path.join(DATA, "ms_directory.json")) else {}
     for dbn, m in moved.items():
         if dbn in listed and zip_key(listed[dbn]) == zip_key(m["a"]):
-            print(f"school_fixes.json: MySchools now lists {dbn} at {listed[dbn]}; its entry can go")
-    if moved:
-        print(f"school_fixes.json: {len(moved)} moved: {', '.join(moved)}")
+            print(f"school_fixes.json: MySchools now lists {dbn} at {listed[dbn]}; its moved entry can go")
+    in_zones = set()
+    for name in ("elem_zones.json", "ms_zones.json", "hs_zones.json"):
+        if os.path.exists(os.path.join(DATA, name)):
+            in_zones |= {x for f in load(name)["features"] for x in f["properties"]["dbns"]} | set(load(name)["schools"])
+    for dbn in sorted(set(fixes.get("closed", {})) - in_zones):
+        print(f"school_fixes.json: Find a School no longer lists {dbn}; its closed entry can go")
+    print(f"school_fixes.json: {len(moved)} moved, {len(points)} points, {len(fixes.get('closed', {}))} closed")
 
 
 def fix_addresses(d):
@@ -210,18 +244,21 @@ def fix_addresses(d):
             continue
         d["ZIP"][dbn] = f"{z} {'*' if near(dbn, lat, lon) else zip_key(a)}"
     for dbn in sorted(set(current) - set(lcgms)):
+        if dbn not in points:  # no card on the map
+            continue
         for a in current[dbn]:
             z = a and by_addr.get((dbn[2], zip_key(a)))
             if z:
                 d["ZIP"][dbn] = f"{z} {zip_key(a)}"
                 break
-    far = sorted(dbn for dbn, (a, z, lat, lon) in lcgms.items() if lat is not None and points[dbn]
+    far = sorted(dbn for dbn, (a, z, lat, lon) in lcgms.items() if lat is not None and any(p[0] for p in points[dbn])
                  and not near(dbn, lat, lon, 300))
     if far:
         print(f"addresses: {len(far)} schools' map points are over 300 m from their LCGMS tax lot: {', '.join(far)}")
 
 
 def prepare_zones(d):
+    drop_closed(d)
     feats = d["features"]
 
     # Zones are neighbors if they share boundary vertices.
@@ -809,7 +846,7 @@ def main(standalone_path=None, pages=None):
         d["DMC"] = dm["city"]
         print(f"demographics: {n} of {len(done)} schools")
 
-    apply_moves(d)
+    apply_school_fixes(d)
     fix_addresses(d)
 
     with open(os.path.join(ROOT, "src", "template.html"), encoding="utf-8") as f:

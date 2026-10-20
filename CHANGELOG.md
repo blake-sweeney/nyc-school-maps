@@ -10,6 +10,9 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 
 ### Fixed
 - Global Innovators Academy (15K428) is at its new building, 4012 Fort Hamilton Parkway, on the map and its school page, with directions there. It moved this school year from 4222 4th Avenue, where MySchools still lists it. Its card and page no longer show building use, accessibility or a shared school for the old building, and Sunset Park Avenues Elementary no longer lists it as sharing a building.
+- Three schools that have closed are gone from the map, the district and neighborhood pages and search, and their school pages are gone: Elementary School for Math, Science, and Technology (10X382), which merged with P.S. 386; North Bronx School of Empowerment (11X287), which merged into Leaders of Tomorrow; and I.S. 364 Gateway (19K364). P.S. 386 and Leaders of Tomorrow now have their zones to themselves. Families in I.S. 364's old zone in Starrett City see "No zoned middle school" and District 19's middle schools, like the rest of the district.
+- P.S./I.S. 217's marker is at its building, 645 Main Street on Roosevelt Island. It used to sit about a kilometer south.
+- Virtual Innovators Academy (08X636), a virtual school, no longer has a marker on the map. You can still find it by name in search, and its card and school page are still there.
 
 ## 1.42.1 (2026-10-20)
 
