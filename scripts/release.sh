@@ -5,7 +5,7 @@
 #   scripts/release.sh minor      # 1.13.0 -> 1.14.0  (a new feature)
 #   scripts/release.sh major      # 1.13.0 -> 2.0.0   (a new kind of view)
 #   scripts/release.sh minor --dry-run   # show what would happen, change nothing
-#   scripts/release.sh minor --yes       # don't ask before pushing
+#   scripts/release.sh minor --yes       # don't ask "Release vX.Y.Z? [y/N]" (it comes right after the changelog)
 #
 # Before running: commit your work, and describe it under a "## Unreleased" heading at the top of
 # CHANGELOG.md. The script renames that heading to the new version and today's date.
@@ -18,6 +18,7 @@ for a in "$@"; do
   case "$a" in
     major|minor|patch) part="$a" ;;
     --dry-run|-n) dry=1 ;;
+    --yes|-y) yes=1 ;;
     -h|--help) usage ;;
     *) echo "Unknown argument: $a"; usage ;;
   esac
@@ -33,6 +34,8 @@ branch="$(git rev-parse --abbrev-ref HEAD)"
 [ "$branch" = "main" ] || die "you're on '$branch'. Releases go out from main (merge first)."
 git fetch --quiet origin main --tags || die "couldn't reach GitHub (git fetch failed)."
 [ -z "$(git rev-list HEAD..origin/main)" ] || die "GitHub has commits you don't. Run 'git pull' first."
+# sign in to GitHub now, not after the rebuild: a password, SSH key or passkey prompt shows up right away
+if [ "$dry" = 0 ]; then git push --dry-run --quiet origin main || die "couldn't sign in to GitHub to push (git push --dry-run failed)."; fi
 
 old="$(tr -d '[:space:]' < VERSION)"
 [[ "$old" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]] || die "VERSION should look like 1.2.3, but it says '$old'."
@@ -54,6 +57,10 @@ echo "Changelog for this release:"
 awk '/^## Unreleased/{on=1;next} /^## /{if(on)exit} on' CHANGELOG.md | sed 's/^/  /'
 echo
 if [ "$dry" = 1 ]; then echo "(dry run: nothing changed)"; exit 0; fi
+if [ "$yes" = 0 ]; then
+  [ -t 0 ] || die "nobody to ask: add --yes to release without the question."
+  read -r -p "Release $tag? [y/N] " ans; [[ "$ans" =~ ^[Yy] ]] || { echo "Stopped: nothing changed."; exit 0; }
+fi
 
 # --- bump, rebuild, commit, tag ------------------------------------------------------------------
 printf '%s\n' "$new" > VERSION
