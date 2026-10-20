@@ -486,7 +486,7 @@ def demo_pov(p):
 
 def demo_html(m, city, ch, iep=None, ell=None):
     """Demographics (build.py DM row; city: DMC), as on the map's card (src/template.html demoSec): race and ethnicity
-    bars for the school and all of NYC, a table of both, girls and boys, poverty, economic need, IEPs and English
+    bars for the school and all of NYC, a table of both, girls and boys, low-income students, economic need, IEPs and English
     learners. iep, ell: the School Quality Snapshot's counts (of_all), only for a school the Demographic Snapshot
     doesn't list."""
     m = m if m and m[0] else None
@@ -515,7 +515,7 @@ def demo_html(m, city, ch, iep=None, ell=None):
                    f'<td>{demo_pct(city[1 + i], city[0]) if city else ""}</td></tr>'
                    for i, (name, c) in enumerate(settings.DEMO_GROUPS))
     rows += tr("Girls · boys", both(m), city and both(city), "pov")
-    rows += tr("Students in poverty", None if m[1 + k] is None else demo_pov(m[1 + k]), city and demo_pov(city[1 + k]))
+    rows += tr("Low-income students", None if m[1 + k] is None else demo_pov(m[1 + k]), city and demo_pov(city[1 + k]))
     rows += tr("Economic need", None if m[2 + k] is None else demo_pov(m[2 + k]), city and demo_pov(city[2 + k]))
     rows += tr(f"Students with IEPs (special ed)<small>{m[k + 5]:,} of {m[0]:,}</small>", demo_pct(m[k + 5], m[0]),
                city and demo_pct(city[k + 5], city[0]), "pov")
@@ -528,8 +528,9 @@ def demo_html(m, city, ch, iep=None, ell=None):
             + f"<tbody>{rows}</tbody></table>"
             + f'<p class="src">DOE Demographic Snapshot, {settings.DEMOGRAPHICS_LABEL}, counting every student, 3-K and '
               "pre-K included. IEPs and English learners as of the end of the school year; pre-K students aren’t tested "
-              "for English, so the English learner share runs a little low at schools with pre-K. Poverty: families who "
-              "qualify for free or reduced-price lunch or get HRA benefits (like SNAP)"
+              "for English, so the English learner share runs a little low at schools with pre-K. Low-income: families who "
+              "qualify for free or reduced-price lunch (income up to about 185% of the poverty line) or get HRA "
+              "benefits like SNAP"
             + ("; it can be undercounted at charter schools that don’t use DOE school food" if ch else "")
             + ". Economic need: the DOE’s estimate of students facing hardship. Students in temporary housing or on HRA "
               "benefits count fully; everyone else counts by the poverty rate where they live.</p>")

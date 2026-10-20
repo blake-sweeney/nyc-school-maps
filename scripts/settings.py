@@ -16,7 +16,7 @@ PREK_LABEL = "fall 2025"
 MYSCHOOLS_LABEL = "fall 2026"
 # Building use: the SCA's Enrollment, Capacity & Utilization Report ("Blue Book", data/utilization.json)
 BLUE_BOOK_LABEL = "2025–26"
-# Race and ethnicity and poverty: the DOE's Demographic Snapshot (data/demographics.json), the school year it counts
+# Race and ethnicity, family income and more: the DOE's Demographic Snapshot (data/demographics.json), the school year it counts
 DEMOGRAPHICS_LABEL = "2025–26"
 
 # NYC-wide high school averages from that Snapshot, quoted next to each school's numbers

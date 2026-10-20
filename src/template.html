@@ -430,7 +430,7 @@ aside>*{flex-shrink:0}
       <p><a href="https://github.com/blake-sweeney/nyc-school-maps" target="_blank" rel="noopener">Source code</a> (AGPL-3.0)</p>
       <p class="asof">Zones: NYC DOE Find a School, __ZONES_DATE__ · Ratings, test scores and programs: DOE __SNAPSHOT__ School Quality Snapshot · Updated __UPDATED__ · <a href="https://github.com/blake-sweeney/nyc-school-maps/blob/main/CHANGELOG.md" target="_blank" rel="noopener">v__VERSION__</a></p>
       <details><summary>Data sources</summary>
-        <p>School zones from the DOE’s <a href="https://schoolsearch.schools.nyc/" target="_blank" rel="noopener">Find a School</a> map. Thanks to Jimmy Chion’s <a href="https://schoolzones.nyc/" target="_blank" rel="noopener">schoolzones.nyc</a> for pointing the way to the DOE’s current zone data. School names and addresses from the 2019–20 DOE location list. State test results, ratings, programs and current school names from the DOE’s <a href="https://tools.nycenet.edu/snapshot/" target="_blank" rel="noopener">__SNAPSHOT__ School Quality Snapshot</a>. Students’ race, ethnicity and poverty from the DOE’s __DEMOGRAPHICS__ Demographic Snapshot. Shared zones show the combined result of all their schools. Address lookup by NYC Planning’s GeoSearch.</p>
+        <p>School zones from the DOE’s <a href="https://schoolsearch.schools.nyc/" target="_blank" rel="noopener">Find a School</a> map. Thanks to Jimmy Chion’s <a href="https://schoolzones.nyc/" target="_blank" rel="noopener">schoolzones.nyc</a> for pointing the way to the DOE’s current zone data. School names and addresses from the 2019–20 DOE location list. State test results, ratings, programs and current school names from the DOE’s <a href="https://tools.nycenet.edu/snapshot/" target="_blank" rel="noopener">__SNAPSHOT__ School Quality Snapshot</a>. Students’ race, ethnicity and family income from the DOE’s __DEMOGRAPHICS__ Demographic Snapshot. Shared zones show the combined result of all their schools. Address lookup by NYC Planning’s GeoSearch.</p>
       </details>
     </div>
   </aside>
@@ -1116,7 +1116,7 @@ function factsHtml(d){const x=X[d]||[],c=CS[d]||{},u=U[d];if(!X[d]&&!CS[d]&&!u&&
   const row=(k,v)=>v==null?'':'<span>'+k+'</span><b>'+v+'</b>';
   const h=row('Attendance',x[1]!=null?x[1]+'%':null)+row('Teachers with 3+ years’ experience',x[2]!=null?x[2]+'%':null)+row('Principal’s years at school',x[3]!=null?(Math.round(x[3]*10)/10):null)+(level==='es'?row('Kindergarten class size',cs(c.k))+row('Grades 1–5 class size',cs(c.e)):row('Core class size',cs(level==='ms'?c.ms:c.hs)))+row('Building use (how full)',u?u[0]+'% of capacity':null)+row('Building accessibility',AC_TXT[AC[d]])+'';return h?'<div class="facts">'+h+'</div>':''}
 // Demographics: who goes to the school (DOE Demographic Snapshot, __DEMOGRAPHICS__). DM rows are [enrollment, counts in
-// DEMO_GROUPS order, % in poverty, Economic Need Index (both a whole % or ">95" / "<5"), girls, boys, students with
+// DEMO_GROUPS order, % low-income (the DOE's "poverty"), Economic Need Index (both a whole % or ">95" / "<5"), girls, boys, students with
 // IEPs, English language learners]; DMC the same for all of NYC
 const DEMO_GROUPS=__DEMO_GROUPS__;  // scripts/settings.py
 function dmPct(n,t){const q=t?100*n/t:0;return (q>0&&q<1?'<1':Math.round(q))+'%'}
@@ -1140,11 +1140,11 @@ function demoSec(d){const m=DM[d]&&DM[d][0]?DM[d]:null,x=X[d]||[],c=DMC,k=DEMO_G
     '<span></span><span class="hd">School</span><span class="hd">'+(c?'NYC':'')+'</span>'+
     DEMO_GROUPS.map((y,i)=>'<span class="g"><i style="background:'+y[1]+'"></i>'+y[0]+'</span><b>'+dmPct(g[i],m[0])+'</b><span class="c">'+(c?dmPct(c[1+i],c[0]):'')+'</span>').join('')+
     row('Girls · boys',both(m),c&&both(c),'pov')+
-    row('Students in poverty',pv!=null?dmPov(pv):null,c&&dmPov(c[1+k]))+row('Economic need',en!=null?dmPov(en):null,c&&dmPov(c[2+k]))+
+    row('Low-income students',pv!=null?dmPov(pv):null,c&&dmPov(c[1+k]))+row('Economic need',en!=null?dmPov(en):null,c&&dmPov(c[2+k]))+
     row('<span>Students with IEPs (special ed)<small>'+m[k+5].toLocaleString()+' of '+m[0].toLocaleString()+'</small></span>',dmPct(m[k+5],m[0]),c&&dmPct(c[k+5],c[0]),'pov')+
     row('<span>English language learners<small>'+m[k+6].toLocaleString()+' of '+m[0].toLocaleString()+'</small></span>',dmPct(m[k+6],m[0]),c&&dmPct(c[k+6],c[0]))+
-    '<small>DOE Demographic Snapshot, __DEMOGRAPHICS__, counting every student, 3-K and pre-K included. IEPs and English learners as of the end of the school year; pre-K students aren’t tested for English, so the English learner share runs a little low at schools with pre-K. Poverty: families who qualify for free or reduced-price lunch or get HRA benefits (like SNAP)'+(CHX[d]?'; it can be undercounted at charter schools that don’t use DOE school food':'')+'. Economic need: the DOE’s estimate of students facing hardship. Students in temporary housing or on HRA benefits count fully; everyone else counts by the poverty rate where they live.</small></div>';
-  return sec('demo','<span class="st">Demographics<small>'+[dmSex(m)].concat(top,pv!=null?[dmPov(pv).replace('Over','over').replace('Under','under')+' in poverty']:[]).filter(Boolean).join(' · ')+'</small></span>',h)}
+    '<small>DOE Demographic Snapshot, __DEMOGRAPHICS__, counting every student, 3-K and pre-K included. IEPs and English learners as of the end of the school year; pre-K students aren’t tested for English, so the English learner share runs a little low at schools with pre-K. Low-income: families who qualify for free or reduced-price lunch (income up to about 185% of the poverty line) or get HRA benefits like SNAP'+(CHX[d]?'; it can be undercounted at charter schools that don’t use DOE school food':'')+'. Economic need: the DOE’s estimate of students facing hardship. Students in temporary housing or on HRA benefits count fully; everyone else counts by the poverty rate where they live.</small></div>';
+  return sec('demo','<span class="st">Demographics<small>'+[dmSex(m)].concat(top,pv!=null?[dmPov(pv).replace('Over','over').replace('Under','under')+' low-income']:[]).filter(Boolean).join(' · ')+'</small></span>',h)}
 // school card: sections that open and close. Each viewer's choice is remembered in this browser; the Color by
 // metric also opens the section that shows it (without changing what's remembered).
 const SEC_KEY='nsz-card-v1',SEC={},SEC_FOR={scr:'progs',ip:'rate',ss:'rate',rf:'rate',ela:'tests',math:'tests',coll:'out',ccr:'out',sat:'out',iep:'demo'};
