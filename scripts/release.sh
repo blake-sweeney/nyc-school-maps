@@ -34,6 +34,8 @@ branch="$(git rev-parse --abbrev-ref HEAD)"
 [ "$branch" = "main" ] || die "you're on '$branch'. Releases go out from main (merge first)."
 git fetch --quiet origin main --tags || die "couldn't reach GitHub (git fetch failed)."
 [ -z "$(git rev-list HEAD..origin/main)" ] || die "GitHub has commits you don't. Run 'git pull' first."
+# sign in to GitHub now, not after the rebuild: a password, SSH key or passkey prompt shows up right away
+if [ "$dry" = 0 ]; then git push --dry-run --quiet origin main || die "couldn't sign in to GitHub to push (git push --dry-run failed)."; fi
 
 old="$(tr -d '[:space:]' < VERSION)"
 [[ "$old" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]] || die "VERSION should look like 1.2.3, but it says '$old'."
