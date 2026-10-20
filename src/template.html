@@ -321,6 +321,7 @@ aside>*{flex-shrink:0}
 .kind.nz{background:var(--bg)}
 .kind{font-size:.85rem;border-left:3px solid var(--hl);padding:2px 0 2px 9px;line-height:1.4}
 .kind a{color:var(--hl)}
+details.kind>summary{cursor:pointer}details.kind>p{margin:4px 0 2px}
 /* the city's basemap is gray; #nsz-water (built in the script) tints its water shades blue. "Parks & water" off: plain gray */
 .nyc-base{filter:grayscale(1) url(#nsz-water) contrast(.85) brightness(1.06)}
 .plain-base .nyc-base{filter:grayscale(1) contrast(.85) brightness(1.06)}
@@ -672,9 +673,10 @@ function boroOf(d){if(!CHX[d])return BORO[d[2]]||'';const k=distOf(d);return k<=
 // charters: how to apply, what they can't do, and what changed
 const CH_APPLY='https://nyccharterschools.org/apply-to-a-charter-school/';
 function chBlock(o){const x=CHX[o.d]||[];
-  return '<div class="kind nz ch"><b>Charter school:</b> free and public, run by an independent nonprofit. '+esc(nzPriority(o))+
+  // starts closed: the full explanation pushed the school itself below the fold
+  return '<details class="kind nz ch"><summary><b>Charter school:</b> lottery admission, separate application</summary><p>Free and public, run by an independent nonprofit. '+esc(nzPriority(o))+
     ' Apply through the <a href="'+CH_APPLY+'" target="_blank" rel="noopener">common charter application ↗</a> or on the school’s own site, by April 1 for most schools. It’s separate from MySchools: applying doesn’t affect your MySchools application.'+
-    (x[3]?' Formerly '+esc(x[3])+'.':'')+'</div>'}
+    (x[3]?' Formerly '+esc(x[3])+'.':'')+'</p></details>'}
 regNZ(NZ_ES);
 [['ms',MSD],['hs',HSD]].forEach(([lv,x])=>{if(!x||!LV[lv])return;Object.assign(LV[lv],{P:x.P||{},A:x.A||{},EX:x.EX||{},EXV:x.EXV||[],NZ:allNZ(x,lv),CUT:x.CUT||null,CHR:x.CHR||{},CHX:x.CHX||{}});
   if(x.R)Object.entries(x.R).forEach(([k,v])=>{if(!R[k])R[k]=v});if(x.X)Object.entries(x.X).forEach(([k,v])=>{if(!X[k])X[k]=v});regNZ(LV[lv].NZ)});
