@@ -454,6 +454,9 @@ def main(standalone_path=None, pages=None):
     color_districts(d["DIST"])
     d["ST"] = load("streets.json") if os.path.exists(os.path.join(DATA, "streets.json")) else []
     d["LS"] = load("local_streets.json") if os.path.exists(os.path.join(DATA, "local_streets.json")) else {"n": [], "l": []}
+    # park outlines for the green tint over the basemap (fetch_data.py parks): {"p": [[ring, ...] per park]}
+    if os.path.exists(os.path.join(DATA, "parks.json")):
+        d["PARKS"] = load("parks.json")
 
     # Middle school zones (optional): same shape as the elementary data, tests for grades 6-8
     if os.path.exists(os.path.join(DATA, "ms_zones.json")):
@@ -688,9 +691,9 @@ def main(standalone_path=None, pages=None):
     template = fill_settings(template)
 
     full = dict(d)
-    # For the website, middle school, high school and the all-streets layer load on demand from
+    # For the website, middle school, high school, the all-streets layer and the parks load on demand from
     # assets/ so the first view is about half the size. The standalone file keeps everything inline.
-    split = {"ms": d.pop("MS", None), "hs": d.pop("HS", None), "ls": d.pop("LS", None)}
+    split = {"ms": d.pop("MS", None), "hs": d.pop("HS", None), "ls": d.pop("LS", None), "parks": d.pop("PARKS", None)}
     assets = {}
     os.makedirs(os.path.join(ROOT, "assets"), exist_ok=True)
     for key, obj in split.items():
