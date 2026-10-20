@@ -1,0 +1,58 @@
+# NYC School Zones · one-click release from GitHub: Actions → Release → Run workflow.
+# Runs scripts/release.sh on main: bumps VERSION, turns "## Unreleased" in CHANGELOG.md into the new version and
+# today's date (New York time), rebuilds the site, commits "Release vX.Y.Z", tags it and pushes both.
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Which number to bump: patch (fixes, wording), minor (a new feature), major (a new kind of view)"
+        type: choice
+        options: [patch, minor, major]
+        default: minor
+      dry_run:
+        description: "Dry run: only show the version and changelog, change nothing"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write   # push the release commit and tag
+  pages: write      # ask GitHub Pages to rebuild afterwards
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    # only from main, and for now only Blake can start or re-run a release (see issue #38 before adding collaborators)
+    if: github.ref == 'refs/heads/main' && github.triggering_actor == 'blake-sweeney'
+    env:
+      TZ: America/New_York
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set the commit author
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Release
+        run: scripts/release.sh "${{ inputs.bump }}" --yes ${{ inputs.dry_run && '--dry-run' || '' }}
+
+      # A push made with the workflow's own token may not start a Pages deploy, so ask for one.
+      - name: Rebuild GitHub Pages
+        if: ${{ !inputs.dry_run }}
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${{ github.repository }}/pages/builds" --silent && echo "Requested a Pages build."
