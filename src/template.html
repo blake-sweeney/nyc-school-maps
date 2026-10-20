@@ -321,10 +321,13 @@ aside>*{flex-shrink:0}
 .kind.nz{background:var(--bg)}
 .kind{font-size:.85rem;border-left:3px solid var(--hl);padding:2px 0 2px 9px;line-height:1.4}
 .kind a{color:var(--hl)}
-.nyc-base{filter:grayscale(1) contrast(.85) brightness(1.06)}
+/* the city's basemap is gray; #nsz-water (built in the script) tints its water shades blue. "Parks & water" off: plain gray */
+.nyc-base{filter:grayscale(1) url(#nsz-water) contrast(.85) brightness(1.06)}
+.plain-base .nyc-base{filter:grayscale(1) contrast(.85) brightness(1.06)}
 .nyc-labels{filter:grayscale(1)}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .nyc-base{filter:grayscale(1) invert(1) brightness(.78) contrast(.9)}:root:not([data-theme="light"]) .nyc-labels{filter:grayscale(1) invert(1) brightness(1.15)}}
-:root[data-theme="dark"] .nyc-base{filter:grayscale(1) invert(1) brightness(.78) contrast(.9)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .nyc-base{filter:grayscale(1) url(#nsz-water) invert(1) hue-rotate(180deg) brightness(.78) contrast(.9)}:root:not([data-theme="light"]) .plain-base .nyc-base{filter:grayscale(1) invert(1) brightness(.78) contrast(.9)}:root:not([data-theme="light"]) .nyc-labels{filter:grayscale(1) invert(1) brightness(1.15)}}
+:root[data-theme="dark"] .nyc-base{filter:grayscale(1) url(#nsz-water) invert(1) hue-rotate(180deg) brightness(.78) contrast(.9)}
+:root[data-theme="dark"] .plain-base .nyc-base{filter:grayscale(1) invert(1) brightness(.78) contrast(.9)}
 :root[data-theme="dark"] .nyc-labels{filter:grayscale(1) invert(1) brightness(1.15)}
 .leaflet-tile{visibility:hidden}.leaflet-tile-loaded{visibility:inherit}
 .leaflet-tile-container{pointer-events:none}
@@ -433,7 +436,7 @@ aside>*{flex-shrink:0}
       <p><a href="https://github.com/blake-sweeney/nyc-school-maps" target="_blank" rel="noopener">Source code</a> (AGPL-3.0)</p>
       <p class="asof">Zones: NYC DOE Find a School, __ZONES_DATE__ · Ratings, test scores and programs: DOE __SNAPSHOT__ School Quality Snapshot · Updated __UPDATED__ · <a href="https://github.com/blake-sweeney/nyc-school-maps/blob/main/CHANGELOG.md" target="_blank" rel="noopener">v__VERSION__</a></p>
       <details><summary>Data sources</summary>
-        <p>School zones from the DOE’s <a href="https://schoolsearch.schools.nyc/" target="_blank" rel="noopener">Find a School</a> map. Thanks to Jimmy Chion’s <a href="https://schoolzones.nyc/" target="_blank" rel="noopener">schoolzones.nyc</a> for pointing the way to the DOE’s current zone data. School names and addresses from the 2019–20 DOE location list. State test results, ratings, programs and current school names from the DOE’s <a href="https://tools.nycenet.edu/snapshot/" target="_blank" rel="noopener">__SNAPSHOT__ School Quality Snapshot</a>. Students’ race, ethnicity and family income from the DOE’s __DEMOGRAPHICS__ Demographic Snapshot. Shared zones show the combined result of all their schools. Address lookup by NYC Planning’s GeoSearch.</p>
+        <p>School zones from the DOE’s <a href="https://schoolsearch.schools.nyc/" target="_blank" rel="noopener">Find a School</a> map. Thanks to Jimmy Chion’s <a href="https://schoolzones.nyc/" target="_blank" rel="noopener">schoolzones.nyc</a> for pointing the way to the DOE’s current zone data. School names and addresses from the 2019–20 DOE location list. State test results, ratings, programs and current school names from the DOE’s <a href="https://tools.nycenet.edu/snapshot/" target="_blank" rel="noopener">__SNAPSHOT__ School Quality Snapshot</a>. Students’ race, ethnicity and family income from the DOE’s __DEMOGRAPHICS__ Demographic Snapshot. Shared zones show the combined result of all their schools. Address lookup by NYC Planning’s GeoSearch. Park outlines from NYC Parks’ <a href="https://data.cityofnewyork.us/d/enfh-gkve" target="_blank" rel="noopener">Parks Properties</a> on NYC Open Data.</p>
       </details>
     </div>
   </aside>
@@ -478,6 +481,7 @@ aside>*{flex-shrink:0}
       <label class="chk ly-chrow"><input type="checkbox" id="ly-ch" checked> <span>Charter schools</span> <i class="chs" aria-hidden="true"></i></label>
       <label class="chk"><input type="checkbox" id="ly-zs" checked> <span>Zoned schools</span> <i class="zsk" aria-hidden="true"></i></label>
       <label class="chk"><input type="checkbox" id="ly-names" checked> Street &amp; place names</label>
+      <label class="chk" id="ly-parks-row"><input type="checkbox" id="ly-parks" checked> Parks &amp; water color</label>
     </div>
   </div>
   <div class="map-pop" id="search-dlg" role="dialog" aria-labelledby="sd-lab" hidden><div class="cp-head"><span class="lab" id="sd-lab">Search</span><button type="button" class="cp-close" id="sd-close" aria-label="Close search">✕</button></div></div>
@@ -649,7 +653,7 @@ const PK=D.PK||{};
 const KA=D.KA||{};
 // non-zoned elementary schools (MySchools kindergarten directory): no zone, priority by district
 // map layers the viewer can turn off; remembered in this browser
-const LAY_KEY='nsz-layers-v1',LAY={zones:true,dist:true,zs:true,nz:true,hsnz:true,gt:true,ch:true,names:true};
+const LAY_KEY='nsz-layers-v1',LAY={zones:true,dist:true,zs:true,nz:true,hsnz:true,gt:true,ch:true,names:true,parks:true};
 try{Object.assign(LAY,JSON.parse(localStorage.getItem(LAY_KEY)||'{}'))}catch(e){}
 function saveLay(){try{localStorage.setItem(LAY_KEY,JSON.stringify(LAY))}catch(e){}}
 const mkNZ=(r,lv,ch)=>({d:r[0],n:r[1],a:r[2],lat:r[3],lon:r[4],pd:r[5]||[],only:r[6],pr:r[7]||[],gt:!!r[8],ms:lv==='ms',hs:lv==='hs',pz:r[9]||'',ch:!!ch});
@@ -801,8 +805,26 @@ const labelTiles=L.tileLayer(NYC_TILES+'label@EPSG%3A900913@png8/{z}/{x}/{y}.png
 L.control.attribution({prefix:false,position:'bottomright'}).addAttribution('Basemap © <a href="https://finder.nyc.gov/nyc-lib/tiles/index.html" target="_blank" rel="noopener">City of New York</a> (CC BY 4.0)').addTo(map);
 baseTiles.on('tileload',()=>{tileOk++});
 baseTiles.on('tileerror',()=>{if(++tileErr>=6&&!tileOk)dropBase()});
-function dropBase(){if(!useBase)return;useBase=false;map.removeLayer(baseTiles);map.removeLayer(labelTiles);
+function dropBase(){if(!useBase)return;useBase=false;map.removeLayer(baseTiles);map.removeLayer(labelTiles);if(typeof syncParks==='function')syncParks();
   document.querySelector('.leaflet-control-attribution')?.remove();if(typeof restyle==='function'){restyle();syncStreets()}}
+// Color on the gray basemap. Water: the tiles keep water in its own gray shades (about 150-217; land is 236,
+// parks 222, buildings 219+), so an SVG lookup table tints just those blue and the shoreline stays exact.
+// Parks: NYC Parks outlines (assets/parks.js), drawn green in a pane that blends as "color" into the tiles,
+// so paths and lakes inside a park still show. Both follow the "Parks & water color" layer.
+(()=>{const R=[],G=[],B=[];for(let v=0;v<256;v++){const w=v>=150&&v<=217;R.push((w?v*.84:v)/255);G.push((w?v*.93:v)/255);B.push((w?Math.min(255,v*1.07):v)/255)}
+  const f=a=>a.map(x=>x.toFixed(4)).join(' '),d=document.createElement('div');
+  d.innerHTML='<svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="nsz-water" color-interpolation-filters="sRGB"><feComponentTransfer><feFuncR type="discrete" tableValues="'+f(R)+'"/><feFuncG type="discrete" tableValues="'+f(G)+'"/><feFuncB type="discrete" tableValues="'+f(B)+'"/></feComponentTransfer></filter></svg>';
+  document.body.appendChild(d.firstChild)})();
+const PARK_MIN_Z=12,parkPane=map.createPane('parks');parkPane.style.zIndex=250;parkPane.style.pointerEvents='none';parkPane.style.mixBlendMode='color';
+const parkRend=L.canvas({pane:'parks',padding:.3}),parkGroup=L.layerGroup();let parksBuilt=false,parksLoading=false;
+function buildParks(src){(src.p||[]).forEach(rings=>L.polygon(rings.map(r=>{const ll=[];let x=0,y=0;for(let i=0;i<r.length;i+=2){x+=r[i];y+=r[i+1];ll.push([y/1e5,x/1e5])}return ll}),
+  {renderer:parkRend,interactive:false,stroke:false,fill:true,fillColor:'#4f9a57',fillOpacity:1}).addTo(parkGroup));parksBuilt=true}
+function syncParks(){const on=useBase&&!!LAY.parks;document.getElementById('map').classList.toggle('plain-base',!on);
+  parkPane.style.opacity=String((isDark()?.4:.55)*(map.getZoom()<12.5?.85:1));
+  const show=on&&map.getZoom()>=PARK_MIN_Z;
+  if(show&&!parksBuilt){if(D.PARKS){buildParks(D.PARKS)}else if(ASSETS.parks&&!parksLoading){parksLoading=true;getAsset('parks').then(j=>{buildParks(j);syncParks()}).catch(()=>{parksLoading=false})}}
+  if(show&&parksBuilt&&!map.hasLayer(parkGroup))parkGroup.addTo(map);if(!show&&map.hasLayer(parkGroup))map.removeLayer(parkGroup)}
+map.on('zoomend',syncParks);
 // the basemap fades in as you zoom in; zone colors get more see-through so streets and parks show
 function syncNames(){if(!useBase)return;if(LAY.names&&!map.hasLayer(labelTiles))labelTiles.addTo(map);if(!LAY.names&&map.hasLayer(labelTiles))map.removeLayer(labelTiles)}
 function baseFade(){const z=map.getZoom();baseTiles.setOpacity(z<11.5?.45:z<12.5?.7:1);labelTiles.setOpacity(z<12?.75:1)}
@@ -1572,7 +1594,7 @@ document.getElementById('pb-layers').addEventListener('click',()=>setPop('layers
 document.getElementById('ly-close').addEventListener('click',()=>{if(phone.matches)setPop('layers',false);else{lypop.hidden=true;document.getElementById('layers-btn').setAttribute('aria-expanded','false')}});
 function syncLayerBoxes(){Object.keys(LAY).forEach(k=>{const b=document.getElementById('ly-'+k);if(b)b.checked=!!LAY[k]});document.querySelectorAll('.ly-es').forEach(e=>e.hidden=!NZ.some(o=>o.gt));document.querySelectorAll('.ly-chrow').forEach(e=>e.hidden=!NZ.some(o=>o.ch));document.getElementById('ly-gt-lab').textContent=level==='hs'?'Specialized high schools':level==='ms'?'Citywide middle schools':'Citywide G&T schools';{const g=document.getElementById('gtk-item');if(g)g.lastChild.textContent=level==='hs'?'Specialized':level==='ms'?'Citywide':'Citywide G&T'}document.querySelectorAll('.ly-nzrow').forEach(e=>e.hidden=level==='hs'||!NZ.length);document.querySelectorAll('.ly-hsrow').forEach(e=>e.hidden=level!=='hs'||!NZ.some(o=>!o.gt));document.getElementById('ly-nz-lab').textContent=level==='ms'?'Middle schools without zones':'Non-zoned schools';const k=document.getElementById('nzk-item');if(k)k.lastChild.textContent=level==='es'?'Non-zoned':'No zone'}
 function syncZoneLines(){byLayer.forEach(l=>{l.options.interactive=!!LAY.zones;if(!LAY.zones)l.closeTooltip()});if(!zoneLines)return;if(LAY.zones&&!map.hasLayer(zoneLines))zoneLines.addTo(map);if(!LAY.zones&&map.hasLayer(zoneLines))map.removeLayer(zoneLines)}
-function applyLayers(){syncZoneLines();restyle();if(typeof syncDistricts==='function')syncDistricts();buildNZ();drawLabels();syncNames();if(typeof syncDistricts==='function')syncDistricts()}
+function applyLayers(){syncZoneLines();restyle();if(typeof syncDistricts==='function')syncDistricts();buildNZ();drawLabels();syncNames();syncParks();if(typeof syncDistricts==='function')syncDistricts()}
 // hiding zones also drops a selected zone (its outline and card); a selected school marker stays
 function clearZoneSel(){if(!selected)return;selected.setStyle(style(selected.feature,false));selected=null;buildZS();if(selLine){map.removeLayer(selLine);selLine=null}
   card.className='card empty';card.textContent='Select a zone on the map, or search for a school, to see its zoned school.';sheetDefault();

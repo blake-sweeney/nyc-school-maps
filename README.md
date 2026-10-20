@@ -23,9 +23,10 @@ An interactive map of New York City's elementary (kindergarten), middle and high
 - **Charter schools (not on the map yet):** the charter schools open now, with locations, grades and last year's enrollment, from the DOE's LCGMS school list and Demographic Snapshot (`data/charters.json`) and their School Quality Snapshot pages (`data/charter_snapshot.json`)
 - **Class size (zone card):** average kindergarten, grades 1–5 and core-subject class sizes, from the DOE's class size report
 - **Colors:** a red → orange → yellow → teal ramp, checked against common forms of color blindness (deuteranopia, protanopia)
+- **Parks and water:** parks tinted green (NYC Parks outlines, `data/parks.json`) and water tinted blue on the gray city basemap, with a "Parks & water color" layer toggle
 - **Streets:** a "Major streets" toggle (highways, main roads and truck routes) and an "All streets" toggle (every street, shown once you zoom in to street level), with names along the lines
 
-The site is a static `index.html` plus three data files in `assets/`. The page has the elementary data built in and fetches middle school, high school and all-streets data only when someone needs them, which keeps the first load to about 1.8 MB. There is no server or back end.
+The site is a static `index.html` plus four data files in `assets/`. The page has the elementary data built in and fetches middle school, high school, all-streets and park data only when someone needs them, which keeps the first load to about 0.9 MB over the network (the 2.6 MB page compresses to about 0.65 MB; the rest is the map library, fonts and the opening map tiles). There is no server or back end.
 
 To get a single file with everything inline (for example, to open by double-clicking or to email), run `python3 scripts/build.py --standalone path/to/nyc-school-zones.html`.
 
@@ -55,7 +56,7 @@ index.html              built page (this is what GitHub Pages serves)
 VERSION                 site version, shown in the footer
 CHANGELOG.md            what changed in each version
 LICENSE                 AGPL-3.0
-assets/                 ms.js, hs.js, ls.js — built by build.py, loaded on demand
+assets/                 ms.js, hs.js, ls.js, parks.js — built by build.py, loaded on demand
 schools/<DBN>/          one page per school — built by build.py (scripts/pages.py)
 districts/              one page per district + an index — built by build.py
 neighborhoods/          one page per neighborhood + an index — built by build.py (scripts/neighborhoods.py)
@@ -73,6 +74,7 @@ data/
   snapshot_ratings.json Snapshot ratings by school
   streets.json          simplified major streets for the overlay
   local_streets.json    every other street, compactly encoded
+  parks.json            park outlines for the green tint, compactly encoded
   neighborhoods.json    residential neighborhood boundaries (NYC Planning NTAs)
 scripts/
   build.py              data/ + src/template.html  →  index.html
@@ -206,6 +208,7 @@ Download the Classic Edition PDF from the [SCA](https://www.nycsca.org/Community
 
 - District lines (only if the boundaries change): `python3 scripts/fetch_data.py districts <file.geojson>`, from [School Districts](https://data.cityofnewyork.us/d/8ugf-3d8u) (Export → GeoJSON).
 - Streets: `python3 scripts/fetch_data.py streets`.
+- Parks: `python3 scripts/fetch_data.py parks`.
 - Neighborhoods (only when NYC Planning redraws them, about once a decade): `python3 scripts/fetch_data.py neighborhoods`.
 - State test files from NYC Open Data, only used as a fallback when the Snapshot has no scores: `python3 scripts/fetch_data.py tests`, after updating `TEST_YEAR`.
 
@@ -230,6 +233,7 @@ Look over a few school cards and pages, bump `VERSION`, add a `CHANGELOG.md` ent
 - [Local Law 72 admissions report](https://infohub.nyced.org/reports/government-reports), NYC DOE (fall 2025 admissions, School tab; refresh with `python3 scripts/fetch_data.py prek <file.xlsx>`)
 - [School Quality Snapshot 2024–25](https://tools.nycenet.edu/snapshot/), NYC DOE (ratings, test scores, graduation rates, programs and current school names)
 - [Centerline (CSCL)](https://data.cityofnewyork.us/City-Government/Centerline/inkn-q76z), NYC Open Data (major streets)
+- [Parks Properties](https://data.cityofnewyork.us/d/enfh-gkve), NYC Parks via NYC Open Data (park outlines; refresh with `python3 scripts/fetch_data.py parks`)
 
 Zones change from year to year. Before applying, always confirm a specific address on [schoolsearch.schools.nyc](https://schoolsearch.schools.nyc/).
 

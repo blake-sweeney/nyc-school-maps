@@ -35,6 +35,7 @@ SNAPSHOT_API = "https://tools.nycenet.edu/api/v1/data/school/app/snapshot/all"
 from settings import SNAPSHOT_YEAR, MYSCHOOLS_LABEL, DEMOGRAPHICS_LABEL  # which Snapshot, MySchools and Demographic Snapshot year (scripts/settings.py)
 CENTERLINE_DATASET = "inkn-q76z"  # NYC Street Centerline (CSCL)
 NTA_DATASET = "9nt8-h7nd"         # 2020 Neighborhood Tabulation Areas (NYC Planning)
+PARKS_DATASET = "enfh-gkve"       # NYC Parks Properties (parks, playgrounds, gardens)
 
 
 def get_json(url):
@@ -651,9 +652,47 @@ def fetch_snapshot_counts():
     save("snapshot_counts.json", out)
 
 
+def fetch_parks():
+    """Park outlines for the map's green tint, from NYC Parks Properties on NYC Open Data.
+
+    Open Data simplifies the outlines (about 4 m). parks.json: {"p": [[ring, ...] per park]}, each ring
+    [x0, y0, dx1, dy1, ...] in 1e-5 degrees, the first point absolute and the rest steps from the last
+    (the same packing as local_streets.json). Holes stay in their park as extra rings.
+    """
+    q = urllib.parse.urlencode({"$select": "simplify_preserve_topology(multipolygon,0.00004) as g, retired",
+                                "$limit": 10000})
+    rows = get_json(f"{OPEN_DATA}/resource/{PARKS_DATASET}.json?{q}")
+    out = []
+    for r in rows:
+        g = r.get("g")
+        if not g or str(r.get("retired")).lower() == "true":
+            continue
+        polys = g["coordinates"] if g["type"] == "MultiPolygon" else [g["coordinates"]]
+        rings = []
+        for poly in polys:
+            for ring in poly:
+                pts, px, py = [], None, None
+                for x, y in ring:
+                    ix, iy = round(x * 1e5), round(y * 1e5)
+                    if px is None:
+                        pts += [ix, iy]
+                    elif (ix, iy) != (px, py):
+                        pts += [ix - px, iy - py]
+                    else:
+                        continue
+                    px, py = ix, iy
+                if len(pts) >= 6:
+                    rings.append(pts)
+        if rings:
+            out.append(rings)
+    print(f"  {len(out)} parks, {sum(len(r) for p in out for r in p) // 2} points")
+    save("parks.json", {"p": out})
+
+
 STEPS = {"zones": fetch_zones, "tests": fetch_tests, "snapshot": fetch_snapshot, "streets": fetch_streets,
          "classsize": fetch_class_size, "neighborhoods": fetch_neighborhoods, "charters": fetch_charters,
-         "snapshot-counts": fetch_snapshot_counts, "demographics": fetch_demographics}
+         "snapshot-counts": fetch_snapshot_counts, "demographics": fetch_demographics,
+         "parks": fetch_parks}
 
 def fetch_prek(path):
     """Pre-K and 3-K seats, applicants and offers per school, from the DOE's Local Law 72 admissions report.
