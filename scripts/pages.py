@@ -762,9 +762,10 @@ def page_html(d, dbn, streets, site_url, goat, nbi=None):
         sections.append(t + more(ext(snap, "Scores by student group in the Snapshot")) if t else "")
     cs = d.get("CS", {}).get(dbn) or {}
     u = d.get("U", {}).get(dbn)
+    dm = {**HS.get("DM", {}), **MS.get("DM", {}), **d.get("DM", {})}.get(dbn)
     pk = d.get("PK", {}).get(dbn) if lv == "es" else None
     facts = facts_rows([
-        ("Students", f"{x[0]:,}" if x and x[0] else None),
+        ("Students", f"{dm[0]:,}" if dm and dm[0] else f"{x[0]:,}" if x and x[0] else None),
         ("Attendance", pct(x[1]) if len(x) > 1 else None),
         ("Teachers with 3+ years’ experience", pct(x[2]) if len(x) > 2 else None),
         ("Kindergarten class size", f"{round(cs['k'])} students" if cs.get("k") else None),
@@ -778,7 +779,6 @@ def page_html(d, dbn, streets, site_url, goat, nbi=None):
     if facts:
         sections.append("<h2>School details</h2>" + facts + more(
             ext(f"https://www.schools.nyc.gov/schools/{dbn[2:]}", "School page: contacts, hours, bell schedule")))
-    dm = {**HS.get("DM", {}), **MS.get("DM", {}), **d.get("DM", {})}.get(dbn)
     sections.append(demo_html(dm, d.get("DMC"), ch, of_all(d.get("XN", {}).get(dbn), x, 2, 6),
                               of_all(d.get("XN", {}).get(dbn), x, 1, 5)))
     if lv == "es" and pk:

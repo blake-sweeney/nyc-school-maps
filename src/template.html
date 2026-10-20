@@ -1121,6 +1121,8 @@ function factsHtml(d){const x=X[d]||[],c=CS[d]||{},u=U[d];if(!X[d]&&!CS[d]&&!u&&
 const DEMO_GROUPS=__DEMO_GROUPS__;  // scripts/settings.py
 function dmPct(n,t){const q=t?100*n/t:0;return (q>0&&q<1?'<1':Math.round(q))+'%'}
 function dmPov(p){return p==null?'n/a':p==='>95'?'Over 95%':p==='<5'?'Under 5%':p+'%'}
+// students at the school: the Demographic Snapshot's count (3-K and pre-K included), else the School Quality Snapshot's
+function dmEnroll(d){const m=DM[d];return m&&m[0]?m[0]:X[d]&&X[d][0]!=null?X[d][0]:null}
 // % of students with an IEP: the Demographic Snapshot's, else the School Quality Snapshot's (Color by special ed)
 function dmIep(d){const m=DM[d],k=DEMO_GROUPS.length;return m&&m[0]&&m[k+4]!=null?100*m[k+4]/m[0]:X[d]&&X[d][6]!=null?X[d][6]:null}
 // "All girls", "88% girls": only where one is at least 65%, for the summary line
@@ -1227,7 +1229,7 @@ function kindText(p){const n=p.dbns.length,k=zoneKind(p);
   if(k==='grade')return '<b>Split by grade:</b> which school depends on your child’s grade. See the note below.';
   return '<b>Shared zone:</b> families here get zoned priority at all '+n+' schools below and can rank any of them.'}
 // one school's details (zoned or not)
-function schoolBlock(d){const s=S[d],n=X[d]&&X[d][0]!=null?X[d][0].toLocaleString()+' students':'',gr=s&&s.g?'Grades '+esc(grades(s.g,d)):'',ch=!!CHX[d];
+function schoolBlock(d){const s=S[d],e=dmEnroll(d),n=e!=null?e.toLocaleString()+' students':'',gr=s&&s.g?'Grades '+esc(grades(s.g,d)):'',ch=!!CHX[d];
   return '<div class="school"><span class="nm"><a class="nm-link" href="'+pageUrl(d)+'">'+esc(short(d))+'</a> <span class="dbn">('+esc(d)+')</span></span>'+addrHtml(d)+(gr||n?'<span class="meta">'+[gr,n].filter(Boolean).join(' · ')+'</span>':'')+tagsHtml(d)+(level==='hs'?zonedHtml(d):'')+'<hr class="sep">'+rateSec(d)+(level==='hs'?outSec(d):testSec(d))+(level==='es'?esAdmHtml(d):admSec(d)+cutSec(d)+progSec(d)+exSec(d))+(factsHtml(d)?sec('facts','<span class="st">School details</span>',factsHtml(d)):'')+demoSec(d)+'<hr class="sep">'+'<div class="links">'+'<a href="'+pageUrl(d)+'"><b>Full school page →</b></a>'+(ch?'<a href="'+CH_APPLY+'" target="_blank" rel="noopener"><b>How to apply to charter schools ↗</b></a>':'<a href="'+mySchoolsUrl(d)+'" target="_blank" rel="noopener"><b>MySchools: apply &amp; see your chances ↗</b></a>')+'<a href="https://www.schools.nyc.gov/schools/'+esc(d.slice(2))+'" target="_blank" rel="noopener">School website ↗</a></div></div>'}
 // a big no-zone area (most of the city in the high school view) spans many districts: a click there selects
 // just the district under the click, outlined, instead of the whole area

@@ -13,6 +13,7 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 
 ### Changed
 - "Students with IEPs" and "English language learners" moved from School details into the new Demographics section, on the map's cards and on school pages, and are a year newer (2025–26). They now come from the same DOE count as the rest of the section, so they add up to the same number of students, and they show the NYC share next to the school's ("139 of 673 · 21%, NYC 24%"). Before, at schools with middle and high school grades, they could count only some of the grades. Coloring the map by special ed uses the same newer numbers, and opens Demographics.
+- The number of students under each school's name, on the map's cards and school pages, is now this year's (2025–26) count from the same DOE source, including 3-K and pre-K, so it matches the Demographics section. P.S. 6, for example, now shows 673 students instead of 540.
 
 ## 1.31.2 (2026-10-19)
 
