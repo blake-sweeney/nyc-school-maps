@@ -1281,8 +1281,13 @@ function esAdmHtml(d){const pk=PK[d],ka=KA[d],ky=ka&&Object.keys(ka).sort().pop(
   if(noLine)h+='<p class="adm-none">'+noLine+'</p>';
   return h}
 // street address with a copy button (for maps apps and forms)
-function addrHtml(d){const s=S[d];if(!s||!s.a)return '';const full=title(s.a)+', '+boroOf(d)+', NY';
-  return '<span class="addr">'+esc(title(s.a))+', '+esc(boroOf(d))+'<button type="button" class="copy-addr" data-copy="'+esc(full)+'" aria-label="Copy address: '+esc(full)+'">Copy</button></span>'}
+// ZIP from LCGMS (D.ZIP: "ZIP house-number street"), shown only when it's for the same address as the card's
+const ZIP=D.ZIP||{};
+function zipKey(a){const w=String(a).toUpperCase().replace(/,/g,' ').replace(/(\d)(ST|ND|RD|TH)\b/g,'$1').split(/\s+/).filter(Boolean);
+  return (w[0]||'').replace(/[A-Z]+$/,'')+' '+(w.slice(1).find(x=>!/^(N|S|E|W|NORTH|SOUTH|EAST|WEST)$/.test(x))||'')}
+function zipOf(d){const z=ZIP[d],s=S[d];return z&&s&&s.a&&z.slice(6)===zipKey(s.a)?z.slice(0,5):''}
+function addrHtml(d){const s=S[d];if(!s||!s.a)return '';const z=zipOf(d),full=title(s.a)+', '+boroOf(d)+', NY'+(z?' '+z:'');
+  return '<span class="addr">'+esc(title(s.a))+', '+esc(boroOf(d))+(z?' '+z:'')+'<button type="button" class="copy-addr" data-copy="'+esc(full)+'" aria-label="Copy address: '+esc(full)+'">Copy</button></span>'}
 function outHtml(d){const o=O[d];if(!o)return '<span class="meta">No __SNAPSHOT__ graduation data.</span>';
   const r=(lbl,m)=>{const v=o[OUT[m].i];return v==null?'':'<span>'+lbl+'</span><span class="bar"><i style="width:'+v+'%;background:'+outColor(m,v)+'"></i></span><b>'+Math.round(v)+'%</b>'};
   const q=Q[d]||[],ab=(lbl,m,txt)=>{const v=outVal(d,m);return v==null?'':'<span>'+lbl+'</span><span class="bar"><i style="width:'+outPos(m,v).toFixed(1)+'%;background:'+outColor(m,v)+'"></i></span><b>'+(txt?txt(v):Math.round(v))+'</b>'};

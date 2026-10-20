@@ -76,6 +76,7 @@ data/
   local_streets.json    every other street, compactly encoded
   parks.json            park outlines for the green tint, compactly encoded
   neighborhoods.json    residential neighborhood boundaries (NYC Planning NTAs)
+  zips.json             each school's address and ZIP code, for the cards (DOE LCGMS)
 scripts/
   build.py              data/ + src/template.html  →  index.html
   settings.py           data years, citywide averages and color scales, shared by the map, the pages and fetch_data.py
@@ -180,10 +181,13 @@ If the DOE site is blocked, download the school-level report from [class size re
 
 ```sh
 python3 scripts/fetch_data.py charters           # which charters are open, where, grades, enrollment
+python3 scripts/fetch_data.py zips               # every school's ZIP code, for the cards (same LCGMS list)
 python3 scripts/fetch_data.py charter-snapshot   # their Snapshot ratings, tests, attendance, graduation (or step 3)
 ```
 
 `charters` writes `charters.json` from the DOE's live school list ([LCGMS](https://infohub.nyced.org/in-our-schools/operations/lcgms)), so it already has schools opening this fall; addresses are placed with NYC Planning's GeoSearch, and enrollment by grade comes from the DOE's [Demographic Snapshot](https://infohub.nyced.org/reports/students-and-schools/school-quality/information-and-data-overview) (update `DEMOGRAPHICS_URL` in `fetch_data.py` when a new year's file appears). Read what it prints: it names charters it left out (no location found: look up the school on [schools.nyc.gov](https://www.schools.nyc.gov/) and add a point to `points` in `data/charter_fixes.json`; or marked open but with no students last year). If the DOE sites are blocked, save both files in a browser and pass them: `fetch_data.py charters <LCGMS .xls> <snapshot .xlsx>`.
+
+`zips` writes `zips.json`, each school's address and ZIP code from the same LCGMS list (or a saved copy: `fetch_data.py zips <LCGMS .xls>`). A card shows the ZIP only when its own address has the same house number and street.
 
 ### 6b. Demographics: race, ethnicity, gender, family income, IEPs and English learners (each fall, when the DOE posts a new Demographic Snapshot)
 

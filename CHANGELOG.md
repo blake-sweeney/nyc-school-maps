@@ -11,6 +11,11 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 ### Fixed
 - School pages no longer turn a building number into a street number: "3000 Avenue X" and "99 Terrace View Avenue" used to read "3000th Avenue X" and "99th Terrace View Avenue". This fixes 33 schools, mostly on Brooklyn's lettered avenues.
 
+## 1.40.0 (2026-10-20)
+
+### Added
+- School cards on the map show the school's ZIP code after its address ("180 7 Avenue, Brooklyn 11215"), and the Copy button copies it too, so the address pastes straight into a maps app or a form. ZIP codes come from the DOE's list of school locations; a card leaves the ZIP out when that list has a different address for the school.
+
 ## 1.39.0 (2026-10-20)
 
 ### Changed
