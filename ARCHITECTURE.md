@@ -27,7 +27,7 @@ fetch_data.py ──> data/*.json   (yearly refresh; MySchools + Snapshot go thr
 - `scripts/neighborhoods.py`: one page per neighborhood, listing the zones that cover it.
 - `scripts/fetch_data.py`: one command per source (`zones`, `myschools`, `snapshot-job`, `snapshot-raw`, `snapshot-counts`, `accessibility`, `admissions`, `charters`, `demographics`, `charter-snapshot`, …).
   The README's "Refresh the data" section is the checklist.
-- `scripts/release.sh`: bumps `VERSION`, dates the changelog, rebuilds, commits, tags and pushes. `.github/workflows/release.yml` (Actions → Release) runs it on GitHub with a patch/minor/major choice, then asks Pages to rebuild.
+- `scripts/release.sh`: bumps `VERSION`, dates the changelog, rebuilds, commits, tags and pushes. `.github/workflows/release.yml` (Actions → Release) runs it on GitHub with a patch/minor/major choice; its push starts the Pages deploy like any other.
 
 ## src/template.html
 
@@ -41,7 +41,7 @@ The script runs top to bottom in roughly this order:
 | Layer toggles | `LAY`, `LAY_KEY` (localStorage `nsz-layers-v1`), `saveLay`, `applyLayers`, `syncZoneLines`, `clearZoneSel` |
 | Schools without a zone | `nzGet`, `regNZ`, `nzOptions`, `nzPriority`, `nzDemand`, `buildNZ`, `nzTip`, `selectNZ`, `gtStar` |
 | Charter schools | `CHX` (grades, enrollment, former name), `allNZ` (charter `CH` rows join `NZ`, flagged `o.ch`), `chBlock` (lottery card text, `CH_APPLY`), `chOptions` (the zone card's charter list), `distOf` / `boroOf` (district and borough from the row, not the DBN), `chReports` (K–12 charters: high school ratings in the high school view), `.chm` squares, layer key `ch` |
-| Basemap | `NYC_KEY`, `NYC_TILES`, `baseTiles`, `labelTiles`, `dropBase` (falls back to our own streets), `baseFade`, color on the gray tiles: `#nsz-water` (SVG lookup that tints the water shades), `buildParks`/`syncParks`/`PARK_MIN_Z` (parks pane blended as "color"), `.plain-base` when the `parks` layer is off |
+| Basemap | `NYC_KEY`, `NYC_TILES`, `baseTiles`, `labelTiles`, `dropBase` (falls back to our own streets), color on the gray tiles: `#nsz-water` (SVG lookup that tints the water shades), `buildParks`/`syncParks`/`PARK_MIN_Z` (parks pane blended as "color"), `.plain-base` when the `parks` layer is off |
 | Coloring | `schoolVal`, `fillFor`, `style`, `rampColor`/`STOPS`, `scoreColor`, `rateColor`, `OUT` (high school ranges), `zoneRating`, `zoneOut`, `zonePk`, `zoneScr`, `zoneDl`/`DL_LANGS` (dual language by language), `buildStripes` (multi-school zones) |
 | Zones and selection | `makeLayer`, `lineStyle`, `makeSel`, `restyleSel`, `select` (the main click handler), `distAt` (no-zone areas pick the district under the click) |
 | Streets | `buildStreets`, `buildLocal`/`decodeLocal`, `syncStreets`, `drawStreetLabels` |
