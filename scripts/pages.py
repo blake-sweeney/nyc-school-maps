@@ -222,7 +222,21 @@ INTRO_PAGE_CSS = """
 footer .disc{margin:0 0 8px}
 footer .link-btn{all:unset;cursor:pointer;color:var(--hl);text-decoration:underline}
 footer .link-btn:focus-visible{outline:2px solid var(--hl)}
+.theme-pick{margin:8px 0 0}.theme-pick .link-btn[aria-pressed="true"]{color:var(--fg);font-weight:700;text-decoration:none;cursor:default}
 """
+# light / dark / auto, shared with the map (localStorage nsz-theme-v1): applied in <head> before the page draws,
+# and picked in the footer
+THEME_HEAD = ("<script>try{const t=localStorage.getItem('nsz-theme-v1');if(t==='light'||t==='dark')"
+              "document.documentElement.dataset.theme=t}catch(e){}</script>")
+THEME_FOOT = ('<p class="theme-pick" role="group" aria-label="Color theme">Theme: '
+              '<button type="button" class="link-btn" data-theme-pick="auto">Auto</button> · '
+              '<button type="button" class="link-btn" data-theme-pick="light">Light</button> · '
+              '<button type="button" class="link-btn" data-theme-pick="dark">Dark</button></p>'
+              "<script>(()=>{const r=document.documentElement,bs=document.querySelectorAll('[data-theme-pick]'),"
+              "sync=()=>bs.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.themePick===(r.dataset.theme||'auto'))));"
+              "bs.forEach(b=>b.addEventListener('click',()=>{const t=b.dataset.themePick;if(t==='auto')delete r.dataset.theme;"
+              "else r.dataset.theme=t;try{t==='auto'?localStorage.removeItem('nsz-theme-v1'):localStorage.setItem('nsz-theme-v1',t)}"
+              "catch(e){}sync()}));sync()})()</script>")
 # the same points in short, at the foot of every page
 DISCLAIMER = ('<p class="disc">NYC School Zones is an independent site made by a NYC parent. It isn’t made by, affiliated '
               'with or endorsed by NYC Public Schools. Data can be out of date or have errors, and zones change from year to '
@@ -242,8 +256,10 @@ def set_from_template(template):
         return ";".join(f"--{k}:{vs[k]}" for k in SHARED_VARS if k in vs)
     light = re.search(r"^:root\{(.*?)\}", template, re.S | re.M).group(1)
     dark = re.search(r'@media \(prefers-color-scheme: dark\)\{:root:not\(\[data-theme="light"\]\)\{(.*?)\}\}', template, re.S).group(1)
+    dk = f'{theme(dark)};{PAGE_VARS["dark"]};color-scheme:dark'
     INTRO["theme"] = (f':root{{{theme(light)};{PAGE_VARS["light"]}}}\n'
-                      f'@media (prefers-color-scheme:dark){{:root{{{theme(dark)};{PAGE_VARS["dark"]};color-scheme:dark}}}}\n')
+                      f'@media (prefers-color-scheme:dark){{:root:not([data-theme="light"]){{{dk}}}}}\n'
+                      f':root[data-theme="dark"]{{{dk}}}\n')
 
 def myschools_url(dbn, lv):
     return {"ms": f"https://www.myschools.nyc/en/schools/middle-school/{dbn}",
@@ -1075,6 +1091,7 @@ def page_html(d, dbn, streets, site_url, goat, nbi=None):
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{e(title)}</title>
+{THEME_HEAD}
 <meta name="description" content="{e(desc)}">
 <link rel="canonical" href="{e(canon)}">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
@@ -1106,7 +1123,7 @@ def page_html(d, dbn, streets, site_url, goat, nbi=None):
 {near_html}
 {apply_html}
 </main>
-<footer>{DISCLAIMER}NYC School Zones is free and independent. Data: NYC Department of Education (zones, School Quality Snapshot, MySchools, Local Law 72 reports), NYC School Construction Authority. Questions or corrections: <a href="mailto:info@nycschoolzones.com">info@nycschoolzones.com</a></footer>{goat}
+<footer>{DISCLAIMER}NYC School Zones is free and independent. Data: NYC Department of Education (zones, School Quality Snapshot, MySchools, Local Law 72 reports), NYC School Construction Authority. Questions or corrections: <a href="mailto:info@nycschoolzones.com">info@nycschoolzones.com</a>{THEME_FOOT}</footer>{goat}
 </body>
 </html>
 """
@@ -1146,6 +1163,7 @@ def shell(title, desc, canon, body, goat, site_url):
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{e(title)}</title>
+{THEME_HEAD}
 <meta name="description" content="{e(desc)}">
 <link rel="canonical" href="{e(canon)}">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
@@ -1165,7 +1183,7 @@ def shell(title, desc, canon, body, goat, site_url):
 <main>
 {body}
 </main>
-<footer>{DISCLAIMER}NYC School Zones is free and independent. Data: NYC Department of Education and NYC School Construction Authority. Questions or corrections: <a href="mailto:info@nycschoolzones.com">info@nycschoolzones.com</a></footer>{goat}
+<footer>{DISCLAIMER}NYC School Zones is free and independent. Data: NYC Department of Education and NYC School Construction Authority. Questions or corrections: <a href="mailto:info@nycschoolzones.com">info@nycschoolzones.com</a>{THEME_FOOT}</footer>{goat}
 </body>
 </html>
 """
