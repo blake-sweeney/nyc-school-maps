@@ -313,10 +313,12 @@ def charter_how(dist):
 # ---------- page sections ----------
 
 def facts_rows(rows):
-    rows = [(k, v) for k, v in rows if v not in (None, "")]
+    """(label, value) rows, or (label, value, note): the note goes on its own full-width line below."""
+    rows = [r for r in rows if r[1] not in (None, "")]
     if not rows:
         return ""
-    return '<dl class="facts">' + "".join(f"<dt>{e(k)}</dt><dd>{v}</dd>" for k, v in rows) + "</dl>"
+    return '<dl class="facts">' + "".join(f"<dt>{e(r[0])}</dt><dd>{r[1]}</dd>" + (f'<dd class="mates">{r[2]}</dd>' if len(r) > 2 and r[2] else "")
+                                          for r in rows) + "</dl>"
 
 
 def bar(label, v, stops, txt=None, lo=0, hi=100):
@@ -734,6 +736,7 @@ h2{font-family:var(--display);font-weight:700;font-size:1.15rem;margin:0 0 8px}
 .facts{display:grid;grid-template-columns:1fr auto;gap:6px 16px;margin:0;font-size:.95rem}
 .facts dd i.sw{display:inline-block;width:10px;height:10px;border-radius:2px;border:1px solid var(--line);margin-right:6px}
 .facts dt{color:var(--fg)}.facts dd{margin:0;font-family:var(--display);font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
+.facts dd.mates{grid-column:1/-1;margin-top:-4px;text-align:left;font-family:inherit;font-weight:400;font-size:.85rem;color:var(--muted)}
 .bars{display:flex;flex-direction:column;gap:6px}
 .bar-row{display:grid;grid-template-columns:minmax(0,1fr) 120px 52px;gap:10px;align-items:center;font-size:.95rem}
 .bar{height:9px;background:var(--line);border-radius:5px;overflow:hidden}.bar i{display:block;height:100%;background:var(--bar)}
@@ -900,14 +903,18 @@ def page_html(d, dbn, streets, site_url, goat, nbi=None):
     u = d.get("U", {}).get(dbn)
     dm = {**HS.get("DM", {}), **MS.get("DM", {}), **d.get("DM", {})}.get(dbn)
     pk = d.get("PK", {}).get(dbn) if lv == "es" else None
+    co = d.get("CO", {}).get(dbn, [])
     facts = facts_rows([
         ("Students", f"{dm[0]:,}" if dm and dm[0] else f"{x[0]:,}" if x and x[0] else None),
         ("Attendance", pct(x[1]) if len(x) > 1 else None),
         ("Teachers with 3+ years’ experience", pct(x[2]) if len(x) > 2 else None),
+        ("How far students live (median)", f"{x[9]:g} mile{'' if x[9] == 1 else 's'}" if len(x) > 9 and x[9] is not None else None),
         ("Kindergarten class size", f"{round(cs['k'])} students" if cs.get("k") else None),
         ("Grades 1–5 class size", f"{round(cs['e'])} students" if cs.get("e") else None),
         ("Core class size", f"{round(cs[lv])} students" if lv in ("ms", "hs") and cs.get(lv) else None),
         ("Building use (how full)", f"{u[0]}% of capacity" if u else None),
+        ("Shares its building with", f"{len(co)} school{'s' if len(co) > 1 else ''}" if co else None, " · ".join(
+            f'<a href="/schools/{e(m)}/">{e(nice_name(n))}</a>' if m in page_dbns(d) else e(nice_name(n)) for m, n in co)),
         ("Dual-language program", e(x[4]) if len(x) > 4 and x[4] else None),
         ("Building accessibility", {"F": "Fully accessible", "P": "Partially accessible", "N": "Not accessible"}
          .get(d.get("AC", {}).get(dbn))),
@@ -1129,12 +1136,23 @@ def page_html(d, dbn, streets, site_url, goat, nbi=None):
 """
 
 
+_PAGE_DBNS = {}
+
+
+def page_dbns(d):
+    """The schools that get a page (any level's zoned, non-zoned and charter schools), worked out once per build."""
+    if id(d) not in _PAGE_DBNS:
+        dbns = set(d.get("schools", {})) | {r[0] for r in d.get("NZ", []) + d.get("CH", [])}
+        for key in ("MS", "HS"):
+            lv = d.get(key) or {}
+            dbns |= set(lv.get("schools", {})) | {r[0] for r in lv.get("NZ", []) + lv.get("CH", [])}
+        _PAGE_DBNS[id(d)] = dbns
+    return _PAGE_DBNS[id(d)]
+
+
 def write_pages(d, root, only, site_url, goat="", nbi=None):
     """Write /schools/<DBN>/index.html for each school (or only the DBNs in `only`). Returns the count."""
-    dbns = set(d.get("schools", {})) | {r[0] for r in d.get("NZ", []) + d.get("CH", [])}
-    for key in ("MS", "HS"):
-        lv = d.get(key) or {}
-        dbns |= set(lv.get("schools", {})) | {r[0] for r in lv.get("NZ", []) + lv.get("CH", [])}
+    dbns = page_dbns(d)
     if only:
         dbns = [x for x in only if x in dbns]
     streets = street_index(d)

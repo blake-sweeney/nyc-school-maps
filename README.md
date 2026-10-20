@@ -9,6 +9,7 @@ An interactive map of New York City's elementary (kindergarten), middle and high
 - **Students with IEPs and English language learners:** counts from the Demographic Snapshot (`data/demographics.json`, also behind Color by special ed); the School Quality Snapshot's counts (`data/snapshot_counts.json`) fill in for the few schools it doesn't list
 - **Demographics:** race and ethnicity, girls and boys, the share of low-income students (the DOE's "poverty" count), and students with IEPs and English language learners at each school, next to all of NYC, from the DOE's Demographic Snapshot (`data/demographics.json`)
 - **Building accessibility:** fully, partially or not accessible, from the MySchools directories (`data/accessibility.json`)
+- **Shared buildings and travel distance:** which schools share each building (the Snapshot's co-location line, with current names from the DOE's LCGMS list, `data/colocation.json`) and how far a school's students live (the Snapshot's median distance, in `snapshot_extra.json` and the other Snapshot files)
 - **Building use:** each school's enrollment as a share of its building capacity, from the SCA's Enrollment, Capacity & Utilization Report ("Blue Book")
 - **Neighborhoods:** [2020 Neighborhood Tabulation Areas](https://data.cityofnewyork.us/d/9nt8-h7nd), NYC Planning via NYC Open Data (refresh with `python3 scripts/fetch_data.py neighborhoods`)
 - **School district lines:** [School Districts](https://data.cityofnewyork.us/d/8ugf-3d8u), NYC Open Data (GeoJSON export; refresh with `python3 scripts/fetch_data.py districts <file.geojson>`)
@@ -69,6 +70,7 @@ data/
   hs_zones.json         high school zone boundaries + school names/locations
   hs_outcomes.json      high school graduation and college/career rates
   snapshot_extra.json   enrollment, programs and other Snapshot facts by school
+  colocation.json       other schools in each school's building (Snapshot co-location, LCGMS names)
   demographics.json     race and ethnicity, girls and boys, % low-income, IEPs and English learners by school, plus all of NYC (DOE Demographic Snapshot)
   state_tests.json      grade 3–5 ELA/Math results by school
   snapshot_ratings.json Snapshot ratings by school
@@ -156,6 +158,8 @@ Ratings, test scores, graduation, SAT, college readiness, where graduates went, 
 This writes `snapshot_ratings.json`, `snapshot_extra.json`, `snapshot_tests.json`, `hs_outcomes.json`, `nonzoned_snapshot.json`, `ms_snapshot.json`, `hs_snapshot.json` and `charter_snapshot.json` (charters come from `charters.json`, step 6, so run that first). If the Snapshot doesn't block your connection, `python3 scripts/fetch_data.py charter-snapshot` fetches just the charters directly. If your connection isn't blocked, `python3 scripts/fetch_data.py snapshot` still fetches the zoned schools directly.
 
 Then `python3 scripts/fetch_data.py snapshot-counts` fetches each school's English language learners and students with IEPs as counts (`snapshot_counts.json`), for "159 of 1,030" under Demographics at the few schools the Demographic Snapshot (step 6b) doesn't list. It reads the files above, so run it last; it needs the Snapshot to answer scripted requests.
+
+`python3 scripts/fetch_data.py colocation` does the same for "Shares its building with" under School details (`colocation.json`): it reads each school's co-location line from the Snapshot and the other schools' current names from LCGMS, leaving out schools LCGMS no longer lists as open. Run it after `snapshot-counts`; it takes about a minute.
 
 ### 4. Admissions: kindergarten, grade 6, grade 9, pre-K and 3-K (each fall or winter, for the previous fall)
 
