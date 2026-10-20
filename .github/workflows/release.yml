@@ -46,7 +46,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
       - name: Release
-        run: scripts/release.sh "${{ inputs.bump }}" ${{ inputs.dry_run && '--dry-run' || '' }}
+        run: scripts/release.sh "${{ inputs.bump }}" --yes ${{ inputs.dry_run && '--dry-run' || '' }}
 
       # A push made with the workflow's own token may not start a Pages deploy, so ask for one.
       - name: Rebuild GitHub Pages

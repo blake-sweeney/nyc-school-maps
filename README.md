@@ -111,7 +111,7 @@ The site's version is in `VERSION` and shows in the footer next to the "Updated"
 scripts/release.sh minor     # or patch, or major
 ```
 
-Both do the same thing (the workflow, `.github/workflows/release.yml`, runs this script on GitHub): check that everything is committed and up to date with GitHub, bump `VERSION`, rename `## Unreleased` to the new version and today's date (New York time), rebuild the site (the footer shows the version), commit, tag (`v1.14.0`) and push the commit and tag. Add `--dry-run` to only preview, or `-i` to have the script ask "Release v1.14.0? [y/N]" right after it shows the changelog, before it changes anything. The script signs in to GitHub first (a `git push --dry-run`), so any password or key prompt comes up right away rather than after the rebuild. The workflow also asks GitHub Pages to rebuild, since a push made by a workflow may not start a deploy on its own.
+Both do the same thing (the workflow, `.github/workflows/release.yml`, runs this script on GitHub): check that everything is committed and up to date with GitHub, bump `VERSION`, rename `## Unreleased` to the new version and today's date (New York time), rebuild the site (the footer shows the version), commit, tag (`v1.14.0`) and push the commit and tag. It asks "Release v1.14.0? [y/N]" right after it shows the changelog, before it changes anything; add `--yes` to skip the question, or `--dry-run` to only preview. The script signs in to GitHub first (a `git push --dry-run`), so any password or key prompt comes up right away rather than after the rebuild. The workflow also asks GitHub Pages to rebuild, since a push made by a workflow may not start a deploy on its own.
 
 ## Link previews
 
