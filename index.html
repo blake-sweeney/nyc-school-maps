@@ -27,7 +27,7 @@
 <meta name="twitter:title" content="NYC School Zones">
 <meta name="twitter:description" content="Every NYC elementary (kindergarten), middle and high school zone on one map, colored by DOE School Quality ratings and state test scores. Free for parents.">
 <meta name="twitter:image" content="https://nycschoolzones.com/preview.png">
-<!-- NYC School Zones · Copyright (C) 2026 Blake Sweeney · SPDX-License-Identifier: AGPL-3.0-or-later · v1.38.1 · https://github.com/blake-sweeney/nyc-school-maps -->
+<!-- NYC School Zones · Copyright (C) 2026 Blake Sweeney · SPDX-License-Identifier: AGPL-3.0-or-later · v1.39.0 · https://github.com/blake-sweeney/nyc-school-maps -->
 <title>NYC School Zone Map: Elementary, Middle &amp; High School Zones</title>
 <script>/* light / dark / auto, chosen in the footer (localStorage nsz-theme-v1); set before the page draws so it doesn't flash */
 try{const t=localStorage.getItem('nsz-theme-v1');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</script>
@@ -474,7 +474,7 @@ details.kind>summary{cursor:pointer}details.kind>p{margin:4px 0 2px}
       <p><button type="button" class="link-btn" id="about-open">About this map</button> · <button type="button" class="link-btn" id="terms-open">Terms &amp; privacy</button></p>
       <p><a href="https://github.com/blake-sweeney/nyc-school-maps" target="_blank" rel="noopener">Source code</a> (AGPL-3.0)</p>
       <p class="theme-pick" role="group" aria-label="Color theme">Theme: <button type="button" class="link-btn" data-theme-pick="auto">Auto</button> · <button type="button" class="link-btn" data-theme-pick="light">Light</button> · <button type="button" class="link-btn" data-theme-pick="dark">Dark</button></p>
-      <p class="asof">Zones: NYC DOE Find a School, Oct 2026 · Ratings, test scores and programs: DOE 2024–25 School Quality Snapshot · Updated Oct 2026 · <a href="https://github.com/blake-sweeney/nyc-school-maps/blob/main/CHANGELOG.md" target="_blank" rel="noopener">v1.38.1</a></p>
+      <p class="asof">Zones: NYC DOE Find a School, Oct 2026 · Ratings, test scores and programs: DOE 2024–25 School Quality Snapshot · Updated Oct 2026 · <a href="https://github.com/blake-sweeney/nyc-school-maps/blob/main/CHANGELOG.md" target="_blank" rel="noopener">v1.39.0</a></p>
       <details><summary>Data sources</summary>
         <p>School zones from the DOE’s <a href="https://schoolsearch.schools.nyc/" target="_blank" rel="noopener">Find a School</a> map. Thanks to Jimmy Chion’s <a href="https://schoolzones.nyc/" target="_blank" rel="noopener">schoolzones.nyc</a> for pointing the way to the DOE’s current zone data. School names and addresses from the 2019–20 DOE location list. State test results, ratings, programs and current school names from the DOE’s <a href="https://tools.nycenet.edu/snapshot/" target="_blank" rel="noopener">2024–25 School Quality Snapshot</a>. Students’ race, ethnicity and family income from the DOE’s 2025–26 Demographic Snapshot. Shared zones show the combined result of all their schools. Address lookup by NYC Planning’s GeoSearch. Park outlines from NYC Parks’ <a href="https://data.cityofnewyork.us/d/enfh-gkve" target="_blank" rel="noopener">Parks Properties</a> on NYC Open Data.</p>
       </details>
@@ -841,8 +841,8 @@ map.createPane('nycLabels').style.zIndex=456;map.getPane('nycLabels').style.poin
 // Served by the NYC API portal (api-portal.nyc.gov, GeoServer Tile Services API). The key is meant to be public:
 // it's tied to info@nycschoolzones.com and only reads map tiles. Tiles are TMS, so rows count up from the bottom (tms:true).
 const NYC_KEY='55e87513137841dc8bcc1474ba215833',NYC_TILES='https://api.nyc.gov/geoserver/gwc/service/tms/1.0.0/carto%3A';
-const baseTiles=L.tileLayer(NYC_TILES+'basemap@EPSG%3A900913@jpg/{z}/{x}/{y}.jpg?Key='+NYC_KEY,{tms:true,minZoom:10,maxZoom:18,className:'nyc-base'}).addTo(map);
-const labelTiles=L.tileLayer(NYC_TILES+'label@EPSG%3A900913@png8/{z}/{x}/{y}.png8?Key='+NYC_KEY,{tms:true,pane:'nycLabels',minZoom:10,maxZoom:18,className:'nyc-labels'}).addTo(map);
+const baseTiles=L.tileLayer(NYC_TILES+'basemap@EPSG%3A900913@jpg/{z}/{x}/{y}.jpg?Key='+NYC_KEY,{tms:true,maxZoom:18,className:'nyc-base'}).addTo(map);
+const labelTiles=L.tileLayer(NYC_TILES+'label@EPSG%3A900913@png8/{z}/{x}/{y}.png8?Key='+NYC_KEY,{tms:true,pane:'nycLabels',maxZoom:18,className:'nyc-labels'}).addTo(map);
 L.control.attribution({prefix:false,position:'bottomright'}).addAttribution('Basemap © <a href="https://finder.nyc.gov/nyc-lib/tiles/index.html" target="_blank" rel="noopener">City of New York</a> (CC BY 4.0)').addTo(map);
 baseTiles.on('tileload',()=>{tileOk++});
 baseTiles.on('tileerror',()=>{if(++tileErr>=6&&!tileOk)dropBase()});
@@ -866,9 +866,8 @@ function syncParks(){const on=useBase&&!!LAY.parks;document.getElementById('map'
   if(show&&!parksBuilt){if(D.PARKS){buildParks(D.PARKS)}else if(ASSETS.parks&&!parksLoading){parksLoading=true;getAsset('parks').then(j=>{buildParks(j);syncParks()}).catch(()=>{parksLoading=false})}}
   if(show&&parksBuilt&&!map.hasLayer(parkGroup))parkGroup.addTo(map);if(!show&&map.hasLayer(parkGroup))map.removeLayer(parkGroup)}
 map.on('zoomend',syncParks);
-// the basemap fades in as you zoom in; zone colors get more see-through so streets and parks show
+// the basemap shows at full strength at every zoom; zone colors get more see-through as you zoom in so streets and parks show
 function syncNames(){if(!useBase)return;if(LAY.names&&!map.hasLayer(labelTiles))labelTiles.addTo(map);if(!LAY.names&&map.hasLayer(labelTiles))map.removeLayer(labelTiles)}
-function baseFade(){const z=map.getZoom();baseTiles.setOpacity(z<11.5?.45:z<12.5?.7:1);labelTiles.setOpacity(z<12?.75:1)}
 function isDark(){const th=document.documentElement.dataset.theme;return th==='dark'||(th!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)}
 // a bit more solid in dark mode, where see-through colors over the dark basemap look muddy
 // zone fill: full color when zoomed all the way out (no markers), fading to a light wash by zoom 13 where the
@@ -877,7 +876,7 @@ function zoneAlpha(){if(!useBase)return .78;const z=map.getZoom();
   if(!LAY.zs){const a=z<11.5?.8:z<12.5?.7:z<13.5?.6:.5;return isDark()?Math.min(a+.15,.9):a}
   const a=Math.min(.9,(z<=9?.8:z<13?.8-(z-9)*(.8-.36)/4:z<13.5?.36:z<14.5?.345:.33)*1.36);return isDark()?Math.min(a+.08,.9):a}
 const SEL_FILL=.2;  // the selected zone's extra fill
-map.on('zoomend',()=>{baseFade();if(useBase&&typeof restyle==='function')restyle()});baseFade();
+map.on('zoomend',()=>{if(useBase&&typeof restyle==='function')restyle()});
 const renderer=L.canvas({padding:.3,tolerance:2});
 function short(d){const s=S[d];if(!s)return 'School '+d;return s.n}
 // one school's value under the current coloring (null if none)
