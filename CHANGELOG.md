@@ -6,6 +6,11 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
+## Unreleased
+
+### Fixed
+- School pages no longer turn a building number into a street number: "3000 Avenue X" and "99 Terrace View Avenue" used to read "3000th Avenue X" and "99th Terrace View Avenue". This fixes 33 schools, mostly on Brooklyn's lettered avenues.
+
 ## 1.39.0 (2026-10-20)
 
 ### Changed
@@ -30,11 +35,6 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 
 ### Added
 - A "Theme: Auto · Light · Dark" switch at the bottom of the side panel and of every school, district and neighborhood page. Auto follows your device; Light or Dark sticks in this browser across the whole site.
-
-## Unreleased
-
-### Fixed
-- School pages no longer turn a building number into a street number: "3000 Avenue X" and "99 Terrace View Avenue" used to read "3000th Avenue X" and "99th Terrace View Avenue". This fixes 33 schools, mostly on Brooklyn's lettered avenues.
 
 ## 1.35.0 (2026-10-19)
 
