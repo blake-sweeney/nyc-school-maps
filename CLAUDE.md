@@ -27,7 +27,7 @@ python3 -m http.server 8000           # preview at http://localhost:8000
 
 - Every change, even an internal fix or a docs change, adds an entry under `## Unreleased` at the top of `CHANGELOG.md`, in `### Added` / `### Changed` / `### Fixed`. Create the heading above the newest version if it's missing: `scripts/release.sh` stops without it. For something parents won't see, write one short plain line ("Behind the scenes: school pages now come out the same on every computer that builds them.").
 - Write entries for parents, not developers: what they'll see on the map or page, in plain English. Match the existing entries.
-- Never edit `VERSION`, rename the Unreleased heading, create tags or run `scripts/release.sh`. Blake releases from his Mac after merging.
+- Never edit `VERSION`, rename the Unreleased heading, create tags or run `scripts/release.sh`. Blake releases after merging, from GitHub (Actions → Release) or his Mac.
 - Update README.md when a change affects the repo layout, the build, or the "Refresh the data" steps.
 - Update ARCHITECTURE.md in the same commit when you add, rename, move or remove something it lists or that someone would need to find (a section of the template, a main function, a data file or array shape, a URL hash, a localStorage key, a script), or when you learn a new gotcha. Routine changes inside existing functions don't need an update.
 

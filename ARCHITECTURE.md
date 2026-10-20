@@ -27,6 +27,7 @@ fetch_data.py ──> data/*.json   (yearly refresh; MySchools + Snapshot go thr
 - `scripts/neighborhoods.py`: one page per neighborhood, listing the zones that cover it.
 - `scripts/fetch_data.py`: one command per source (`zones`, `myschools`, `snapshot-job`, `snapshot-raw`, `snapshot-counts`, `accessibility`, `admissions`, `charters`, `demographics`, `charter-snapshot`, …).
   The README's "Refresh the data" section is the checklist.
+- `scripts/release.sh`: bumps `VERSION`, dates the changelog, rebuilds, commits, tags and pushes. `.github/workflows/release.yml` (Actions → Release) runs it on GitHub with a patch/minor/major choice; its push starts the Pages deploy like any other.
 
 ## src/template.html
 
@@ -53,6 +54,7 @@ The script runs top to bottom in roughly this order:
 | Color by | `METRIC_NAME`, `GROUP_SRC`, `showGroup`, `Legend`, `syncLegend`, `setColorParam`/`applyColorParam` (`?c=` in the URL) |
 | Level switch | `setLevel` (es / ms / hs) |
 | Opening from a link | `openFromHash`: `#es-15K321`, `#ms-02M104`, `#hs-28Q440`, `#es-d15` (district), `#middle`, `#high` |
+| Theme | `THEME_KEY` (localStorage `nsz-theme-v1`: `light`/`dark`, absent = auto), the inline script after `<title>` that sets `data-theme` before drawing, `syncThemePick`, `retheme`. The generated pages share the key: `THEME_HEAD`/`THEME_FOOT` in pages.py, and `INTRO["theme"]` writes `data-theme` rules into `schools/style.css` |
 | Phones | `setSheet`/`sheetOpen` (bottom sheet), `PhoneBar`, `POPS`/`setPop`, `placeUI`, `measurePeek` |
 
 ## Gotchas we learned the hard way

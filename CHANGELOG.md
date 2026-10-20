@@ -11,6 +11,26 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 ### Changed
 - The background map now stays visible at every zoom. It no longer fades as you zoom out, and it still shows when you zoom all the way out to the whole city.
 
+## 1.38.1 (2026-10-20)
+
+### Changed
+- Behind the scenes: releasing from GitHub no longer starts a second, unneeded site rebuild.
+
+## 1.38.0 (2026-10-20)
+
+### Changed
+- On a charter school's card on the map, the explanation of how charter schools work (lottery admission, the separate application and its deadline) now starts folded into one line, "Charter school: lottery admission, separate application", so the school's ratings show up first. Tap the line to read it all.
+
+## 1.37.0 (2026-10-20)
+
+### Changed
+- Behind the scenes: new versions of the site can be released with one click from GitHub, not only from a computer.
+
+## 1.36.0 (2026-10-20)
+
+### Added
+- A "Theme: Auto · Light · Dark" switch at the bottom of the side panel and of every school, district and neighborhood page. Auto follows your device; Light or Dark sticks in this browser across the whole site.
+
 ## 1.35.0 (2026-10-19)
 
 ### Added
