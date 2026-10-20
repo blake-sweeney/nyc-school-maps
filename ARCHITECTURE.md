@@ -17,6 +17,7 @@ fetch_data.py ──> data/*.json   (yearly refresh; MySchools + Snapshot go thr
 
 - `scripts/settings.py`: which year's data the site shows (`SNAPSHOT_YEAR`, `PREK_LABEL`, `MYSCHOOLS_LABEL`, …). Shared by every script. Change values here only.
 - `scripts/build.py` `add_charters()`: charter rows (`CH` per level, `CHX`, `HS.CHR`/`CHX`) from `charters.json` and `charter_snapshot.json`. Kept out of `NZ` on purpose: pages.py and neighborhoods.py read `CH` separately (charter wording, the building's district, their own "Charter schools" tables).
+- `scripts/build.py` `apply_moves()`: schools in `school_fixes.json` `moved` get the new address and point in every row they appear in, and lose the old building's `U`, `AC` and `CO` (other schools' `CO` lists too). Runs before `fix_addresses()`.
 - `scripts/build.py` `fix_addresses()`: checks every address against `zips.json` (LCGMS). A school whose Snapshot address (in `R` and `NZ` rows) differs from LCGMS's while this year's zone file or MySchools directory has LCGMS's gets this year's address. Builds `ZIP`, and prints the schools it changed and the map points far from their LCGMS tax lot.
 - `scripts/build.py` `main()`: loads each data file, trims it to the compact arrays the page uses, and fills the
   template's `__PLACEHOLDERS__`. Comments above each block give the array shapes, e.g. `NZ` rows, `P` programs, `Q` high

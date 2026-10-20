@@ -1,0 +1,11 @@
+{
+  "note": "Hand-checked fixes for district schools; see README 'Refresh the data' step 8. moved: schools in a new building that MySchools and the Snapshot don't show yet. The build uses this address and point and drops facts about the old building (building use, accessibility, shared building). Remove an entry once MySchools lists the new address; the build says when.",
+  "moved": {
+    "15K428": {
+      "a": "4012 Fort Hamilton Parkway",
+      "lat": 40.642507,
+      "lon": -73.992128,
+      "source": "DOE letter to Global Innovators Academy families: from the 2026-27 school year the school serves all students in building K004, 4012 Fort Hamilton Parkway (also in LCGMS). Point from NYC Planning GeoSearch."
+    }
+  }
+}

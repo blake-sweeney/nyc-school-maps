@@ -6,6 +6,11 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
+## Unreleased
+
+### Fixed
+- Global Innovators Academy (15K428) is at its new building, 4012 Fort Hamilton Parkway, on the map and its school page, with directions there. It moved this school year from 4222 4th Avenue, where MySchools still lists it. Its card and page no longer show building use, accessibility or a shared school for the old building, and Sunset Park Avenues Elementary no longer lists it as sharing a building.
+
 ## 1.42.1 (2026-10-20)
 
 ### Fixed

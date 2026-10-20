@@ -110,6 +110,41 @@ def zip_key(addr):
     return " ".join([re.sub(r"[A-Z]+$", "", w[0]) if w else "", next((x for x in w[1:] if x not in DIRECTIONS), "")])
 
 
+def apply_moves(d):
+    """Schools that moved to a building MySchools and the Snapshot don't show yet (data/school_fixes.json, checked by
+    hand): the new address and point everywhere the school appears, and no facts about the old building (building
+    use U, accessibility AC, shared building CO, including other schools' CO lists)."""
+    if not os.path.exists(os.path.join(DATA, "school_fixes.json")):
+        return
+    moved = load("school_fixes.json").get("moved", {})
+    levels = [d] + [d[k] for k in ("MS", "HS") if k in d]
+    for dbn, m in moved.items():
+        for lv in levels:
+            if dbn in lv.get("schools", {}):
+                lv["schools"][dbn].update(a=m["a"], lat=m["lat"], lon=m["lon"])
+            for r in lv.get("NZ", []) + lv.get("CH", []):
+                if r[0] == dbn:
+                    r[2], r[3], r[4] = m["a"], m["lat"], m["lon"]
+            for k in ("R", "CHR"):
+                if dbn in lv.get(k, {}):
+                    lv[k][dbn][1] = m["a"]
+            for k in ("U", "AC"):
+                lv.get(k, {}).pop(dbn, None)
+            co = lv.get("CO", {})
+            co.pop(dbn, None)
+            for other in list(co):
+                co[other] = [x for x in co[other] if x[0] != dbn]
+                if not co[other]:
+                    del co[other]
+    # a reminder once MySchools has caught up
+    listed = {r[0]: r[2] for r in load("ms_directory.json")} if os.path.exists(os.path.join(DATA, "ms_directory.json")) else {}
+    for dbn, m in moved.items():
+        if dbn in listed and zip_key(listed[dbn]) == zip_key(m["a"]):
+            print(f"school_fixes.json: MySchools now lists {dbn} at {listed[dbn]}; its entry can go")
+    if moved:
+        print(f"school_fixes.json: {len(moved)} moved: {', '.join(moved)}")
+
+
 def fix_addresses(d):
     """Check school addresses against the DOE's live location list (zips.json from LCGMS) and add the cards' ZIP codes.
     - The Snapshot's address is last school year's. When it differs from LCGMS's and a current source (Find a School,
@@ -774,6 +809,7 @@ def main(standalone_path=None, pages=None):
         d["DMC"] = dm["city"]
         print(f"demographics: {n} of {len(done)} schools")
 
+    apply_moves(d)
     fix_addresses(d)
 
     with open(os.path.join(ROOT, "src", "template.html"), encoding="utf-8") as f:
