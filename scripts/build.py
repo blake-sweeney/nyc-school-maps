@@ -673,6 +673,16 @@ def main(standalone_path=None, pages=None):
     if os.path.exists(os.path.join(DATA, "accessibility.json")):
         d["AC"] = load("accessibility.json")
 
+    # Schools sharing the building (Snapshot co_located, LCGMS names): CO {dbn: [[dbn, name], ...]}, for the schools
+    # that have a card at any level
+    if os.path.exists(os.path.join(DATA, "colocation.json")):
+        shown = set(d["X"]) | {r[0] for lv in (d, d.get("MS") or {}, d.get("HS") or {})
+                               for r in lv.get("NZ", []) + lv.get("CH", [])}
+        shown |= {x for lv in (d, d.get("MS") or {}, d.get("HS") or {}) for f in lv.get("features", [])
+                  for x in f["properties"]["dbns"]} | set((d.get("HS") or {}).get("X", {}))
+        d["CO"] = {k: v for k, v in load("colocation.json")["schools"].items() if k in shown}
+        print(f"shared buildings: {len(d['CO'])} schools")
+
     # Who goes to each school (DOE Demographic Snapshot, settings.DEMOGRAPHICS_LABEL): DM {dbn: [enrollment, Asian
     # and Pacific Islander, Black, Hispanic, White, everyone else, % in poverty (whole % or ">95" / "<5"),
     # girls, boys, students with IEPs, English language learners]}. d["DM"] has the elementary map's

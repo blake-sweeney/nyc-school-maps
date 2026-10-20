@@ -614,7 +614,7 @@ function alertLoad(){const m=document.getElementById('llmsg');if(m){m.textConten
 const RK={ip:2,ss:3,rf:4},RNAME={ip:'Instruction and Performance',ss:'Safety and School Climate',rf:'Relationships with Families'};
 const isRate=m=>m==='comp'||m in RK;
 // extra Snapshot fields: [enrollment, attendance %, teachers 3+ yrs %, principal yrs, dual language, ELL %, IEP %, economic need %, admissions, median distance mi]
-const X=D.X||{},XN=D.XN||{},DM=Object.assign({},D.DM,MSD&&MSD.DM,HSD&&HSD.DM),DMC=D.DMC,AC=D.AC||{},AC_TXT={F:'Fully accessible',P:'Partially accessible',N:'Not accessible'};
+const X=D.X||{},XN=D.XN||{},DM=Object.assign({},D.DM,MSD&&MSD.DM,HSD&&HSD.DM),DMC=D.DMC,AC=D.AC||{},CO=D.CO||{},AC_TXT={F:'Fully accessible',P:'Partially accessible',N:'Not accessible'};
 // class size (DOE report, Feb 2025-26): k = kindergarten, e = grades 1-5, ms / hs = core classes. Shown in the zone card only: it isn't a quality measure, so it isn't a map color
 const CS=D.CS||{};
 const IEP_BINS=[[17,'#e0f1ee'],[22,'#a6dbd0'],[27,'#5fb8a8'],[32,'#2a8a7e'],[Infinity,'#0f5a54']];
@@ -1174,11 +1174,11 @@ function tagsHtml(d){const x=X[d];if(!x)return '';const tags=[];if(hasGT(d))tags
 // "159 of 1,030 (15%)" from the Snapshot's counts (XN) when they match the enrollment shown, else its percentage
 function ofAll(d,i,p){const n=XN[d],x=X[d];if(n&&x&&n[0]===x[0]&&n[i]!=null&&n[0]){const q=100*n[i]/n[0];
   return n[i].toLocaleString()+' of '+n[0].toLocaleString()+' <small>('+(q>0&&q<1?'<1':Math.round(q))+'%)</small>'}return p!=null?p+'%':null}
-function factsHtml(d){const x=X[d]||[],c=CS[d]||{},u=U[d];if(!X[d]&&!CS[d]&&!u&&!AC[d])return '';
+function factsHtml(d){const x=X[d]||[],c=CS[d]||{},u=U[d],co=CO[d];if(!X[d]&&!CS[d]&&!u&&!AC[d]&&!co)return '';
   const seats=(n,a)=>n?n+' seats'+(a!=null?', '+a.toLocaleString()+' applied':''):'Not offered';
   const cs=v=>v!=null?Math.round(v)+' students':null;
   const row=(k,v)=>v==null?'':'<span>'+k+'</span><b>'+v+'</b>';
-  const h=row('Attendance',x[1]!=null?x[1]+'%':null)+row('Teachers with 3+ years’ experience',x[2]!=null?x[2]+'%':null)+row('Principal’s years at school',x[3]!=null?(Math.round(x[3]*10)/10):null)+(level==='es'?row('Kindergarten class size',cs(c.k))+row('Grades 1–5 class size',cs(c.e)):row('Core class size',cs(level==='ms'?c.ms:c.hs)))+row('Building use (how full)',u?u[0]+'% of capacity':null)+row('Building accessibility',AC_TXT[AC[d]])+'';return h?'<div class="facts">'+h+'</div>':''}
+  const h=row('Attendance',x[1]!=null?x[1]+'%':null)+row('Teachers with 3+ years’ experience',x[2]!=null?x[2]+'%':null)+row('Principal’s years at school',x[3]!=null?(Math.round(x[3]*10)/10):null)+row('Median home distance',x[9]!=null?x[9]+(x[9]===1?' mile':' miles'):null)+(level==='es'?row('Kindergarten class size',cs(c.k))+row('Grades 1–5 class size',cs(c.e)):row('Core class size',cs(level==='ms'?c.ms:c.hs)))+row('Building use (how full)',u?u[0]+'% of capacity':null)+row('Building accessibility',AC_TXT[AC[d]])+(co?row('Shares its building with',co.length+(co.length>1?' schools':' school'))+'<small>'+co.map(y=>esc(y[1])).join(' · ')+'</small>':'')+'';return h?'<div class="facts">'+h+'</div>':''}
 // Demographics: who goes to the school (DOE Demographic Snapshot, __DEMOGRAPHICS__). DM rows are [enrollment, counts in
 // DEMO_GROUPS order, % low-income (the DOE's "poverty": a whole % or ">95" / "<5"), girls, boys, students with IEPs,
 // English language learners]; DMC the same for all of NYC

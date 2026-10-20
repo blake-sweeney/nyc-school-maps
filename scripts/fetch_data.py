@@ -621,12 +621,10 @@ def fetch_neighborhoods():
 
 
 
-def fetch_snapshot_counts():
-    """English language learners and students with IEPs as counts (the Snapshot's ell_n, iep_n), for every school whose
-    Snapshot values we keep: snapshot_counts.json {dbn: {report type: [enrollment, ELL, IEP]}}. The enrollment is the
-    Snapshot's own, so build.py can match each count to the enrollment the card shows. Run after "snapshot",
-    "snapshot-raw" or "charter-snapshot"."""
-    jobs = {}  # (dbn, report type) from each file that feeds the cards' Snapshot facts
+def _snapshot_jobs(hs=False):
+    """{(dbn, report type): 1} from each file that feeds the cards' Snapshot facts; with hs, the high school
+    Snapshot's schools (hs_snapshot.json) too."""
+    jobs = {}
 
     def add(path, pick):
         if os.path.exists(os.path.join(DATA, path)):
@@ -635,6 +633,8 @@ def fetch_snapshot_counts():
                 for dbn, v in (d["schools"] if "schools" in d else d).items():  # charter_snapshot.json wraps its schools
                     for rt in pick(dbn, v):
                         jobs[(dbn, rt)] = 1
+    if hs:
+        add("hs_snapshot.json", lambda dbn, v: ["HS"])
     ratings = {}
     if os.path.exists(os.path.join(DATA, "snapshot_ratings.json")):
         with open(os.path.join(DATA, "snapshot_ratings.json"), encoding="utf-8") as f:
@@ -643,6 +643,15 @@ def fetch_snapshot_counts():
     add("nonzoned_snapshot.json", lambda dbn, v: [v["r"][5]] if v.get("r") and v["r"][5] else [])
     add("ms_snapshot.json", lambda dbn, v: [v["r"][5]] if v.get("r") and v["r"][5] else [])
     add("charter_snapshot.json", lambda dbn, v: list(v))
+    return jobs
+
+
+def fetch_snapshot_counts():
+    """English language learners and students with IEPs as counts (the Snapshot's ell_n, iep_n), for every school whose
+    Snapshot values we keep: snapshot_counts.json {dbn: {report type: [enrollment, ELL, IEP]}}. The enrollment is the
+    Snapshot's own, so build.py can match each count to the enrollment the card shows. Run after "snapshot",
+    "snapshot-raw" or "charter-snapshot"."""
+    jobs = _snapshot_jobs()
 
     def one(job):
         dbn, rt = job
@@ -663,6 +672,37 @@ def fetch_snapshot_counts():
                 missing += 1
     print(f"  {len(jobs)} Snapshot reports, {missing} without counts")
     save("snapshot_counts.json", out)
+
+
+def fetch_colocation():
+    """Which schools share a building, for "Shares its building with" under School details: the Snapshot's
+    co_located line ("This school is co-located with 14K071 and 75K141.") for every school whose Snapshot values
+    we keep, high schools included. LCGMS (read_lcgms) names the other schools, since many (District 75, transfer
+    high schools) aren't on the map. Run after the Snapshot steps, like "snapshot-counts".
+    colocation.json: {"year": SNAPSHOT_YEAR, "source": ..., "schools": {dbn: [[dbn, name], ...]}}."""
+    import re
+    jobs = sorted({dbn: rt for dbn, rt in _snapshot_jobs(hs=True)}.items())  # one report per school is enough
+
+    def one(job):
+        dbn, rt = job
+        try:
+            rows = get_json(f"{SNAPSHOT_API}/{SNAPSHOT_YEAR}/{dbn}/{rt}")
+        except Exception:
+            return dbn, None
+        v = {r["varname"]: r["value"] for r in (rows.values() if isinstance(rows, dict) else rows)}
+        return dbn, [x for x in re.findall(r"\b\d\d[MXKQR]\d{3}\b", v.get("co_located") or "") if x != dbn]
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:
+        found = dict(pool.map(one, jobs))
+    # schools LCGMS doesn't list as open have closed since the Snapshot's year: left out
+    names = {r["ATS System Code"]: r["Location Name"] for r in read_lcgms() if r.get("Status Description") == "Open"}
+    gone = sorted({x for v in found.values() for x in v or [] if x not in names})
+    out = {dbn: [[x, names[x]] for x in others if x in names] for dbn, others in sorted(found.items())}
+    out = {k: v for k, v in out.items() if v}
+    print(f"  {len(jobs)} schools, {sum(v is None for v in found.values())} without a Snapshot report, "
+          f"{len(out)} sharing a building; not open in LCGMS, left out: {', '.join(gone) or 'none'}")
+    save("colocation.json", {"year": SNAPSHOT_YEAR, "source": "DOE School Quality Snapshot (co_located), LCGMS names",
+                             "schools": out})
 
 
 def fetch_parks():
@@ -704,7 +744,7 @@ def fetch_parks():
 
 STEPS = {"zones": fetch_zones, "tests": fetch_tests, "snapshot": fetch_snapshot, "streets": fetch_streets,
          "classsize": fetch_class_size, "neighborhoods": fetch_neighborhoods, "charters": fetch_charters,
-         "snapshot-counts": fetch_snapshot_counts, "demographics": fetch_demographics,
+         "snapshot-counts": fetch_snapshot_counts, "colocation": fetch_colocation, "demographics": fetch_demographics,
          "parks": fetch_parks, "zips": fetch_zips}
 
 def fetch_prek(path):
