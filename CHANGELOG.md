@@ -6,6 +6,11 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
+## Unreleased
+
+### Changed
+- The background map now stays visible at every zoom. It no longer fades as you zoom out, and it still shows when you zoom all the way out to the whole city.
+
 ## 1.38.1 (2026-10-20)
 
 ### Changed
