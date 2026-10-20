@@ -575,6 +575,65 @@ def of_all(n, x, i, j):
     return pct(x[j]) if x and len(x) > j else None
 
 
+def demo_pct(n, t):
+    q = 100 * n / t if t else 0
+    return f"{'<1' if 0 < q < 1 else round(q)}%"
+
+
+def demo_pov(p):
+    return "n/a" if p is None else {">95": "Over 95%", "<5": "Under 5%"}.get(p, f"{p}%")
+
+
+def demo_html(m, city, ch, iep=None, ell=None):
+    """Demographics (build.py DM row; city: DMC), as on the map's card (src/template.html demoSec): race and ethnicity
+    bars for the school and all of NYC, a table of both, girls and boys, low-income students, IEPs and English
+    learners. iep, ell: the School Quality Snapshot's counts (of_all), only for a school the Demographic Snapshot
+    doesn't list."""
+    m = m if m and m[0] else None
+    if not m:
+        sn = [(lab, v) for lab, v in (("Students with IEPs (special ed)", iep), ("English language learners", ell)) if v is not None]
+        return "" if not sn else ('<h2>Demographics</h2><table class="dm"><tbody>' + "".join(
+            f'<tr><th>{lab}</th><td colspan="2">{v}</td></tr>' for lab, v in sn) + "</tbody></table>"
+            f'<p class="src">{SNAPSHOT_LABEL} School Quality Snapshot.</p>')
+    k = len(settings.DEMO_GROUPS)
+
+    def tr(label, v, cv="", cls=""):
+        attr = f' class="{cls}"' if cls else ""
+        return "" if v is None else f"<tr{attr}><th>{label}</th><td>{v}</td><td>{cv or ''}</td></tr>"
+
+    def both(r):
+        n = r[k + 2] + r[k + 3]
+        if not n or not r[k + 2] or not r[k + 3]:
+            return None if not n else "All boys" if not r[k + 2] else "All girls"
+        return f"{demo_pct(r[k + 2], n)} · {demo_pct(r[k + 3], n)}"
+
+    def dbar(row, cls=""):
+        return (f'<div class="dbar dm-bar{cls}">' + "".join(
+            f'<i style="flex:{n} 1 0;background:{c}"></i>' for n, (_, c) in zip(row[1:1 + k], settings.DEMO_GROUPS) if n)
+            + "</div>")
+    rows = "".join(f'<tr><th><i style="background:{c}"></i>{e(name)}</th><td>{demo_pct(m[1 + i], m[0])}</td>'
+                   f'<td>{demo_pct(city[1 + i], city[0]) if city else ""}</td></tr>'
+                   for i, (name, c) in enumerate(settings.DEMO_GROUPS))
+    rows += tr("Girls · boys", both(m), city and both(city), "pov")
+    rows += tr("Low-income students", None if m[1 + k] is None else demo_pov(m[1 + k]), city and demo_pov(city[1 + k]))
+    rows += tr(f"Students with IEPs (special ed)<small>{m[k + 4]:,} of {m[0]:,}</small>", demo_pct(m[k + 4], m[0]),
+               city and demo_pct(city[k + 4], city[0]), "pov")
+    rows += tr(f"English language learners<small>{m[k + 5]:,} of {m[0]:,}</small>", demo_pct(m[k + 5], m[0]),
+               city and demo_pct(city[k + 5], city[0]))
+    return (f"<h2>Demographics</h2>"
+            f'<p class="dm-l">This school · {m[0]:,} students</p>' + dbar(m)
+            + (f'<p class="dm-l">All NYC public schools</p>' + dbar(city, " city") if city else "")
+            + '<table class="dm"><thead><tr><th></th><th>School</th><th>' + ("NYC" if city else "") + "</th></tr></thead>"
+            + f"<tbody>{rows}</tbody></table>"
+            + f'<p class="src">DOE Demographic Snapshot, {settings.DEMOGRAPHICS_LABEL}, counting every student, 3-K and '
+              "pre-K included. IEPs and English learners as of the end of the school year; pre-K students aren’t tested "
+              "for English, so the English learner share runs a little low at schools with pre-K. Low-income: families who "
+              "qualify for free or reduced-price lunch (income up to about 185% of the poverty line) or get HRA "
+              "benefits like SNAP"
+            + ("; it can be undercounted at charter schools that don’t use DOE school food" if ch else "")
+            + ".</p>")
+
+
 def k_adm_html(ka, lv="es", dist=None, bare=False, zoned=False):
     """Admissions for kindergarten, grade 6 or grade 9 from the DOE's Local Law 72 report: offers and applicants for all
     students, and for middle schools by district, as the map card's table (src/template.html admHtml). bare: just the
@@ -667,6 +726,12 @@ h2{font-family:var(--display);font-weight:700;font-size:1.15rem;margin:0 0 8px}
 .dbar{display:flex;height:14px;border-radius:5px;overflow:hidden;background:var(--line)}.dbar i{display:block;height:100%}
 .dest{list-style:none;margin:10px 0 0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;font-size:.9rem}
 .dest li{display:flex;align-items:center;gap:8px}.dest li i{width:10px;height:10px;border-radius:2px;flex:none}.dest b{margin-left:auto;font-family:var(--display)}
+.dm-l{margin:10px 0 4px;font-size:.85rem;color:var(--muted)}.dm-bar{gap:2px;background:none}.dm-bar i{min-width:2px}.dm-bar.city{height:7px}
+table.dm{width:100%;border-collapse:collapse;margin-top:12px;font-size:.95rem;font-variant-numeric:tabular-nums}
+.dm th,.dm td{padding:4px 0;text-align:right;font-weight:400}.dm thead th{font-size:.82rem;color:var(--muted)}
+.dm tbody th{text-align:left;padding-right:12px}.dm tbody th small{display:block;font-size:.82rem;color:var(--muted)}.dm th i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:8px}
+.dm td{font-family:var(--display);font-weight:700;padding-left:16px;white-space:nowrap}.dm td+td{font-weight:400;color:var(--muted)}
+.dm tr.pov>*{border-top:1px solid var(--line);padding-top:8px}
 .progs{list-style:none;margin:0;padding:0}
 h3.ex-h{font-size:.95rem;margin:14px 0 2px}h3.ex-h+p{margin:0}
 .adm-t{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;margin:6px 0 4px;font-size:.95rem}
@@ -817,17 +882,16 @@ def page_html(d, dbn, streets, site_url, goat, nbi=None):
         sections.append(t + more(ext(snap, "Scores by student group in the Snapshot")) if t else "")
     cs = d.get("CS", {}).get(dbn) or {}
     u = d.get("U", {}).get(dbn)
+    dm = {**HS.get("DM", {}), **MS.get("DM", {}), **d.get("DM", {})}.get(dbn)
     pk = d.get("PK", {}).get(dbn) if lv == "es" else None
     facts = facts_rows([
-        ("Students", f"{x[0]:,}" if x and x[0] else None),
+        ("Students", f"{dm[0]:,}" if dm and dm[0] else f"{x[0]:,}" if x and x[0] else None),
         ("Attendance", pct(x[1]) if len(x) > 1 else None),
         ("Teachers with 3+ years’ experience", pct(x[2]) if len(x) > 2 else None),
         ("Kindergarten class size", f"{round(cs['k'])} students" if cs.get("k") else None),
         ("Grades 1–5 class size", f"{round(cs['e'])} students" if cs.get("e") else None),
         ("Core class size", f"{round(cs[lv])} students" if lv in ("ms", "hs") and cs.get(lv) else None),
         ("Building use (how full)", f"{u[0]}% of capacity" if u else None),
-        ("Students with IEPs (special ed)", of_all(d.get("XN", {}).get(dbn), x, 2, 6)),
-        ("English language learners", of_all(d.get("XN", {}).get(dbn), x, 1, 5)),
         ("Dual-language program", e(x[4]) if len(x) > 4 and x[4] else None),
         ("Building accessibility", {"F": "Fully accessible", "P": "Partially accessible", "N": "Not accessible"}
          .get(d.get("AC", {}).get(dbn))),
@@ -835,6 +899,8 @@ def page_html(d, dbn, streets, site_url, goat, nbi=None):
     if facts:
         sections.append("<h2>School details</h2>" + facts + more(
             ext(f"https://www.schools.nyc.gov/schools/{dbn[2:]}", "School page: contacts, hours, bell schedule")))
+    sections.append(demo_html(dm, d.get("DMC"), ch, of_all(d.get("XN", {}).get(dbn), x, 2, 6),
+                              of_all(d.get("XN", {}).get(dbn), x, 1, 5)))
     if lv == "es" and pk:
         if pk[0] or pk[2]:
             # one table, as the map card: a row per program offered ("s": the report hides that count for privacy)

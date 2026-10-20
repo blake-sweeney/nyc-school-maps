@@ -6,6 +6,15 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
+## Unreleased
+
+### Added
+- School cards on the map have a new "Demographics" section: who goes to the school, next to all NYC public schools. It shows students by race and ethnicity (Asian or Pacific Islander, Black, Hispanic, White, and everyone else) as a bar and a table, the split between girls and boys ("All boys" at single-sex schools) and the share of low-income students (families who qualify for free or reduced-price lunch or get benefits like SNAP; about 75% citywide). The summary line gives the two largest groups and the low-income share, and calls out schools that are mostly girls or boys ("88% girls · 61% Hispanic · 27% Black · 80% low-income"). School pages show the same section. From the DOE's 2025–26 Demographic Snapshot, for elementary, middle, high and charter schools.
+
+### Changed
+- "Students with IEPs" and "English language learners" moved from School details into the new Demographics section, on the map's cards and on school pages, and are a year newer (2025–26). They now come from the same DOE count as the rest of the section, so they add up to the same number of students, and they show the NYC share next to the school's ("139 of 673 · 21%, NYC 24%"). Before, at schools with middle and high school grades, they could count only some of the grades. Coloring the map by special ed uses the same newer numbers, and opens Demographics.
+- The number of students under each school's name, on the map's cards and school pages, is now this year's (2025–26) count from the same DOE source, including 3-K and pre-K, so it matches the Demographics section. P.S. 6, for example, now shows 673 students instead of 540.
+
 ## 1.33.0 (2026-10-19)
 
 ### Changed

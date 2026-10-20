@@ -6,7 +6,8 @@ An interactive map of New York City's elementary (kindergarten), middle and high
 - **School Quality Snapshot (2024–25):** Instruction and Performance, Safety and School Climate, and Relationships with Families, each rated 1–4, plus an Overall average of the three
 - **State tests (2024–25 Snapshot):** share of students scoring proficient in ELA and Math (grades 3–5 for elementary, 6–8 for middle); high schools show 4-year graduation and college/career enrollment instead
 - **Programs:** gifted & talented, dual language and special education
-- **Students with IEPs and English language learners:** counts from the School Quality Snapshot (`data/snapshot_counts.json`)
+- **Students with IEPs and English language learners:** counts from the Demographic Snapshot (`data/demographics.json`, also behind Color by special ed); the School Quality Snapshot's counts (`data/snapshot_counts.json`) fill in for the few schools it doesn't list
+- **Demographics:** race and ethnicity, girls and boys, the share of low-income students (the DOE's "poverty" count), and students with IEPs and English language learners at each school, next to all of NYC, from the DOE's Demographic Snapshot (`data/demographics.json`)
 - **Building accessibility:** fully, partially or not accessible, from the MySchools directories (`data/accessibility.json`)
 - **Building use:** each school's enrollment as a share of its building capacity, from the SCA's Enrollment, Capacity & Utilization Report ("Blue Book")
 - **Neighborhoods:** [2020 Neighborhood Tabulation Areas](https://data.cityofnewyork.us/d/9nt8-h7nd), NYC Planning via NYC Open Data (refresh with `python3 scripts/fetch_data.py neighborhoods`)
@@ -67,6 +68,7 @@ data/
   hs_zones.json         high school zone boundaries + school names/locations
   hs_outcomes.json      high school graduation and college/career rates
   snapshot_extra.json   enrollment, programs and other Snapshot facts by school
+  demographics.json     race and ethnicity, girls and boys, % low-income, IEPs and English learners by school, plus all of NYC (DOE Demographic Snapshot)
   state_tests.json      grade 3–5 ELA/Math results by school
   snapshot_ratings.json Snapshot ratings by school
   streets.json          simplified major streets for the overlay
@@ -151,7 +153,7 @@ Ratings, test scores, graduation, SAT, college readiness, where graduates went, 
 
 This writes `snapshot_ratings.json`, `snapshot_extra.json`, `snapshot_tests.json`, `hs_outcomes.json`, `nonzoned_snapshot.json`, `ms_snapshot.json`, `hs_snapshot.json` and `charter_snapshot.json` (charters come from `charters.json`, step 6, so run that first). If the Snapshot doesn't block your connection, `python3 scripts/fetch_data.py charter-snapshot` fetches just the charters directly. If your connection isn't blocked, `python3 scripts/fetch_data.py snapshot` still fetches the zoned schools directly.
 
-Then `python3 scripts/fetch_data.py snapshot-counts` fetches each school's English language learners and students with IEPs as counts (`snapshot_counts.json`), for "159 of 1,030" in School details. It reads the files above, so run it last; it needs the Snapshot to answer scripted requests.
+Then `python3 scripts/fetch_data.py snapshot-counts` fetches each school's English language learners and students with IEPs as counts (`snapshot_counts.json`), for "159 of 1,030" under Demographics at the few schools the Demographic Snapshot (step 6b) doesn't list. It reads the files above, so run it last; it needs the Snapshot to answer scripted requests.
 
 ### 4. Admissions: kindergarten, grade 6, grade 9, pre-K and 3-K (each fall or winter, for the previous fall)
 
@@ -181,6 +183,14 @@ python3 scripts/fetch_data.py charter-snapshot   # their Snapshot ratings, tests
 
 `charters` writes `charters.json` from the DOE's live school list ([LCGMS](https://infohub.nyced.org/in-our-schools/operations/lcgms)), so it already has schools opening this fall; addresses are placed with NYC Planning's GeoSearch, and enrollment by grade comes from the DOE's [Demographic Snapshot](https://infohub.nyced.org/reports/students-and-schools/school-quality/information-and-data-overview) (update `DEMOGRAPHICS_URL` in `fetch_data.py` when a new year's file appears). Read what it prints: it names charters it left out (no location found: look up the school on [schools.nyc.gov](https://www.schools.nyc.gov/) and add a point to `points` in `data/charter_fixes.json`; or marked open but with no students last year). If the DOE sites are blocked, save both files in a browser and pass them: `fetch_data.py charters <LCGMS .xls> <snapshot .xlsx>`.
 
+### 6b. Demographics: race, ethnicity, gender, family income, IEPs and English learners (each fall, when the DOE posts a new Demographic Snapshot)
+
+```sh
+python3 scripts/fetch_data.py demographics
+```
+
+Writes `demographics.json` from the DOE's [Demographic Snapshot](https://infohub.nyced.org/reports/students-and-schools/school-quality/information-and-data-overview) (the same file as step 6; update `DEMOGRAPHICS_URL` in `fetch_data.py` when a new year appears), then set `DEMOGRAPHICS_LABEL` in `scripts/settings.py` to its newest school year; the command says when they don't match. If the DOE site is blocked, save the file in a browser and pass it: `fetch_data.py demographics <file.xlsx>`.
+
 ### 7. Building use, the SCA "Blue Book" (once a year)
 
 Download the Classic Edition PDF from the [SCA](https://www.nycsca.org/Community/Capital-Plan-Reports-Data), then `python3 scripts/fetch_data.py utilization <file.pdf>` (needs `pdftotext`), and set `BLUE_BOOK_LABEL` in `scripts/settings.py`.
@@ -206,7 +216,7 @@ python3 scripts/build.py          # site, school, district and neighborhood page
 python3 scripts/make_preview.py   # optional: redraw preview.png
 ```
 
-The school, district and neighborhood pages, including the neighborhood zone maps, are rebuilt from `data/`, so they need nothing by hand. Every year shown on the map and the pages comes from the dates of the data files or from `scripts/settings.py`: check that `SNAPSHOT_YEAR`, `CITY_GRAD`, `CITY_READINESS`, `PREK_LABEL` and `BLUE_BOOK_LABEL` match what you refreshed. Also update the years in "Data sources" below.
+The school, district and neighborhood pages, including the neighborhood zone maps, are rebuilt from `data/`, so they need nothing by hand. Every year shown on the map and the pages comes from the dates of the data files or from `scripts/settings.py`: check that `SNAPSHOT_YEAR`, `CITY_GRAD`, `CITY_READINESS`, `PREK_LABEL`, `BLUE_BOOK_LABEL` and `DEMOGRAPHICS_LABEL` match what you refreshed. Also update the years in "Data sources" below.
 
 Look over a few school cards and pages, bump `VERSION`, add a `CHANGELOG.md` entry and commit.
 

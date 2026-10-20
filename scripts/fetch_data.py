@@ -32,7 +32,7 @@ ELA_DATASET = "iebs-5yhr"         # ELA Test Results 2013-2023
 MATH_DATASET = "74kb-55u9"        # Math Test Results 2013-2023
 TEST_YEAR = "2023"
 SNAPSHOT_API = "https://tools.nycenet.edu/api/v1/data/school/app/snapshot/all"
-from settings import SNAPSHOT_YEAR, MYSCHOOLS_LABEL  # which Snapshot and MySchools year (scripts/settings.py)
+from settings import SNAPSHOT_YEAR, MYSCHOOLS_LABEL, DEMOGRAPHICS_LABEL  # which Snapshot, MySchools and Demographic Snapshot year (scripts/settings.py)
 CENTERLINE_DATASET = "inkn-q76z"  # NYC Street Centerline (CSCL)
 NTA_DATASET = "9nt8-h7nd"         # 2020 Neighborhood Tabulation Areas (NYC Planning)
 
@@ -432,6 +432,56 @@ def read_lcgms(path=None):
     return [dict(zip(rows[0], r)) for r in rows[1:] if len(r) == len(rows[0])]
 
 
+def read_demographics(path=None):
+    """The DOE Demographic Snapshot workbook (DEMOGRAPHICS_URL), downloaded to data/_demographics.xlsx unless you
+    pass a saved copy. Tabs: School, District, Citywide, Citywide with Charter Schools, ..."""
+    if not path:
+        path = os.path.join(DATA, "_demographics.xlsx")
+        req = urllib.request.Request(DEMOGRAPHICS_URL, headers={"User-Agent": "nyc-school-maps"})
+        with urllib.request.urlopen(req, timeout=300) as r, open(path, "wb") as f:
+            f.write(r.read())
+    return read_xlsx(os.path.expanduser(path))
+
+
+DEMO_GROUPS = ["Asian and Pacific Islander", "Black", "Hispanic", "White"]  # the rest: "Other"
+
+
+def fetch_demographics(path=None):
+    """Who goes to each school, from the DOE Demographic Snapshot (every DOE and charter school, the newest year).
+        fetch_data.py demographics                     # downloads DEMOGRAPHICS_URL
+        fetch_data.py demographics ~/Downloads/demographic-snapshot-*.xlsx
+    demographics.json: {"year", "source", "city": row, "schools": {dbn: row}}, row = [total enrollment (3-K and
+    pre-K included), Asian and Pacific Islander, Black, Hispanic, White, everyone else (multiracial, Native American,
+    not reported), % in poverty, girls, boys, students with IEPs, English language learners].
+    Groups, girls, boys, IEPs and English learners are counts (a few students are neither girls nor boys; IEPs and
+    English learners as of the end of the school year). Poverty is a whole percent, or ">95" / "<5" where the DOE hides
+    the number for privacy ("Above 95%", "Below 5%"). "city" is every NYC public school student, charters included."""
+    wb = read_demographics(path)
+    num = lambda v: int(float(v)) if v not in (None, "") else 0
+
+    def row(h, r):
+        c = lambda k: r[h.index(k)] if h.index(k) < len(r) else None
+        tot = num(c("Total Enrollment"))
+        g = [num(c("# " + k)) for k in DEMO_GROUPS]
+        pov = c("% Poverty")
+        pov = {"Above 95%": ">95", "Below 5%": "<5"}.get(pov) or (round(100 * float(pov)) if pov not in (None, "") else None)
+        return [tot, *g, max(0, tot - sum(g)), pov, num(c("# Female")), num(c("# Male")),
+                num(c("# Students with Disabilities")), num(c("# English Language Learners"))]
+
+    rows = wb["School"]
+    h = rows[0]
+    year = max(r[h.index("Year")] for r in rows[1:] if len(r) > h.index("Year") and r[h.index("Year")])
+    schools = {r[0]: row(h, r) for r in rows[1:] if len(r) > h.index("Year") and r[h.index("Year")] == year}
+    schools = {k: v for k, v in sorted(schools.items()) if v[0]}
+    cw = wb["Citywide with Charter Schools"]
+    city = next(row(cw[0], r) for r in cw[1:] if r and r[cw[0].index("Year")] == year)
+    print(f"  {len(schools)} schools, {year}; citywide {city[0]:,} students")
+    if year.replace("-", "–") != DEMOGRAPHICS_LABEL:
+        print(f"  set DEMOGRAPHICS_LABEL in scripts/settings.py to \"{year.replace('-', '–')}\"")
+    save("demographics.json", {"year": year, "source": "DOE Demographic Snapshot, School tab",
+                               "city": city, "schools": schools})
+
+
 def fetch_charters(lcgms_path=None, demographics_path=None):
     """Charter schools open now, with a point for each and last year's enrollment.
     - Which schools, their DBN, address, grades and district: the DOE's LCGMS (read_lcgms), as of the day you run
@@ -456,12 +506,7 @@ def fetch_charters(lcgms_path=None, demographics_path=None):
            and r.get("Status Description") == "Open" and r.get("Geographical District Code", "00").isdigit()
            and 1 <= int(r["Geographical District Code"]) <= 32]
 
-    if not demographics_path:
-        demographics_path = os.path.join(DATA, "_demographics.xlsx")
-        req = urllib.request.Request(DEMOGRAPHICS_URL, headers={"User-Agent": "nyc-school-maps"})
-        with urllib.request.urlopen(req, timeout=300) as r, open(demographics_path, "wb") as f:
-            f.write(r.read())
-    rows = read_xlsx(os.path.expanduser(demographics_path))["School"]
+    rows = read_demographics(demographics_path)["School"]
     col = {k: rows[0].index(k) for k in ("DBN", "School Name", "Year", "Total Enrollment", "Grade K", "Grade 12")}
     year = max(r[col["Year"]] for r in rows[1:] if len(r) > col["Year"] and r[col["Year"]])
     num = lambda v: int(float(v)) if v not in (None, "") else 0
@@ -608,7 +653,7 @@ def fetch_snapshot_counts():
 
 STEPS = {"zones": fetch_zones, "tests": fetch_tests, "snapshot": fetch_snapshot, "streets": fetch_streets,
          "classsize": fetch_class_size, "neighborhoods": fetch_neighborhoods, "charters": fetch_charters,
-         "snapshot-counts": fetch_snapshot_counts}
+         "snapshot-counts": fetch_snapshot_counts, "demographics": fetch_demographics}
 
 def fetch_prek(path):
     """Pre-K and 3-K seats, applicants and offers per school, from the DOE's Local Law 72 admissions report.
@@ -1285,6 +1330,10 @@ if __name__ == "__main__":
     if args[:1] == ["charters"] and len(args) == 3:  # from a saved LCGMS export and Demographic Snapshot
         print("-- charters (from files)")
         fetch_charters(args[1], args[2])
+        sys.exit()
+    if args[:1] == ["demographics"] and len(args) == 2:  # from a saved Demographic Snapshot
+        print("-- demographics (from file)")
+        fetch_demographics(args[1])
         sys.exit()
     if args[:1] == ["prek"] and len(args) == 2:  # from the downloaded Local Law 72 admissions file
         print("-- prek (from file)")
