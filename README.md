@@ -7,7 +7,7 @@ An interactive map of New York City's elementary (kindergarten), middle and high
 - **State tests (2024–25 Snapshot):** share of students scoring proficient in ELA and Math (grades 3–5 for elementary, 6–8 for middle); high schools show 4-year graduation and college/career enrollment instead
 - **Programs:** gifted & talented, dual language and special education
 - **Students with IEPs and English language learners:** counts from the Demographic Snapshot (`data/demographics.json`, also behind Color by special ed); the School Quality Snapshot's counts (`data/snapshot_counts.json`) fill in for the few schools it doesn't list
-- **Demographics:** race and ethnicity, girls and boys, the share of low-income students (the DOE's "poverty" count) and the DOE's Economic Need Index at each school, next to all of NYC, from the DOE's Demographic Snapshot (`data/demographics.json`)
+- **Demographics:** race and ethnicity, girls and boys, the share of low-income students (the DOE's "poverty" count), and students with IEPs and English language learners at each school, next to all of NYC, from the DOE's Demographic Snapshot (`data/demographics.json`)
 - **Building accessibility:** fully, partially or not accessible, from the MySchools directories (`data/accessibility.json`)
 - **Building use:** each school's enrollment as a share of its building capacity, from the SCA's Enrollment, Capacity & Utilization Report ("Blue Book")
 - **Neighborhoods:** [2020 Neighborhood Tabulation Areas](https://data.cityofnewyork.us/d/9nt8-h7nd), NYC Planning via NYC Open Data (refresh with `python3 scripts/fetch_data.py neighborhoods`)
@@ -68,7 +68,7 @@ data/
   hs_zones.json         high school zone boundaries + school names/locations
   hs_outcomes.json      high school graduation and college/career rates
   snapshot_extra.json   enrollment, programs and other Snapshot facts by school
-  demographics.json     race and ethnicity, girls and boys, % low-income and economic need by school, plus all of NYC (DOE Demographic Snapshot)
+  demographics.json     race and ethnicity, girls and boys, % low-income, IEPs and English learners by school, plus all of NYC (DOE Demographic Snapshot)
   state_tests.json      grade 3–5 ELA/Math results by school
   snapshot_ratings.json Snapshot ratings by school
   streets.json          simplified major streets for the overlay
@@ -183,7 +183,7 @@ python3 scripts/fetch_data.py charter-snapshot   # their Snapshot ratings, tests
 
 `charters` writes `charters.json` from the DOE's live school list ([LCGMS](https://infohub.nyced.org/in-our-schools/operations/lcgms)), so it already has schools opening this fall; addresses are placed with NYC Planning's GeoSearch, and enrollment by grade comes from the DOE's [Demographic Snapshot](https://infohub.nyced.org/reports/students-and-schools/school-quality/information-and-data-overview) (update `DEMOGRAPHICS_URL` in `fetch_data.py` when a new year's file appears). Read what it prints: it names charters it left out (no location found: look up the school on [schools.nyc.gov](https://www.schools.nyc.gov/) and add a point to `points` in `data/charter_fixes.json`; or marked open but with no students last year). If the DOE sites are blocked, save both files in a browser and pass them: `fetch_data.py charters <LCGMS .xls> <snapshot .xlsx>`.
 
-### 6b. Demographics: race, ethnicity, gender, family income and economic need (each fall, when the DOE posts a new Demographic Snapshot)
+### 6b. Demographics: race, ethnicity, gender, family income, IEPs and English learners (each fall, when the DOE posts a new Demographic Snapshot)
 
 ```sh
 python3 scripts/fetch_data.py demographics

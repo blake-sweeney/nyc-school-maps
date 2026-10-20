@@ -649,8 +649,8 @@ def main(standalone_path=None, pages=None):
         d["AC"] = load("accessibility.json")
 
     # Who goes to each school (DOE Demographic Snapshot, settings.DEMOGRAPHICS_LABEL): DM {dbn: [enrollment, Asian
-    # and Pacific Islander, Black, Hispanic, White, everyone else, % in poverty, Economic Need Index (both whole % or
-    # ">95" / "<5"), girls, boys, students with IEPs, English language learners]}. d["DM"] has the elementary map's
+    # and Pacific Islander, Black, Hispanic, White, everyone else, % in poverty (whole % or ">95" / "<5"),
+    # girls, boys, students with IEPs, English language learners]}. d["DM"] has the elementary map's
     # schools; MS.DM and HS.DM the rest of their level's, loaded with it. DMC: the same row for every NYC public
     # school student
     if os.path.exists(os.path.join(DATA, "demographics.json")):

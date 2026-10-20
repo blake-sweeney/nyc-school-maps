@@ -486,7 +486,7 @@ def demo_pov(p):
 
 def demo_html(m, city, ch, iep=None, ell=None):
     """Demographics (build.py DM row; city: DMC), as on the map's card (src/template.html demoSec): race and ethnicity
-    bars for the school and all of NYC, a table of both, girls and boys, low-income students, economic need, IEPs and English
+    bars for the school and all of NYC, a table of both, girls and boys, low-income students, IEPs and English
     learners. iep, ell: the School Quality Snapshot's counts (of_all), only for a school the Demographic Snapshot
     doesn't list."""
     m = m if m and m[0] else None
@@ -502,10 +502,10 @@ def demo_html(m, city, ch, iep=None, ell=None):
         return "" if v is None else f"<tr{attr}><th>{label}</th><td>{v}</td><td>{cv or ''}</td></tr>"
 
     def both(r):
-        n = r[k + 3] + r[k + 4]
-        if not n or not r[k + 3] or not r[k + 4]:
-            return None if not n else "All boys" if not r[k + 3] else "All girls"
-        return f"{demo_pct(r[k + 3], n)} · {demo_pct(r[k + 4], n)}"
+        n = r[k + 2] + r[k + 3]
+        if not n or not r[k + 2] or not r[k + 3]:
+            return None if not n else "All boys" if not r[k + 2] else "All girls"
+        return f"{demo_pct(r[k + 2], n)} · {demo_pct(r[k + 3], n)}"
 
     def dbar(row, cls=""):
         return (f'<div class="dbar dm-bar{cls}">' + "".join(
@@ -516,11 +516,10 @@ def demo_html(m, city, ch, iep=None, ell=None):
                    for i, (name, c) in enumerate(settings.DEMO_GROUPS))
     rows += tr("Girls · boys", both(m), city and both(city), "pov")
     rows += tr("Low-income students", None if m[1 + k] is None else demo_pov(m[1 + k]), city and demo_pov(city[1 + k]))
-    rows += tr("Economic need", None if m[2 + k] is None else demo_pov(m[2 + k]), city and demo_pov(city[2 + k]))
-    rows += tr(f"Students with IEPs (special ed)<small>{m[k + 5]:,} of {m[0]:,}</small>", demo_pct(m[k + 5], m[0]),
-               city and demo_pct(city[k + 5], city[0]), "pov")
-    rows += tr(f"English language learners<small>{m[k + 6]:,} of {m[0]:,}</small>", demo_pct(m[k + 6], m[0]),
-               city and demo_pct(city[k + 6], city[0]))
+    rows += tr(f"Students with IEPs (special ed)<small>{m[k + 4]:,} of {m[0]:,}</small>", demo_pct(m[k + 4], m[0]),
+               city and demo_pct(city[k + 4], city[0]), "pov")
+    rows += tr(f"English language learners<small>{m[k + 5]:,} of {m[0]:,}</small>", demo_pct(m[k + 5], m[0]),
+               city and demo_pct(city[k + 5], city[0]))
     return (f"<h2>Demographics</h2>"
             f'<p class="dm-l">This school · {m[0]:,} students</p>' + dbar(m)
             + (f'<p class="dm-l">All NYC public schools</p>' + dbar(city, " city") if city else "")
@@ -532,8 +531,7 @@ def demo_html(m, city, ch, iep=None, ell=None):
               "qualify for free or reduced-price lunch (income up to about 185% of the poverty line) or get HRA "
               "benefits like SNAP"
             + ("; it can be undercounted at charter schools that don’t use DOE school food" if ch else "")
-            + ". Economic need: the DOE’s estimate of students facing hardship. Students in temporary housing or on HRA "
-              "benefits count fully; everyone else counts by the poverty rate where they live.</p>")
+            + ".</p>")
 
 
 def k_adm_html(ka, lv="es", dist=None, prio=""):
