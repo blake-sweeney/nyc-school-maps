@@ -15,6 +15,21 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - "Students with IEPs" and "English language learners" moved from School details into the new Demographics section, on the map's cards and on school pages, and are a year newer (2025–26). They now come from the same DOE count as the rest of the section, so they add up to the same number of students, and they show the NYC share next to the school's ("139 of 673 · 21%, NYC 24%"). Before, at schools with middle and high school grades, they could count only some of the grades. Coloring the map by special ed uses the same newer numbers, and opens Demographics.
 - The number of students under each school's name, on the map's cards and school pages, is now this year's (2025–26) count from the same DOE source, including 3-K and pre-K, so it matches the Demographics section. P.S. 6, for example, now shows 673 students instead of 540.
 
+## 1.33.0 (2026-10-19)
+
+### Changed
+- Each school card says right under the school's name whether it's zoned ("Zoned:" or "No zone:"), with a "See this school's priority groups ↓" link that opens the admissions section and scrolls to it. Middle and high schools without a zone no longer show a short summary of who gets priority at the top of the card, since the full priority groups are one tap away. Non-zoned elementary schools keep their district priority note until MySchools posts kindergarten priority groups in December.
+- School pages for schools without a zone point to their priority groups instead of summarizing them, and no longer repeat that students apply through MySchools.
+
+## 1.32.0 (2026-10-19)
+
+### Added
+- The links at the bottom of each school card include the school's 2024–25 School Quality Snapshot report, next to MySchools and the school website.
+
+### Changed
+- Admissions on middle and high school cards are one table per program: a row for all students, then each priority group in the order it gets offers (siblings, the zone, the district, then everyone else), with how many applied and got offers last year. Lunch-eligible applicants show as indented rows under their group. Each program's seats, special ed seats and admissions method sit right above its table, so the separate Programs list is gone. Below the tables, "True applicants" gives the DOE's count of students who listed the school and didn't get a choice they ranked higher; the DOE's full report numbers are under "About this data". School pages show the same tables.
+- Kindergarten, pre-K and 3-K admissions use the same simple table at every school. Zoned schools no longer list the DOE's eight-step priority order; one line explains that families in the zone come first, with a link to how kindergarten admissions work.
+
 ## 1.31.2 (2026-10-19)
 
 ### Changed

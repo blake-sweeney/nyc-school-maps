@@ -266,17 +266,27 @@ def _count(t):
     return "~" + n if t.startswith("about") else "<" + n if t[0] in "fl" else int(n)
 
 
-# Kindergarten at a zoned school: the DOE's standard priority order ({d}: the school's district), from
-# schools.nyc.gov/enrollment/enroll-grade-by-grade/kindergarten. Shown until MySchools posts each school's own
-# groups (k_priority.json) when kindergarten applications open in December.
-K_ZONED_PRIORITY = ["Students who live in the zone and have a sibling at the school",
-                    "Other students who live in the zone",
-                    "Students who live in District {d} and have a sibling at the school",
-                    "Students who live outside the district and have a sibling at the school",
-                    "Students who live in District {d} and are in pre-K at the school",
-                    "Students who live outside the district and are in pre-K at the school",
-                    "Other students who live in District {d}",
-                    "Other students who live outside the district"]
+def short_group(nm):
+    """A priority group MySchools words in its own way, shortened for a table row: "Residents of the elementary school
+    zone" -> "Elementary school zone", "District 25 and 28 students and residents" -> "Districts 25 and 28",
+    "Students attending PS 8, PS 153, or PS 173 and to residents of the middle school zone" -> "Attending PS 8, PS 153,
+    or PS 173, or zone residents". Anything else stays as written."""
+    rules = [(r"^Residents of the (.+?) (zones?)$", r"\1 \2"),
+             (r"^(?:Students and Residents of |Students and residents of )?(Districts? [\d ,&]+(?:and \d+)?)(?: students and residents)?$",
+              lambda m: re.sub(r"^District (?=\d+(?:,| and| &))", "Districts ", m.group(1).strip())),
+             (r"^Students and [Rr]esidents of (?:the )?(.+)$", r"\1"),
+             (r"^(Manhattan|Brooklyn|Queens|Bronx|Staten Island) students or residents$", r"\1"),
+             (r"^Students attending (?:or zoned to )?(.+?) and to residents of the middle school zone$", r"Attending \1, or zone residents"),
+             (r"^Students attending or zoned to (.+)$", r"Attending or zoned to \1"),
+             (r"^Students attending (.+)$", r"Attending \1"),
+             (r"^Students residing in the zone and residents of (.+)$", r"Zone residents and \1"),
+             (r"^Continuing (\d+)th grade students$", r"Continuing \1th graders"),
+             (r"^(\d+)th grade students who attend (.+)$", r"\1th graders at \2")]
+    for pat, rep in rules:
+        out = re.sub(pat, rep, nm)
+        if out != nm:
+            return out[:1].upper() + out[1:]
+    return nm
 
 
 def priority_steps(groups, dbn):
@@ -298,7 +308,7 @@ def priority_steps(groups, dbn):
              "Z" if low in ("students who live in the zoned area", "residents of the middle school zone", "students residing in the zone") else
              "B" if low in (f"{boro} students and residents".lower(), f"{boro} students or residents".lower(),
                             f"students and residents of {boro}".lower(), f"students and residents of the {boro}".lower()) else
-             "D" + str(int(next(x for x in m.groups() if x))) if m else nm[:1].upper() + nm[1:])
+             "D" + str(int(next(x for x in m.groups() if x))) if m else short_group(nm[:1].upper() + nm[1:]))
         if desc is None or not desc.strip():
             out.append([g])
             continue
@@ -625,9 +635,7 @@ def main(standalone_path=None, pages=None):
         d["KA"] = {k: ka[k] for k in sorted(es_all) if k in ka}
         print(f"kindergarten admissions: {len(d['KA'])} of {len(es_all)} elementary schools")
 
-    # Kindergarten priority groups (optional, MySchools kindergarten directory): KP {dbn: priority steps (priority_steps)};
-    # KPZ: the standard order at zoned schools, for schools MySchools hasn't posted groups for
-    d["KPZ"] = K_ZONED_PRIORITY
+    # Kindergarten priority groups (optional, MySchools kindergarten directory): KP {dbn: priority steps (priority_steps)}
     if os.path.exists(os.path.join(DATA, "k_priority.json")):
         kp = load("k_priority.json")
         d["KP"] = {k: priority_steps(kp[k], k) for k in sorted(es_all) if k in kp}
