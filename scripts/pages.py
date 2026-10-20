@@ -913,11 +913,11 @@ def page_html(d, dbn, streets, site_url, goat, nbi=None):
         ("Grades 1–5 class size", f"{round(cs['e'])} students" if cs.get("e") else None),
         ("Core class size", f"{round(cs[lv])} students" if lv in ("ms", "hs") and cs.get(lv) else None),
         ("Building use (how full)", f"{u[0]}% of capacity" if u else None),
-        ("Shares its building with", f"{len(co)} school{'s' if len(co) > 1 else ''}" if co else None, " · ".join(
-            f'<a href="/schools/{e(m)}/">{e(nice_name(n))}</a>' if m in page_dbns(d) else e(nice_name(n)) for m, n in co)),
         ("Dual-language program", e(x[4]) if len(x) > 4 and x[4] else None),
         ("Building accessibility", {"F": "Fully accessible", "P": "Partially accessible", "N": "Not accessible"}
          .get(d.get("AC", {}).get(dbn))),
+        ("Shares its building with", f"{len(co)} school{'s' if len(co) > 1 else ''}" if co else None, " · ".join(
+            f'<a href="/schools/{e(m)}/">{e(nice_name(n))}</a>' if m in page_dbns(d) else e(nice_name(n)) for m, n in co)),
     ])
     if facts:
         sections.append("<h2>School details</h2>" + facts + more(
