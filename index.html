@@ -361,13 +361,9 @@ aside>*{flex-shrink:0}
 .kind{font-size:.85rem;border-left:3px solid var(--hl);padding:2px 0 2px 9px;line-height:1.4}
 .kind a{color:var(--hl)}
 details.kind>summary{cursor:pointer}details.kind>p{margin:4px 0 2px}
-/* the city's basemap is gray; #nsz-water (built in the script) makes its water shades one flat blue. "Parks & water" off: #nsz-water-gray, flat gray */
-.nyc-base{filter:grayscale(1) url(#nsz-water) contrast(.85) brightness(1.06)}
-.plain-base .nyc-base{filter:grayscale(1) url(#nsz-water-gray) contrast(.85) brightness(1.06)}
+/* the city's basemap tiles are recolored in a canvas by NycBase (flat water, dark mode); the label tiles keep CSS filters */
 .nyc-labels{filter:grayscale(1)}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .nyc-base{filter:grayscale(1) url(#nsz-water) invert(1) hue-rotate(180deg) brightness(.78) contrast(.9)}:root:not([data-theme="light"]) .plain-base .nyc-base{filter:grayscale(1) url(#nsz-water-gray) invert(1) brightness(.78) contrast(.9)}:root:not([data-theme="light"]) .nyc-labels{filter:grayscale(1) invert(1) brightness(1.15)}}
-:root[data-theme="dark"] .nyc-base{filter:grayscale(1) url(#nsz-water) invert(1) hue-rotate(180deg) brightness(.78) contrast(.9)}
-:root[data-theme="dark"] .plain-base .nyc-base{filter:grayscale(1) url(#nsz-water-gray) invert(1) brightness(.78) contrast(.9)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .nyc-labels{filter:grayscale(1) invert(1) brightness(1.15)}}
 :root[data-theme="dark"] .nyc-labels{filter:grayscale(1) invert(1) brightness(1.15)}
 .leaflet-tile{visibility:hidden}.leaflet-tile-loaded{visibility:inherit}
 .leaflet-tile-container{pointer-events:none}
@@ -841,7 +837,11 @@ map.createPane('nycLabels').style.zIndex=456;map.getPane('nycLabels').style.poin
 // Served by the NYC API portal (api-portal.nyc.gov, GeoServer Tile Services API). The key is meant to be public:
 // it's tied to info@nycschoolzones.com and only reads map tiles. Tiles are TMS, so rows count up from the bottom (tms:true).
 const NYC_KEY='55e87513137841dc8bcc1474ba215833',NYC_TILES='https://api.nyc.gov/geoserver/gwc/service/tms/1.0.0/carto%3A';
-const baseTiles=L.tileLayer(NYC_TILES+'basemap@EPSG%3A900913@jpg/{z}/{x}/{y}.jpg?Key='+NYC_KEY,{tms:true,maxZoom:18,className:'nyc-base'}).addTo(map);
+// The base tiles are drawn into canvases and recolored there (baseLut), not with CSS filters: Safari can't apply an SVG
+// filter (url(#...)) to HTML elements, so it showed the raw gray tiles. The tile server allows it (Access-Control-Allow-Origin: *).
+const NycBase=L.TileLayer.extend({createTile(coords,done){const c=document.createElement('canvas'),img=new Image();c.width=c.height=256;
+  img.crossOrigin='anonymous';img.onload=()=>{c._img=img;paintTile(c);done(null,c)};img.onerror=e=>done(e,c);img.src=this.getTileUrl(coords);return c}});
+const baseTiles=new NycBase(NYC_TILES+'basemap@EPSG%3A900913@jpg/{z}/{x}/{y}.jpg?Key='+NYC_KEY,{tms:true,maxZoom:18,className:'nyc-base'}).addTo(map);
 const labelTiles=L.tileLayer(NYC_TILES+'label@EPSG%3A900913@png8/{z}/{x}/{y}.png8?Key='+NYC_KEY,{tms:true,pane:'nycLabels',maxZoom:18,className:'nyc-labels'}).addTo(map);
 L.control.attribution({prefix:false,position:'bottomright'}).addAttribution('Basemap © <a href="https://finder.nyc.gov/nyc-lib/tiles/index.html" target="_blank" rel="noopener">City of New York</a> (CC BY 4.0)').addTo(map);
 baseTiles.on('tileload',()=>{tileOk++});
@@ -849,21 +849,32 @@ baseTiles.on('tileerror',()=>{if(++tileErr>=6&&!tileOk)dropBase()});
 function dropBase(){if(!useBase)return;useBase=false;map.removeLayer(baseTiles);map.removeLayer(labelTiles);if(typeof syncParks==='function')syncParks();
   document.querySelector('.leaflet-control-attribution')?.remove();if(typeof restyle==='function'){restyle();syncStreets()}}
 // Color on the gray basemap. Water: the tiles keep water in its own gray shades (about 150-217; land is 236,
-// parks 222, buildings 219+), so an SVG lookup table turns just those into one flat blue and the shoreline stays exact.
-// One color for every shade drops the tiles' dark shading along the shore. With the layer off, #nsz-water-gray
-// does the same in flat gray.
-// Parks: NYC Parks outlines (assets/parks.js), drawn green in a pane that blends as "color" into the tiles,
-// so paths and lakes inside a park still show. Both follow the "Parks & water color" layer.
-(()=>{const f=(v,c)=>v>=150&&v<=217?c:v,t=c=>{const a=[];for(let v=0;v<256;v++)a.push((f(v,c)/255).toFixed(4));return a.join(' ')},
-  filt=(id,[r,g,b])=>'<filter id="'+id+'" color-interpolation-filters="sRGB"><feComponentTransfer><feFuncR type="discrete" tableValues="'+t(r)+'"/><feFuncG type="discrete" tableValues="'+t(g)+'"/><feFuncB type="discrete" tableValues="'+t(b)+'"/></feComponentTransfer></filter>',
-  d=document.createElement('div');
-  d.innerHTML='<svg width="0" height="0" style="position:absolute" aria-hidden="true">'+filt('nsz-water',[176,198,224])+filt('nsz-water-gray',[200,200,200])+'</svg>';
-  document.body.appendChild(d.firstChild)})();
+// parks 222, buildings 219+), so a lookup table turns just those into one flat blue and the shoreline stays exact.
+// One color for every shade drops the tiles' dark shading along the shore. With the "Parks & water color" layer off,
+// water is one flat gray. baseLut builds a table per look, from each pixel's gray: the water color, then light mode's
+// contrast .85 and brightness 1.06, or dark mode's invert, hue turn 180°, brightness .78 and contrast .9 (what the CSS
+// filters did before). Parks: NYC Parks outlines (assets/parks.js), drawn green in a pane that blends as "color" into
+// the tiles, so paths and lakes inside a park still show. Both follow the "Parks & water color" layer.
+const LUTS={};let baseLook='';
+function baseLut(look){if(LUTS[look])return LUTS[look];const dark=look[0]==='d',water=look[1]==='w'?[176,198,224]:[200,200,200],t=new Uint8ClampedArray(768);
+  const k=(c,a)=>(c-127.5)*a+127.5,H=[[-.574,1.43,.144],[.426,.43,.144],[.426,1.43,-.856]];
+  for(let v=0;v<256;v++){let c=v>=150&&v<=217?water.slice():[v,v,v];
+    if(dark){c=c.map(x=>255-x);if(look[1]==='w'){const [r,g,b]=c;c=H.map(m=>Math.min(255,Math.max(0,m[0]*r+m[1]*g+m[2]*b)))}c=c.map(x=>k(Math.min(255,x*.78),.9))}
+    else c=c.map(x=>Math.min(255,k(x,.85)*1.06));
+    t[v*3]=c[0];t[v*3+1]=c[1];t[v*3+2]=c[2]}
+  return LUTS[look]=t}
+function paintTile(c){const t=baseLut(baseLook||(baseLook=lookNow())),x=c.getContext('2d',{willReadFrequently:true});x.drawImage(c._img,0,0,256,256);
+  const im=x.getImageData(0,0,256,256),p=im.data;
+  for(let i=0;i<p.length;i+=4){const v=(p[i]*54+p[i+1]*183+p[i+2]*19)>>8;p[i]=t[v*3];p[i+1]=t[v*3+1];p[i+2]=t[v*3+2]}
+  x.putImageData(im,0,0)}
+const lookNow=()=>(isDark()?'d':'l')+(LAY.parks?'w':'g');
+// a theme or layer change repaints the tiles already loaded, from the images they keep (no new downloads)
+function syncBase(){const l=lookNow();if(l===baseLook)return;baseLook=l;Object.values(baseTiles._tiles).forEach(t=>{if(t.el._img)paintTile(t.el)})}
 const PARK_MIN_Z=12,parkPane=map.createPane('parks');parkPane.style.zIndex=250;parkPane.style.pointerEvents='none';parkPane.style.mixBlendMode='color';
 const parkRend=L.canvas({pane:'parks',padding:.3}),parkGroup=L.layerGroup();let parksBuilt=false,parksLoading=false;
 function buildParks(src){(src.p||[]).forEach(rings=>L.polygon(rings.map(r=>{const ll=[];let x=0,y=0;for(let i=0;i<r.length;i+=2){x+=r[i];y+=r[i+1];ll.push([y/1e5,x/1e5])}return ll}),
   {renderer:parkRend,interactive:false,stroke:false,fill:true,fillColor:'#4f9a57',fillOpacity:1}).addTo(parkGroup));parksBuilt=true}
-function syncParks(){const on=useBase&&!!LAY.parks;document.getElementById('map').classList.toggle('plain-base',!on);
+function syncParks(){const on=useBase&&!!LAY.parks;syncBase();
   parkPane.style.opacity=String((isDark()?.4:.55)*(map.getZoom()<12.5?.85:1));
   const show=on&&map.getZoom()>=PARK_MIN_Z;
   if(show&&!parksBuilt){if(D.PARKS){buildParks(D.PARKS)}else if(ASSETS.parks&&!parksLoading){parksLoading=true;getAsset('parks').then(j=>{buildParks(j);syncParks()}).catch(()=>{parksLoading=false})}}
