@@ -911,7 +911,7 @@ def page_html(d, dbn, streets, site_url, goat, nbi=None):
             lede = []
             if mates:
                 lede.append("This zone is shared with " + ", ".join(
-                    f'<a href="/schools/{e(m)}/">{e(nice_name(S.get(m, {}).get("n", m)))}</a>' for m in mates) +
+                    f'<a href="/schools/{e(m)}/#{lv}">{e(nice_name(S.get(m, {}).get("n", m)))}</a>' for m in mates) +
                     ". Families who live here get zoned priority at each of these schools.")
             nb_codes = (nbi or {}).get("by_school", {}).get(dbn, [])
             if nb_codes:
@@ -1096,15 +1096,16 @@ def page_html(d, dbn, streets, site_url, goat, nbi=None):
             return nice_name((R.get(m) or [None])[0] or S.get(m, {}).get("n") or next((row[1] for row in nzl + chl if row[0] == m), m))
         near_html = ""
         if near or near_nz or near_ch:
-            lst = "".join(f'<li><a href="/schools/{e(m)}/">{e(nm(m))}</a></li>' for m in sorted(near, key=lambda m: nm(m).lower())[:80])
-            lst2 = "".join(f'<li><a href="/schools/{e(m)}/">{e(nm(m))}</a></li>' for m in sorted(near_nz, key=lambda m: nm(m).lower())[:80])
+            # links open the other school's page on this level's tab (#es, #ms, #hs; TABS_JS)
+            lst = "".join(f'<li><a href="/schools/{e(m)}/#{lv}">{e(nm(m))}</a></li>' for m in sorted(near, key=lambda m: nm(m).lower())[:80])
+            lst2 = "".join(f'<li><a href="/schools/{e(m)}/#{lv}">{e(nm(m))}</a></li>' for m in sorted(near_nz, key=lambda m: nm(m).lower())[:80])
             lvw = {"es": "elementary", "ms": "middle", "hs": "high"}[lv]
             n_near = min(len(near), 80) + min(len(near_nz), 80) + min(len(near_ch), 80)
             near_html = fold_card(f'<h2>Other {lvw} schools in District {dist}</h2>'
                                   + (f'<ul class="near">{lst}</ul>' if lst else "")
                                   + (f'<h2 style="margin-top:14px">Without a zone</h2><ul class="near">{lst2}</ul>' if lst2 else "")
                                   + ('<h2 style="margin-top:14px">Charter schools</h2><ul class="near">' + "".join(
-                                      f'<li><a href="/schools/{e(m)}/">{e(nm(m))}</a></li>' for m in sorted(near_ch, key=lambda m: nm(m).lower())[:80])
+                                      f'<li><a href="/schools/{e(m)}/#{lv}">{e(nm(m))}</a></li>' for m in sorted(near_ch, key=lambda m: nm(m).lower())[:80])
                                      + "</ul>" if near_ch else "")
                                   + f'<p class="src"><a href="/districts/{e(dist)}/">All District {e(dist)} schools</a></p>',
                                   f"{n_near} school{'' if n_near == 1 else 's'}", False)
@@ -1370,8 +1371,9 @@ def swatch(style, txt):
     return f'<i class="sw" style="{style}"></i>{txt}'
 
 
-def school_table(dbns, names, R, cols, note=None, note_line=False, num=None):
-    """A sortable table: school name, overall rating, then `cols` = [(heading, fn(dbn) -> number or None, format)]."""
+def school_table(dbns, names, R, cols, note=None, note_line=False, num=None, lv=None):
+    """A sortable table: school name, overall rating, then `cols` = [(heading, fn(dbn) -> number or None, format)].
+    lv: the level it lists ("es", "ms", "hs"), so a school's link opens that tab of its page."""
     if not dbns:
         return ""
     heads = [("School", "text"), ("Rating", "num")] + [(h, "num") for h, _, _, _ in cols]
@@ -1384,7 +1386,7 @@ def school_table(dbns, names, R, cols, note=None, note_line=False, num=None):
         rt = rating(R, dbn)
         tag = note(dbn) if note else ""
         badge = f'<span class="znum" aria-label="zone {num[dbn]} on the map">{num[dbn]}</span>' if num and dbn in num else ""
-        cells = [f'<td data-v="{e(names[dbn].lower())}">{badge}<a href="/schools/{e(dbn)}/">{e(names[dbn])}</a>'
+        cells = [f'<td data-v="{e(names[dbn].lower())}">{badge}<a href="/schools/{e(dbn)}/{"#" + lv if lv else ""}">{e(names[dbn])}</a>'
                  + (f' <small{small_cls}>{e(tag)}</small>' if tag else "") + "</td>",
                  f'<td data-v="{"" if rt is None else f"{rt:.2f}"}">{"–" if rt is None else swatch(rate_color(rt), f"{rt:.1f}")}</td>']
         for _, fn, fmt, stops in cols:
@@ -1510,8 +1512,8 @@ def write_districts(d, root, site_url, goat, nbi=None):
         ch_note = ('<p class="src">Charter schools admit by lottery, with priority to siblings and then to District '
                    f'{e(k)} families. They can’t screen: no tests, grades, interviews or auditions. Families apply through the '
                    '<a href="' + CH_APPLY + '" target="_blank" rel="noopener">common charter application ↗</a>, not MySchools.</p>')
-        def ch_table(lst, cols, rr=R):
-            return f'<section class="card"><h2>Charter schools</h2>{school_table(lst, names, rr, cols)}{ch_note}</section>' if lst else ""
+        def ch_table(lst, cols, lv, rr=R):
+            return f'<section class="card"><h2>Charter schools</h2>{school_table(lst, names, rr, cols, lv=lv)}{ch_note}</section>' if lst else ""
         boro = boro_of[k]
         es_note = lambda x: "citywide G&T" if info[x].get("es") == "citywide" else ""
         ms_note = lambda x: "citywide" if info[x].get("ms") == "citywide" else ""
@@ -1523,27 +1525,27 @@ def write_districts(d, root, site_url, goat, nbi=None):
         panels = [
             ("es", "Elementary", f"{len(es_z) + len(es_n) + len(es_c)}",
              go("es", "elementary")
-             + f'<section class="card"><h2>Zoned elementary schools</h2>{school_table(es_z, names, R, es_cols)}'
-             + (f'<h2>Elementary schools without a zone</h2>{school_table(es_n, names, R, es_cols, es_note)}' if es_n else "")
+             + f'<section class="card"><h2>Zoned elementary schools</h2>{school_table(es_z, names, R, es_cols, lv="es")}'
+             + (f'<h2>Elementary schools without a zone</h2>{school_table(es_n, names, R, es_cols, es_note, lv="es")}' if es_n else "")
              + '<p class="src">Rating is the DOE’s overall rating (out of 4). Tests is the share of students meeting state standards '
                'in ELA and math, grades 3–5. Zoned schools give priority to families in their zone; schools without a zone give '
-               'priority by district.</p></section>' + ch_table(es_c, es_cols)),
+               'priority by district.</p></section>' + ch_table(es_c, es_cols, "es")),
             ("ms", "Middle", f"{len(ms_z) + len(ms_n) + len(ms_c)}",
              go("ms", "middle")
              + '<section class="card">'
-             + (f'<h2>Zoned middle schools</h2>{school_table(ms_z, names, R, ms_cols)}' if ms_z else "")
-             + (f'<h2>Middle schools without a zone</h2>{school_table(ms_n, names, R, ms_cols, ms_note)}' if ms_n else "")
+             + (f'<h2>Zoned middle schools</h2>{school_table(ms_z, names, R, ms_cols, lv="ms")}' if ms_z else "")
+             + (f'<h2>Middle schools without a zone</h2>{school_table(ms_n, names, R, ms_cols, ms_note, lv="ms")}' if ms_n else "")
              + '<p class="src">Rating is the DOE’s overall rating (out of 4). Tests is the share of students meeting state standards '
                f'in ELA and math, grades 6–8. Most middle school programs fill seats with District {e(k)} students and residents first, '
-               'then consider other districts.</p></section>' + ch_table(ms_c, ms_cols)),
+               'then consider other districts.</p></section>' + ch_table(ms_c, ms_cols, "ms")),
             ("hs", "High", f"{len(hs) + len(hs_c)}",
              go("hs", "high")
-             + (f'<section class="card"><h2>High schools in District {e(k)}</h2>{school_table(hs, names, R, hs_cols, hs_note)}'
+             + (f'<section class="card"><h2>High schools in District {e(k)}</h2>{school_table(hs, names, R, hs_cols, hs_note, lv="hs")}'
                 '<p class="src">Rating is the DOE’s overall rating (out of 4). Grad is the 4-year graduation rate, SAT the average score '
                 f'and Readiness the DOE’s college readiness score (city average {settings.CITY_READINESS}). High schools don’t give priority by district: any NYC '
                 'student can apply, and many programs give priority to students in their borough.</p></section>' if hs else
                 '<section class="card"><p>No high schools are located in this district. High schools admit students from across the city.</p></section>'
-                if not hs_c else "") + ch_table(hs_c, hs_cols, R_hs)),
+                if not hs_c else "") + ch_table(hs_c, hs_cols, "hs", R_hs)),
         ]
         tabs = "".join(f'<button type="button" role="tab" id="tab-{lv}" aria-controls="p-{lv}" aria-selected="{"true" if lv == "es" else "false"}">'
                        f'{w}<small>{n} schools</small></button>' for lv, w, n, _ in panels)
