@@ -191,6 +191,22 @@ def apply_school_fixes(d):
     print(f"school_fixes.json: {len(moved)} moved, {len(points)} points, {len(fixes.get('closed', {}))} closed, {len(entry)} entry")
 
 
+def add_grades(d):
+    """d["G"] = {dbn: "0K,01,..."}: the grades each district school on the map teaches this year, from LCGMS
+    (zips.json "grades"), for every card and school page. The zone files' grade lists (schools[dbn]["g"]) are from the
+    2019-20 location file and only cover zoned schools; the map and pages use them when LCGMS doesn't list a school.
+    Charters keep theirs in CHX."""
+    if not os.path.exists(os.path.join(DATA, "zips.json")):
+        return
+    lcgms = load("zips.json").get("grades", {})
+    levels = [d] + [d[k] for k in ("MS", "HS") if k in d]
+    shown = set()
+    for lv in levels:
+        shown |= set(lv.get("schools", {})) | {r[0] for r in lv.get("NZ", [])} | set(lv.get("R", {}))
+    d["G"] = {dbn: lcgms[dbn] for dbn in sorted(shown) if dbn in lcgms and not dbn.startswith("84")}
+    print(f"grades: {len(d['G'])} schools from LCGMS")
+
+
 def fix_addresses(d):
     """Check school addresses against the DOE's live location list (zips.json from LCGMS) and add the cards' ZIP codes.
     - The Snapshot's address is last school year's. When it differs from LCGMS's and a current source (Find a School,
@@ -860,6 +876,7 @@ def main(standalone_path=None, pages=None):
 
     apply_school_fixes(d)
     fix_addresses(d)
+    add_grades(d)
 
     with open(os.path.join(ROOT, "src", "template.html"), encoding="utf-8") as f:
         template = f.read()

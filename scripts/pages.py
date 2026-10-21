@@ -1056,11 +1056,11 @@ def page_html(d, dbn, streets, site_url, goat, nbi=None):
     # head
     canon = f"{site_url}schools/{dbn}/"
     grades_txt = ""
-    g_src = (d.get("CHX", {}).get(dbn) or [None])[0] if ch else s.get("g")  # a charter's grades: this year's, from LCGMS
+    # this year's grades from LCGMS: a charter's in CHX, a district school's in G (else the zone file's 2019-20 list)
+    g_src = (d.get("CHX", {}).get(dbn) or [None])[0] if ch else (d.get("G") or {}).get(dbn) or s.get("g")
     if g_src:
         g = [x2 for x2 in g_src.split(",") if x2 not in ("3K", "SE")]
-        # the grade list is from the 2019-20 location file; pre-K and 3-K come from this year's admissions report
-        # when we have it (like grades() on the map)
+        # pre-K and 3-K come from this year's admissions report when we have it (like grades() on the map)
         pkr = (d.get("PK") or {}).get(dbn)
         if pkr:
             g = (["3K"] if pkr[2] else []) + (["PK"] if pkr[0] else []) + [x2 for x2 in g if x2 != "PK"]

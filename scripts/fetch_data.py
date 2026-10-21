@@ -584,13 +584,15 @@ def fetch_charters(lcgms_path=None, demographics_path=None):
 def fetch_zips(lcgms_path=None):
     """Each school's current address and ZIP code from the DOE's LCGMS (read_lcgms), the DOE's live list of school
     locations, plus the center of the school's tax lot (NYC Planning PLUTO, by LCGMS's Borough Block Lot).
-    Writes zips.json: {"fetched": date, "zips": {dbn: [LCGMS address, ZIP, lat, lon]}}, lat and lon null when PLUTO
-    has no point for the lot (condo lots, mostly). build.py uses it for the cards' ZIP codes and to choose between
+    Writes zips.json: {"fetched": date, "zips": {dbn: [LCGMS address, ZIP, lat, lon]}, "grades": {dbn: "0K,01,..."}},
+    lat and lon null when PLUTO has no point for the lot (condo lots, mostly); grades are the ones the school teaches
+    this year (LCGMS "Grades", without SE), for the cards and school pages. build.py uses it for the cards' ZIP codes and to choose between
     addresses when the Snapshot and the current directories disagree (fix_addresses); the lot center tells it
     whether the school's map point is the same building. If the DOE site is blocked, save the LCGMS export in a
     browser and pass it: fetch_data.py zips ~/Downloads/LCGMS_SchoolData_*.xls"""
     import datetime
-    rows = [r for r in read_lcgms(lcgms_path)
+    lcgms = read_lcgms(lcgms_path)
+    rows = [r for r in lcgms
             if r.get("ATS System Code") and len(r.get("Zip", "")) == 5 and r["Zip"].isdigit()]
     bbl = lambda r: r.get("Borough Block Lot", "").strip()
     bbls = sorted({bbl(r) for r in rows if bbl(r).isdigit() and int(bbl(r))})
@@ -601,8 +603,10 @@ def fetch_zips(lcgms_path=None):
                 lots[str(int(float(lot["bbl"])))] = (round(float(lot["latitude"]), 6), round(float(lot["longitude"]), 6))
     zips = {r["ATS System Code"]: [r["Primary Address"], r["Zip"], *lots.get(bbl(r), (None, None))] for r in rows}
     print(f"  {len(zips)} schools with a ZIP code, {sum(1 for z in zips.values() if z[2])} with their tax lot's center")
+    grades = {r["ATS System Code"]: ",".join(g for g in r.get("Grades", "").split(",") if g and g != "SE")
+              for r in lcgms if r.get("ATS System Code") and r.get("Grades")}
     save("zips.json", {"source": "DOE LCGMS; NYC Planning PLUTO", "fetched": datetime.date.today().isoformat(),
-                       "zips": dict(sorted(zips.items()))})
+                       "zips": dict(sorted(zips.items())), "grades": dict(sorted((k, v) for k, v in grades.items() if v))})
 
 
 def fetch_neighborhoods():
