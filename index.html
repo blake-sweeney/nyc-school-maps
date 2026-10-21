@@ -302,7 +302,7 @@ aside>*{flex-shrink:0}
 .theme-pick .link-btn[aria-pressed="true"]{color:var(--fg);font-weight:700;text-decoration:none;cursor:default}
 .about details summary{cursor:pointer;color:var(--fg);font-family:var(--display);font-weight:600}
 .about details p{margin:6px 0 0}
-:root{--r-red:#f06060;--r-orange:#ffa65a;--r-yellow:#ffe26e;--r-green:#46c4aa}@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--r-red:#b8202a;--r-orange:#e8742a;--r-yellow:#f7cf45;--r-green:#1f8a84}}:root[data-theme="dark"]{--r-red:#b8202a;--r-orange:#e8742a;--r-yellow:#f7cf45;--r-green:#1f8a84}
+:root{--r-red:#e44449;--r-orange:#f98c10;--r-yellow:#ffe26e;--r-green:#35b69c}@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--r-red:#b8202a;--r-orange:#e8742a;--r-yellow:#f7cf45;--r-green:#1f8a84}}:root[data-theme="dark"]{--r-red:#b8202a;--r-orange:#e8742a;--r-yellow:#f7cf45;--r-green:#1f8a84}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) [style*="--cd:"]{background:var(--cd)!important}}
 :root[data-theme="dark"] [style*="--cd:"]{background:var(--cd)!important}
 .sw i.stripes{background:repeating-linear-gradient(45deg,var(--r-green) 0 3px,var(--r-orange) 3px 6px)}
@@ -897,7 +897,7 @@ function tipHtml(f){const p=f.properties;const dt=distTag(p);
 function psNum(f){const p=f.properties;return p.dbns.length?p.label||p.dbns[0].slice(3):''}
 // proficiency for a zone: pooled across its schools that have results
 function pct(dbns,m){let n=0,p=0;dbns.forEach(d=>{const v=T[d];if(!v)return;if(m!=='math'){n+=v[0];p+=v[1]}if(m!=='ela'){n+=v[2];p+=v[3]}});return n?100*p/n:null}
-const STOPS=[[5,"red"],[50,"orange"],[75,"yellow"],[95,"green"]],RAMP={"light":{"red":[240,96,96],"orange":[255,166,90],"yellow":[255,226,110],"green":[70,196,170]},"dark":{"red":[184,32,42],"orange":[232,116,42],"yellow":[247,207,69],"green":[31,138,132]}};  // scripts/settings.py: stops name a color, RAMP gives each theme's
+const STOPS=[[5,"red"],[50,"orange"],[75,"yellow"],[95,"green"]],RAMP={"light":{"red":[228,68,73],"orange":[249,140,16],"yellow":[255,226,110],"green":[53,182,156]},"dark":{"red":[184,32,42],"orange":[232,116,42],"yellow":[247,207,69],"green":[31,138,132]}};  // scripts/settings.py: stops name a color, RAMP gives each theme's
 // rampTheme: draw in one theme's colors for now (bgBoth); otherwise the current theme's
 let rampTheme=null;
 function rampColor(v,S){const P=RAMP[rampTheme||(isDark()?'dark':'light')];if(v<=S[0][0])return rgb(P[S[0][1]]);for(let i=1;i<S.length;i++){const[a,na]=S[i-1],[b,nb]=S[i];if(v<=b){const t=(v-a)/(b-a),ca=P[na],cb=P[nb];return rgb(ca.map((c,k)=>c+(cb[k]-c)*t))}}return rgb(P[S[S.length-1][1]])}

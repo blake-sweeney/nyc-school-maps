@@ -10,7 +10,7 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 
 ### Changed
 - In light mode, school names and ratings on the map have a solid white outline, so they're easy to read on any zone color. Zone outlines and school district lines are soft grays instead of purple and black, so the map is calmer to look at. The zone and school you pick are outlined in bright yellow. Dark mode is unchanged.
-- In light mode, ratings, test scores and high school results use brighter, lighter colors on the map, the school cards and the school and district pages, so labels on the map stand out against the zone colors. Dark mode keeps its deeper colors, and everything switches when you change the theme.
+- In light mode, ratings, test scores and high school results use brighter, lighter colors on the map, the school cards and the school and district pages, so labels on the map stand out against the zone colors. The red and orange are a little deeper, so Fair and Good stay easy to tell apart for people with red-green color blindness. Dark mode keeps its deeper colors, and everything switches when you change the theme.
 - In light mode, the stripes on areas with no zoned school are fainter, so street names are easier to read.
 - "Pre-K & 3-K" colors zones pink (pre-K only) and plum (pre-K and 3-K), and middle school "Screened programs" uses tan and brown, instead of two blues that looked like each other and like the water. "G&T programs" colors zones with a G&T program violet instead of blue.
 

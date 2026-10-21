@@ -27,8 +27,9 @@ CITY_READINESS = 54   # college readiness score, of 100
 
 # [value, color name] stops, low (red) to high (green). The map's Color by modes, legends and card bars use them,
 # and so do the tables and bars on the generated pages. Each theme has its own colors for the names:
-# light is bright and light, so dark map labels read well on top of the zone fills.
-RAMP_COLORS = {"light": {"red": [240, 96, 96], "orange": [255, 166, 90], "yellow": [255, 226, 110], "green": [70, 196, 170]},
+# light is bright and light, so dark map labels read well on top of the zone fills, and steps down in lightness
+# red < teal < orange < yellow so neighboring levels stay apart for red-green color blindness (checked by simulation).
+RAMP_COLORS = {"light": {"red": [228, 68, 73], "orange": [249, 140, 16], "yellow": [255, 226, 110], "green": [53, 182, 156]},
                "dark": {"red": [184, 32, 42], "orange": [232, 116, 42], "yellow": [247, 207, 69], "green": [31, 138, 132]}}
 # DOE ratings: 1 -> 5, 2 -> 50, 3 -> 75, 4 -> 95 on this scale
 RATE_STOPS = [[5, "red"], [50, "orange"], [75, "yellow"], [95, "green"]]
