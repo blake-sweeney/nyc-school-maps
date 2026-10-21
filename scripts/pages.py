@@ -301,7 +301,7 @@ def fold_card(html, summary="", start_open=False):
     title = re.sub(r"<[^>]+>", "", m.group(1))
     key = next((k for start, k in FOLD_KEYS if title.startswith(start)), re.sub(r"\W+", "-", title.lower()).strip("-"))
     sm = f"<small>{summary}</small>" if summary else ""
-    return (f'<details class="card fold" data-k="{e(key)}"{" open" if start_open else ""}><summary><span class="fh"><h2>{m.group(1)}</h2>{sm}</span>'
+    return (f'<details class="card fold" data-k="{e(key)}"{" open" if start_open else ""}><summary><h2>{m.group(1)}</h2>{sm}'
             f'<span class="chev" aria-hidden="true"></span></summary><div class="fb">{html[m.end():]}</div></details>')
 
 
@@ -817,13 +817,13 @@ h3.adm-p{font-size:.95rem;margin:16px 0 2px}h3.adm-p small{font-weight:400;color
 details.about{margin:12px 0 4px;font-size:.9rem}details.about>summary{cursor:pointer;color:var(--muted)}details.about[open]>summary{margin-bottom:6px}
 /* fold_card: a card that folds to its heading and a summary line; FOLD_JS's "Expand all" opens every one */
 details.card.fold{padding:0}
-details.card.fold>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:16px 18px}
+details.card.fold>summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:1fr auto;column-gap:12px;align-items:center;padding:16px 18px}
 details.card.fold>summary::-webkit-details-marker{display:none}
 details.card.fold>summary:focus-visible{outline:2px solid var(--hl);outline-offset:-2px;border-radius:10px}
-details.card.fold .fh{flex:1;min-width:0}details.card.fold .fh h2{margin:0}
-details.card.fold .fh small{display:block;color:var(--muted);font-size:.88rem;margin-top:3px}
-details.card.fold[open] .fh small{display:none}
-details.card.fold .chev{flex:none;width:9px;height:9px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);margin:-5px 4px 0 0}
+details.card.fold>summary h2{margin:0;min-width:0}
+details.card.fold>summary small{grid-column:1;color:var(--muted);font-size:.88rem;margin-top:3px}
+details.card.fold[open]>summary small{display:none}
+details.card.fold .chev{grid-column:2;grid-row:1/span 2;width:9px;height:9px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);margin:-5px 4px 0 0}
 details.card.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
 details.card.fold>.fb{padding:0 18px 18px}
 .expand-all{all:unset;cursor:pointer;align-self:flex-end;color:var(--hl);font-size:.88rem;text-decoration:underline;margin:-10px 2px -12px}
@@ -1229,8 +1229,8 @@ def page_html(d, dbn, streets, site_url, goat, nbi=None):
 {body_cards}
 {near_html}
 {apply_html}
-</main>
-<footer>{DISCLAIMER}NYC School Zones is free and independent. Data: NYC Department of Education (zones, School Quality Snapshot, MySchools, Local Law 72 reports), NYC School Construction Authority. Questions or corrections: <a href="mailto:info@nycschoolzones.com">info@nycschoolzones.com</a>{THEME_FOOT}</footer>{goat}{TABS_JS if len(parts) > 1 else ""}{FOLD_JS}
+</main>{FOLD_JS}
+<footer>{DISCLAIMER}NYC School Zones is free and independent. Data: NYC Department of Education (zones, School Quality Snapshot, MySchools, Local Law 72 reports), NYC School Construction Authority. Questions or corrections: <a href="mailto:info@nycschoolzones.com">info@nycschoolzones.com</a>{THEME_FOOT}</footer>{goat}{TABS_JS if len(parts) > 1 else ""}
 </body>
 </html>
 """
