@@ -1068,7 +1068,7 @@ map.on('zoomend',()=>{if(LAY.dist&&distLines.length){buildDistricts();drawDistNu
 map.createPane('nzPane').style.zIndex=462;
 const nzGroup=L.layerGroup().addTo(map);let nzSel=null;
 const nzKey=o=>o.ch?'ch':o.gt?'gt':o.hs?'hsnz':'nz';
-function nzShown(o){return LAY[nzKey(o)]}
+function nzShown(o){return o.lat!=null&&LAY[nzKey(o)]}  // a virtual school has no point, so no marker
 function nzWanted(){return NZ.length>0&&(LAY[level==='hs'?'hsnz':'nz']||LAY.gt||LAY.ch)}
 function nzOn(){return nzWanted()&&markersByZoom()}
 function nzFill(d){return fillFor({properties:{dbns:[d],c:0}})}
@@ -1081,7 +1081,7 @@ function gtStar(c,sel){return '<svg class="gtm" viewBox="-16 -16 132 132" aria-h
 // a marker label: up to ~24 characters of the name (charters 32, so the campus shows), "High School" shortened to "HS"
 function shortName(n,max=24){n=n.replace(/^The\s+/i,'').replace(/,\s*The$/i,'').replace(/\s*\bCharter (High )?Schools?\b(\s+(of|for)\b)?/i,(m,h)=>h?' HS':'').replace(/\s+[–-]\s+/g,' ').replace(/\bHigh School\b/gi,'HS');
   n=n.replace(/\s+Campus$/i,'');const w=n.split(/\s+/);let t=w[0];for(let i=1;i<w.length&&(t+' '+w[i]).length<=max;i++)t+=' '+w[i];return t.replace(/\s+(of|for|and|the|at|in|&)$/i,'').replace(/[,.;:-]+$/,'')}
-function nzSpot(o){return o.lat.toFixed(4)+','+o.lon.toFixed(4)}
+function nzSpot(o){return o.lat==null?o.d:o.lat.toFixed(4)+','+o.lon.toFixed(4)}
 function nzAt(k){return NZ.filter(o=>nzShown(o)&&nzSpot(o)===k)}
 // small when zoomed out (the whole city), full size once you're looking at a neighborhood
 // zoomed all the way out, markers and zone lines shrink: half size at zoom 9, three quarters at 10, full from 11
@@ -1118,9 +1118,9 @@ function selectNZ(d,fromClick,back){const o=nzGet(d);if(!o)return;markEngaged();
   card.className='card';card.innerHTML=h;setZoneHash(d);if(backTo)document.getElementById('back-link').onclick=()=>history.back();
   document.getElementById('copy-link').onclick=e=>copyLink(e.currentTarget,pageLink(d));
   document.getElementById('to-map').onclick=()=>{if(phone.matches)setSheet(false);else document.getElementById('map').scrollIntoView({behavior:'smooth',block:'start'})};
-  const ll=L.latLng(o.lat,o.lon);
-  if(phone.matches){const ae=document.activeElement;if(ae&&ae.tagName==='INPUT')ae.blur();setPop('search',false);sheetLabel(o.n,o.ch?'Charter school · District '+o.pd[0]:o.hs?(o.gt?'Specialized high school':'High school')+' · '+(BORO[d[2]]||''):(o.ms&&o.gt?'Citywide middle school':o.ms?'Middle school, no zone':o.gt?'Citywide G&T':'Non-zoned')+' · District '+(+d.slice(0,2)));setSheet(true);aside.scrollTo({top:0});if(!fromClick)showLatLng(ll,15)}
-  else if(!fromClick)map.setView(ll,Math.max(map.getZoom(),15))}
+  const ll=o.lat==null?null:L.latLng(o.lat,o.lon);
+  if(phone.matches){const ae=document.activeElement;if(ae&&ae.tagName==='INPUT')ae.blur();setPop('search',false);sheetLabel(o.n,o.ch?'Charter school · District '+o.pd[0]:o.hs?(o.gt?'Specialized high school':'High school')+' · '+(BORO[d[2]]||''):(o.ms&&o.gt?'Citywide middle school':o.ms?'Middle school, no zone':o.gt?'Citywide G&T':'Non-zoned')+' · District '+(+d.slice(0,2)));setSheet(true);aside.scrollTo({top:0});if(!fromClick&&ll)showLatLng(ll,15)}
+  else if(!fromClick&&ll)map.setView(ll,Math.max(map.getZoom(),15))}
 // the zone card's "other options" list opens a non-zoned school
 document.getElementById('card').addEventListener('click',e=>{const b=e.target.closest('button[data-nz]');if(!b)return;
   const l=selected,p=l&&l.feature.properties,ds=p&&p.dbns||[];

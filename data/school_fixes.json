@@ -1,0 +1,28 @@
+{
+  "note": "Hand-checked fixes for district schools; see README 'Refresh the data' step 8. moved: schools in a new building that MySchools and the Snapshot don't show yet; the build uses this address and point and drops facts about the old building (building use, accessibility, shared building). points: a better map point for a school whose address is right, or null lat/lon for no marker (a virtual school). closed: schools the DOE has closed that its zone file still lists; the build takes them out of their zones and off the map. The build says when an entry is no longer needed.",
+  "moved": {
+    "15K428": {
+      "a": "4012 Fort Hamilton Parkway",
+      "lat": 40.642507,
+      "lon": -73.992128,
+      "source": "DOE letter to Global Innovators Academy families: from the 2026-27 school year the school serves all students in building K004, 4012 Fort Hamilton Parkway (also in LCGMS). Point from NYC Planning GeoSearch."
+    }
+  },
+  "points": {
+    "02M217": {
+      "lat": 40.763994,
+      "lon": -73.948245,
+      "source": "P.S./I.S. 217's physical address is 645 Main Street, Roosevelt Island (school's listing); point from NYC Planning GeoSearch (BIN 1084848). Find a School's point is about 1.2 km south."
+    },
+    "08X636": {
+      "lat": null,
+      "lon": null,
+      "source": "Virtual Innovators Academy is a virtual school: no building to show on the map. MySchools' point was 9.7 km from its listed address."
+    }
+  },
+  "closed": {
+    "10X382": "Elementary School for Math, Science, and Technology: closed; merged with P.S. 386 (10X386), which keeps their shared zone.",
+    "11X287": "North Bronx School of Empowerment: closed; merged into Leaders of Tomorrow (11X370), which keeps their shared middle school zone.",
+    "19K364": "I.S. 364 Gateway: closed or merged. Its middle school zone goes with it."
+  }
+}

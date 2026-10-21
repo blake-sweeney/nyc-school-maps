@@ -78,6 +78,7 @@ data/
   local_streets.json    every other street, compactly encoded
   parks.json            park outlines for the green tint, compactly encoded
   neighborhoods.json    residential neighborhood boundaries (NYC Planning NTAs)
+  school_fixes.json     hand-checked: district schools that moved, better map points, closed schools
   zips.json             each school's current address, ZIP code and tax lot center (DOE LCGMS, NYC Planning PLUTO)
 scripts/
   build.py              data/ + src/template.html  →  index.html
@@ -210,6 +211,7 @@ Download the Classic Edition PDF from the [SCA](https://www.nycsca.org/Community
 - `data/citywide_ms.json`: citywide middle schools (open to students from anywhere in NYC). Compare against [InsideSchools](https://insideschools.org/insidetools/citywide-middle-schools) and update the list of DBNs and the `source` note.
 - `data/shsat_cutoffs.json`: lowest SHSAT score offered a seat at each of the 8 test schools, for the newest year and the one before. Published after offers come out in late winter; update `year`, `cut` and `source`.
 - Citywide G&T kindergarten schools come from MySchools in step 2; check the five still make sense.
+- `data/school_fixes.json`: hand-checked corrections for district schools, each with its source. `moved`: a school in a building MySchools doesn't list yet (new address and point); the build leaves out the old building's facts. `points`: a better map point for a school whose address is right, or `null` for a virtual school (no marker). `closed`: schools the DOE has closed that Find a School still lists; the build takes them out of their zones. When you add a school to `closed`, delete its `schools/<DBN>/` folder too: the build doesn't remove old pages. The build prints when MySchools or Find a School catches up; then remove the entry.
 - `data/charter_fixes.json`: charter points for addresses that don't geocode (see step 6), and charter dual-language programs (`dual_language`), which the DOE doesn't list: check each against the school's site or its NYSED annual report and note the source. Remove schools that have closed.
 
 ### 9. Rarely
