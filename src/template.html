@@ -1359,6 +1359,8 @@ function distAt(ll){const x=ll.lng,y=ll.lat;for(const [k,v] of Object.entries(DI
   // in a gap between the simplified district outlines (a park, a pier): the district with the nearest edge point
   let best=null,bd=Infinity,kx=Math.cos(y*Math.PI/180);for(const [k,v] of Object.entries(DIST))for(const r of v.r)for(const [xi,yi] of r){const dd=((xi-x)*kx)**2+(yi-y)**2;if(dd<bd){bd=dd;best=k}}
   return bd<4e-5?best:null}
+// the district page, opened on the tab for the level being browsed (#es, #ms, #hs; pages.py TABS_JS)
+function distPage(n){return '<a class="dist-page" href="districts/'+n+'/'+(LOCAL?'index.html':'')+'#'+level+'">All District '+n+' schools →</a>'}
 function select(l,fromClick,ll){
   clearNZSel();backTo=null;
   markEngaged();
@@ -1371,12 +1373,12 @@ function select(l,fromClick,ll){
   let h='<div class="zt">'+(p.dist&&+p.dist?'District '+esc(p.dist)+' · ':'')+esc(BORO[p.boro]||'')+'</div>';
   if(p.dbns.length>1)h+='<div class="kind">'+kindText(p)+'</div>';
   if(!p.dbns.length){h+='<div class="school"><span class="nm">'+LEVEL_TXT[level].noZone+'</span></div>';if(level==='ms'&&/District/.test(p.remarks||''))h+='<div class="note">Students here apply to middle schools through <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a>.</div>';if(level==='hs')h+='<div class="note">Students here apply to high schools citywide through <a href="https://www.myschools.nyc/" target="_blank" rel="noopener">MySchools</a>.</div>';
-    if(p.dist&&+p.dist){h+='<a class="dist-page" href="districts/'+(+p.dist)+'/'+(LOCAL?'index.html':'')+'">All District '+(+p.dist)+' schools →</a>';h+=nzOptions(+p.dist,[],true)+chOptions(+p.dist)}}
+    if(p.dist&&+p.dist){h+=distPage(+p.dist);h+=nzOptions(+p.dist,[],true)+chOptions(+p.dist)}}
   else{h+=p.dbns.map(schoolBlock).join('');
     h+='<a class="confirm" href="https://schoolsearch.schools.nyc/" target="_blank" rel="noopener">Confirm your exact address on schoolsearch.schools.nyc ↗</a>';
     h+='<div class="card-actions"><button type="button" class="btn-sm" id="copy-link">Copy link to '+(p.dbns.length>1?'these schools':'this school')+'</button><button type="button" class="btn-sm to-map" id="to-map">↑ Back to map</button></div>';
     const opts=level==='es'||level==='ms'?nzOptions(+p.dist,p.dbns):'';h+=(opts||'<hr class="sep">')+chOptions(+p.dist);
-    if(p.dist&&+p.dist)h+='<a class="dist-page" href="districts/'+(+p.dist)+'/'+(LOCAL?'index.html':'')+'">All District '+(+p.dist)+' schools →</a>'}
+    if(p.dist&&+p.dist)h+=distPage(+p.dist)}
   if(p.remarks&&!/^Citywide High School Choice$/i.test(p.remarks))h+='<div class="note">'+esc(p.remarks)+'</div>';
 
   card.className='card';card.innerHTML=h;
