@@ -6,7 +6,7 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
-## Unreleased
+## 1.47.0 (2026-10-21)
 
 ### Fixed
 - Every school card and school page shows the grades the school teaches, including schools without a zone like the Anderson School, Special Music School and the Center School. Grades come from the DOE's current list of schools, so schools that have grown or shrunk since 2019 show this year's grades.
