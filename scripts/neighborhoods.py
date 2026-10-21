@@ -347,14 +347,14 @@ def write(d, nbi, root, site_url, goat):
                       f'{"school" if not shared[lv] else "school, or for the schools that share its zone"}. Always confirm your '
                       'exact address on <a href="https://schoolsearch.schools.nyc/" target="_blank" rel="noopener">'
                       'schoolsearch.schools.nyc</a>.</p>'
-                      + school_table(list(zoned), names, R, cols[lv], zone_note, note_line=True, num=num))
+                      + school_table(list(zoned), names, R, cols[lv], zone_note, note_line=True, num=num, lv=lv))
             if others:
                 h += (f'<h2>{"High schools" if lv == "hs" else word.capitalize() + " schools without a zone"} in {e(name)}</h2>'
-                      + school_table(others, names, R, cols[lv], other_note))
+                      + school_table(others, names, R, cols[lv], other_note, lv=lv))
             if charters:
                 cd = sorted({str(charter_district(d, x)) for x in charters}, key=int)
                 h += (f'<h2>Charter schools in {e(name)}</h2>'
-                      + school_table(charters, names, R_hs if lv == "hs" else R, cols[lv])
+                      + school_table(charters, names, R_hs if lv == "hs" else R, cols[lv], lv=lv)
                       + '<p class="src">Charter schools admit by lottery, with priority to siblings and then to families '
                         f'in the school’s district ({and_list([f"District {k}" for k in cd])}). They can’t screen: no tests, '
                         'grades, interviews or auditions. Families apply through the <a href="' + CH_APPLY + '" target="_blank" '
