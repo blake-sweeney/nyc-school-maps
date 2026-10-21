@@ -10,6 +10,7 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 
 ### Changed
 - "All District 3 schools" on a map card opens the district page on the tab for the schools you're browsing: high schools when you're looking at high schools, middle schools for middle schools, elementary for elementary.
+- On school pages with a tab for each level, like P.S. 126 (elementary and middle), "Open on the map" and the links beside it (MySchools, school website, InsideSchools, directions) are inside each tab. "Open on the map" opens the map on the level you're reading, and the MySchools link goes to that level's MySchools page. Before, they always opened the first level, so a middle school tab opened the elementary map.
 
 ## 1.49.0 (2026-10-21)
 
