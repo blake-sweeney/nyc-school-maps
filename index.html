@@ -42,7 +42,7 @@ body{margin:0}
 :root{
   --bg:#f3f4f1; --panel:#ffffff; --fg:#1d2321; --muted:#5d6763; --line:#d9ddd8;
   --water:#cfdde3; --land:#eceee9; --nodata:#a3a8a5; --off:#e2e5e1; --accent:#f2b705; --accent-ink:#1d2321;
-  --hl:#0b4f8a; --dot:#1d2321; --road:#2c3331; --road-case:#ffffff; --zone-line:#a0a0b0; --dist-line:#8d8d9d; --sel:#ffff00; --nz-stripe:25%; --zl-halo:1px 0 0 #fff,-1px 0 0 #fff,0 1px 0 #fff,0 -1px 0 #fff,1px 1px 0 #fff,-1px -1px 0 #fff,1px -1px 0 #fff,-1px 1px 0 #fff,0 0 4px #fff,0 0 6px #fff; --warn-bg:#fff4d1; --warn-fg:#6b4d00;
+  --hl:#0b4f8a; --dot:#1d2321; --road:#2c3331; --road-case:#ffffff; --zone-line:#a0a0b0; --dist-line:#8d8d9d; --sel:#ffff00; --nz-stripe:25%; --sw-edge:rgba(0,0,0,.4); --zl-halo:1px 0 0 #fff,-1px 0 0 #fff,0 1px 0 #fff,0 -1px 0 #fff,1px 1px 0 #fff,-1px -1px 0 #fff,1px -1px 0 #fff,-1px 1px 0 #fff,0 0 4px #fff,0 0 6px #fff; --warn-bg:#fff4d1; --warn-fg:#6b4d00;
   --z0:#b9d3a8; --z1:#f0c9a0; --z2:#b7c8e6; --z3:#e8b9c4; --z4:#d8d29a; --z5:#c3b5dd;
   --display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
   --body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
@@ -50,12 +50,12 @@ body{margin:0}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#141917; --panel:#1c2220; --fg:#e7ebe8; --muted:#9aa5a0; --line:#2f3835;
   --water:#0f1a20; --land:#1a201e; --nodata:#5d6461; --off:#262d2a; --accent:#f2b705; --accent-ink:#141917;
-  --hl:#7fb8ec; --dot:#e7ebe8; --road:#e3e8e5; --road-case:#0d1110; --zone-line:#d4bdff; --dist-line:#e7ebe8; --sel:#7fb8ec; --nz-stripe:45%; --zl-halo:0 0 3px var(--land),0 0 3px var(--land),0 0 2px var(--land); --warn-bg:#3a3014; --warn-fg:#f3d98a;
+  --hl:#7fb8ec; --dot:#e7ebe8; --road:#e3e8e5; --road-case:#0d1110; --zone-line:#d4bdff; --dist-line:#e7ebe8; --sel:#7fb8ec; --nz-stripe:45%; --sw-edge:#2f3835; --zl-halo:0 0 3px var(--land),0 0 3px var(--land),0 0 2px var(--land); --warn-bg:#3a3014; --warn-fg:#f3d98a;
   --z0:#3d5536; --z1:#5c4430; --z2:#33456a; --z3:#5e3a45; --z4:#545026; --z5:#45395e; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#141917; --panel:#1c2220; --fg:#e7ebe8; --muted:#9aa5a0; --line:#2f3835;
   --water:#0f1a20; --land:#1a201e; --nodata:#5d6461; --off:#262d2a; --accent:#f2b705; --accent-ink:#141917;
-  --hl:#7fb8ec; --dot:#e7ebe8; --road:#e3e8e5; --road-case:#0d1110; --zone-line:#d4bdff; --dist-line:#e7ebe8; --sel:#7fb8ec; --nz-stripe:45%; --zl-halo:0 0 3px var(--land),0 0 3px var(--land),0 0 2px var(--land); --warn-bg:#3a3014; --warn-fg:#f3d98a;
+  --hl:#7fb8ec; --dot:#e7ebe8; --road:#e3e8e5; --road-case:#0d1110; --zone-line:#d4bdff; --dist-line:#e7ebe8; --sel:#7fb8ec; --nz-stripe:45%; --sw-edge:#2f3835; --zl-halo:0 0 3px var(--land),0 0 3px var(--land),0 0 2px var(--land); --warn-bg:#3a3014; --warn-fg:#f3d98a;
   --z0:#3d5536; --z1:#5c4430; --z2:#33456a; --z3:#5e3a45; --z4:#545026; --z5:#45395e; color-scheme:dark}
 html,body{height:100%}
 body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.45}
@@ -152,7 +152,7 @@ aside>*{flex-shrink:0}
 .sw i{width:12px;height:12px;border-radius:2px;flex:none;border:1px solid var(--line)}
 .rates{display:grid;grid-template-columns:1fr auto;gap:3px 8px;font-size:.85rem;margin-top:4px}
 .chip{display:inline-flex;align-items:center;gap:5px;font-family:var(--display);font-weight:600;font-size:.8rem;white-space:nowrap}
-.chip i{width:10px;height:10px;border-radius:2px;border:1px solid var(--line)}
+.chip i{width:10px;height:10px;border-radius:2px;border:1px solid var(--sw-edge)}
 .rates .tot{font-weight:700}
 .school hr.sep,.card>hr.sep{border:0;border-top:1px solid var(--line);margin:8px 0 6px;width:100%}
 .card>hr.sep{margin:0}
@@ -661,7 +661,7 @@ const hasGT=d=>!!(X[d]&&X[d][8]&&X[d][8].includes('G&T'));
 const dualLang=d=>X[d]&&X[d][4]||null;
 // dual language by language: the common ones get their own color, the rest share "Other"; a school (or shared zone)
 // with two or more languages gets its own color too
-const DL_LANGS=[['Spanish','#2f6db5'],['Chinese','#d1495b'],['French','#7b5ea7'],['Russian','#e09f3e'],['Italian','#3a9d6e'],['Polish','#8c6d46']],
+const DL_LANGS=[['Spanish','#127a72'],['Chinese','#d1495b'],['French','#7b5ea7'],['Russian','#e09f3e'],['Italian','#3a9d6e'],['Polish','#8c6d46']],
   DL_OTHER='#c06fb0',DL_MULTI='#35b9d6';
 function dlKey(l){return DL_LANGS.some(x=>x[0]===l)?l:'Other'}
 // '' = no dual language, a language name, 'multi'; null = no Snapshot data

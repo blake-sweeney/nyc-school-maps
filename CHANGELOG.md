@@ -6,6 +6,14 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
+## Unreleased
+
+### Changed
+- "Dual language" colors Spanish programs dark teal instead of blue, so they don't look like the water.
+
+### Fixed
+- In light mode, the color squares next to ratings and test scores on school cards have a darker edge, so pale colors like Good (yellow) don't blend into the card.
+
 ## 1.45.0 (2026-10-21)
 
 ### Changed
