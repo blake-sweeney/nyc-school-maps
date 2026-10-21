@@ -6,7 +6,7 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
-## Unreleased
+## 1.48.0 (2026-10-21)
 
 ### Changed
 - School pages for schools that teach more than one level, like the Anderson School (K–8) or Special Music School (K–12), have a tab for each level: Elementary, Middle, High. Each tab has that level's admissions, test scores, class sizes and the other schools at that level in the district. Opening a school's page from the map, or from a list of middle schools on another school's page or a district or neighborhood page, shows the tab for that level.
