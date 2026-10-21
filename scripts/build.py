@@ -143,7 +143,9 @@ def apply_school_fixes(d):
       everywhere the school appears, and no facts about the old building (building use U, accessibility AC,
       shared building CO, including other schools' CO lists).
     - "points": a better point for a school whose address is right, or none (null) for a virtual school, which then
-      has a card and a page but no marker."""
+      has a card and a page but no marker.
+    - "entry": middle schools that take new students in a grade other than 6 (MS.EG, dbn -> grade); the card and the
+      school page name that grade instead of showing grade 6 seats."""
     fixes = school_fixes()
     moved, points = fixes.get("moved", {}), fixes.get("points", {})
     levels = [d] + [d[k] for k in ("MS", "HS") if k in d]
@@ -180,7 +182,13 @@ def apply_school_fixes(d):
             in_zones |= {x for f in load(name)["features"] for x in f["properties"]["dbns"]} | set(load(name)["schools"])
     for dbn in sorted(set(fixes.get("closed", {})) - in_zones):
         print(f"school_fixes.json: Find a School no longer lists {dbn}; its closed entry can go")
-    print(f"school_fixes.json: {len(moved)} moved, {len(points)} points, {len(fixes.get('closed', {}))} closed")
+    entry = fixes.get("entry", {})
+    if entry and "MS" in d:
+        d["MS"]["EG"] = {dbn: x["grade"] for dbn, x in entry.items()}
+        for dbn in entry:
+            if any(p[2] or p[3] for p in d["MS"].get("P", {}).get(dbn, [])):
+                print(f"school_fixes.json: MySchools now lists grade 6 seats for {dbn}; check its entry grade")
+    print(f"school_fixes.json: {len(moved)} moved, {len(points)} points, {len(fixes.get('closed', {}))} closed, {len(entry)} entry")
 
 
 def fix_addresses(d):

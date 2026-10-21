@@ -519,19 +519,32 @@ def ms_progs(progs):
     return [p for p in progs or [] if p[1] not in SPECIAL and p[1] != "T" and (p[3] is not None or (len(p) > 6 and p[6]))]
 
 
-def ms_adm_html(dbn, lv, progs, ka, dist):
+def ms_adm_html(dbn, lv, progs, ka, dist, eg=None):
     """Grade 6 or 9 admissions from MySchools: a table per program, special ed seats, District 75 and ASD/ACES
-    programs, and the Local Law 72 numbers in "About this data". "" when MySchools has nothing for the school."""
+    programs, and the Local Law 72 numbers in "About this data". "" when MySchools has nothing for the school.
+    eg: the grade a middle school takes new students in, when it isn't 6 (school_fixes.json "entry")."""
     R = ms_progs(progs)
     if not R:
         return ""
     N = HNAME if lv == "hs" else MNAME
     solo = len(R) == 1
-    G = {"ms": "Grade 6", "hs": "Grade 9"}[lv]
-    h = (f"<h2>{G} admissions, {settings.MYSCHOOLS_LABEL}</h2>"
-         f"<p>{sum(p[2] or 0 for p in R):,} seats · {sum(p[3] or 0 for p in R):,} applied"
-         + (f", across {len(R)} programs" if not solo else "") + "</p>")
+    G = f"Grade {eg}" if eg else {"ms": "Grade 6", "hs": "Grade 9"}[lv]
+    h = f"<h2>{G} admissions, {settings.MYSCHOOLS_LABEL}</h2>"
     tr = true_apps(ka)  # the school's, not a program's: under the table only when there's one program
+    # MySchools sometimes lists the priority groups with no seats or applicants: name the entry grade, or take the
+    # Local Law 72 numbers, or say there are none
+    if all(p[2] is None and p[3] is None for p in R):
+        y = max(ka) if ka else None
+        if eg:
+            h += (f"<p>This school takes new students in grade {eg}, not grade 6, so families apply when their child is in "
+                  f"grade {eg - 1}. MySchools lists the priority groups below but no seat counts.</p>")
+        elif y and ka[y] and ka[y][0] is not None:
+            h += f"<p>{ka[y][0]:,} seats · {ka[y][1] or 0:,} applied (fall {e(y)} DOE report)</p>"
+        else:
+            h += "<p>MySchools lists this school’s priority groups but no seat counts.</p>"
+    else:
+        h += (f"<p>{sum(p[2] or 0 for p in R):,} seats · {sum(p[3] or 0 for p in R):,} applied"
+              + (f", across {len(R)} programs" if not solo else "") + "</p>")
     tr_line = f'<p class="src">True applicants: {tr[1]:,} (fall {e(tr[0])} DOE report)</p>' if tr else ""
     for p in R:
         how = " · ".join(x for x in (N.get(p[1], p[1]), f"{p[2]} seats" + (", all filled" if p[4] else "") if p[2] is not None else "",
@@ -698,7 +711,7 @@ def k_adm_html(ka, lv="es", dist=None, bare=False, zoned=False):
 # Colors and fonts: the map's (src/template.html :root, copied by set_from_template) plus these, for the zone maps and bars
 PAGE_VARS = {"light": "--zone:#f2b705;--zone-o:#e8e2c4;--dist:#eceee9;--bar:#1f8a84",
              "dark": "--zone:#c99a0a;--zone-o:#3a3a2a;--dist:#232a27;--bar:#2fa39b"}
-SHARED_VARS = ("bg", "panel", "fg", "muted", "line", "hl", "accent", "accent-ink", "warn-bg", "warn-fg", "display", "body")
+SHARED_VARS = ("bg", "panel", "fg", "muted", "line", "hl", "accent", "accent-ink", "warn-bg", "warn-fg", "sw-edge", "display", "body")
 CSS = """
 *,*::before,*::after{box-sizing:border-box}
 [hidden]{display:none!important}
@@ -737,7 +750,7 @@ h2{font-family:var(--display);font-weight:700;font-size:1.15rem;margin:0 0 8px}
 .zmap .sd{fill:var(--fg);stroke:var(--panel);stroke-width:3}.zmap .sr{fill:none;stroke:var(--hl);stroke-width:3}
 .note{background:var(--warn-bg);color:var(--warn-fg);padding:10px 12px;border-radius:8px;font-size:.92rem;margin:12px 0 0}
 .facts{display:grid;grid-template-columns:1fr auto;gap:6px 16px;margin:0;font-size:.95rem}
-.facts dd i.sw{display:inline-block;width:10px;height:10px;border-radius:2px;border:1px solid var(--line);margin-right:6px}
+.facts dd i.sw{display:inline-block;width:10px;height:10px;border-radius:2px;border:1px solid var(--sw-edge);margin-right:6px}
 .facts dt{color:var(--fg)}.facts dd{margin:0;font-family:var(--display);font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
 .facts dd.mates{grid-column:1/-1;margin-top:-4px;text-align:left;font-family:inherit;font-weight:400;font-size:.85rem;color:var(--muted)}
 .bars{display:flex;flex-direction:column;gap:6px}
@@ -747,11 +760,11 @@ h2{font-family:var(--display);font-weight:700;font-size:1.15rem;margin:0 0 8px}
 .card h2:not(:first-child){margin-top:20px}\n.src,.muted{color:var(--muted);font-size:.82rem;margin:8px 0 0}
 .dbar{display:flex;height:14px;border-radius:5px;overflow:hidden;background:var(--line)}.dbar i{display:block;height:100%}
 .dest{list-style:none;margin:10px 0 0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;font-size:.9rem}
-.dest li{display:flex;align-items:center;gap:8px}.dest li i{width:10px;height:10px;border-radius:2px;flex:none}.dest b{margin-left:auto;font-family:var(--display)}
+.dest li{display:flex;align-items:center;gap:8px}.dest li i{width:10px;height:10px;box-sizing:border-box;border:1px solid var(--sw-edge);border-radius:2px;flex:none}.dest b{margin-left:auto;font-family:var(--display)}
 .dm-l{margin:10px 0 4px;font-size:.85rem;color:var(--muted)}.dm-bar{gap:2px;background:none}.dm-bar i{min-width:2px}.dm-bar.city{height:7px}
 table.dm{width:100%;border-collapse:collapse;margin-top:12px;font-size:.95rem;font-variant-numeric:tabular-nums}
 .dm th,.dm td{padding:4px 0;text-align:right;font-weight:400}.dm thead th{font-size:.82rem;color:var(--muted)}
-.dm tbody th{text-align:left;padding-right:12px}.dm tbody th small{display:block;font-size:.82rem;color:var(--muted)}.dm th i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:8px}
+.dm tbody th{text-align:left;padding-right:12px}.dm tbody th small{display:block;font-size:.82rem;color:var(--muted)}.dm th i{display:inline-block;width:10px;height:10px;box-sizing:border-box;border:1px solid var(--sw-edge);border-radius:2px;margin-right:8px}
 .dm td{font-family:var(--display);font-weight:700;padding-left:16px;white-space:nowrap}.dm td+td{font-weight:400;color:var(--muted)}
 .dm tr.pov>*{border-top:1px solid var(--line);padding-top:8px}
 .progs{list-style:none;margin:0;padding:0}
@@ -865,7 +878,8 @@ def page_html(d, dbn, streets, site_url, goat, nbi=None):
                      + '</div></section>')
     else:
         # where the admissions tables list each program's priority groups, say so instead of summarizing them
-        listed = (f" Each program’s priority groups are listed under {'Grade 9' if lv == 'hs' else 'Grade 6'} admissions below."
+        g_adm = "Grade 9" if lv == "hs" else f"Grade {(MS.get('EG') or {}).get(dbn, 6)}"
+        listed = (f" Each program’s priority groups are listed under {g_adm} admissions below."
                   if lv in ("ms", "hs") and ms_progs(((HS if lv == "hs" else MS).get("P") or {}).get(dbn)) else "")
         if lv == "hs":
             if gt:
@@ -963,7 +977,8 @@ def page_html(d, dbn, streets, site_url, goat, nbi=None):
         """Grade 6 or 9 admissions: MySchools tables per program, else the Local Law 72 table and the program list."""
         progs = ((HS if lv == "hs" else MS).get("P") or {}).get(dbn) or []
         ka = ((HS if lv == "hs" else MS).get("A") or {}).get(dbn)
-        return ms_adm_html(dbn, lv, progs, ka, dist) or (k_adm_html(ka, lv, dist) + programs_html(dbn, progs, lv == "hs"))
+        eg = (MS.get("EG") or {}).get(dbn) if lv == "ms" else None
+        return ms_adm_html(dbn, lv, progs, ka, dist, eg) or (k_adm_html(ka, lv, dist) + programs_html(dbn, progs, lv == "hs"))
     if lv in ("ms", "hs"):
         h = admissions(lv)
         sections.append(h + more(ext(ms_url, "Program details, open houses and your chances on MySchools"),
@@ -1337,7 +1352,7 @@ table.sort th[aria-sort=descending] button::after{content:"▼"}
 table.sort td{padding:7px 10px;border-top:1px solid var(--line);text-align:center;font-family:var(--display);font-weight:600;white-space:nowrap}
 table.sort td:first-child{text-align:left;font-family:var(--body);font-weight:400;white-space:normal;min-width:150px}
 @media (max-width:640px){table.sort th:not(:first-child){width:68px}table.sort th button{padding:6px 3px}table.sort td{padding:7px 3px}}
-table.sort td i.sw{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:1px}
+table.sort td i.sw{display:inline-block;width:9px;height:9px;box-sizing:border-box;border:1px solid var(--sw-edge);border-radius:2px;margin-right:5px;vertical-align:1px}
 table.sort td small{color:var(--muted);font-size:.78rem}
 table.sort td small.line{display:block}
 .lvtabs{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel)}

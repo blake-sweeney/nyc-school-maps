@@ -9,7 +9,7 @@ try{const t=localStorage.getItem('nsz-theme-v1');if(t==='light'||t==='dark')docu
 :root{
   --bg:#f3f4f1; --panel:#ffffff; --fg:#1d2321; --muted:#5d6763; --line:#d9ddd8;
   --water:#cfdde3; --land:#eceee9; --nodata:#a3a8a5; --off:#e2e5e1; --accent:#f2b705; --accent-ink:#1d2321;
-  --hl:#0b4f8a; --dot:#1d2321; --road:#2c3331; --road-case:#ffffff; --zone-line:#a0a0b0; --dist-line:#8d8d9d; --sel:#ffff00; --nz-stripe:25%; --zl-halo:1px 0 0 #fff,-1px 0 0 #fff,0 1px 0 #fff,0 -1px 0 #fff,1px 1px 0 #fff,-1px -1px 0 #fff,1px -1px 0 #fff,-1px 1px 0 #fff,0 0 4px #fff,0 0 6px #fff; --warn-bg:#fff4d1; --warn-fg:#6b4d00;
+  --hl:#0b4f8a; --dot:#1d2321; --road:#2c3331; --road-case:#ffffff; --zone-line:#a0a0b0; --dist-line:#8d8d9d; --sel:#ffff00; --nz-stripe:25%; --sw-edge:rgba(0,0,0,.4); --zl-halo:1px 0 0 #fff,-1px 0 0 #fff,0 1px 0 #fff,0 -1px 0 #fff,1px 1px 0 #fff,-1px -1px 0 #fff,1px -1px 0 #fff,-1px 1px 0 #fff,0 0 4px #fff,0 0 6px #fff; --warn-bg:#fff4d1; --warn-fg:#6b4d00;
   --z0:#b9d3a8; --z1:#f0c9a0; --z2:#b7c8e6; --z3:#e8b9c4; --z4:#d8d29a; --z5:#c3b5dd;
   --display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
   --body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
@@ -17,12 +17,12 @@ try{const t=localStorage.getItem('nsz-theme-v1');if(t==='light'||t==='dark')docu
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#141917; --panel:#1c2220; --fg:#e7ebe8; --muted:#9aa5a0; --line:#2f3835;
   --water:#0f1a20; --land:#1a201e; --nodata:#5d6461; --off:#262d2a; --accent:#f2b705; --accent-ink:#141917;
-  --hl:#7fb8ec; --dot:#e7ebe8; --road:#e3e8e5; --road-case:#0d1110; --zone-line:#d4bdff; --dist-line:#e7ebe8; --sel:#7fb8ec; --nz-stripe:45%; --zl-halo:0 0 3px var(--land),0 0 3px var(--land),0 0 2px var(--land); --warn-bg:#3a3014; --warn-fg:#f3d98a;
+  --hl:#7fb8ec; --dot:#e7ebe8; --road:#e3e8e5; --road-case:#0d1110; --zone-line:#d4bdff; --dist-line:#e7ebe8; --sel:#7fb8ec; --nz-stripe:45%; --sw-edge:#2f3835; --zl-halo:0 0 3px var(--land),0 0 3px var(--land),0 0 2px var(--land); --warn-bg:#3a3014; --warn-fg:#f3d98a;
   --z0:#3d5536; --z1:#5c4430; --z2:#33456a; --z3:#5e3a45; --z4:#545026; --z5:#45395e; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#141917; --panel:#1c2220; --fg:#e7ebe8; --muted:#9aa5a0; --line:#2f3835;
   --water:#0f1a20; --land:#1a201e; --nodata:#5d6461; --off:#262d2a; --accent:#f2b705; --accent-ink:#141917;
-  --hl:#7fb8ec; --dot:#e7ebe8; --road:#e3e8e5; --road-case:#0d1110; --zone-line:#d4bdff; --dist-line:#e7ebe8; --sel:#7fb8ec; --nz-stripe:45%; --zl-halo:0 0 3px var(--land),0 0 3px var(--land),0 0 2px var(--land); --warn-bg:#3a3014; --warn-fg:#f3d98a;
+  --hl:#7fb8ec; --dot:#e7ebe8; --road:#e3e8e5; --road-case:#0d1110; --zone-line:#d4bdff; --dist-line:#e7ebe8; --sel:#7fb8ec; --nz-stripe:45%; --sw-edge:#2f3835; --zl-halo:0 0 3px var(--land),0 0 3px var(--land),0 0 2px var(--land); --warn-bg:#3a3014; --warn-fg:#f3d98a;
   --z0:#3d5536; --z1:#5c4430; --z2:#33456a; --z3:#5e3a45; --z4:#545026; --z5:#45395e; color-scheme:dark}
 html,body{height:100%}
 body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.45}
@@ -109,17 +109,17 @@ aside>*{flex-shrink:0}
 .seg.level.three small{display:block;margin:2px 0 0}
 .seg.level small{font-weight:500;opacity:.75;margin-left:3px}
 .ms-note{margin:10px 0 0}
-.sw i.off{background:var(--off)}
+.sw i.off{background:var(--off)}.sw i.na{background:var(--nodata)}
 .facts{display:grid;grid-template-columns:1fr auto;gap:3px 8px;font-size:.85rem;margin-top:4px;font-variant-numeric:tabular-nums}
 .facts b{font-family:var(--display);font-weight:600;text-align:right}
 .tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:2px}
 .tag{font-family:var(--display);font-weight:600;font-size:.75rem;padding:2px 7px;border-radius:999px;background:#2f6db5;color:#fff}
 .sw{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;font-size:.82rem}
 .sw span{display:flex;align-items:center;gap:6px}
-.sw i{width:12px;height:12px;border-radius:2px;flex:none;border:1px solid var(--line)}
+.sw i{width:12px;height:12px;border-radius:2px;flex:none;border:1px solid var(--sw-edge)}
 .rates{display:grid;grid-template-columns:1fr auto;gap:3px 8px;font-size:.85rem;margin-top:4px}
 .chip{display:inline-flex;align-items:center;gap:5px;font-family:var(--display);font-weight:600;font-size:.8rem;white-space:nowrap}
-.chip i{width:10px;height:10px;border-radius:2px;border:1px solid var(--line)}
+.chip i{width:10px;height:10px;border-radius:2px;border:1px solid var(--sw-edge)}
 .rates .tot{font-weight:700}
 .school hr.sep,.card>hr.sep{border:0;border-top:1px solid var(--line);margin:8px 0 6px;width:100%}
 .card>hr.sep{margin:0}
@@ -137,14 +137,14 @@ aside>*{flex-shrink:0}
 .dbar{display:flex;height:12px;border-radius:4px;overflow:hidden;background:var(--line)}
 .dbar i{display:block;height:100%}.dbar i.rest{flex:1}
 .dest ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:3px 12px}
-.dest li{display:flex;align-items:center;gap:6px;font-size:.8rem}.dest li i{width:9px;height:9px;border-radius:2px;flex:none}.dest li b{margin-left:auto;font-family:var(--display);font-variant-numeric:tabular-nums}
+.dest li{display:flex;align-items:center;gap:6px;font-size:.8rem}.dest li i{width:9px;height:9px;box-sizing:border-box;border:1px solid var(--sw-edge);border-radius:2px;flex:none}.dest li b{margin-left:auto;font-family:var(--display);font-variant-numeric:tabular-nums}
 .dest+.facts{margin-top:10px}
 .dest small{color:var(--muted);font-size:.75rem}
 .dm{display:grid;grid-template-columns:1fr auto auto;gap:3px 10px;align-items:center;font-size:.85rem;font-variant-numeric:tabular-nums}
 .dm .dbar{grid-column:1/-1;display:flex;gap:2px;background:none}.dm .dbar i{min-width:2px}.dm .dbar.city{height:6px;margin-bottom:4px}
 .dm .bl{grid-column:1/-1;font-size:.75rem;color:var(--muted);margin-top:2px}
 .dm .hd{font-size:.75rem;color:var(--muted);text-align:right}
-.dm .g{display:flex;align-items:center;gap:6px;min-width:0}.dm .g small{display:block;font-size:.75rem;color:var(--muted)}.dm .g i{width:9px;height:9px;border-radius:2px;flex:none}
+.dm .g{display:flex;align-items:center;gap:6px;min-width:0}.dm .g small{display:block;font-size:.75rem;color:var(--muted)}.dm .g i{width:9px;height:9px;box-sizing:border-box;border:1px solid var(--sw-edge);border-radius:2px;flex:none}
 .dm b{font-family:var(--display);font-weight:600;text-align:right;white-space:nowrap}.dm b.wide{grid-column:span 2}.dm .c{white-space:nowrap}.dm .c{color:var(--muted);text-align:right}
 .dm .pov{border-top:1px solid var(--line);padding-top:4px;margin-top:2px}
 .dm small{grid-column:1/-1;color:var(--muted);font-size:.75rem;margin-top:2px}
@@ -531,7 +531,7 @@ details.kind>summary{cursor:pointer}details.kind>p{margin:4px 0 2px}
       </div>
       <div class="legend" id="leg-pk" hidden>
         <div class="sw"><span><i style="background:#9c3f8f"></i>Pre-K and 3-K</span><span><i style="background:#f4b6cf"></i>Pre-K only</span><span><i class="off"></i>Neither</span></div>
-        <p class="hint">Whether the zoned school has pre-K and 3-K seats, from the DOE’s Local Law 72 report for __PREK__ admissions. Shared zones show the school with the most. Pre-K and 3-K seats aren’t zoned: families apply through MySchools, and zoned families often get priority. <span class="nd"></span> No data.</p>
+        <p class="hint">Whether the zoned school has pre-K and 3-K seats, from the DOE’s Local Law 72 report for __PREK__ admissions. Shared zones show the school with the most. Pre-K and 3-K seats aren’t zoned: families apply through MySchools, and zoned families often get priority. <span class="nd"></span> No data (charter schools aren’t in the report).</p>
       </div>
       <div class="legend" id="leg-scr" hidden>
         <div class="sw"><span><i style="background:#8a5a2e"></i>All programs screened</span><span><i style="background:#e3c9a0"></i>Some screened</span><span><i class="off"></i>None</span></div>
@@ -611,7 +611,7 @@ async function loadLevel(lv){if(LV[lv])return true;if(!ASSETS[lv])return false;
   try{const x=await getAsset(lv);
     Object.entries(x.schools).forEach(([d,s])=>{S[d]=Object.assign({},s,S[d]||{})});snapNames(Object.keys(x.schools));
     if(x.O)Object.assign(O,x.O);if(x.Q)Object.assign(Q,x.Q);
-    LV[lv]={F:x.features,T:x.T||{},S:x.schools,P:x.P||{},A:x.A||{},EX:x.EX||{},EXV:x.EXV||[],NZ:allNZ(x,lv),CUT:x.CUT||null,CHR:x.CHR||{},CHX:x.CHX||{}};if(x.R)Object.entries(x.R).forEach(([k,v])=>{if(!R[k])R[k]=v});if(x.X)Object.entries(x.X).forEach(([k,v])=>{if(!X[k])X[k]=v});if(x.DM)Object.assign(DM,x.DM);regNZ(LV[lv].NZ);return true}
+    LV[lv]={F:x.features,T:x.T||{},S:x.schools,P:x.P||{},A:x.A||{},EX:x.EX||{},EXV:x.EXV||[],EG:x.EG||{},NZ:allNZ(x,lv),CUT:x.CUT||null,CHR:x.CHR||{},CHX:x.CHX||{}};if(x.R)Object.entries(x.R).forEach(([k,v])=>{if(!R[k])R[k]=v});if(x.X)Object.entries(x.X).forEach(([k,v])=>{if(!X[k])X[k]=v});if(x.DM)Object.assign(DM,x.DM);regNZ(LV[lv].NZ);return true}
   catch(e){alertLoad();return false}finally{document.body.style.cursor=''}}
 function alertLoad(){const m=document.getElementById('llmsg');if(m){m.textContent='Couldn’t load that part of the map. Check your connection and try again.';m.hidden=false}}
 const RK={ip:2,ss:3,rf:4},RNAME={ip:'Instruction and Performance',ss:'Safety and School Climate',rf:'Relationships with Families'};
@@ -626,8 +626,8 @@ const hasGT=d=>!!(X[d]&&X[d][8]&&X[d][8].includes('G&T'));
 const dualLang=d=>X[d]&&X[d][4]||null;
 // dual language by language: the common ones get their own color, the rest share "Other"; a school (or shared zone)
 // with two or more languages gets its own color too
-const DL_LANGS=[['Spanish','#2f6db5'],['Chinese','#d1495b'],['French','#7b5ea7'],['Russian','#e09f3e'],['Italian','#3a9d6e'],['Polish','#8c6d46']],
-  DL_OTHER='#c06fb0',DL_MULTI='#35b9d6';
+const DL_LANGS=[['Spanish','#e0b000'],['Chinese','#d1495b'],['French','#7b5ea7'],['Russian','#6b7f1a'],['Italian','#3a9d6e'],['Polish','#8c6d46']],
+  DL_OTHER='#c06fb0',DL_MULTI='#5b1f4a';
 function dlKey(l){return DL_LANGS.some(x=>x[0]===l)?l:'Other'}
 // '' = no dual language, a language name, 'multi'; null = no Snapshot data
 function zoneDl(dbns){if(!dbns.some(d=>X[d]&&!(CHX[d]&&!dualLang(d))))return null;const ks=new Set();  // charters: only a hand-checked few
@@ -682,7 +682,7 @@ function chBlock(o){const x=CHX[o.d]||[];
     ' Apply through the <a href="'+CH_APPLY+'" target="_blank" rel="noopener">common charter application ↗</a> or on the school’s own site, by April 1 for most schools. It’s separate from MySchools: applying doesn’t affect your MySchools application.'+
     (x[3]?' Formerly '+esc(x[3])+'.':'')+'</p></details>'}
 regNZ(NZ_ES);
-[['ms',MSD],['hs',HSD]].forEach(([lv,x])=>{if(!x||!LV[lv])return;Object.assign(LV[lv],{P:x.P||{},A:x.A||{},EX:x.EX||{},EXV:x.EXV||[],NZ:allNZ(x,lv),CUT:x.CUT||null,CHR:x.CHR||{},CHX:x.CHX||{}});
+[['ms',MSD],['hs',HSD]].forEach(([lv,x])=>{if(!x||!LV[lv])return;Object.assign(LV[lv],{P:x.P||{},A:x.A||{},EX:x.EX||{},EXV:x.EXV||[],EG:x.EG||{},NZ:allNZ(x,lv),CUT:x.CUT||null,CHR:x.CHR||{},CHX:x.CHX||{}});
   if(x.R)Object.entries(x.R).forEach(([k,v])=>{if(!R[k])R[k]=v});if(x.X)Object.entries(x.X).forEach(([k,v])=>{if(!X[k])X[k]=v});regNZ(LV[lv].NZ)});
 function nzDistricts(o){const ds=o.pd.length?o.pd:[+o.d.slice(0,2)];return ds}
 function nzPriority(o){if(o.ch)return 'Admission is by lottery only. Charter schools can’t screen: no tests, grades, interviews or auditions. Lottery priority usually goes to siblings, then to families who live in District '+o.pd[0]+'.';if(o.hs){if(o.gt)return o.pr.some(p=>p[1]==='T')?'Admission is by SHSAT score only. Any NYC 8th or 9th grader can take the test.':'Admission is by audition. Students from anywhere in NYC can apply.';return o.pz||'Open to students from anywhere in NYC.'}if(o.gt)return 'Open to children found eligible for G&T, from anywhere in NYC.'+(o.pd.length?' Priority to eligible children in Districts '+o.pd.slice(0,-1).join(', ')+' and '+o.pd[o.pd.length-1]+'.':'');const ds=nzDistricts(o),t=ds.length>1?'Districts '+ds.slice(0,-1).join(', ')+' and '+ds[ds.length-1]:'District '+ds[0];
@@ -1244,10 +1244,17 @@ function outSec(d){const o=O[d],g=o&&o[OUT.grad.i];if(g==null)return outHtml(d);
   return sec('out','<span class="st">Graduation rate<small>Graduates in 4 years · NYC __CITY_GRAD__%</small></span><span class="chip"><i style="'+bgBoth(()=>outColor('grad',g))+'"></i>'+Math.round(g)+'%</span>',outHtml(d))}
 // grade 6 or grade 9 admissions: the MySchools tables when the school has them (seats / applied up top, summed over its
 // programs), else the Local Law 72 table with its own year
-function admSec(d){const g=level==='ms'?'6':'9',R=msProgs(d,level);
-  if(R.length){const st=R.reduce((a,p)=>a+(p[2]||0),0),ap=R.reduce((a,p)=>a+(p[3]||0),0);
-    return sec('adm-'+g,'<span class="st">Admissions, grade '+g+'<small>Seats / applied, __MYSCHOOLS__</small></span><span class="sa">'+st.toLocaleString()+' / '+ap.toLocaleString()+'</span>',msAdmHtml(d,level,msAdm(d,level),'students'))}
-  const k=(LV[level]&&LV[level].A||{})[d],y=k&&Object.keys(k).sort().pop(),r=y&&k[y];if(!r)return '';
+// MySchools sometimes lists a school's priority groups with no seats or applicants: then the summary takes the Local
+// Law 72 numbers, or names the grade it takes new students in (LV.ms.EG, school_fixes.json "entry"), or shows none
+function admSec(d){const eg=level==='ms'&&LV.ms.EG&&LV.ms.EG[d],g=eg?String(eg):level==='ms'?'6':'9',R=msProgs(d,level);
+  const k=(LV[level]&&LV[level].A||{})[d],y=k&&Object.keys(k).sort().pop(),r=y&&k[y];
+  if(R.length){const st=R.reduce((a,p)=>a+(p[2]||0),0),ap=R.reduce((a,p)=>a+(p[3]||0),0),none=R.every(p=>p[2]==null&&p[3]==null);
+    const [sub,sa,note]=!none?['Seats / applied, __MYSCHOOLS__',st.toLocaleString()+' / '+ap.toLocaleString(),'']
+      :eg?['Takes new students in grade '+eg,'','<p class="adm-note">This school takes new students in grade '+eg+', not grade 6, so families apply when their child is in grade '+(eg-1)+'. MySchools lists the priority groups below but no seat counts.</p>']
+      :r?['Seats / applied, fall '+y,r[0].toLocaleString()+' / '+r[1].toLocaleString(),'']
+      :['Priority groups, __MYSCHOOLS__','','<p class="adm-note">MySchools lists this school’s priority groups but no seat counts.</p>'];
+    return sec('adm-'+g,'<span class="st">Admissions, grade '+g+'<small>'+sub+'</small></span>'+(sa?'<span class="sa">'+sa+'</span>':''),msAdmHtml(d,level,note+msAdm(d,level),'students'))}
+  if(!r)return '';
   return sec('adm-'+g,'<span class="st">Admissions, grade '+g+'<small>Seats / applied, fall '+y+'</small></span><span class="sa">'+r[0].toLocaleString()+' / '+r[1].toLocaleString()+'</span>',admHtml(d,level,true))}
 // middle school classes, sports and activities (MySchools, LV.ms.EX as indexes into EXV): counts up top, the lists inside
 const EX_GROUPS=['Accelerated and honors classes','Arts courses','Electives','Sports','Clubs and activities'];
@@ -1459,8 +1466,8 @@ function syncLegend(){syncName();const lo=document.getElementById('leg-out');lo.
     document.getElementById('out-hint').innerHTML=metric==='sat'?'Average SAT score (out of 1600) of the school’s test takers, from the __SNAPSHOT__ School Quality Snapshot. Most NYC high schools average 780–1100. <span class="nd"></span> No data.':metric==='ccr'?'The DOE’s college and career readiness score (0–100): credit for each student who graduates meeting CUNY’s standard to skip remedial classes, passing AP or college-credit exams, and similar. NYC average: __CITY_READINESS__. From the __SNAPSHOT__ School Quality Snapshot. <span class="nd"></span> No data.':metric==='grad'?'Share of students who graduate within 4 years, from the __SNAPSHOT__ School Quality Snapshot. NYC average: __CITY_GRAD__%. The scale is narrower than for test scores because most zoned high schools graduate 75–95% of students. <span class="nd"></span> No data.':'Share of graduates who enrolled in college or a career program within 6 months, from the __SNAPSHOT__ School Quality Snapshot. <span class="nd"></span> No data.'}
   document.getElementById('leg-pk').hidden=metric!=='pk';document.getElementById('leg-scr').hidden=metric!=='scr';if(metric==='scr')document.getElementById('scr-hint').innerHTML='How many of each school’s programs are screened, from the MySchools '+(level==='hs'?'high':'middle')+' school directory. Screened programs rank applicants by their '+(level==='hs'?'7th':'4th')+'-grade report card grades; some also use an assessment. A school with some screened programs also has open, zone-priority or other programs; click it to see each one. Shared zones show the school with the most. <span class="nd"></span> No program data.';{const gs=document.getElementById('grp-src');if(gs&&metric==='pk')gs.textContent='DOE Local Law 72 report · __PREK__'}document.getElementById('leg-rate').hidden=!isRate(metric);document.getElementById('leg-test').hidden=!['both','ela','math'].includes(metric);document.getElementById('leg-prog').hidden=!isProg(metric);document.getElementById('leg-iep').hidden=metric!=='iep';{const gs=document.getElementById('grp-src');if(gs&&['gt','dl','scr','iep'].includes(metric))gs.textContent=metric==='scr'?'MySchools '+(level==='hs'?'high':'middle')+' school directory':metric==='iep'?'DOE Demographic Snapshot · __DEMOGRAPHICS__':GROUP_SRC.programs}{const sw=document.getElementById('prog-sw');if(metric==='dl'){const seen=new Set(Object.keys(LV[level].S||{}).concat(NZ.map(o=>o.d)).map(d=>zoneDl([d])).filter(Boolean));
   const items=DL_LANGS.map(x=>x[0]).concat(['Other','multi']).filter(k=>seen.has(k));
-  sw.innerHTML=items.map(k=>'<span><i style="background:'+dlColor(k)+'"></i>'+(k==='multi'?'Two or more':k)+'</span>').join('')+'<span><i class="off"></i>None</span>'}
-  else sw.innerHTML='<span><i style="background:'+PROG_COL+'"></i>'+(metric==='gt'?'Has G&amp;T':'Has dual language')+'</span><span><i class="off"></i>Doesn’t</span>'}document.getElementById('prog-hint').textContent=metric==='gt'?'District Gifted & Talented programs listed for the zoned school in the __SNAPSHOT__ Snapshot (73 zoned schools). G&T seats aren’t assigned by zone: families apply separately, and admission rules have changed in recent years, so check MySchools for this year’s process.':'Dual-language programs at the zoned school (151 zoned schools), from the __SNAPSHOT__ Snapshot. Each color is a language. “Two or more” means the school runs programs in more than one language. Seats are usually by application, often with priority for zoned families.';
+  sw.innerHTML=items.map(k=>'<span><i style="background:'+dlColor(k)+'"></i>'+(k==='multi'?'Two or more':k)+'</span>').join('')+'<span><i class="off"></i>None</span><span><i class="na"></i>No data</span>'}
+  else sw.innerHTML='<span><i style="background:'+PROG_COL+'"></i>'+(metric==='gt'?'Has G&amp;T':'Has dual language')+'</span><span><i class="off"></i>Doesn’t</span>'}document.getElementById('prog-hint').textContent=metric==='gt'?'District Gifted & Talented programs listed for the zoned school in the __SNAPSHOT__ Snapshot (73 zoned schools). G&T seats aren’t assigned by zone: families apply separately, and admission rules have changed in recent years, so check MySchools for this year’s process.':'Dual-language programs at the zoned school (151 zoned schools), from the __SNAPSHOT__ Snapshot. Each color is a language. “Two or more” means the school runs programs in more than one language. Seats are usually by application, often with priority for zoned families. Most charter schools aren’t in the Snapshot’s program lists, so they show as no data.';
   document.getElementById('rate-hint').innerHTML=(metric==='comp'?'Overall is the average of the three ratings, so zones blend between colors (3.3 sits between yellow and teal). ':'DOE rating for '+RNAME[metric]+'. ')+'Ratings are the DOE’s own. Shared zones average their schools. <span class="nd"></span> No rating.'}
 syncLegend();
 //METRIC
