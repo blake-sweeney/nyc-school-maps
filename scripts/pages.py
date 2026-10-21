@@ -258,9 +258,11 @@ def set_from_template(template):
     light = re.search(r"^:root\{(.*?)\}", template, re.S | re.M).group(1)
     dark = re.search(r'@media \(prefers-color-scheme: dark\)\{:root:not\(\[data-theme="light"\]\)\{(.*?)\}\}', template, re.S).group(1)
     dk = f'{theme(dark)};{PAGE_VARS["dark"]};color-scheme:dark'
+    # ramp swatches and bars carry their dark color in --cd (ramp()); the dark theme switches to it
+    cd = '[style*="--cd:"]{background:var(--cd)!important}'
     INTRO["theme"] = (f':root{{{theme(light)};{PAGE_VARS["light"]}}}\n'
-                      f'@media (prefers-color-scheme:dark){{:root:not([data-theme="light"]){{{dk}}}}}\n'
-                      f':root[data-theme="dark"]{{{dk}}}\n')
+                      f'@media (prefers-color-scheme:dark){{:root:not([data-theme="light"]){{{dk}}}:root:not([data-theme="light"]) {cd}}}\n'
+                      f':root[data-theme="dark"]{{{dk}}}\n:root[data-theme="dark"] {cd}\n')
 
 def myschools_url(dbn, lv):
     return {"ms": f"https://www.myschools.nyc/en/schools/middle-school/{dbn}",
@@ -327,7 +329,7 @@ def bar(label, v, stops, txt=None, lo=0, hi=100):
     if v is None:
         return ""
     w = max(0, min(100, 100 * (v - lo) / (hi - lo)))
-    return (f'<div class="bar-row"><span>{e(label)}</span><span class="bar"><i style="width:{w:.0f}%;background:{ramp(v, stops)}"></i></span>'
+    return (f'<div class="bar-row"><span>{e(label)}</span><span class="bar"><i style="width:{w:.0f}%;{ramp(v, stops)}"></i></span>'
             f'<b>{e(txt if txt is not None else round(v))}</b></div>')
 
 
@@ -1242,18 +1244,24 @@ def rating(R, dbn):
 RATE_STOPS, TEST_STOPS, OUT_STOPS = settings.RATE_STOPS, settings.TEST_STOPS, settings.OUT_STOPS
 
 
-def ramp(v, stops):
+def ramp_color(v, stops, theme):
+    P = settings.RAMP_COLORS[theme]
     if v <= stops[0][0]:
-        c = stops[0][1]
+        c = P[stops[0][1]]
     elif v >= stops[-1][0]:
-        c = stops[-1][1]
+        c = P[stops[-1][1]]
     else:
-        for (a, ca), (b, cb) in zip(stops, stops[1:]):
+        for (a, na), (b, nb) in zip(stops, stops[1:]):
             if v <= b:
                 t = (v - a) / (b - a)
-                c = tuple(x + (y - x) * t for x, y in zip(ca, cb))
+                c = tuple(x + (y - x) * t for x, y in zip(P[na], P[nb]))
                 break
     return "rgb(" + ",".join(str(round(x)) for x in c) + ")"
+
+
+def ramp(v, stops):
+    """Inline style for a swatch or bar: the light theme's color, and the dark theme's in --cd (see set_from_template)."""
+    return f"background:{ramp_color(v, stops, 'light')};--cd:{ramp_color(v, stops, 'dark')}"
 
 
 def rate_color(r):  # 1->5%, 2->50%, 3->75%, 4->95% on the ratings ramp, like the map
@@ -1262,8 +1270,8 @@ def rate_color(r):  # 1->5%, 2->50%, 3->75%, 4->95% on the ratings ramp, like th
     return ramp(P[i] + (P[i + 1] - P[i]) * (r - 1 - i), RATE_STOPS)
 
 
-def swatch(color, txt):
-    return f'<i class="sw" style="background:{color}"></i>{txt}'
+def swatch(style, txt):
+    return f'<i class="sw" style="{style}"></i>{txt}'
 
 
 def school_table(dbns, names, R, cols, note=None, note_line=False, num=None):

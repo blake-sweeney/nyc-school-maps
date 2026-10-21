@@ -49,8 +49,13 @@ def fill_settings(template):
     def hexc(c):
         return "#%02x%02x%02x" % tuple(c)
     lo, hi = settings.TEST_STOPS[0][0], settings.TEST_STOPS[-1][0]
-    gradient = ("linear-gradient(90deg," + f"{hexc(settings.TEST_STOPS[0][1])} 0%,"
-                + ",".join(f"{hexc(c)} {v}%" for v, c in settings.TEST_STOPS) + f",{hexc(settings.TEST_STOPS[-1][1])} 100%)")
+    rv = lambda name: f"var(--r-{name})"
+    gradient = ("linear-gradient(90deg," + f"{rv(settings.TEST_STOPS[0][1])} 0%,"
+                + ",".join(f"{rv(c)} {v}%" for v, c in settings.TEST_STOPS) + f",{rv(settings.TEST_STOPS[-1][1])} 100%)")
+    # the ramp colors as CSS variables (--r-red ...) for each theme, for the legends
+    rvars = {t: ";".join(f"--r-{k}:{hexc(c)}" for k, c in cols.items()) for t, cols in settings.RAMP_COLORS.items()}
+    ramp_css = (f':root{{{rvars["light"]}}}@media (prefers-color-scheme: dark){{:root:not([data-theme="light"]){{{rvars["dark"]}}}}}'
+                f':root[data-theme="dark"]{{{rvars["dark"]}}}')
     ticks = "".join(f'<span style="left:{v}%">{v}{"%" if v == hi else ""}</span>' for v, _ in settings.TEST_STOPS)
     for k, v in {"__SNAPSHOT_YEAR__": settings.SNAPSHOT_YEAR, "__SNAPSHOT__": settings.SNAPSHOT_LABEL,
                  "__PREK__": settings.PREK_LABEL, "__MYSCHOOLS__": settings.MYSCHOOLS_LABEL,
@@ -61,8 +66,7 @@ def fill_settings(template):
                  "__OUT_STOPS__": json.dumps(settings.OUT_STOPS, separators=(",", ":")),
                  "__DEMO_GROUPS__": json.dumps(settings.DEMO_GROUPS, separators=(",", ":"), ensure_ascii=False),
                  "__TEST_GRADIENT__": gradient, "__TEST_TICKS__": ticks,
-                 "__RED__": hexc(settings.RED), "__ORANGE__": hexc(settings.ORANGE),
-                 "__YELLOW__": hexc(settings.YELLOW), "__GREEN__": hexc(settings.GREEN)}.items():
+                 "__RAMP_COLORS__": json.dumps(settings.RAMP_COLORS, separators=(",", ":")), "__RAMP_CSS__": ramp_css}.items():
         template = template.replace(k, v)
     return template
 
