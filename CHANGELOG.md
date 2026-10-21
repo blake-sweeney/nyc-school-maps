@@ -12,7 +12,7 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - "Dual language" colors Spanish programs gold and "Two or more" languages deep aubergine, instead of a blue and a cyan that looked like the water. Russian is olive, so it stays apart from Spanish and Chinese. The legend now has a "No data" entry for the gray: most charter schools aren't in the Snapshot's program lists.
 
 ### Fixed
-- In light mode, the color squares next to ratings and test scores on school cards, in the map's key and in the school and district page tables have a darker edge, so pale colors like Good (yellow) don't blend into the background.
+- In light mode, the color squares next to ratings and test scores on school cards, in the map's key, in the school and district page tables, and in the Demographics and "Where graduates went" keys have a darker edge, so pale colors like Good (yellow) don't blend into the background.
 
 ## 1.45.0 (2026-10-21)
 

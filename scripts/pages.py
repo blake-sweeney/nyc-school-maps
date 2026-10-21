@@ -747,11 +747,11 @@ h2{font-family:var(--display);font-weight:700;font-size:1.15rem;margin:0 0 8px}
 .card h2:not(:first-child){margin-top:20px}\n.src,.muted{color:var(--muted);font-size:.82rem;margin:8px 0 0}
 .dbar{display:flex;height:14px;border-radius:5px;overflow:hidden;background:var(--line)}.dbar i{display:block;height:100%}
 .dest{list-style:none;margin:10px 0 0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;font-size:.9rem}
-.dest li{display:flex;align-items:center;gap:8px}.dest li i{width:10px;height:10px;border-radius:2px;flex:none}.dest b{margin-left:auto;font-family:var(--display)}
+.dest li{display:flex;align-items:center;gap:8px}.dest li i{width:10px;height:10px;box-sizing:border-box;border:1px solid var(--sw-edge);border-radius:2px;flex:none}.dest b{margin-left:auto;font-family:var(--display)}
 .dm-l{margin:10px 0 4px;font-size:.85rem;color:var(--muted)}.dm-bar{gap:2px;background:none}.dm-bar i{min-width:2px}.dm-bar.city{height:7px}
 table.dm{width:100%;border-collapse:collapse;margin-top:12px;font-size:.95rem;font-variant-numeric:tabular-nums}
 .dm th,.dm td{padding:4px 0;text-align:right;font-weight:400}.dm thead th{font-size:.82rem;color:var(--muted)}
-.dm tbody th{text-align:left;padding-right:12px}.dm tbody th small{display:block;font-size:.82rem;color:var(--muted)}.dm th i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:8px}
+.dm tbody th{text-align:left;padding-right:12px}.dm tbody th small{display:block;font-size:.82rem;color:var(--muted)}.dm th i{display:inline-block;width:10px;height:10px;box-sizing:border-box;border:1px solid var(--sw-edge);border-radius:2px;margin-right:8px}
 .dm td{font-family:var(--display);font-weight:700;padding-left:16px;white-space:nowrap}.dm td+td{font-weight:400;color:var(--muted)}
 .dm tr.pov>*{border-top:1px solid var(--line);padding-top:8px}
 .progs{list-style:none;margin:0;padding:0}
