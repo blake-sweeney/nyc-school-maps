@@ -6,7 +6,7 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
-## Unreleased
+## 1.46.0 (2026-10-21)
 
 ### Changed
 - "Dual language" colors Spanish programs gold and "Two or more" languages deep aubergine, instead of a blue and a cyan that looked like the water. Russian is olive, so it stays apart from Spanish and Chinese. The legend now has a "No data" entry for the gray: most charter schools aren't in the Snapshot's program lists.
