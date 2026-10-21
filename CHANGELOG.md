@@ -6,7 +6,7 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
-## Unreleased
+## 1.45.0 (2026-10-21)
 
 ### Changed
 - In light mode, school names and ratings on the map have a solid white outline, so they're easy to read on any zone color. Zone outlines and school district lines are soft grays instead of purple and black, so the map is calmer to look at. The zone and school you pick are outlined in bright yellow. Dark mode is unchanged.
