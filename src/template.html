@@ -530,11 +530,11 @@ details.kind>summary{cursor:pointer}details.kind>p{margin:4px 0 2px}
         <p class="hint" id="rate-hint"></p>
       </div>
       <div class="legend" id="leg-pk" hidden>
-        <div class="sw"><span><i style="background:#2b6fae"></i>Pre-K and 3-K</span><span><i style="background:#9ecae1"></i>Pre-K only</span><span><i class="off"></i>Neither</span></div>
+        <div class="sw"><span><i style="background:#9c3f8f"></i>Pre-K and 3-K</span><span><i style="background:#f4b6cf"></i>Pre-K only</span><span><i class="off"></i>Neither</span></div>
         <p class="hint">Whether the zoned school has pre-K and 3-K seats, from the DOE’s Local Law 72 report for __PREK__ admissions. Shared zones show the school with the most. Pre-K and 3-K seats aren’t zoned: families apply through MySchools, and zoned families often get priority. <span class="nd"></span> No data.</p>
       </div>
       <div class="legend" id="leg-scr" hidden>
-        <div class="sw"><span><i style="background:#2b6fae"></i>All programs screened</span><span><i style="background:#9ecae1"></i>Some screened</span><span><i class="off"></i>None</span></div>
+        <div class="sw"><span><i style="background:#8a5a2e"></i>All programs screened</span><span><i style="background:#e3c9a0"></i>Some screened</span><span><i class="off"></i>None</span></div>
         <p class="hint" id="scr-hint"></p>
       </div>
       <div class="legend" id="leg-prog" hidden>
@@ -638,14 +638,14 @@ function zoneIep(dbns){const v=dbns.map(dmIep).filter(x=>x!=null);return v.lengt
 const isProg=m=>m==='gt'||m==='dl';
 // middle and high schools: how many of a school's programs are screened (admission by grades, sometimes an assessment):
 // 0 none, 1 some, 2 all; null when there's no program list. District 75 and autism programs don't count either way.
-const SCR_CODES=['S','SA','SL'],SCR_COL=['var(--off)','#9ecae1','#2b6fae'],SCR_LAB=['not screened','some screened','all screened'];
+const SCR_CODES=['S','SA','SL'],SCR_COL=['var(--off)','#e3c9a0','#8a5a2e'],SCR_LAB=['not screened','some screened','all screened'];
 function scrCat(d){const P=((LV[level]&&LV[level].P||{})[d]||[]).filter(p=>p[1]!=='D75'&&p[1]!=='ASD');if(!P.length)return null;
   const n=P.filter(p=>SCR_CODES.includes(p[1])).length;return n?n===P.length?2:1:0}
 function zoneScr(dbns){const v=dbns.map(scrCat).filter(x=>x!=null);return v.length?Math.max(...v):null}
 const progWord=m=>m==='gt'?'G&T':'dual language';
 const progTxt=d=>metric==='dl'&&dualLang(d)?dualLang(d)+' dual language':'has '+progWord(metric);
 // pre-K and 3-K (Local Law 72): 0 neither, 1 pre-K only (or 3-K only), 2 both; a zone with several schools shows the most
-const PK_COL=['var(--off)','#9ecae1','#2b6fae'],PK_LAB=['No pre-K or 3-K','Pre-K only','Pre-K and 3-K'];
+const PK_COL=['var(--off)','#f4b6cf','#9c3f8f'],PK_LAB=['No pre-K or 3-K','Pre-K only','Pre-K and 3-K'];
 function pkCat(d){const p=PK[d];if(!p)return null;return (p[0]?1:0)+(p[2]?1:0)}
 function zonePk(dbns){const v=dbns.map(pkCat).filter(x=>x!=null);return v.length?Math.max(...v):null}
 // building use (SCA Blue Book 2025-26): [utilization %, enrollment, capacity] per school
