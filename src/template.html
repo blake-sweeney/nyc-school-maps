@@ -325,13 +325,13 @@ aside>*{flex-shrink:0}
 .kind{font-size:.85rem;border-left:3px solid var(--hl);padding:2px 0 2px 9px;line-height:1.4}
 .kind a{color:var(--hl)}
 details.kind>summary{cursor:pointer}details.kind>p{margin:4px 0 2px}
-/* the city's basemap is gray; #nsz-water (built in the script) tints its water shades blue. "Parks & water" off: plain gray */
+/* the city's basemap is gray; #nsz-water (built in the script) makes its water shades one flat blue. "Parks & water" off: #nsz-water-gray, flat gray */
 .nyc-base{filter:grayscale(1) url(#nsz-water) contrast(.85) brightness(1.06)}
-.plain-base .nyc-base{filter:grayscale(1) contrast(.85) brightness(1.06)}
+.plain-base .nyc-base{filter:grayscale(1) url(#nsz-water-gray) contrast(.85) brightness(1.06)}
 .nyc-labels{filter:grayscale(1)}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .nyc-base{filter:grayscale(1) url(#nsz-water) invert(1) hue-rotate(180deg) brightness(.78) contrast(.9)}:root:not([data-theme="light"]) .plain-base .nyc-base{filter:grayscale(1) invert(1) brightness(.78) contrast(.9)}:root:not([data-theme="light"]) .nyc-labels{filter:grayscale(1) invert(1) brightness(1.15)}}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .nyc-base{filter:grayscale(1) url(#nsz-water) invert(1) hue-rotate(180deg) brightness(.78) contrast(.9)}:root:not([data-theme="light"]) .plain-base .nyc-base{filter:grayscale(1) url(#nsz-water-gray) invert(1) brightness(.78) contrast(.9)}:root:not([data-theme="light"]) .nyc-labels{filter:grayscale(1) invert(1) brightness(1.15)}}
 :root[data-theme="dark"] .nyc-base{filter:grayscale(1) url(#nsz-water) invert(1) hue-rotate(180deg) brightness(.78) contrast(.9)}
-:root[data-theme="dark"] .plain-base .nyc-base{filter:grayscale(1) invert(1) brightness(.78) contrast(.9)}
+:root[data-theme="dark"] .plain-base .nyc-base{filter:grayscale(1) url(#nsz-water-gray) invert(1) brightness(.78) contrast(.9)}
 :root[data-theme="dark"] .nyc-labels{filter:grayscale(1) invert(1) brightness(1.15)}
 .leaflet-tile{visibility:hidden}.leaflet-tile-loaded{visibility:inherit}
 .leaflet-tile-container{pointer-events:none}
@@ -811,12 +811,15 @@ baseTiles.on('tileerror',()=>{if(++tileErr>=6&&!tileOk)dropBase()});
 function dropBase(){if(!useBase)return;useBase=false;map.removeLayer(baseTiles);map.removeLayer(labelTiles);if(typeof syncParks==='function')syncParks();
   document.querySelector('.leaflet-control-attribution')?.remove();if(typeof restyle==='function'){restyle();syncStreets()}}
 // Color on the gray basemap. Water: the tiles keep water in its own gray shades (about 150-217; land is 236,
-// parks 222, buildings 219+), so an SVG lookup table tints just those blue and the shoreline stays exact.
+// parks 222, buildings 219+), so an SVG lookup table turns just those into one flat blue and the shoreline stays exact.
+// One color for every shade drops the tiles' dark shading along the shore. With the layer off, #nsz-water-gray
+// does the same in flat gray.
 // Parks: NYC Parks outlines (assets/parks.js), drawn green in a pane that blends as "color" into the tiles,
 // so paths and lakes inside a park still show. Both follow the "Parks & water color" layer.
-(()=>{const R=[],G=[],B=[];for(let v=0;v<256;v++){const w=v>=150&&v<=217;R.push((w?v*.84:v)/255);G.push((w?v*.93:v)/255);B.push((w?Math.min(255,v*1.07):v)/255)}
-  const f=a=>a.map(x=>x.toFixed(4)).join(' '),d=document.createElement('div');
-  d.innerHTML='<svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="nsz-water" color-interpolation-filters="sRGB"><feComponentTransfer><feFuncR type="discrete" tableValues="'+f(R)+'"/><feFuncG type="discrete" tableValues="'+f(G)+'"/><feFuncB type="discrete" tableValues="'+f(B)+'"/></feComponentTransfer></filter></svg>';
+(()=>{const f=(v,c)=>v>=150&&v<=217?c:v,t=c=>{const a=[];for(let v=0;v<256;v++)a.push((f(v,c)/255).toFixed(4));return a.join(' ')},
+  filt=(id,[r,g,b])=>'<filter id="'+id+'" color-interpolation-filters="sRGB"><feComponentTransfer><feFuncR type="discrete" tableValues="'+t(r)+'"/><feFuncG type="discrete" tableValues="'+t(g)+'"/><feFuncB type="discrete" tableValues="'+t(b)+'"/></feComponentTransfer></filter>',
+  d=document.createElement('div');
+  d.innerHTML='<svg width="0" height="0" style="position:absolute" aria-hidden="true">'+filt('nsz-water',[176,198,224])+filt('nsz-water-gray',[200,200,200])+'</svg>';
   document.body.appendChild(d.firstChild)})();
 const PARK_MIN_Z=12,parkPane=map.createPane('parks');parkPane.style.zIndex=250;parkPane.style.pointerEvents='none';parkPane.style.mixBlendMode='color';
 const parkRend=L.canvas({pane:'parks',padding:.3}),parkGroup=L.layerGroup();let parksBuilt=false,parksLoading=false;

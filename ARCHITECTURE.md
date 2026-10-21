@@ -43,7 +43,7 @@ The script runs top to bottom in roughly this order:
 | Layer toggles | `LAY`, `LAY_KEY` (localStorage `nsz-layers-v1`), `saveLay`, `applyLayers`, `syncZoneLines`, `clearZoneSel` |
 | Schools without a zone | `nzGet`, `regNZ`, `nzOptions`, `nzPriority`, `nzDemand`, `buildNZ`, `nzTip`, `selectNZ`, `gtStar` |
 | Charter schools | `CHX` (grades, enrollment, former name), `allNZ` (charter `CH` rows join `NZ`, flagged `o.ch`), `chBlock` (lottery card text, `CH_APPLY`), `chOptions` (the zone card's charter list), `distOf` / `boroOf` (district and borough from the row, not the DBN), `chReports` (K–12 charters: high school ratings in the high school view), `.chm` squares, layer key `ch` |
-| Basemap | `NYC_KEY`, `NYC_TILES`, `baseTiles`, `labelTiles`, `dropBase` (falls back to our own streets), color on the gray tiles: `#nsz-water` (SVG lookup that tints the water shades), `buildParks`/`syncParks`/`PARK_MIN_Z` (parks pane blended as "color"), `.plain-base` when the `parks` layer is off |
+| Basemap | `NYC_KEY`, `NYC_TILES`, `baseTiles`, `labelTiles`, `dropBase` (falls back to our own streets), color on the gray tiles: `#nsz-water` (SVG lookup that turns every water shade one flat blue; `#nsz-water-gray` flat gray when the layer is off), `buildParks`/`syncParks`/`PARK_MIN_Z` (parks pane blended as "color"), `.plain-base` when the `parks` layer is off |
 | Coloring | `schoolVal`, `fillFor`, `style`, `rampColor`/`STOPS`, `scoreColor`, `rateColor`, `OUT` (high school ranges), `zoneRating`, `zoneOut`, `zonePk`, `zoneScr`, `zoneDl`/`DL_LANGS` (dual language by language), `buildStripes` (multi-school zones) |
 | Zones and selection | `makeLayer`, `lineStyle`, `makeSel`, `restyleSel`, `select` (the main click handler), `distAt` (no-zone areas pick the district under the click) |
 | Streets | `buildStreets`, `buildLocal`/`decodeLocal`, `syncStreets`, `drawStreetLabels` |
@@ -61,7 +61,7 @@ The script runs top to bottom in roughly this order:
 
 ## Gotchas we learned the hard way
 
-- **The city basemap is pure gray.** Desaturation filters can't bring color back; water is recolored by its gray shade (`#nsz-water`) and parks are our own outlines. Park and building grays overlap at close zoom, so don't recolor parks by shade.
+- **The city basemap is pure gray.** Desaturation filters can't bring color back; water is recolored by its gray shade (`#nsz-water`) and parks are our own outlines. The tiles shade water darker along the shore; the lookup maps every water shade to one color so that shading doesn't show. Park and building grays overlap at close zoom, so don't recolor parks by shade.
 
 - **`[hidden]` loses to `display:` rules.** The CSS has `[hidden]{display:none!important}`. When you test, check that elements are actually visible, not just whether they have the attribute.
 - **Pages must work from disk.** Use relative links only, load extra data by `<script>` tag instead of `fetch`, and remember a folder link needs `index.html` added under `file://` (`LOCAL`, `LOCAL_FIX`).
