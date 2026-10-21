@@ -42,7 +42,7 @@ body{margin:0}
 :root{
   --bg:#f3f4f1; --panel:#ffffff; --fg:#1d2321; --muted:#5d6763; --line:#d9ddd8;
   --water:#cfdde3; --land:#eceee9; --nodata:#a3a8a5; --off:#e2e5e1; --accent:#f2b705; --accent-ink:#1d2321;
-  --hl:#0b4f8a; --dot:#1d2321; --road:#2c3331; --road-case:#ffffff; --zone-line:#4a2477; --warn-bg:#fff4d1; --warn-fg:#6b4d00;
+  --hl:#0b4f8a; --dot:#1d2321; --road:#2c3331; --road-case:#ffffff; --zone-line:#a48fc4; --dist-line:#4b3a63; --zl-halo:1px 0 0 #fff,-1px 0 0 #fff,0 1px 0 #fff,0 -1px 0 #fff,1px 1px 0 #fff,-1px -1px 0 #fff,1px -1px 0 #fff,-1px 1px 0 #fff,0 0 4px #fff,0 0 6px #fff; --warn-bg:#fff4d1; --warn-fg:#6b4d00;
   --z0:#b9d3a8; --z1:#f0c9a0; --z2:#b7c8e6; --z3:#e8b9c4; --z4:#d8d29a; --z5:#c3b5dd;
   --display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
   --body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
@@ -50,12 +50,12 @@ body{margin:0}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#141917; --panel:#1c2220; --fg:#e7ebe8; --muted:#9aa5a0; --line:#2f3835;
   --water:#0f1a20; --land:#1a201e; --nodata:#5d6461; --off:#262d2a; --accent:#f2b705; --accent-ink:#141917;
-  --hl:#7fb8ec; --dot:#e7ebe8; --road:#e3e8e5; --road-case:#0d1110; --zone-line:#d4bdff; --warn-bg:#3a3014; --warn-fg:#f3d98a;
+  --hl:#7fb8ec; --dot:#e7ebe8; --road:#e3e8e5; --road-case:#0d1110; --zone-line:#d4bdff; --dist-line:#e7ebe8; --zl-halo:0 0 3px var(--land),0 0 3px var(--land),0 0 2px var(--land); --warn-bg:#3a3014; --warn-fg:#f3d98a;
   --z0:#3d5536; --z1:#5c4430; --z2:#33456a; --z3:#5e3a45; --z4:#545026; --z5:#45395e; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#141917; --panel:#1c2220; --fg:#e7ebe8; --muted:#9aa5a0; --line:#2f3835;
   --water:#0f1a20; --land:#1a201e; --nodata:#5d6461; --off:#262d2a; --accent:#f2b705; --accent-ink:#141917;
-  --hl:#7fb8ec; --dot:#e7ebe8; --road:#e3e8e5; --road-case:#0d1110; --zone-line:#d4bdff; --warn-bg:#3a3014; --warn-fg:#f3d98a;
+  --hl:#7fb8ec; --dot:#e7ebe8; --road:#e3e8e5; --road-case:#0d1110; --zone-line:#d4bdff; --dist-line:#e7ebe8; --zl-halo:0 0 3px var(--land),0 0 3px var(--land),0 0 2px var(--land); --warn-bg:#3a3014; --warn-fg:#f3d98a;
   --z0:#3d5536; --z1:#5c4430; --z2:#33456a; --z3:#5e3a45; --z4:#545026; --z5:#45395e; color-scheme:dark}
 html,body{height:100%}
 body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.45}
@@ -309,7 +309,7 @@ aside>*{flex-shrink:0}
 .sw i.nzh{background:repeating-linear-gradient(-45deg,color-mix(in srgb,var(--muted) 45%,transparent) 0 2px,color-mix(in srgb,var(--muted) 8%,transparent) 2px 7px)}
 .zl .zd{font-weight:600;opacity:.7}
 .tip-d{font-family:var(--display);font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-size:.7rem}
-.sw i.dk{border:0;border-radius:0;height:0;width:18px;border-top:3.5px solid var(--fg);box-shadow:0 0 0 1.5px var(--panel);align-self:center}
+.sw i.dk{border:0;border-radius:0;height:0;width:18px;border-top:3.5px solid var(--dist-line);box-shadow:0 0 0 1.5px var(--panel);align-self:center}
 .dnum{font-family:var(--display);font-weight:700;font-size:26px;line-height:1;color:var(--fg);opacity:.55;text-align:center;white-space:nowrap;pointer-events:none;text-shadow:0 0 3px var(--panel),0 0 6px var(--panel),0 0 10px var(--panel)}
 .dnum small{display:block;font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:600}
 #nz-key .sw{display:flex;flex-wrap:wrap;gap:4px 14px;white-space:nowrap}
@@ -323,7 +323,7 @@ aside>*{flex-shrink:0}
 .layers{display:flex;flex-direction:column;gap:9px}
 .layers .chk i{margin-left:auto}
 .layers .chk[hidden]{display:none}
-.dk{display:inline-block;width:18px;height:0;border-top:3px solid var(--fg)}
+.dk{display:inline-block;width:18px;height:0;border-top:3px solid var(--dist-line)}
 .layers-ctl a{display:flex!important;align-items:center;justify-content:center}
 .gtm{display:block;width:100%;height:100%;overflow:visible;cursor:pointer;filter:drop-shadow(0 1px 2px rgba(0,0,0,.3))}
 .gtk{display:inline-block;width:12px;height:12px;flex:none;background:var(--fg);clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)}
@@ -370,7 +370,7 @@ details.kind>summary{cursor:pointer}details.kind>p{margin:4px 0 2px}
 .leaflet-tile-container{pointer-events:none}
 .leaflet-control-attribution{font-size:10px;line-height:1.4;padding:1px 6px;margin:0!important;background:color-mix(in srgb,var(--panel) 75%,transparent);color:var(--muted);border-radius:4px 0 0 0}
 .leaflet-control-attribution a{color:inherit}
-.zl{font-family:var(--display);font-weight:700;font-size:11px;color:var(--fg);text-align:center;white-space:nowrap;text-shadow:0 0 3px var(--land),0 0 3px var(--land),0 0 2px var(--land);pointer-events:none;line-height:1}
+.zl{font-family:var(--display);font-weight:700;font-size:11px;color:var(--fg);text-align:center;white-space:nowrap;text-shadow:var(--zl-halo);pointer-events:none;line-height:1}
 @media (max-width:760px){
   /* phones: full-screen map; search, level and color are buttons on the map; details slide up in a sheet */
   html,body{overflow:hidden}
@@ -1094,7 +1094,7 @@ function buildDistFill(){distFill.clearLayers();const on=LAY.dist&&!LAY.zones&&O
   Object.values(DIST).forEach(v=>L.polygon(v.r.map(r=>r.map(c=>[c[1],c[0]])),{renderer:fillRend,interactive:false,stroke:false,fillColor:(isDark()?DFILL_DARK:DFILL)[v.c||0],fillOpacity:isDark()?.7:.62}).addTo(distFill));
   if(!map.hasLayer(distFill))distFill.addTo(map)}
 const distLines=Object.values(DIST).flatMap(v=>v.r.map(r=>r.map(c=>[c[1],c[0]])));
-function distStyle(){const z=map.getZoom(),w=(z<11.5?1.4:z<12.5?2.2:z<13.5?3:z<15?3.8:4.6)*farScale();return[{renderer:distRend,interactive:false,color:css('--panel'),weight:w+3.5,opacity:.85,lineJoin:'round',lineCap:'round'},{renderer:distRend,interactive:false,color:css('--fg'),weight:w,opacity:.95,lineJoin:'round',lineCap:'round'}]}
+function distStyle(){const z=map.getZoom(),w=(z<11.5?1.4:z<12.5?2.2:z<13.5?3:z<15?3.8:4.6)*farScale();return[{renderer:distRend,interactive:false,color:css('--panel'),weight:w+3.5,opacity:.85,lineJoin:'round',lineCap:'round'},{renderer:distRend,interactive:false,color:css('--dist-line'),weight:w,opacity:.95,lineJoin:'round',lineCap:'round'}]}
 function buildDistricts(){distGroup.clearLayers();if(!distLines.length)return;const [h,l]=distStyle();L.polyline(distLines,h).addTo(distGroup);L.polyline(distLines,l).addTo(distGroup)}
 function drawDistNums(){distNums.clearLayers();const z=map.getZoom();if(!LAY.dist||z<10||z>=(LAY.zones?13:15.5))return;  // too crowded at zoom 9
   Object.entries(DIST).forEach(([k,v])=>L.marker(v.lp,{interactive:false,keyboard:false,pane:'distPane',icon:L.divIcon({className:'',html:'<div class="dnum">'+(z>=11.5?'<small>District</small>':'')+k+'</div>',iconSize:[70,40],iconAnchor:[35,z>=11.5?20:13]})}).addTo(distNums))}
