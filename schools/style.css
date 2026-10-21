@@ -72,6 +72,20 @@ h3.ex-h{font-size:.95rem;margin:14px 0 2px}h3.ex-h+p{margin:0}
 h3.adm-p{font-size:.95rem;margin:16px 0 2px}h3.adm-p small{font-weight:400;color:var(--muted)}
 .adm-sp{list-style:none;margin:4px 0 8px;padding:0}.adm-sp li{padding:6px 0;border-top:1px solid var(--line);font-size:.95rem}.adm-sp small{color:var(--muted)}
 details.about{margin:12px 0 4px;font-size:.9rem}details.about>summary{cursor:pointer;color:var(--muted)}details.about[open]>summary{margin-bottom:6px}
+/* fold_card: a card that folds to its heading and a summary line; FOLD_JS's "Expand all" opens every one */
+details.card.fold{padding:0}
+details.card.fold>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:16px 18px}
+details.card.fold>summary::-webkit-details-marker{display:none}
+details.card.fold>summary:focus-visible{outline:2px solid var(--hl);outline-offset:-2px;border-radius:10px}
+details.card.fold .fh{flex:1;min-width:0}details.card.fold .fh h2{margin:0}
+details.card.fold .fh small{display:block;color:var(--muted);font-size:.88rem;margin-top:3px}
+details.card.fold[open] .fh small{display:none}
+details.card.fold .chev{flex:none;width:9px;height:9px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);margin:-5px 4px 0 0}
+details.card.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
+details.card.fold>.fb{padding:0 18px 18px}
+.expand-all{all:unset;cursor:pointer;align-self:flex-end;color:var(--hl);font-size:.88rem;text-decoration:underline;margin:-10px 2px -12px}
+.expand-all:focus-visible{outline:2px solid var(--hl)}
+@media print{details.card.fold>.fb{display:block!important}details.card.fold .chev,.expand-all{display:none}}
 .progs li{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid var(--line);font-size:.95rem}
 .progs small{display:block;color:var(--muted);font-size:.8rem}.progs b small{font-family:var(--body);font-weight:400;text-align:right}.progs b{font-family:var(--display);white-space:nowrap;font-variant-numeric:tabular-nums}
 .near{list-style:none;margin:0;padding:0;columns:2;column-gap:20px;font-size:.92rem}
