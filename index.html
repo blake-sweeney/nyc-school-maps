@@ -661,8 +661,8 @@ const hasGT=d=>!!(X[d]&&X[d][8]&&X[d][8].includes('G&T'));
 const dualLang=d=>X[d]&&X[d][4]||null;
 // dual language by language: the common ones get their own color, the rest share "Other"; a school (or shared zone)
 // with two or more languages gets its own color too
-const DL_LANGS=[['Spanish','#127a72'],['Chinese','#d1495b'],['French','#7b5ea7'],['Russian','#e09f3e'],['Italian','#3a9d6e'],['Polish','#8c6d46']],
-  DL_OTHER='#c06fb0',DL_MULTI='#35b9d6';
+const DL_LANGS=[['Spanish','#e0b000'],['Chinese','#d1495b'],['French','#7b5ea7'],['Russian','#e07b39'],['Italian','#3a9d6e'],['Polish','#8c6d46']],
+  DL_OTHER='#c06fb0',DL_MULTI='#4b5563';
 function dlKey(l){return DL_LANGS.some(x=>x[0]===l)?l:'Other'}
 // '' = no dual language, a language name, 'multi'; null = no Snapshot data
 function zoneDl(dbns){if(!dbns.some(d=>X[d]&&!(CHX[d]&&!dualLang(d))))return null;const ks=new Set();  // charters: only a hand-checked few

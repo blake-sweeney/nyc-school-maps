@@ -698,7 +698,7 @@ def k_adm_html(ka, lv="es", dist=None, bare=False, zoned=False):
 # Colors and fonts: the map's (src/template.html :root, copied by set_from_template) plus these, for the zone maps and bars
 PAGE_VARS = {"light": "--zone:#f2b705;--zone-o:#e8e2c4;--dist:#eceee9;--bar:#1f8a84",
              "dark": "--zone:#c99a0a;--zone-o:#3a3a2a;--dist:#232a27;--bar:#2fa39b"}
-SHARED_VARS = ("bg", "panel", "fg", "muted", "line", "hl", "accent", "accent-ink", "warn-bg", "warn-fg", "display", "body")
+SHARED_VARS = ("bg", "panel", "fg", "muted", "line", "hl", "accent", "accent-ink", "warn-bg", "warn-fg", "sw-edge", "display", "body")
 CSS = """
 *,*::before,*::after{box-sizing:border-box}
 [hidden]{display:none!important}
@@ -737,7 +737,7 @@ h2{font-family:var(--display);font-weight:700;font-size:1.15rem;margin:0 0 8px}
 .zmap .sd{fill:var(--fg);stroke:var(--panel);stroke-width:3}.zmap .sr{fill:none;stroke:var(--hl);stroke-width:3}
 .note{background:var(--warn-bg);color:var(--warn-fg);padding:10px 12px;border-radius:8px;font-size:.92rem;margin:12px 0 0}
 .facts{display:grid;grid-template-columns:1fr auto;gap:6px 16px;margin:0;font-size:.95rem}
-.facts dd i.sw{display:inline-block;width:10px;height:10px;border-radius:2px;border:1px solid var(--line);margin-right:6px}
+.facts dd i.sw{display:inline-block;width:10px;height:10px;border-radius:2px;border:1px solid var(--sw-edge);margin-right:6px}
 .facts dt{color:var(--fg)}.facts dd{margin:0;font-family:var(--display);font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
 .facts dd.mates{grid-column:1/-1;margin-top:-4px;text-align:left;font-family:inherit;font-weight:400;font-size:.85rem;color:var(--muted)}
 .bars{display:flex;flex-direction:column;gap:6px}
@@ -1337,7 +1337,7 @@ table.sort th[aria-sort=descending] button::after{content:"▼"}
 table.sort td{padding:7px 10px;border-top:1px solid var(--line);text-align:center;font-family:var(--display);font-weight:600;white-space:nowrap}
 table.sort td:first-child{text-align:left;font-family:var(--body);font-weight:400;white-space:normal;min-width:150px}
 @media (max-width:640px){table.sort th:not(:first-child){width:68px}table.sort th button{padding:6px 3px}table.sort td{padding:7px 3px}}
-table.sort td i.sw{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:1px}
+table.sort td i.sw{display:inline-block;width:9px;height:9px;box-sizing:border-box;border:1px solid var(--sw-edge);border-radius:2px;margin-right:5px;vertical-align:1px}
 table.sort td small{color:var(--muted);font-size:.78rem}
 table.sort td small.line{display:block}
 .lvtabs{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel)}

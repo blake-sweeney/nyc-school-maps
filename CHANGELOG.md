@@ -9,10 +9,10 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 ## Unreleased
 
 ### Changed
-- "Dual language" colors Spanish programs dark teal instead of blue, so they don't look like the water.
+- "Dual language" colors Spanish programs gold and "Two or more" languages slate, instead of a blue and a cyan that looked like the water. Russian is a deeper orange so it stays apart from Spanish.
 
 ### Fixed
-- In light mode, the color squares next to ratings and test scores on school cards have a darker edge, so pale colors like Good (yellow) don't blend into the card.
+- In light mode, the color squares next to ratings and test scores on school cards and in the school and district page tables have a darker edge, so pale colors like Good (yellow) don't blend into the background.
 
 ## 1.45.0 (2026-10-21)
 
