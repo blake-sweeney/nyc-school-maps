@@ -27,7 +27,8 @@ CITY_READINESS = 54   # college readiness score, of 100
 
 # [value, [r, g, b]] stops, low (red) to high (green). The map's Color by modes, legends and card bars use them,
 # and so do the tables and bars on the generated pages.
-RED, ORANGE, YELLOW, GREEN = [184, 32, 42], [232, 116, 42], [247, 207, 69], [31, 138, 132]
+# Bright and light, so dark map labels and text read well on top of the zone fills
+RED, ORANGE, YELLOW, GREEN = [240, 96, 96], [255, 166, 90], [255, 226, 110], [70, 196, 170]
 # DOE ratings: 1 -> 5, 2 -> 50, 3 -> 75, 4 -> 95 on this scale
 RATE_STOPS = [[5, RED], [50, ORANGE], [75, YELLOW], [95, GREEN]]
 # % meeting state standards
