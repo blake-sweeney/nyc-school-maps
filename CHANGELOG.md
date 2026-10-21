@@ -11,6 +11,11 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 ### Changed
 - "All District 3 schools" on a map card opens the district page on the tab for the schools you're browsing: high schools when you're looking at high schools, middle schools for middle schools, elementary for elementary.
 
+## 1.49.0 (2026-10-21)
+
+### Fixed
+- In Safari (iPhone, iPad and Mac), the map shows blue water without the dark shading along the shore, and green parks, like other browsers. Before, Safari showed the city's plain gray map.
+
 ## 1.48.0 (2026-10-21)
 
 ### Changed
