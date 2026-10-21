@@ -1116,6 +1116,16 @@ def page_html(d, dbn, streets, site_url, goat, nbi=None):
     g_src = (d.get("CHX", {}).get(dbn) or [None])[0] if ch else (d.get("G") or {}).get(dbn) or s.get("g")
     parts = {l[0]: level_html(*l) for l in levels}
     kind, map_url, ms_url, zone_html, body_cards, near_html = parts[lv]
+    from urllib.parse import quote
+    addr_q = quote(f"{name}, {addr}, {boro}, NY")
+
+    def actions(map_url, ms_url):
+        """"Open on the map" and the quick links for one level: in each tab, so the map and MySchools open at its grades."""
+        return (f'<div class="actions"><a class="go" href="{e(map_url)}">Open on the map <span aria-hidden="true">→</span></a>\n'
+                f'<nav class="quick" aria-label="Links for this school">{ext(CH_APPLY, "How to apply") if ch else ext(ms_url, "MySchools: apply & see your chances")}'
+                f'{ext(f"https://www.schools.nyc.gov/schools/{dbn[2:]}", "School website")}{"" if ch else ext(f"https://insideschools.org/school/{dbn}", "InsideSchools")}'
+                f'{ext(f"https://www.google.com/maps/dir/?api=1&destination={addr_q}", "Directions")}</nav></div>')
+    actions_html = actions(map_url, ms_url)
     if len(parts) > 1:
         # a school that spans levels (K-8, 6-12): a tab per level, each a whole page for those grades. The tabs work like
         # the district pages' (TABS_JS): #es, #ms or #hs picks one, else the page's lead level
@@ -1130,8 +1140,8 @@ def page_html(d, dbn, streets, site_url, goat, nbi=None):
                        f'{words[l2]}<small>{e(span(l2))}</small></button>' for l2 in parts)
         zone_html = (f'<div class="lvtabs" role="tablist" aria-label="School level" style="grid-template-columns:repeat({len(parts)},1fr)">{tabs}</div>'
                      + "".join(f'<div class="lvpanel" role="tabpanel" id="p-{l2}" aria-labelledby="tab-{l2}">'
-                               f'<h2 class="lvh">{words[l2]} grades</h2>{p2[3]}{p2[4]}{p2[5]}</div>' for l2, p2 in parts.items()))
-        body_cards = near_html = ""
+                               f'<h2 class="lvh">{words[l2]} grades</h2>{actions(p2[1], p2[2])}{p2[3]}{p2[4]}{p2[5]}</div>' for l2, p2 in parts.items()))
+        body_cards = near_html = actions_html = ""
         if not ch:  # the kicker names the levels; each tab says how that level admits
             kind = {("es", "ms"): "Elementary and middle school", ("ms", "hs"): "Middle and high school",
                     ("es", "hs"): "Elementary and high school"}.get(tuple(parts), "Elementary, middle and high school")
@@ -1175,8 +1185,6 @@ def page_html(d, dbn, streets, site_url, goat, nbi=None):
         {"@type": "ListItem", "position": 2, "name": f"District {dist}", "item": f"{site_url}districts/{dist}/"},
         {"@type": "ListItem", "position": 3, "name": name, "item": canon}]}
 
-    from urllib.parse import quote
-    addr_q = quote(f"{name}, {addr}, {boro}, NY")
     apply_html = ('<section class="card"><h2>Apply</h2><p>Charter schools run their own lotteries, outside MySchools. Most take '
                   'applications through the common charter application, usually by April 1; some use their own form. Families '
                   'can apply to charter schools and through MySchools in the same year.</p>'
@@ -1222,8 +1230,7 @@ def page_html(d, dbn, streets, site_url, goat, nbi=None):
 <h1>{e(name)}</h1>
 <p class="lede">{e(addr)}{", " + e(boro) if addr else e(boro)}{home_nb} · DBN {e(dbn)}</p>
 </div>
-<div class="actions"><a class="go" href="{e(map_url)}">Open on the map <span aria-hidden="true">→</span></a>
-<nav class="quick" aria-label="Links for this school">{ext(CH_APPLY, "How to apply") if ch else ext(ms_url, "MySchools: apply & see your chances")}{ext(f"https://www.schools.nyc.gov/schools/{dbn[2:]}", "School website")}{"" if ch else ext(f"https://insideschools.org/school/{dbn}", "InsideSchools")}{ext(f"https://www.google.com/maps/dir/?api=1&destination={addr_q}", "Directions")}</nav></div>
+{actions_html}
 <button type="button" class="expand-all" aria-expanded="false" hidden>Expand all</button>
 {zone_html}
 {body_cards}
