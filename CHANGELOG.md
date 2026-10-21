@@ -6,7 +6,7 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
-## Unreleased
+## 1.50.0 (2026-10-21)
 
 ### Changed
 - "All District 3 schools" on a map card opens the district page on the tab for the schools you're browsing: high schools when you're looking at high schools, middle schools for middle schools, elementary for elementary.
