@@ -12,6 +12,8 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - "Dual language" colors Spanish programs gold and "Two or more" languages deep aubergine, instead of a blue and a cyan that looked like the water. Russian is olive, so it stays apart from Spanish and Chinese. The legend now has a "No data" entry for the gray: most charter schools aren't in the Snapshot's program lists.
 
 ### Fixed
+- The Center School's card and page say it takes new students in grade 5, not grade 6, instead of "0 / 0" grade 6 seats.
+- M.S. 936's card and page show its grade 6 seats and applicants from the DOE's admissions report (150 seats, 282 applied) instead of "0 / 0". A school with no seat counts anywhere now says so instead of showing "0 / 0".
 - In light mode, the color squares next to ratings and test scores on school cards, in the map's key, in the school and district page tables, and in the Demographics and "Where graduates went" keys have a darker edge, so pale colors like Good (yellow) don't blend into the background.
 
 ## 1.45.0 (2026-10-21)

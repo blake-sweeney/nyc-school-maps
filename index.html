@@ -646,7 +646,7 @@ async function loadLevel(lv){if(LV[lv])return true;if(!ASSETS[lv])return false;
   try{const x=await getAsset(lv);
     Object.entries(x.schools).forEach(([d,s])=>{S[d]=Object.assign({},s,S[d]||{})});snapNames(Object.keys(x.schools));
     if(x.O)Object.assign(O,x.O);if(x.Q)Object.assign(Q,x.Q);
-    LV[lv]={F:x.features,T:x.T||{},S:x.schools,P:x.P||{},A:x.A||{},EX:x.EX||{},EXV:x.EXV||[],NZ:allNZ(x,lv),CUT:x.CUT||null,CHR:x.CHR||{},CHX:x.CHX||{}};if(x.R)Object.entries(x.R).forEach(([k,v])=>{if(!R[k])R[k]=v});if(x.X)Object.entries(x.X).forEach(([k,v])=>{if(!X[k])X[k]=v});if(x.DM)Object.assign(DM,x.DM);regNZ(LV[lv].NZ);return true}
+    LV[lv]={F:x.features,T:x.T||{},S:x.schools,P:x.P||{},A:x.A||{},EX:x.EX||{},EXV:x.EXV||[],EG:x.EG||{},NZ:allNZ(x,lv),CUT:x.CUT||null,CHR:x.CHR||{},CHX:x.CHX||{}};if(x.R)Object.entries(x.R).forEach(([k,v])=>{if(!R[k])R[k]=v});if(x.X)Object.entries(x.X).forEach(([k,v])=>{if(!X[k])X[k]=v});if(x.DM)Object.assign(DM,x.DM);regNZ(LV[lv].NZ);return true}
   catch(e){alertLoad();return false}finally{document.body.style.cursor=''}}
 function alertLoad(){const m=document.getElementById('llmsg');if(m){m.textContent='Couldn’t load that part of the map. Check your connection and try again.';m.hidden=false}}
 const RK={ip:2,ss:3,rf:4},RNAME={ip:'Instruction and Performance',ss:'Safety and School Climate',rf:'Relationships with Families'};
@@ -717,7 +717,7 @@ function chBlock(o){const x=CHX[o.d]||[];
     ' Apply through the <a href="'+CH_APPLY+'" target="_blank" rel="noopener">common charter application ↗</a> or on the school’s own site, by April 1 for most schools. It’s separate from MySchools: applying doesn’t affect your MySchools application.'+
     (x[3]?' Formerly '+esc(x[3])+'.':'')+'</p></details>'}
 regNZ(NZ_ES);
-[['ms',MSD],['hs',HSD]].forEach(([lv,x])=>{if(!x||!LV[lv])return;Object.assign(LV[lv],{P:x.P||{},A:x.A||{},EX:x.EX||{},EXV:x.EXV||[],NZ:allNZ(x,lv),CUT:x.CUT||null,CHR:x.CHR||{},CHX:x.CHX||{}});
+[['ms',MSD],['hs',HSD]].forEach(([lv,x])=>{if(!x||!LV[lv])return;Object.assign(LV[lv],{P:x.P||{},A:x.A||{},EX:x.EX||{},EXV:x.EXV||[],EG:x.EG||{},NZ:allNZ(x,lv),CUT:x.CUT||null,CHR:x.CHR||{},CHX:x.CHX||{}});
   if(x.R)Object.entries(x.R).forEach(([k,v])=>{if(!R[k])R[k]=v});if(x.X)Object.entries(x.X).forEach(([k,v])=>{if(!X[k])X[k]=v});regNZ(LV[lv].NZ)});
 function nzDistricts(o){const ds=o.pd.length?o.pd:[+o.d.slice(0,2)];return ds}
 function nzPriority(o){if(o.ch)return 'Admission is by lottery only. Charter schools can’t screen: no tests, grades, interviews or auditions. Lottery priority usually goes to siblings, then to families who live in District '+o.pd[0]+'.';if(o.hs){if(o.gt)return o.pr.some(p=>p[1]==='T')?'Admission is by SHSAT score only. Any NYC 8th or 9th grader can take the test.':'Admission is by audition. Students from anywhere in NYC can apply.';return o.pz||'Open to students from anywhere in NYC.'}if(o.gt)return 'Open to children found eligible for G&T, from anywhere in NYC.'+(o.pd.length?' Priority to eligible children in Districts '+o.pd.slice(0,-1).join(', ')+' and '+o.pd[o.pd.length-1]+'.':'');const ds=nzDistricts(o),t=ds.length>1?'Districts '+ds.slice(0,-1).join(', ')+' and '+ds[ds.length-1]:'District '+ds[0];
@@ -1279,10 +1279,17 @@ function outSec(d){const o=O[d],g=o&&o[OUT.grad.i];if(g==null)return outHtml(d);
   return sec('out','<span class="st">Graduation rate<small>Graduates in 4 years · NYC 81%</small></span><span class="chip"><i style="'+bgBoth(()=>outColor('grad',g))+'"></i>'+Math.round(g)+'%</span>',outHtml(d))}
 // grade 6 or grade 9 admissions: the MySchools tables when the school has them (seats / applied up top, summed over its
 // programs), else the Local Law 72 table with its own year
-function admSec(d){const g=level==='ms'?'6':'9',R=msProgs(d,level);
-  if(R.length){const st=R.reduce((a,p)=>a+(p[2]||0),0),ap=R.reduce((a,p)=>a+(p[3]||0),0);
-    return sec('adm-'+g,'<span class="st">Admissions, grade '+g+'<small>Seats / applied, fall 2026</small></span><span class="sa">'+st.toLocaleString()+' / '+ap.toLocaleString()+'</span>',msAdmHtml(d,level,msAdm(d,level),'students'))}
-  const k=(LV[level]&&LV[level].A||{})[d],y=k&&Object.keys(k).sort().pop(),r=y&&k[y];if(!r)return '';
+// MySchools sometimes lists a school's priority groups with no seats or applicants: then the summary takes the Local
+// Law 72 numbers, or names the grade it takes new students in (LV.ms.EG, school_fixes.json "entry"), or shows none
+function admSec(d){const eg=level==='ms'&&LV.ms.EG&&LV.ms.EG[d],g=eg?String(eg):level==='ms'?'6':'9',R=msProgs(d,level);
+  const k=(LV[level]&&LV[level].A||{})[d],y=k&&Object.keys(k).sort().pop(),r=y&&k[y];
+  if(R.length){const st=R.reduce((a,p)=>a+(p[2]||0),0),ap=R.reduce((a,p)=>a+(p[3]||0),0),none=R.every(p=>p[2]==null&&p[3]==null);
+    const [sub,sa,note]=!none?['Seats / applied, fall 2026',st.toLocaleString()+' / '+ap.toLocaleString(),'']
+      :eg?['Takes new students in grade '+eg,'','<p class="adm-note">This school takes new students in grade '+eg+', not grade 6, so families apply when their child is in grade '+(eg-1)+'. MySchools lists the priority groups below but no seat counts.</p>']
+      :r?['Seats / applied, fall '+y,r[0].toLocaleString()+' / '+r[1].toLocaleString(),'']
+      :['Priority groups, fall 2026','','<p class="adm-note">MySchools lists this school’s priority groups but no seat counts.</p>'];
+    return sec('adm-'+g,'<span class="st">Admissions, grade '+g+'<small>'+sub+'</small></span>'+(sa?'<span class="sa">'+sa+'</span>':''),msAdmHtml(d,level,note+msAdm(d,level),'students'))}
+  if(!r)return '';
   return sec('adm-'+g,'<span class="st">Admissions, grade '+g+'<small>Seats / applied, fall '+y+'</small></span><span class="sa">'+r[0].toLocaleString()+' / '+r[1].toLocaleString()+'</span>',admHtml(d,level,true))}
 // middle school classes, sports and activities (MySchools, LV.ms.EX as indexes into EXV): counts up top, the lists inside
 const EX_GROUPS=['Accelerated and honors classes','Arts courses','Electives','Sports','Clubs and activities'];

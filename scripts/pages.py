@@ -519,19 +519,32 @@ def ms_progs(progs):
     return [p for p in progs or [] if p[1] not in SPECIAL and p[1] != "T" and (p[3] is not None or (len(p) > 6 and p[6]))]
 
 
-def ms_adm_html(dbn, lv, progs, ka, dist):
+def ms_adm_html(dbn, lv, progs, ka, dist, eg=None):
     """Grade 6 or 9 admissions from MySchools: a table per program, special ed seats, District 75 and ASD/ACES
-    programs, and the Local Law 72 numbers in "About this data". "" when MySchools has nothing for the school."""
+    programs, and the Local Law 72 numbers in "About this data". "" when MySchools has nothing for the school.
+    eg: the grade a middle school takes new students in, when it isn't 6 (school_fixes.json "entry")."""
     R = ms_progs(progs)
     if not R:
         return ""
     N = HNAME if lv == "hs" else MNAME
     solo = len(R) == 1
-    G = {"ms": "Grade 6", "hs": "Grade 9"}[lv]
-    h = (f"<h2>{G} admissions, {settings.MYSCHOOLS_LABEL}</h2>"
-         f"<p>{sum(p[2] or 0 for p in R):,} seats · {sum(p[3] or 0 for p in R):,} applied"
-         + (f", across {len(R)} programs" if not solo else "") + "</p>")
+    G = f"Grade {eg}" if eg else {"ms": "Grade 6", "hs": "Grade 9"}[lv]
+    h = f"<h2>{G} admissions, {settings.MYSCHOOLS_LABEL}</h2>"
     tr = true_apps(ka)  # the school's, not a program's: under the table only when there's one program
+    # MySchools sometimes lists the priority groups with no seats or applicants: name the entry grade, or take the
+    # Local Law 72 numbers, or say there are none
+    if all(p[2] is None and p[3] is None for p in R):
+        y = max(ka) if ka else None
+        if eg:
+            h += (f"<p>This school takes new students in grade {eg}, not grade 6, so families apply when their child is in "
+                  f"grade {eg - 1}. MySchools lists the priority groups below but no seat counts.</p>")
+        elif y and ka[y] and ka[y][0] is not None:
+            h += f"<p>{ka[y][0]:,} seats · {ka[y][1] or 0:,} applied (fall {e(y)} DOE report)</p>"
+        else:
+            h += "<p>MySchools lists this school’s priority groups but no seat counts.</p>"
+    else:
+        h += (f"<p>{sum(p[2] or 0 for p in R):,} seats · {sum(p[3] or 0 for p in R):,} applied"
+              + (f", across {len(R)} programs" if not solo else "") + "</p>")
     tr_line = f'<p class="src">True applicants: {tr[1]:,} (fall {e(tr[0])} DOE report)</p>' if tr else ""
     for p in R:
         how = " · ".join(x for x in (N.get(p[1], p[1]), f"{p[2]} seats" + (", all filled" if p[4] else "") if p[2] is not None else "",
@@ -865,7 +878,8 @@ def page_html(d, dbn, streets, site_url, goat, nbi=None):
                      + '</div></section>')
     else:
         # where the admissions tables list each program's priority groups, say so instead of summarizing them
-        listed = (f" Each program’s priority groups are listed under {'Grade 9' if lv == 'hs' else 'Grade 6'} admissions below."
+        g_adm = "Grade 9" if lv == "hs" else f"Grade {(MS.get('EG') or {}).get(dbn, 6)}"
+        listed = (f" Each program’s priority groups are listed under {g_adm} admissions below."
                   if lv in ("ms", "hs") and ms_progs(((HS if lv == "hs" else MS).get("P") or {}).get(dbn)) else "")
         if lv == "hs":
             if gt:
@@ -963,7 +977,8 @@ def page_html(d, dbn, streets, site_url, goat, nbi=None):
         """Grade 6 or 9 admissions: MySchools tables per program, else the Local Law 72 table and the program list."""
         progs = ((HS if lv == "hs" else MS).get("P") or {}).get(dbn) or []
         ka = ((HS if lv == "hs" else MS).get("A") or {}).get(dbn)
-        return ms_adm_html(dbn, lv, progs, ka, dist) or (k_adm_html(ka, lv, dist) + programs_html(dbn, progs, lv == "hs"))
+        eg = (MS.get("EG") or {}).get(dbn) if lv == "ms" else None
+        return ms_adm_html(dbn, lv, progs, ka, dist, eg) or (k_adm_html(ka, lv, dist) + programs_html(dbn, progs, lv == "hs"))
     if lv in ("ms", "hs"):
         h = admissions(lv)
         sections.append(h + more(ext(ms_url, "Program details, open houses and your chances on MySchools"),
