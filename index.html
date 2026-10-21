@@ -42,7 +42,7 @@ body{margin:0}
 :root{
   --bg:#f3f4f1; --panel:#ffffff; --fg:#1d2321; --muted:#5d6763; --line:#d9ddd8;
   --water:#cfdde3; --land:#eceee9; --nodata:#a3a8a5; --off:#e2e5e1; --accent:#f2b705; --accent-ink:#1d2321;
-  --hl:#0b4f8a; --dot:#1d2321; --road:#2c3331; --road-case:#ffffff; --zone-line:#a0a0b0; --dist-line:#8d8d9d; --sel:#ffff00; --zl-halo:1px 0 0 #fff,-1px 0 0 #fff,0 1px 0 #fff,0 -1px 0 #fff,1px 1px 0 #fff,-1px -1px 0 #fff,1px -1px 0 #fff,-1px 1px 0 #fff,0 0 4px #fff,0 0 6px #fff; --warn-bg:#fff4d1; --warn-fg:#6b4d00;
+  --hl:#0b4f8a; --dot:#1d2321; --road:#2c3331; --road-case:#ffffff; --zone-line:#a0a0b0; --dist-line:#8d8d9d; --sel:#ffff00; --nz-stripe:25%; --zl-halo:1px 0 0 #fff,-1px 0 0 #fff,0 1px 0 #fff,0 -1px 0 #fff,1px 1px 0 #fff,-1px -1px 0 #fff,1px -1px 0 #fff,-1px 1px 0 #fff,0 0 4px #fff,0 0 6px #fff; --warn-bg:#fff4d1; --warn-fg:#6b4d00;
   --z0:#b9d3a8; --z1:#f0c9a0; --z2:#b7c8e6; --z3:#e8b9c4; --z4:#d8d29a; --z5:#c3b5dd;
   --display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
   --body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
@@ -50,12 +50,12 @@ body{margin:0}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#141917; --panel:#1c2220; --fg:#e7ebe8; --muted:#9aa5a0; --line:#2f3835;
   --water:#0f1a20; --land:#1a201e; --nodata:#5d6461; --off:#262d2a; --accent:#f2b705; --accent-ink:#141917;
-  --hl:#7fb8ec; --dot:#e7ebe8; --road:#e3e8e5; --road-case:#0d1110; --zone-line:#d4bdff; --dist-line:#e7ebe8; --sel:#7fb8ec; --zl-halo:0 0 3px var(--land),0 0 3px var(--land),0 0 2px var(--land); --warn-bg:#3a3014; --warn-fg:#f3d98a;
+  --hl:#7fb8ec; --dot:#e7ebe8; --road:#e3e8e5; --road-case:#0d1110; --zone-line:#d4bdff; --dist-line:#e7ebe8; --sel:#7fb8ec; --nz-stripe:45%; --zl-halo:0 0 3px var(--land),0 0 3px var(--land),0 0 2px var(--land); --warn-bg:#3a3014; --warn-fg:#f3d98a;
   --z0:#3d5536; --z1:#5c4430; --z2:#33456a; --z3:#5e3a45; --z4:#545026; --z5:#45395e; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#141917; --panel:#1c2220; --fg:#e7ebe8; --muted:#9aa5a0; --line:#2f3835;
   --water:#0f1a20; --land:#1a201e; --nodata:#5d6461; --off:#262d2a; --accent:#f2b705; --accent-ink:#141917;
-  --hl:#7fb8ec; --dot:#e7ebe8; --road:#e3e8e5; --road-case:#0d1110; --zone-line:#d4bdff; --dist-line:#e7ebe8; --sel:#7fb8ec; --zl-halo:0 0 3px var(--land),0 0 3px var(--land),0 0 2px var(--land); --warn-bg:#3a3014; --warn-fg:#f3d98a;
+  --hl:#7fb8ec; --dot:#e7ebe8; --road:#e3e8e5; --road-case:#0d1110; --zone-line:#d4bdff; --dist-line:#e7ebe8; --sel:#7fb8ec; --nz-stripe:45%; --zl-halo:0 0 3px var(--land),0 0 3px var(--land),0 0 2px var(--land); --warn-bg:#3a3014; --warn-fg:#f3d98a;
   --z0:#3d5536; --z1:#5c4430; --z2:#33456a; --z3:#5e3a45; --z4:#545026; --z5:#45395e; color-scheme:dark}
 html,body{height:100%}
 body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.45}
@@ -157,7 +157,7 @@ aside>*{flex-shrink:0}
 .school hr.sep,.card>hr.sep{border:0;border-top:1px solid var(--line);margin:8px 0 6px;width:100%}
 .card>hr.sep{margin:0}
 .rates .sub-r{padding-left:14px;color:var(--muted)}
-.lbar{height:12px;border-radius:3px;background:linear-gradient(90deg,#f06060 0%,#f06060 5%,#ffe26e 50%,#46c4aa 95%,#46c4aa 100%)}
+.lbar{height:12px;border-radius:3px;background:linear-gradient(90deg,var(--r-red) 0%,var(--r-red) 5%,var(--r-yellow) 50%,var(--r-green) 95%,var(--r-green) 100%)}
 .lticks{position:relative;height:16px;font-family:var(--display);font-size:.75rem;color:var(--muted);font-variant-numeric:tabular-nums}
 .lticks span{position:absolute;top:2px;transform:translateX(-50%)}
 .lticks span:last-child{transform:translateX(-70%)}
@@ -302,11 +302,14 @@ aside>*{flex-shrink:0}
 .theme-pick .link-btn[aria-pressed="true"]{color:var(--fg);font-weight:700;text-decoration:none;cursor:default}
 .about details summary{cursor:pointer;color:var(--fg);font-family:var(--display);font-weight:600}
 .about details p{margin:6px 0 0}
-.sw i.stripes{background:repeating-linear-gradient(45deg,#46c4aa 0 3px,#ffa65a 3px 6px)}
+:root{--r-red:#f06060;--r-orange:#ffa65a;--r-yellow:#ffe26e;--r-green:#46c4aa}@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--r-red:#b8202a;--r-orange:#e8742a;--r-yellow:#f7cf45;--r-green:#1f8a84}}:root[data-theme="dark"]{--r-red:#b8202a;--r-orange:#e8742a;--r-yellow:#f7cf45;--r-green:#1f8a84}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) [style*="--cd:"]{background:var(--cd)!important}}
+:root[data-theme="dark"] [style*="--cd:"]{background:var(--cd)!important}
+.sw i.stripes{background:repeating-linear-gradient(45deg,var(--r-green) 0 3px,var(--r-orange) 3px 6px)}
 #map-legend .nz-key{order:10}
 #map-legend .dist-key{order:11}
 #map-legend .nozone-key{order:9}
-.sw i.nzh{background:repeating-linear-gradient(-45deg,color-mix(in srgb,var(--muted) 45%,transparent) 0 2px,color-mix(in srgb,var(--muted) 8%,transparent) 2px 7px)}
+.sw i.nzh{background:repeating-linear-gradient(-45deg,color-mix(in srgb,var(--muted) var(--nz-stripe),transparent) 0 2px,color-mix(in srgb,var(--muted) 8%,transparent) 2px 7px)}
 .zl .zd{font-weight:600;opacity:.7}
 .tip-d{font-family:var(--display);font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-size:.7rem}
 .sw i.dk{border:0;border-radius:0;height:0;width:18px;border-top:3.5px solid var(--dist-line);box-shadow:0 0 0 1.5px var(--panel);align-self:center}
@@ -558,7 +561,7 @@ details.kind>summary{cursor:pointer}details.kind>p{margin:4px 0 2px}
     <div class="lg-head"><button type="button" class="map-btn" id="color-btn" aria-expanded="false" aria-controls="color-panel"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2 8.5 12 14l10-5.5z"/><path d="m2 13 10 5.5L22 13"/><path d="m2 17.5 10 5.5 10-5.5" opacity=".5"/></svg><span><small>Color by</small><b id="color-name">Overall rating</b></span><span class="car" aria-hidden="true">▾</span></button><button type="button" class="lg-info" id="lg-info" aria-expanded="false" aria-label="About these colors">i</button></div>
     <span id="grp-src">DOE School Quality Snapshot · 2024–25</span>
       <div class="legend" id="leg-rate">
-        <div class="sw"><span><i style="background:#46c4aa"></i>Excellent (4)</span><span><i style="background:#ffe26e"></i>Good (3)</span><span><i style="background:#ffa65a"></i>Fair (2)</span><span><i style="background:#f06060"></i>Needs Improvement (1)</span></div>
+        <div class="sw"><span><i style="background:var(--r-green)"></i>Excellent (4)</span><span><i style="background:var(--r-yellow)"></i>Good (3)</span><span><i style="background:var(--r-orange)"></i>Fair (2)</span><span><i style="background:var(--r-red)"></i>Needs Improvement (1)</span></div>
         <p class="hint" id="rate-hint"></p>
       </div>
       <div class="legend" id="leg-pk" hidden>
@@ -894,13 +897,17 @@ function tipHtml(f){const p=f.properties;const dt=distTag(p);
 function psNum(f){const p=f.properties;return p.dbns.length?p.label||p.dbns[0].slice(3):''}
 // proficiency for a zone: pooled across its schools that have results
 function pct(dbns,m){let n=0,p=0;dbns.forEach(d=>{const v=T[d];if(!v)return;if(m!=='math'){n+=v[0];p+=v[1]}if(m!=='ela'){n+=v[2];p+=v[3]}});return n?100*p/n:null}
-const STOPS=[[5,[240,96,96]],[50,[255,166,90]],[75,[255,226,110]],[95,[70,196,170]]];  // scripts/settings.py
-function rampColor(v,S){if(v<=S[0][0])return rgb(S[0][1]);for(let i=1;i<S.length;i++){const[a,ca]=S[i-1],[b,cb]=S[i];if(v<=b){const t=(v-a)/(b-a);return rgb(ca.map((c,k)=>c+(cb[k]-c)*t))}}return rgb(S[S.length-1][1])}
+const STOPS=[[5,"red"],[50,"orange"],[75,"yellow"],[95,"green"]],RAMP={"light":{"red":[240,96,96],"orange":[255,166,90],"yellow":[255,226,110],"green":[70,196,170]},"dark":{"red":[184,32,42],"orange":[232,116,42],"yellow":[247,207,69],"green":[31,138,132]}};  // scripts/settings.py: stops name a color, RAMP gives each theme's
+// rampTheme: draw in one theme's colors for now (bgBoth); otherwise the current theme's
+let rampTheme=null;
+function rampColor(v,S){const P=RAMP[rampTheme||(isDark()?'dark':'light')];if(v<=S[0][0])return rgb(P[S[0][1]]);for(let i=1;i<S.length;i++){const[a,na]=S[i-1],[b,nb]=S[i];if(v<=b){const t=(v-a)/(b-a),ca=P[na],cb=P[nb];return rgb(ca.map((c,k)=>c+(cb[k]-c)*t))}}return rgb(P[S[S.length-1][1]])}
+// card swatches and bars: the light color inline, the dark one in --cd for the dark theme's CSS rule, so they follow a theme switch
+function bgBoth(f){rampTheme='light';const l=f();rampTheme='dark';const d=f();rampTheme=null;return 'background:'+l+';--cd:'+d}
 // state tests: straight red (5%) -> yellow (50%) -> green (95%)
-const TEST_STOPS=[[5,[240,96,96]],[50,[255,226,110]],[95,[70,196,170]]];
+const TEST_STOPS=[[5,"red"],[50,"yellow"],[95,"green"]];
 function scoreColor(v){return rampColor(v,TEST_STOPS)}
 // high school outcomes have their own ranges: graduation 65/80/95, college & career 40/60/80
-const OUT_STOPS={"grad":[[65,[240,96,96]],[80,[255,226,110]],[95,[70,196,170]]],"coll":[[40,[240,96,96]],[60,[255,226,110]],[80,[70,196,170]]],"ccr":[[35,[240,96,96]],[55,[255,226,110]],[80,[70,196,170]]],"sat":[[800,[240,96,96]],[950,[255,226,110]],[1200,[70,196,170]]]},outTicks=m=>OUT_STOPS[m].map(x=>x[0]);
+const OUT_STOPS={"grad":[[65,"red"],[80,"yellow"],[95,"green"]],"coll":[[40,"red"],[60,"yellow"],[80,"green"]],"ccr":[[35,"red"],[55,"yellow"],[80,"green"]],"sat":[[800,"red"],[950,"yellow"],[1200,"green"]]},outTicks=m=>OUT_STOPS[m].map(x=>x[0]);
 const OUT={grad:{i:0,stops:OUT_STOPS.grad,ticks:outTicks('grad'),name:'4-year graduation rate'},
            coll:{i:1,stops:OUT_STOPS.coll,ticks:outTicks('coll'),name:'College & career'},
            ccr:{q:1,abs:1,stops:OUT_STOPS.ccr,ticks:outTicks('ccr'),name:'College readiness'},
@@ -925,7 +932,8 @@ function buildNoZone(){noZoneGroup.clearLayers();const nk=document.getElementByI
   const fs=byLayer.filter(l=>noZoneHere(l.feature.properties));if(!fs.length)return;
   const g=L.geoJSON({type:'FeatureCollection',features:fs.map(l=>l.feature)},{style:{renderer:nzRend,stroke:false,fill:true,fillOpacity:1,interactive:false}}).addTo(noZoneGroup);
   const svg=nzRend._container;if(!svg)return;let defs=svg.querySelector('defs');if(!defs){defs=document.createElementNS('http://www.w3.org/2000/svg','defs');svg.insertBefore(defs,svg.firstChild)}
-  const c=css('--muted');defs.innerHTML='<pattern id="nozone" patternUnits="userSpaceOnUse" width="9" height="9" patternTransform="rotate(-45)"><rect width="9" height="9" fill="'+c+'" fill-opacity=".08"/><rect width="2" height="9" fill="'+c+'" fill-opacity=".45"/></pattern>';
+  const c=css('--muted'),o=parseFloat(css('--nz-stripe'))/100;  // stripe strength per theme (--nz-stripe)
+  defs.innerHTML='<pattern id="nozone" patternUnits="userSpaceOnUse" width="9" height="9" patternTransform="rotate(-45)"><rect width="9" height="9" fill="'+c+'" fill-opacity="'+(o*.18).toFixed(3)+'"/><rect width="2" height="9" fill="'+c+'" fill-opacity="'+o+'"/></pattern>';
   g.eachLayer(x=>{if(x._path)x._path.setAttribute('fill','url(#nozone)')})}
 function buildStripes(){buildNoZone();stripeGroup.clearLayers();if(metric==='none'||!byLayer.length||!LAY.zones)return;
   const a=zoneAlpha();let defs=null,i=0;
@@ -1205,8 +1213,8 @@ function grades(g,d){if(!g)return '';let l=g.split(',').filter(x=>x!=='3K'&&x!==
   const pk=d&&PK[d];if(pk){l=l.filter(x=>x!=='PK');if(pk[0])l.unshift('PK');if(pk[2])l.unshift('3K')}
   const a=l.map(x=>x==='3K'?'3-K':x==='PK'?'Pre-K':x==='0K'?'K':String(+x));return a.length>1?a[0]+'–'+a[a.length-1]:a[0]}
 const card=document.getElementById('card');
-function row(lbl,n,p){if(!n)return '';const v=100*p/n;return '<span>'+lbl+'</span><span class="bar"><i style="width:'+v.toFixed(1)+'%;background:'+scoreColor(v)+'"></i></span><b>'+Math.round(v)+'%</b>'}
-function chip(r,num){return r==null?'<span class="chip">n/a</span>':'<span class="chip"><i style="background:'+rateColor(r)+'"></i>'+r.toFixed(1)+' / 4'+'</span>'}
+function row(lbl,n,p){if(!n)return '';const v=100*p/n;return '<span>'+lbl+'</span><span class="bar"><i style="width:'+v.toFixed(1)+'%;'+bgBoth(()=>scoreColor(v))+'"></i></span><b>'+Math.round(v)+'%</b>'}
+function chip(r,num){return r==null?'<span class="chip">n/a</span>':'<span class="chip"><i style="'+bgBoth(()=>rateColor(r))+'"></i>'+r.toFixed(1)+' / 4'+'</span>'}
 function tagsHtml(d){const x=X[d];if(!x)return '';const tags=[];if(hasGT(d))tags.push('Gifted &amp; Talented');if(x[4])tags.push('Dual language: '+esc(x[4]));
   return tags.length?'<div class="tags">'+tags.map(s=>'<span class="tag">'+s+'</span>').join('')+'</div>':''}
 // "159 of 1,030 (15%)" from the Snapshot's counts (XN) when they match the enrollment shown, else its percentage
@@ -1265,10 +1273,10 @@ function rateSec(d){const r=R[d];if(!r||r.slice(2,5).every(x=>x==null))return '<
 function testSec(d){const v=T[d];if(!v)return scoreHtml(d);
   const b=pct([d],'both'),e=v[0]?100*v[1]/v[0]:null,m=v[2]?100*v[3]/v[2]:null,gap=e!=null&&m!=null?Math.round(m-e):0;
   const hint=Math.abs(gap)>=10?(gap>0?'Math ':'ELA ')+Math.abs(gap)+' points higher':'ELA and math, grades '+LEVEL_TXT[level].grades;
-  return sec('tests','<span class="st">State test score<small>'+hint+'</small></span><span class="chip"><i style="background:'+scoreColor(b)+'"></i>'+Math.round(b)+'%</span>',scoreHtml(d))}
+  return sec('tests','<span class="st">State test score<small>'+hint+'</small></span><span class="chip"><i style="'+bgBoth(()=>scoreColor(b))+'"></i>'+Math.round(b)+'%</span>',scoreHtml(d))}
 // high school outcomes: the 4-year graduation rate up top, the other measures and where graduates went inside
 function outSec(d){const o=O[d],g=o&&o[OUT.grad.i];if(g==null)return outHtml(d);
-  return sec('out','<span class="st">Graduation rate<small>Graduates in 4 years · NYC 81%</small></span><span class="chip"><i style="background:'+outColor('grad',g)+'"></i>'+Math.round(g)+'%</span>',outHtml(d))}
+  return sec('out','<span class="st">Graduation rate<small>Graduates in 4 years · NYC 81%</small></span><span class="chip"><i style="'+bgBoth(()=>outColor('grad',g))+'"></i>'+Math.round(g)+'%</span>',outHtml(d))}
 // grade 6 or grade 9 admissions: the MySchools tables when the school has them (seats / applied up top, summed over its
 // programs), else the Local Law 72 table with its own year
 function admSec(d){const g=level==='ms'?'6':'9',R=msProgs(d,level);
@@ -1324,8 +1332,8 @@ function zipOf(d){const z=ZIP[d],s=S[d];return z&&s&&s.a&&(z.slice(6)==='*'||z.s
 function addrHtml(d){const s=S[d];if(!s||!s.a)return '';const z=zipOf(d),full=title(s.a)+', '+boroOf(d)+', NY'+(z?' '+z:'');
   return '<span class="addr">'+esc(title(s.a))+', '+esc(boroOf(d))+(z?' '+z:'')+'<button type="button" class="copy-addr" data-copy="'+esc(full)+'" aria-label="Copy address: '+esc(full)+'">Copy</button></span>'}
 function outHtml(d){const o=O[d];if(!o)return '<span class="meta">No 2024–25 graduation data.</span>';
-  const r=(lbl,m)=>{const v=o[OUT[m].i];return v==null?'':'<span>'+lbl+'</span><span class="bar"><i style="width:'+v+'%;background:'+outColor(m,v)+'"></i></span><b>'+Math.round(v)+'%</b>'};
-  const q=Q[d]||[],ab=(lbl,m,txt)=>{const v=outVal(d,m);return v==null?'':'<span>'+lbl+'</span><span class="bar"><i style="width:'+outPos(m,v).toFixed(1)+'%;background:'+outColor(m,v)+'"></i></span><b>'+(txt?txt(v):Math.round(v))+'</b>'};
+  const r=(lbl,m)=>{const v=o[OUT[m].i];return v==null?'':'<span>'+lbl+'</span><span class="bar"><i style="width:'+v+'%;'+bgBoth(()=>outColor(m,v))+'"></i></span><b>'+Math.round(v)+'%</b>'};
+  const q=Q[d]||[],ab=(lbl,m,txt)=>{const v=outVal(d,m);return v==null?'':'<span>'+lbl+'</span><span class="bar"><i style="width:'+outPos(m,v).toFixed(1)+'%;'+bgBoth(()=>outColor(m,v))+'"></i></span><b>'+(txt?txt(v):Math.round(v))+'</b>'};
   return '<div class="scores">'+r('Graduates in 4 years','grad')+r('College or career program','coll')+ab('College readiness score','ccr')+ab('Average SAT','sat')+'<small>2024–25 School Quality Snapshot · city averages: '+(o[2]!=null?'graduation '+o[2]+'%, ':'')+'readiness 54 (of 100). Readiness counts students who graduate ready for college work by CUNY’s standard, pass AP or college-credit exams, and similar.</small></div>'+destHtml(q[4])+advHtml(q)}
 // where last year's graduates enrolled within 6 months (DOE Snapshot); the rest didn't enroll or weren't tracked
 const DEST=[['CUNY 4-year','#e0a526'],['CUNY 2-year','#f2cf73'],['NY public (SUNY etc.)','#6aa84f'],['NY private','#5a9fcf'],['Out of state','#2b6fae'],['For-profit','#b55d8c'],['Career or other program','#9aa5a0']];
@@ -1480,8 +1488,8 @@ document.querySelectorAll('#search-sec [role=tab]').forEach(b=>b.addEventListene
   document.getElementById('addr-res').hidden=true;document.getElementById('res').hidden=true;document.getElementById('llmsg').hidden=true;
   document.getElementById(s==='addr'?'ll':'q').focus()}));
 function syncLegend(){syncName();const lo=document.getElementById('leg-out');lo.hidden=!isOut(metric);
-  if(isOut(metric)){const o=OUT[metric],s=o.stops,pct=v=>outPos(metric,v)+'%';
-    document.getElementById('out-bar').style.background='linear-gradient(90deg,'+rgb(s[0][1])+' 0%,'+rgb(s[0][1])+' '+pct(s[0][0])+','+rgb(s[1][1])+' '+pct(s[1][0])+','+rgb(s[2][1])+' '+pct(s[2][0])+','+rgb(s[2][1])+' 100%)';
+  if(isOut(metric)){const o=OUT[metric],s=o.stops,pct=v=>outPos(metric,v)+'%',rv=n=>'var(--r-'+n+')';
+    document.getElementById('out-bar').style.background='linear-gradient(90deg,'+rv(s[0][1])+' 0%,'+rv(s[0][1])+' '+pct(s[0][0])+','+rv(s[1][1])+' '+pct(s[1][0])+','+rv(s[2][1])+' '+pct(s[2][0])+','+rv(s[2][1])+' 100%)';
     document.getElementById('out-ticks').innerHTML=o.ticks.map((v,i)=>'<span style="left:'+outPos(metric,v)+'%">'+v+(i===o.ticks.length-1&&!o.abs?'%':'')+'</span>').join('');
     document.getElementById('out-hint').innerHTML=metric==='sat'?'Average SAT score (out of 1600) of the school’s test takers, from the 2024–25 School Quality Snapshot. Most NYC high schools average 780–1100. <span class="nd"></span> No data.':metric==='ccr'?'The DOE’s college and career readiness score (0–100): credit for each student who graduates meeting CUNY’s standard to skip remedial classes, passing AP or college-credit exams, and similar. NYC average: 54. From the 2024–25 School Quality Snapshot. <span class="nd"></span> No data.':metric==='grad'?'Share of students who graduate within 4 years, from the 2024–25 School Quality Snapshot. NYC average: 81%. The scale is narrower than for test scores because most zoned high schools graduate 75–95% of students. <span class="nd"></span> No data.':'Share of graduates who enrolled in college or a career program within 6 months, from the 2024–25 School Quality Snapshot. <span class="nd"></span> No data.'}
   document.getElementById('leg-pk').hidden=metric!=='pk';document.getElementById('leg-scr').hidden=metric!=='scr';if(metric==='scr')document.getElementById('scr-hint').innerHTML='How many of each school’s programs are screened, from the MySchools '+(level==='hs'?'high':'middle')+' school directory. Screened programs rank applicants by their '+(level==='hs'?'7th':'4th')+'-grade report card grades; some also use an assessment. A school with some screened programs also has open, zone-priority or other programs; click it to see each one. Shared zones show the school with the most. <span class="nd"></span> No program data.';{const gs=document.getElementById('grp-src');if(gs&&metric==='pk')gs.textContent='DOE Local Law 72 report · fall 2025'}document.getElementById('leg-rate').hidden=!isRate(metric);document.getElementById('leg-test').hidden=!['both','ela','math'].includes(metric);document.getElementById('leg-prog').hidden=!isProg(metric);document.getElementById('leg-iep').hidden=metric!=='iep';{const gs=document.getElementById('grp-src');if(gs&&['gt','dl','scr','iep'].includes(metric))gs.textContent=metric==='scr'?'MySchools '+(level==='hs'?'high':'middle')+' school directory':metric==='iep'?'DOE Demographic Snapshot · 2025–26':GROUP_SRC.programs}{const sw=document.getElementById('prog-sw');if(metric==='dl'){const seen=new Set(Object.keys(LV[level].S||{}).concat(NZ.map(o=>o.d)).map(d=>zoneDl([d])).filter(Boolean));

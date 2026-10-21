@@ -10,7 +10,8 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 
 ### Changed
 - In light mode, school names and ratings on the map have a solid white outline, so they're easy to read on any zone color. Zone outlines and school district lines are soft grays instead of purple and black, so the map is calmer to look at. The zone and school you pick are outlined in bright yellow. Dark mode is unchanged.
-- Brighter, lighter colors for ratings, test scores and high school results, on the map, the school cards and the school and district pages. Labels on the map stand out more against the zone colors.
+- In light mode, ratings, test scores and high school results use brighter, lighter colors on the map, the school cards and the school and district pages, so labels on the map stand out against the zone colors. Dark mode keeps its deeper colors, and everything switches when you change the theme.
+- In light mode, the stripes on areas with no zoned school are fainter, so street names are easier to read.
 
 ## 1.44.0 (2026-10-20)
 

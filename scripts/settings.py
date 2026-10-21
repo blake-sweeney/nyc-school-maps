@@ -25,19 +25,20 @@ CITY_READINESS = 54   # college readiness score, of 100
 
 # ---------- color ramps ----------
 
-# [value, [r, g, b]] stops, low (red) to high (green). The map's Color by modes, legends and card bars use them,
-# and so do the tables and bars on the generated pages.
-# Bright and light, so dark map labels and text read well on top of the zone fills
-RED, ORANGE, YELLOW, GREEN = [240, 96, 96], [255, 166, 90], [255, 226, 110], [70, 196, 170]
+# [value, color name] stops, low (red) to high (green). The map's Color by modes, legends and card bars use them,
+# and so do the tables and bars on the generated pages. Each theme has its own colors for the names:
+# light is bright and light, so dark map labels read well on top of the zone fills.
+RAMP_COLORS = {"light": {"red": [240, 96, 96], "orange": [255, 166, 90], "yellow": [255, 226, 110], "green": [70, 196, 170]},
+               "dark": {"red": [184, 32, 42], "orange": [232, 116, 42], "yellow": [247, 207, 69], "green": [31, 138, 132]}}
 # DOE ratings: 1 -> 5, 2 -> 50, 3 -> 75, 4 -> 95 on this scale
-RATE_STOPS = [[5, RED], [50, ORANGE], [75, YELLOW], [95, GREEN]]
+RATE_STOPS = [[5, "red"], [50, "orange"], [75, "yellow"], [95, "green"]]
 # % meeting state standards
-TEST_STOPS = [[5, RED], [50, YELLOW], [95, GREEN]]
+TEST_STOPS = [[5, "red"], [50, "yellow"], [95, "green"]]
 # high school outcomes
-OUT_STOPS = {"grad": [[65, RED], [80, YELLOW], [95, GREEN]],     # 4-year graduation rate (%)
-             "coll": [[40, RED], [60, YELLOW], [80, GREEN]],     # college or career program (%)
-             "ccr": [[35, RED], [55, YELLOW], [80, GREEN]],      # college readiness score
-             "sat": [[800, RED], [950, YELLOW], [1200, GREEN]]}  # average SAT
+OUT_STOPS = {"grad": [[65, "red"], [80, "yellow"], [95, "green"]],     # 4-year graduation rate (%)
+             "coll": [[40, "red"], [60, "yellow"], [80, "green"]],     # college or career program (%)
+             "ccr": [[35, "red"], [55, "yellow"], [80, "green"]],      # college readiness score
+             "sat": [[800, "red"], [950, "yellow"], [1200, "green"]]}  # average SAT
 
 # Race and ethnicity bars on the cards and school pages: [label, color], in the order of a demographics.json row.
 # Categorical (no group is "better"), so none of the ramp colors above; checked for color blindness side by side.

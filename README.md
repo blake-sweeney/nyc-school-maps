@@ -23,7 +23,7 @@ An interactive map of New York City's elementary (kindergarten), middle and high
 - **Pre-K and 3-K (zone card):** seats, applicants and offers at each elementary school (applicants who didn't get a choice they ranked higher, as for kindergarten), from the DOE's Local Law 72 admissions report
 - **Charter schools (not on the map yet):** the charter schools open now, with locations, grades and last year's enrollment, from the DOE's LCGMS school list and Demographic Snapshot (`data/charters.json`) and their School Quality Snapshot pages (`data/charter_snapshot.json`)
 - **Class size (zone card):** average kindergarten, grades 1–5 and core-subject class sizes, from the DOE's class size report
-- **Colors:** a red → orange → yellow → teal ramp, checked against common forms of color blindness (deuteranopia, protanopia)
+- **Colors:** a red → orange → yellow → teal ramp, checked against common forms of color blindness (deuteranopia, protanopia); light and dark themes have their own shades (`RAMP_COLORS` in `scripts/settings.py`)
 - **Parks and water:** parks tinted green (NYC Parks outlines, `data/parks.json`) and water tinted blue on the gray city basemap, with a "Parks & water color" layer toggle
 - **Streets:** a "Major streets" toggle (highways, main roads and truck routes) and an "All streets" toggle (every street, shown once you zoom in to street level), with names along the lines
 
