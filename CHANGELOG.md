@@ -6,6 +6,11 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
+## Unreleased
+
+### Fixed
+- In Safari (iPhone, iPad and Mac), the map shows blue water without the dark shading along the shore, and green parks, like other browsers. Before, Safari showed the city's plain gray map.
+
 ## 1.48.0 (2026-10-21)
 
 ### Changed
