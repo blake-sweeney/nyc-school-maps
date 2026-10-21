@@ -6,6 +6,15 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
+## Unreleased
+
+### Changed
+- School pages for schools that teach more than one level, like the Anderson School (K–8) or Special Music School (K–12), have a tab for each level: Elementary, Middle, High. Each tab has that level's admissions, test scores, class sizes and the other schools at that level in the district. Opening a school's page from the map shows the tab for the level you were looking at.
+
+### Fixed
+- Test scores on school pages say which grades they cover, like "grades 3–8" for a K–8 school, instead of always "grades 3–5" or "6–8".
+- Middle and high school class sizes on school pages are labeled "Grades 6–8 class size" and "Grades 9–12 class size" instead of "Core class size".
+
 ## 1.47.0 (2026-10-21)
 
 ### Fixed

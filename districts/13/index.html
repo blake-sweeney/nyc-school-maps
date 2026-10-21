@@ -67,6 +67,7 @@ document.getElementById(t.getAttribute('aria-controls')).hidden=!on});if(push)tr
 tabs.forEach(function(t,i){t.addEventListener('click',function(){show(t.id.slice(4),true)});
 t.addEventListener('keydown',function(ev){var d=ev.key==='ArrowRight'?1:ev.key==='ArrowLeft'?-1:0;if(!d)return;
 var n=tabs[(i+d+tabs.length)%tabs.length];n.focus();show(n.id.slice(4),true)})});
-var h=location.hash.slice(1);show(['es','ms','hs'].indexOf(h)>=0?h:'es',false)})()</script>
+var ids=tabs.map(function(t){return t.id.slice(4)}),sel=tabs.filter(function(t){return t.getAttribute('aria-selected')==='true'})[0];
+var h=location.hash.slice(1);show(ids.indexOf(h)>=0?h:sel?sel.id.slice(4):ids[0],false)})()</script>
 </body>
 </html>

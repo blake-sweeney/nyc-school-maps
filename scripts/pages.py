@@ -358,7 +358,7 @@ def tests_html(t, grades):
     if t[2]:
         rows.append(bar("Math", 100 * t[3] / t[2], TEST_STOPS, pct(100 * t[3] / t[2])))
     return (f'<h2>State test scores</h2><div class="bars">{"".join(rows)}</div>'
-            f'<p class="src">Share of students in grades {grades} who met state standards (level 3 or 4), {SNAPSHOT_LABEL}.</p>')
+            f'<p class="src">Share of students in grade{"s" if "–" in grades else ""} {grades} who met state standards (level 3 or 4), {SNAPSHOT_LABEL}.</p>')
 
 
 def hs_outcomes_html(dbn, o, q, cut):
@@ -815,6 +815,7 @@ def page_html(d, dbn, streets, site_url, goat, nbi=None):
     s = S.get(dbn) or {}
     R = {**HS.get("R", {}), **d.get("R", {})}
     X = {**HS.get("X", {}), **d.get("X", {})}
+    r0, x0 = R.get(dbn), X.get(dbn) or []
     if ch and lv == "hs" and dbn in (HS.get("CHR") or {}):  # a K-12 charter's page leads with its high school report
         R, X = {**R, dbn: HS["CHR"][dbn]}, {**X, dbn: HS["CHX"][dbn]}
     r = R.get(dbn)
@@ -826,238 +827,237 @@ def page_html(d, dbn, streets, site_url, goat, nbi=None):
     lat, lon = (s.get("lat"), s.get("lon")) if s.get("lat") else ((nz[3], nz[4]) if nz else (None, None))
     gt = bool(nz and len(nz) > 8 and nz[8])
 
-    # what kind of school, in plain words
-    if ch:
-        kind = "Charter school"
-    elif feats:
-        kind = {"es": "Zoned elementary school", "ms": "Zoned middle school", "hs": "Zoned high school"}[lv]
-    elif lv == "hs":
-        kind = "Specialized high school" if gt else "High school (citywide choice)"
-    elif lv == "ms":
-        kind = "Citywide middle school" if gt else "Middle school (no zone)"
-    else:
-        kind = "Citywide G&T school" if gt else "Non-zoned elementary school"
-
-    map_url = f"/#{lv}-{dbn}"
-    snap = snapshot_url(dbn, r, lv)
-    ms_url = myschools_url(dbn, lv)
-    # the zone: map, shared schools, streets
-    zone_html, zone_lede = "", ""
-    dist_rings = (d.get("DIST", {}).get(dist) or {}).get("r", [])
-    src_feats = {"es": d.get("features", []), "ms": MS.get("features", []), "hs": HS.get("features", [])}[lv]
-    others = [p for f in src_feats if f["properties"].get("dist") == dist and f["properties"]["dbns"] and f not in feats
-              for p in rings_of(f["geometry"])]
-    zpolys = [p for f in feats for p in rings_of(f["geometry"])]
-    svg = zone_svg(dist_rings, zpolys, others, (lon, lat) if lat else None)
-    if feats:
-        mates = sorted({x2 for f in feats for x2 in f["properties"]["dbns"] if x2 != dbn})
-        st = streets_in(zpolys, streets) if zpolys else []
-        lede = []
-        if mates:
-            lede.append("This zone is shared with " + ", ".join(
-                f'<a href="/schools/{e(m)}/">{e(nice_name(S.get(m, {}).get("n", m)))}</a>' for m in mates) +
-                ". Families who live here get zoned priority at each of these schools.")
-        nb_codes = (nbi or {}).get("by_school", {}).get(dbn, [])
-        if nb_codes:
-            nl = [f'<a href="/neighborhoods/{e(nbi["nbs"][c]["slug"])}/">{e(nbi["nbs"][c]["name"])}</a>' for c in nb_codes[:4]]
-            lede.append("The zone covers " + ("part of " if len(nl) == 1 else "parts of ")
-                        + (nl[0] if len(nl) == 1 else ", ".join(nl[:-1]) + " and " + nl[-1]) + ".")
-        if st:
-            lede.append("Streets in the zone include " + e(", ".join(st[:-1]) + (" and " + st[-1] if len(st) > 1 else st[0])) + ".")
-        zone_lede = "".join(f"<p>{x2}</p>" for x2 in lede)
-        zone_html = (f'<section class="card split"><div>{svg}</div><div><h2>The zone</h2>{zone_lede}'
-                     '<p class="note">Zone lines can change, and a block can sit on a border. Always confirm your exact address on '
-                     '<a href="https://schoolsearch.schools.nyc/" target="_blank" rel="noopener">schoolsearch.schools.nyc</a> before applying.</p>'
-                     + more(f'<a href="{e(map_url)}">See the zone on the map →</a>', ext("https://schoolsearch.schools.nyc/", "Look up your zoned school")) + '</div></section>')
-    elif ch:
-        how = charter_how(dist)
-        zone_html = (f'<section class="card split"><div>{svg}</div><div><h2>How to get in</h2>'
-                     + "".join(f"<p>{e(t)}</p>" for t in how)
-                     + (f'<p>Formerly {e(nice_name(d["CHX"][dbn][3]))}.</p>' if (d.get("CHX", {}).get(dbn) or [None] * 4)[3] else "")
-                     + more(ext(CH_APPLY, "How to apply to charter schools"), f'<a href="{e(map_url)}">See it on the map →</a>')
-                     + '</div></section>')
-    else:
-        # where the admissions tables list each program's priority groups, say so instead of summarizing them
-        g_adm = "Grade 9" if lv == "hs" else f"Grade {(MS.get('EG') or {}).get(dbn, 6)}"
-        listed = (f" Each program’s priority groups are listed under {g_adm} admissions below."
-                  if lv in ("ms", "hs") and ms_progs(((HS if lv == "hs" else MS).get("P") or {}).get(dbn)) else "")
-        if lv == "hs":
-            if gt:
-                why = ("Admission is by SHSAT score only. Any NYC 8th or 9th grader can take the test."
-                       if any(p[1] == "T" for p in (nz[7] or [])) else "Admission is by audition. Students from anywhere in NYC can apply.")
-            else:
-                why = ("There’s no zone." + listed if listed else
-                       (nz[9] if nz and len(nz) > 9 and nz[9] else "Open to students from anywhere in NYC.") + " There’s no zone.")
-        elif lv == "ms":
-            why = ("Open to students from anywhere in NYC." if gt else "There’s no zone.") + \
-                (listed or (" Most programs give priority to students who live or go to school in District " + str(dist) + "." if not gt else ""))
-        else:
-            why = "Open to children found eligible for Gifted & Talented, from anywhere in NYC." if gt else \
-                f"There’s no zone. Priority goes to District {dist} residents."
-        head = "How to get in" if gt else "No zone"
-        zone_html = (f'<section class="card split"><div>{svg}</div><div><h2>{head}</h2><p>{e(why)}</p>'
-                     + more(ext(ms_url, "Apply and see your chances on MySchools"),
-                            ext(SHS_URL, "About the specialized high schools") if lv == "hs" and gt else "",
-                            ext(GT_URL, "How G&T eligibility works") if lv == "es" and gt else "")
-                     + '</div></section>')
-
-    # numbers
-    sections = [ratings_html(dbn, r) + more(ext(snap, "Full School Quality Snapshot"),
-                                            "" if ch else ext(f"https://insideschools.org/school/{dbn}", "InsideSchools review"))]
-    if lv == "hs":
-        cut = (HS.get("CUT") or {})
-        sections.append(hs_outcomes_html(dbn, (HS.get("O") or {}).get(dbn), (HS.get("Q") or {}).get(dbn),
-                                         {"y": cut["y"], "c": cut["c"][dbn]} if cut and dbn in cut.get("c", {}) else None)
-                        + more(ext(snap, "Graduation and college details in the Snapshot"),
-                               ext(SHS_URL, "How the SHSAT works") if gt and dbn in (cut or {}).get("c", {}) else ""))
-    elif lv == "ms":
-        t = tests_html((MS.get("T") or {}).get(dbn) or d.get("T", {}).get(dbn), "6–8")
-        sections.append(t + more(ext(snap, "Scores by student group in the Snapshot")) if t else "")
-    else:
-        t = tests_html(d.get("T", {}).get(dbn), "3–5")
-        sections.append(t + more(ext(snap, "Scores by student group in the Snapshot")) if t else "")
-    cs = d.get("CS", {}).get(dbn) or {}
-    u = d.get("U", {}).get(dbn)
-    dm = {**HS.get("DM", {}), **MS.get("DM", {}), **d.get("DM", {})}.get(dbn)
-    pk = d.get("PK", {}).get(dbn) if lv == "es" else None
-    co = d.get("CO", {}).get(dbn, [])
-    facts = facts_rows([
-        ("Students", f"{dm[0]:,}" if dm and dm[0] else f"{x[0]:,}" if x and x[0] else None),
-        ("Attendance", pct(x[1]) if len(x) > 1 else None),
-        ("Teachers with 3+ years’ experience", pct(x[2]) if len(x) > 2 else None),
-        ("Median home distance", f"{x[9]:g} mile{'' if x[9] == 1 else 's'}" if len(x) > 9 and x[9] is not None else None),
-        ("Kindergarten class size", f"{round(cs['k'])} students" if cs.get("k") else None),
-        ("Grades 1–5 class size", f"{round(cs['e'])} students" if cs.get("e") else None),
-        ("Core class size", f"{round(cs[lv])} students" if lv in ("ms", "hs") and cs.get(lv) else None),
-        ("Building use (how full)", f"{u[0]}% of capacity" if u else None),
-        ("Dual-language program", e(x[4]) if len(x) > 4 and x[4] else None),
-        ("Building accessibility", {"F": "Fully accessible", "P": "Partially accessible", "N": "Not accessible"}
-         .get(d.get("AC", {}).get(dbn))),
-        ("Shares its building with", f"{len(co)} school{'s' if len(co) > 1 else ''}" if co else None, " · ".join(
-            f'<a href="/schools/{e(m)}/">{e(nice_name(n))}</a>' if m in page_dbns(d) else e(nice_name(n)) for m, n in co)),
-    ])
-    if facts:
-        sections.append("<h2>School details</h2>" + facts + more(
-            ext(f"https://www.schools.nyc.gov/schools/{dbn[2:]}", "School page: contacts, hours, bell schedule")))
-    sections.append(demo_html(dm, d.get("DMC"), ch, of_all(d.get("XN", {}).get(dbn), x, 2, 6),
-                              of_all(d.get("XN", {}).get(dbn), x, 1, 5)))
-    if lv == "es" and pk:
-        if pk[0] or pk[2]:
-            # one table, as the map card: a row per program offered ("s": the report hides that count for privacy)
-            show = lambda v: f"{v:,}" if isinstance(v, int) else "—"
-            pko = pk[4:6] if len(pk) > 5 else [None, None]
-            rows, missing = [], []
-            for lab, n, a, o in (("Pre-K", pk[0], pk[1], pko[0]), ("3-K", pk[2], pk[3], pko[1])):
-                if not n:
-                    missing.append(lab)
-                    continue
-                pc = ("all" if o >= a else f"{round(100 * o / a)}%") if isinstance(o, int) and isinstance(a, int) and a else ""
-                rows.append(f'<tr class="all"><th>{lab} <small>{show(n) if n != "s" else "seats not published"}'
-                            f'{" seats" if n != "s" else ""}</small></th><td>{show(o)}</td><td>{show(a)}</td><td>{pc}</td></tr>')
-            body = _table(rows) + (f"<p>No {' or '.join(missing)} at this school.</p>" if missing else "")
-        else:
-            body = "<p>This school doesn’t offer pre-K or 3-K. Many seats are at nearby early childhood centers; MySchools lists every program.</p>"
-        sections.append(f"<h2>Pre-K and 3-K, {settings.PREK_LABEL}</h2>" + body +
-                        ('<p class="src">Seats aren’t zoned: families apply through MySchools, and zoned families often get priority. '
-                         'Applicants listed the school and didn’t get a choice they ranked higher. DOE Local Law 72 report.</p>'
-                         if pk[0] or pk[2] else "")
-                        + more(ext("https://www.myschools.nyc/en/", "Find pre-K and 3-K programs on MySchools")))
-    if lv == "es":
-        ka, kp = d.get("KA", {}).get(dbn), d.get("KP", {}).get(dbn)
-        if kp:  # MySchools' groups once they're posted (December), as for grade 6 and 9
-            tr = true_apps(ka)
-            h = (f"<h2>Kindergarten admissions, {settings.MYSCHOOLS_LABEL}</h2>" + adm_table(dbn, "es", kp, None, "families")
-                 + (f'<p class="src">True applicants: {tr[1]:,} (fall {e(tr[0])} DOE report)</p>' if tr else "")
-                 + about_html(ka, "es", dist, "families", has_lunch(kp)))
-        else:
-            h = k_adm_html(ka, "es", dist, zoned=not nz and bool(feats))
-        sections.append(h + more(ext(ms_url, "See your chances on MySchools"), ext(LL72_URL, "DOE admissions reports")) if h else "")
-
-    def admissions(lv):
-        """Grade 6 or 9 admissions: MySchools tables per program, else the Local Law 72 table and the program list."""
-        progs = ((HS if lv == "hs" else MS).get("P") or {}).get(dbn) or []
-        ka = ((HS if lv == "hs" else MS).get("A") or {}).get(dbn)
-        eg = (MS.get("EG") or {}).get(dbn) if lv == "ms" else None
-        return ms_adm_html(dbn, lv, progs, ka, dist, eg) or (k_adm_html(ka, lv, dist) + programs_html(dbn, progs, lv == "hs"))
-    if lv in ("ms", "hs"):
-        h = admissions(lv)
-        sections.append(h + more(ext(ms_url, "Program details, open houses and your chances on MySchools"),
-                                 ext(LL72_URL, "DOE admissions reports")) if h else "")
-    if lv == "ms":
-        sections.append(extras_html((MS.get("EX") or {}).get(dbn), MS.get("EXV") or []))
-    # schools that span levels (K-8, 6-12): a card for each other level, with its zone or admissions and its programs
-    for lv2, feats2, nz2 in levels:
-        if lv2 == lv:
-            continue
-        lvw2 = {"es": "Elementary", "ms": "Middle", "hs": "High"}[lv2]
-        url2 = f"/#{lv2}-{dbn}"
+    def level_html(lv, feats, nz):
+        """One level's part of the page: how to get in (or the zone), ratings, scores, details, admissions and
+        the other schools at this level in the district. A school that spans levels gets one tab per level."""
+        gt = bool(nz and len(nz) > 8 and nz[8])
+        # the grades its state test scores cover (the Snapshot pools every tested grade, 3-8)
+        tested = {"es": "3–5", "ms": "6–8"}.get(lv, "")
+        span = [int(x2) for x2 in (g_src or "").split(",") if x2.isdigit() and 3 <= int(x2) <= 8]
+        if span and lv in ("es", "ms"):
+            tested = f"{min(span)}–{max(span)}" if len(span) > 1 else str(span[0])
+        # what kind of school, in plain words
         if ch:
-            extra = (f"<h2>{lvw2} school grades</h2><p>{e(name)} also teaches {lvw2.lower()} school grades, with the same "
-                     "lottery. Ask the school which grades take new students.</p>")
-            if lv2 == "hs":  # its own high school report: ratings, graduation and college
-                rr = (HS.get("CHR") or {}).get(dbn)
-                if rr:
-                    extra += ratings_html(dbn, rr).replace("<h2>DOE ratings</h2>", "<h2>High school ratings</h2>")
-                o2, q2 = (HS.get("O") or {}).get(dbn), (HS.get("Q") or {}).get(dbn)
-                if o2 or q2:
-                    extra += hs_outcomes_html(dbn, o2, q2, None)
-            sections.append(extra + more(f'<a href="{e(url2)}">See it on the {lvw2.lower()} school map →</a>',
-                                         ext(snapshot_url(dbn, rr, "hs"), "High school report in the Snapshot") if lv2 == "hs" and rr else ""))
-            continue
-        if feats2:
-            mates2 = sorted({x2 for f in feats2 for x2 in f["properties"]["dbns"] if x2 != dbn})
-            txt = (f"{name} is also a zoned {lvw2.lower()} school: families in its {lvw2.lower()} school zone get priority."
-                   + (f" The zone is shared with {', '.join(nice_name(S.get(m, {}).get('n', m)) for m in mates2)}." if mates2 else ""))
+            kind = "Charter school"
+        elif feats:
+            kind = {"es": "Zoned elementary school", "ms": "Zoned middle school", "hs": "Zoned high school"}[lv]
+        elif lv == "hs":
+            kind = "Specialized high school" if gt else "High school (citywide choice)"
+        elif lv == "ms":
+            kind = "Citywide middle school" if gt else "Middle school (no zone)"
         else:
-            gt2 = bool(nz2 and len(nz2) > 8 and nz2[8])
-            listed2 = ms_progs(((HS if lv2 == "hs" else MS).get("P") or {}).get(dbn))
-            txt = (f"{lvw2} school grades have no zone" + (": open to students from anywhere in NYC." if gt2 else ".")
-                   + (" Each program’s priority groups are listed below." if listed2 else
-                      f" Priority goes to District {dist}." if lv2 != "hs" and not gt2 else ""))
-        extra = f"<h2>{lvw2} school grades</h2><p>{e(txt)}</p>"
-        if lv2 == "ms":
-            t2 = (MS.get("T") or {}).get(dbn)
-            if t2 and lv == "hs":
-                extra += tests_html(t2, "6–8").replace("<h2>State test scores</h2>", "<h2>Middle school test scores</h2>")
-            extra += admissions("ms")
-            extra += extras_html((MS.get("EX") or {}).get(dbn), MS.get("EXV") or [])
-        elif lv2 == "hs":
-            extra += admissions("hs")
-        extra += more(f'<a href="{e(url2)}">See it on the {lvw2.lower()} school map →</a>', ext(myschools_url(dbn, lv2), f"{lvw2} school admissions on MySchools"))
-        sections.append(extra)
-    body_cards = "".join(f'<section class="card">{x2}</section>' for x2 in sections if x2)
+            kind = "Citywide G&T school" if gt else "Non-zoned elementary school"
 
-    # nearby options: other schools at this level in the same district
-    near = []
-    dd = f"{int(dist):02d}"  # the district as a DBN starts
-    for f in src_feats:
-        for m in f["properties"]["dbns"]:
-            if m != dbn and m[:2] == dd and m not in near:
-                near.append(m)
-    nzl = {"es": d.get("NZ", []), "ms": MS.get("NZ", []), "hs": HS.get("NZ", [])}[lv]
-    chl = {"es": d.get("CH", []), "ms": MS.get("CH", []), "hs": HS.get("CH", [])}[lv]
-    near_nz = [row[0] for row in nzl if row[0][:2] == dd and row[0] != dbn]
-    near_ch = [row[0] for row in chl if str(row[5][0]) == dist and row[0] != dbn] if ch else []
-    def nm(m):
-        return nice_name((R.get(m) or [None])[0] or S.get(m, {}).get("n") or next((row[1] for row in nzl + chl if row[0] == m), m))
-    near_html = ""
-    if near or near_nz or near_ch:
-        lst = "".join(f'<li><a href="/schools/{e(m)}/">{e(nm(m))}</a></li>' for m in sorted(near, key=lambda m: nm(m).lower())[:80])
-        lst2 = "".join(f'<li><a href="/schools/{e(m)}/">{e(nm(m))}</a></li>' for m in sorted(near_nz, key=lambda m: nm(m).lower())[:80])
-        lvw = {"es": "elementary", "ms": "middle", "hs": "high"}[lv]
-        near_html = (f'<section class="card"><h2>Other {lvw} schools in District {dist}</h2>'
-                     + (f'<ul class="near">{lst}</ul>' if lst else "")
-                     + (f'<h2 style="margin-top:14px">Without a zone</h2><ul class="near">{lst2}</ul>' if lst2 else "")
-                     + ('<h2 style="margin-top:14px">Charter schools</h2><ul class="near">' + "".join(
-                         f'<li><a href="/schools/{e(m)}/">{e(nm(m))}</a></li>' for m in sorted(near_ch, key=lambda m: nm(m).lower())[:80])
-                        + "</ul>" if near_ch else "")
-                     + f'<p class="src"><a href="/districts/{e(dist)}/">All District {e(dist)} schools</a></p></section>')
+        map_url = f"/#{lv}-{dbn}"
+        ms_url = myschools_url(dbn, lv)
+        # the zone: map, shared schools, streets
+        zone_html, zone_lede = "", ""
+        dist_rings = (d.get("DIST", {}).get(dist) or {}).get("r", [])
+        src_feats = {"es": d.get("features", []), "ms": MS.get("features", []), "hs": HS.get("features", [])}[lv]
+        others = [p for f in src_feats if f["properties"].get("dist") == dist and f["properties"]["dbns"] and f not in feats
+                  for p in rings_of(f["geometry"])]
+        zpolys = [p for f in feats for p in rings_of(f["geometry"])]
+        svg = zone_svg(dist_rings, zpolys, others, (lon, lat) if lat else None)
+        if feats:
+            mates = sorted({x2 for f in feats for x2 in f["properties"]["dbns"] if x2 != dbn})
+            st = streets_in(zpolys, streets) if zpolys else []
+            lede = []
+            if mates:
+                lede.append("This zone is shared with " + ", ".join(
+                    f'<a href="/schools/{e(m)}/">{e(nice_name(S.get(m, {}).get("n", m)))}</a>' for m in mates) +
+                    ". Families who live here get zoned priority at each of these schools.")
+            nb_codes = (nbi or {}).get("by_school", {}).get(dbn, [])
+            if nb_codes:
+                nl = [f'<a href="/neighborhoods/{e(nbi["nbs"][c]["slug"])}/">{e(nbi["nbs"][c]["name"])}</a>' for c in nb_codes[:4]]
+                lede.append("The zone covers " + ("part of " if len(nl) == 1 else "parts of ")
+                            + (nl[0] if len(nl) == 1 else ", ".join(nl[:-1]) + " and " + nl[-1]) + ".")
+            if st:
+                lede.append("Streets in the zone include " + e(", ".join(st[:-1]) + (" and " + st[-1] if len(st) > 1 else st[0])) + ".")
+            zone_lede = "".join(f"<p>{x2}</p>" for x2 in lede)
+            zone_html = (f'<section class="card split"><div>{svg}</div><div><h2>The zone</h2>{zone_lede}'
+                         '<p class="note">Zone lines can change, and a block can sit on a border. Always confirm your exact address on '
+                         '<a href="https://schoolsearch.schools.nyc/" target="_blank" rel="noopener">schoolsearch.schools.nyc</a> before applying.</p>'
+                         + more(f'<a href="{e(map_url)}">See the zone on the map →</a>', ext("https://schoolsearch.schools.nyc/", "Look up your zoned school")) + '</div></section>')
+        elif ch:
+            how = charter_how(dist)
+            zone_html = (f'<section class="card split"><div>{svg}</div><div><h2>How to get in</h2>'
+                         + "".join(f"<p>{e(t)}</p>" for t in how)
+                         + (f'<p>Formerly {e(nice_name(d["CHX"][dbn][3]))}.</p>' if (d.get("CHX", {}).get(dbn) or [None] * 4)[3] else "")
+                         + more(ext(CH_APPLY, "How to apply to charter schools"), f'<a href="{e(map_url)}">See it on the map →</a>')
+                         + '</div></section>')
+        else:
+            # where the admissions tables list each program's priority groups, say so instead of summarizing them
+            g_adm = "Grade 9" if lv == "hs" else f"Grade {(MS.get('EG') or {}).get(dbn, 6)}"
+            listed = (f" Each program’s priority groups are listed under {g_adm} admissions below."
+                      if lv in ("ms", "hs") and ms_progs(((HS if lv == "hs" else MS).get("P") or {}).get(dbn)) else "")
+            if lv == "hs":
+                if gt:
+                    why = ("Admission is by SHSAT score only. Any NYC 8th or 9th grader can take the test."
+                           if any(p[1] == "T" for p in (nz[7] or [])) else "Admission is by audition. Students from anywhere in NYC can apply.")
+                else:
+                    why = ("There’s no zone." + listed if listed else
+                           (nz[9] if nz and len(nz) > 9 and nz[9] else "Open to students from anywhere in NYC.") + " There’s no zone.")
+            elif lv == "ms":
+                why = ("Open to students from anywhere in NYC." if gt else "There’s no zone.") + \
+                    (listed or (" Most programs give priority to students who live or go to school in District " + str(dist) + "." if not gt else ""))
+            else:
+                why = "Open to children found eligible for Gifted & Talented, from anywhere in NYC." if gt else \
+                    f"There’s no zone. Priority goes to District {dist} residents."
+            head = "How to get in" if gt else "No zone"
+            zone_html = (f'<section class="card split"><div>{svg}</div><div><h2>{head}</h2><p>{e(why)}</p>'
+                         + more(ext(ms_url, "Apply and see your chances on MySchools"),
+                                ext(SHS_URL, "About the specialized high schools") if lv == "hs" and gt else "",
+                                ext(GT_URL, "How G&T eligibility works") if lv == "es" and gt else "")
+                         + '</div></section>')
+
+        # numbers: a charter's high school grades have their own Snapshot report (CHR, CHX)
+        r, x = r0, x0
+        if ch and lv == "hs" and dbn in (HS.get("CHR") or {}):
+            r, x = HS["CHR"][dbn], (HS.get("CHX") or {}).get(dbn) or []
+        snap = snapshot_url(dbn, r, lv)
+        sections = [ratings_html(dbn, r) + more(ext(snap, "Full School Quality Snapshot"),
+                                                "" if ch else ext(f"https://insideschools.org/school/{dbn}", "InsideSchools review"))]
+        if lv == "hs":
+            cut = (HS.get("CUT") or {})
+            sections.append(hs_outcomes_html(dbn, (HS.get("O") or {}).get(dbn), (HS.get("Q") or {}).get(dbn),
+                                             {"y": cut["y"], "c": cut["c"][dbn]} if cut and dbn in cut.get("c", {}) else None)
+                            + more(ext(snap, "Graduation and college details in the Snapshot"),
+                                   ext(SHS_URL, "How the SHSAT works") if gt and dbn in (cut or {}).get("c", {}) else ""))
+        elif lv == "ms":
+            t = tests_html((MS.get("T") or {}).get(dbn) or d.get("T", {}).get(dbn), tested)
+            sections.append(t + more(ext(snap, "Scores by student group in the Snapshot")) if t else "")
+        else:
+            t = tests_html(d.get("T", {}).get(dbn), tested)
+            sections.append(t + more(ext(snap, "Scores by student group in the Snapshot")) if t else "")
+        cs = d.get("CS", {}).get(dbn) or {}
+        u = d.get("U", {}).get(dbn)
+        dm = {**HS.get("DM", {}), **MS.get("DM", {}), **d.get("DM", {})}.get(dbn)
+        pk = d.get("PK", {}).get(dbn) if lv == "es" else None
+        co = d.get("CO", {}).get(dbn, [])
+        facts = facts_rows([
+            ("Students", f"{dm[0]:,}" if dm and dm[0] else f"{x[0]:,}" if x and x[0] else None),
+            ("Attendance", pct(x[1]) if len(x) > 1 else None),
+            ("Teachers with 3+ years’ experience", pct(x[2]) if len(x) > 2 else None),
+            ("Median home distance", f"{x[9]:g} mile{'' if x[9] == 1 else 's'}" if len(x) > 9 and x[9] is not None else None),
+            # a tab shows its own level's class sizes; a one-level page all the school has (07X642, grades 2-6, is a middle school)
+            ("Kindergarten class size", f"{round(cs['k'])} students" if (lv == "es" or len(levels) == 1) and cs.get("k") else None),
+            ("Grades 1–5 class size", f"{round(cs['e'])} students" if (lv == "es" or len(levels) == 1) and cs.get("e") else None),
+            ({"ms": "Grades 6–8 class size", "hs": "Grades 9–12 class size"}.get(lv, ""),
+             f"{round(cs[lv])} students" if lv in ("ms", "hs") and cs.get(lv) else None),
+            ("Building use (how full)", f"{u[0]}% of capacity" if u else None),
+            ("Dual-language program", e(x[4]) if len(x) > 4 and x[4] else None),
+            ("Building accessibility", {"F": "Fully accessible", "P": "Partially accessible", "N": "Not accessible"}
+             .get(d.get("AC", {}).get(dbn))),
+            ("Shares its building with", f"{len(co)} school{'s' if len(co) > 1 else ''}" if co else None, " · ".join(
+                f'<a href="/schools/{e(m)}/">{e(nice_name(n))}</a>' if m in page_dbns(d) else e(nice_name(n)) for m, n in co)),
+        ])
+        if facts:
+            sections.append("<h2>School details</h2>" + facts + more(
+                ext(f"https://www.schools.nyc.gov/schools/{dbn[2:]}", "School page: contacts, hours, bell schedule")))
+        sections.append(demo_html(dm, d.get("DMC"), ch, of_all(d.get("XN", {}).get(dbn), x, 2, 6),
+                                  of_all(d.get("XN", {}).get(dbn), x, 1, 5)))
+        if lv == "es" and pk:
+            if pk[0] or pk[2]:
+                # one table, as the map card: a row per program offered ("s": the report hides that count for privacy)
+                show = lambda v: f"{v:,}" if isinstance(v, int) else "—"
+                pko = pk[4:6] if len(pk) > 5 else [None, None]
+                rows, missing = [], []
+                for lab, n, a, o in (("Pre-K", pk[0], pk[1], pko[0]), ("3-K", pk[2], pk[3], pko[1])):
+                    if not n:
+                        missing.append(lab)
+                        continue
+                    pc = ("all" if o >= a else f"{round(100 * o / a)}%") if isinstance(o, int) and isinstance(a, int) and a else ""
+                    rows.append(f'<tr class="all"><th>{lab} <small>{show(n) if n != "s" else "seats not published"}'
+                                f'{" seats" if n != "s" else ""}</small></th><td>{show(o)}</td><td>{show(a)}</td><td>{pc}</td></tr>')
+                body = _table(rows) + (f"<p>No {' or '.join(missing)} at this school.</p>" if missing else "")
+            else:
+                body = "<p>This school doesn’t offer pre-K or 3-K. Many seats are at nearby early childhood centers; MySchools lists every program.</p>"
+            sections.append(f"<h2>Pre-K and 3-K, {settings.PREK_LABEL}</h2>" + body +
+                            ('<p class="src">Seats aren’t zoned: families apply through MySchools, and zoned families often get priority. '
+                             'Applicants listed the school and didn’t get a choice they ranked higher. DOE Local Law 72 report.</p>'
+                             if pk[0] or pk[2] else "")
+                            + more(ext("https://www.myschools.nyc/en/", "Find pre-K and 3-K programs on MySchools")))
+        if lv == "es":
+            ka, kp = d.get("KA", {}).get(dbn), d.get("KP", {}).get(dbn)
+            if kp:  # MySchools' groups once they're posted (December), as for grade 6 and 9
+                tr = true_apps(ka)
+                h = (f"<h2>Kindergarten admissions, {settings.MYSCHOOLS_LABEL}</h2>" + adm_table(dbn, "es", kp, None, "families")
+                     + (f'<p class="src">True applicants: {tr[1]:,} (fall {e(tr[0])} DOE report)</p>' if tr else "")
+                     + about_html(ka, "es", dist, "families", has_lunch(kp)))
+            else:
+                h = k_adm_html(ka, "es", dist, zoned=not nz and bool(feats))
+            sections.append(h + more(ext(ms_url, "See your chances on MySchools"), ext(LL72_URL, "DOE admissions reports")) if h else "")
+
+        def admissions(lv):
+            """Grade 6 or 9 admissions: MySchools tables per program, else the Local Law 72 table and the program list."""
+            progs = ((HS if lv == "hs" else MS).get("P") or {}).get(dbn) or []
+            ka = ((HS if lv == "hs" else MS).get("A") or {}).get(dbn)
+            eg = (MS.get("EG") or {}).get(dbn) if lv == "ms" else None
+            return ms_adm_html(dbn, lv, progs, ka, dist, eg) or (k_adm_html(ka, lv, dist) + programs_html(dbn, progs, lv == "hs"))
+        if lv in ("ms", "hs"):
+            h = admissions(lv)
+            sections.append(h + more(ext(ms_url, "Program details, open houses and your chances on MySchools"),
+                                     ext(LL72_URL, "DOE admissions reports")) if h else "")
+        if lv == "ms":
+            sections.append(extras_html((MS.get("EX") or {}).get(dbn), MS.get("EXV") or []))
+        body_cards = "".join(f'<section class="card">{x2}</section>' for x2 in sections if x2)
+
+        # nearby options: other schools at this level in the same district
+        near = []
+        dd = f"{int(dist):02d}"  # the district as a DBN starts
+        for f in src_feats:
+            for m in f["properties"]["dbns"]:
+                if m != dbn and m[:2] == dd and m not in near:
+                    near.append(m)
+        nzl = {"es": d.get("NZ", []), "ms": MS.get("NZ", []), "hs": HS.get("NZ", [])}[lv]
+        chl = {"es": d.get("CH", []), "ms": MS.get("CH", []), "hs": HS.get("CH", [])}[lv]
+        near_nz = [row[0] for row in nzl if row[0][:2] == dd and row[0] != dbn]
+        near_ch = [row[0] for row in chl if str(row[5][0]) == dist and row[0] != dbn] if ch else []
+        def nm(m):
+            return nice_name((R.get(m) or [None])[0] or S.get(m, {}).get("n") or next((row[1] for row in nzl + chl if row[0] == m), m))
+        near_html = ""
+        if near or near_nz or near_ch:
+            lst = "".join(f'<li><a href="/schools/{e(m)}/">{e(nm(m))}</a></li>' for m in sorted(near, key=lambda m: nm(m).lower())[:80])
+            lst2 = "".join(f'<li><a href="/schools/{e(m)}/">{e(nm(m))}</a></li>' for m in sorted(near_nz, key=lambda m: nm(m).lower())[:80])
+            lvw = {"es": "elementary", "ms": "middle", "hs": "high"}[lv]
+            near_html = (f'<section class="card"><h2>Other {lvw} schools in District {dist}</h2>'
+                         + (f'<ul class="near">{lst}</ul>' if lst else "")
+                         + (f'<h2 style="margin-top:14px">Without a zone</h2><ul class="near">{lst2}</ul>' if lst2 else "")
+                         + ('<h2 style="margin-top:14px">Charter schools</h2><ul class="near">' + "".join(
+                             f'<li><a href="/schools/{e(m)}/">{e(nm(m))}</a></li>' for m in sorted(near_ch, key=lambda m: nm(m).lower())[:80])
+                            + "</ul>" if near_ch else "")
+                         + f'<p class="src"><a href="/districts/{e(dist)}/">All District {e(dist)} schools</a></p></section>')
+
+
+        return kind, map_url, ms_url, zone_html, body_cards, near_html
+
+    # this year's grades from LCGMS: a charter's in CHX, a district school's in G (else the zone file's 2019-20 list)
+    g_src = (d.get("CHX", {}).get(dbn) or [None])[0] if ch else (d.get("G") or {}).get(dbn) or s.get("g")
+    parts = {l[0]: level_html(*l) for l in levels}
+    kind, map_url, ms_url, zone_html, body_cards, near_html = parts[lv]
+    if len(parts) > 1:
+        # a school that spans levels (K-8, 6-12): a tab per level, each a whole page for those grades. The tabs work like
+        # the district pages' (TABS_JS): #es, #ms or #hs picks one, else the page's lead level
+        gl = [x2 for x2 in (g_src or "").split(",") if x2 not in ("SE", "")]
+        def span(l2):
+            band = [x2 for x2 in gl if {"es": x2 in ("3K", "PK", "0K") or (x2.isdigit() and int(x2) <= 5),
+                                        "ms": x2.isdigit() and 6 <= int(x2) <= 8, "hs": x2.isdigit() and int(x2) >= 9}[l2]]
+            lab = ["3-K" if x2 == "3K" else "Pre-K" if x2 == "PK" else "K" if x2 == "0K" else str(int(x2)) for x2 in band]
+            return f"Grades {lab[0]}–{lab[-1]}" if len(lab) > 1 else f"Grade {lab[0]}" if lab else ""
+        words = {"es": "Elementary", "ms": "Middle", "hs": "High"}
+        tabs = "".join(f'<button type="button" role="tab" id="tab-{l2}" aria-controls="p-{l2}" aria-selected="{"true" if l2 == levels[0][0] else "false"}">'
+                       f'{words[l2]}<small>{e(span(l2))}</small></button>' for l2 in parts)
+        zone_html = (f'<div class="lvtabs" role="tablist" aria-label="School level" style="grid-template-columns:repeat({len(parts)},1fr)">{tabs}</div>'
+                     + "".join(f'<div class="lvpanel" role="tabpanel" id="p-{l2}" aria-labelledby="tab-{l2}">'
+                               f'<h2 class="lvh">{words[l2]} grades</h2>{p2[3]}{p2[4]}{p2[5]}</div>' for l2, p2 in parts.items()))
+        body_cards = near_html = ""
+        if not ch:  # the kicker names the levels; each tab says how that level admits
+            kind = {("es", "ms"): "Elementary and middle school", ("ms", "hs"): "Middle and high school",
+                    ("es", "hs"): "Elementary and high school"}.get(tuple(parts), "Elementary, middle and high school")
 
     # head
     canon = f"{site_url}schools/{dbn}/"
     grades_txt = ""
-    # this year's grades from LCGMS: a charter's in CHX, a district school's in G (else the zone file's 2019-20 list)
-    g_src = (d.get("CHX", {}).get(dbn) or [None])[0] if ch else (d.get("G") or {}).get(dbn) or s.get("g")
     if g_src:
         g = [x2 for x2 in g_src.split(",") if x2 not in ("3K", "SE")]
         # pre-K and 3-K come from this year's admissions report when we have it (like grades() on the map)
@@ -1148,7 +1148,7 @@ def page_html(d, dbn, streets, site_url, goat, nbi=None):
 {near_html}
 {apply_html}
 </main>
-<footer>{DISCLAIMER}NYC School Zones is free and independent. Data: NYC Department of Education (zones, School Quality Snapshot, MySchools, Local Law 72 reports), NYC School Construction Authority. Questions or corrections: <a href="mailto:info@nycschoolzones.com">info@nycschoolzones.com</a>{THEME_FOOT}</footer>{goat}
+<footer>{DISCLAIMER}NYC School Zones is free and independent. Data: NYC Department of Education (zones, School Quality Snapshot, MySchools, Local Law 72 reports), NYC School Construction Authority. Questions or corrections: <a href="mailto:info@nycschoolzones.com">info@nycschoolzones.com</a>{THEME_FOOT}</footer>{goat}{TABS_JS if len(parts) > 1 else ""}
 </body>
 </html>
 """
@@ -1332,7 +1332,8 @@ document.getElementById(t.getAttribute('aria-controls')).hidden=!on});if(push)tr
 tabs.forEach(function(t,i){t.addEventListener('click',function(){show(t.id.slice(4),true)});
 t.addEventListener('keydown',function(ev){var d=ev.key==='ArrowRight'?1:ev.key==='ArrowLeft'?-1:0;if(!d)return;
 var n=tabs[(i+d+tabs.length)%tabs.length];n.focus();show(n.id.slice(4),true)})});
-var h=location.hash.slice(1);show(['es','ms','hs'].indexOf(h)>=0?h:'es',false)})()</script>"""
+var ids=tabs.map(function(t){return t.id.slice(4)}),sel=tabs.filter(function(t){return t.getAttribute('aria-selected')==='true'})[0];
+var h=location.hash.slice(1);show(ids.indexOf(h)>=0?h:sel?sel.id.slice(4):ids[0],false)})()</script>"""
 
 
 DIST_CSS = """
