@@ -284,14 +284,24 @@ def more(*links):
     return f'<p class="more">{" ".join(links)}</p>' if links else ""
 
 
+# which kind of section a folded card is, from its heading: FOLD_JS remembers open and folded by kind across pages,
+# so every school's admissions share "adm" (kindergarten, grade 6 and grade 9 alike)
+FOLD_KEYS = (("DOE ratings", "rate"), ("High school ratings", "rate"), ("State test scores", "tests"),
+             ("Graduation and college", "grad"), ("Advanced courses", "grad"), ("Kindergarten admissions", "adm"),
+             ("Grade ", "adm"), ("High school programs", "adm"), ("Pre-K", "prek"),
+             ("School details", "details"), ("Demographics", "demo"), ("Classes", "ex"), ("Other ", "near"))
+
+
 def fold_card(html, summary="", start_open=False):
-    """A school page card that folds to its heading and a one-line summary, like the map card's sections (FOLD_CSS,
-    FOLD_JS). A card without a leading <h2> (a "no ratings" line) stays a plain card."""
+    """A school page card that folds to its heading and a one-line summary, like the map card's sections (FOLD_JS).
+    A card without a leading <h2> (a "no ratings" line) stays a plain card."""
     m = re.match(r"<h2>(.*?)</h2>", html, re.S)
     if not m:
         return f'<section class="card">{html}</section>'
+    title = re.sub(r"<[^>]+>", "", m.group(1))
+    key = next((k for start, k in FOLD_KEYS if title.startswith(start)), re.sub(r"\W+", "-", title.lower()).strip("-"))
     sm = f"<small>{summary}</small>" if summary else ""
-    return (f'<details class="card fold"{" open" if start_open else ""}><summary><span class="fh"><h2>{m.group(1)}</h2>{sm}</span>'
+    return (f'<details class="card fold" data-k="{e(key)}"{" open" if start_open else ""}><summary><span class="fh"><h2>{m.group(1)}</h2>{sm}</span>'
             f'<span class="chev" aria-hidden="true"></span></summary><div class="fb">{html[m.end():]}</div></details>')
 
 
@@ -1407,10 +1417,16 @@ var ids=tabs.map(function(t){return t.id.slice(4)}),sel=tabs.filter(function(t){
 var h=location.hash.slice(1);show(ids.indexOf(h)>=0?h:sel?sel.id.slice(4):ids[0],false)})()</script>"""
 
 
-# school pages: "Expand all" opens every folded card (fold_card), "Collapse all" folds them again; shown only with JS
-FOLD_JS = """<script>(function(){var b=document.querySelector('.expand-all');if(!b)return;b.hidden=false;
-b.addEventListener('click',function(){var o=b.getAttribute('aria-expanded')!=='true';
-document.querySelectorAll('details.fold').forEach(function(d){d.open=o});b.setAttribute('aria-expanded',o);b.textContent=o?'Collapse all':'Expand all'})})()</script>"""
+# school pages: folded cards (fold_card) open or fold as the reader last left that kind of section on any school page
+# (localStorage nsz-page-folds-v1, {kind: true/false}, separate from the map card's nsz-card-v1). "Expand all" opens
+# every card, "Collapse all" folds them again; neither is remembered. The button shows only with JS.
+FOLD_JS = """<script>(function(){var K='nsz-page-folds-v1',m={},bulk=0,ds=[].slice.call(document.querySelectorAll('details.fold'));
+try{m=JSON.parse(localStorage.getItem(K)||'{}')||{}}catch(e){}
+ds.forEach(function(d){var k=d.dataset.k;if(k in m)d.open=!!m[k];
+d.addEventListener('toggle',function(){if(bulk)return;m[k]=d.open;try{localStorage.setItem(K,JSON.stringify(m))}catch(e){}})});
+var b=document.querySelector('.expand-all');if(!b)return;b.hidden=false;
+b.addEventListener('click',function(){var o=b.getAttribute('aria-expanded')!=='true';bulk++;
+ds.forEach(function(d){d.open=o});setTimeout(function(){bulk--},0);b.setAttribute('aria-expanded',o);b.textContent=o?'Collapse all':'Expand all'})})()</script>"""
 
 
 DIST_CSS = """
