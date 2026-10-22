@@ -6,6 +6,11 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
+## Unreleased
+
+### Changed
+- The Map layers box is narrower, so it covers less of the map on phones. Its names are shorter and match the map key: "District lines", "Non-zoned", "Citywide G&T", "Charter", "Place names", "Parks & water".
+
 ## 1.50.0 (2026-10-21)
 
 ### Changed
