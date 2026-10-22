@@ -6,6 +6,14 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
+## Unreleased
+
+### Changed
+- The Map layers box is narrower, so it covers less of the map on phones. Its names are shorter and match the map key: "District lines", "Non-zoned", "Citywide G&T", "Charter", "Place names", "Parks & water".
+- Schools without a zone are called "Non-zoned" in Map layers and the map key for elementary, middle and high school alike. Before, middle and high school said "No zone" or "Other high schools".
+- On phones, the Color by picker stays open after you pick, like on a computer, so you can see the map change and try another. Tap the map or ✕ to close it.
+- In the Color by picker, "Programs & space" is now just "Programs", since everything in it (G&T, dual language, pre-K, special ed) is a program.
+
 ## 1.50.0 (2026-10-21)
 
 ### Changed

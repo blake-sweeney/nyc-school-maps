@@ -287,7 +287,7 @@ __RAMP_CSS__
 .nzk{display:inline-block;width:9px;height:9px;transform:rotate(45deg);background:var(--fg);border:1.5px solid var(--panel);box-shadow:0 0 0 1px var(--fg);margin:0 3px}
 .sw i.nzk{border-radius:0;flex:none;width:8px;height:8px;margin:0 3px 0 2px}
 .sw i.gtk{border:0;border-radius:0;width:13px;height:13px}
-#layers-pop{position:absolute;top:10px;left:54px;z-index:1150;background:var(--panel);color:var(--fg);border-radius:10px;box-shadow:0 4px 18px rgba(0,0,0,.3);padding:12px 14px 14px;width:250px}
+#layers-pop{position:absolute;top:10px;left:54px;z-index:1150;background:var(--panel);color:var(--fg);border-radius:10px;box-shadow:0 4px 18px rgba(0,0,0,.3);padding:12px 14px 14px;width:max-content;min-width:180px}
 #layers-pop[hidden]{display:none}
 #layers-pop .cp-head{margin-bottom:8px}
 .layers{display:flex;flex-direction:column;gap:9px}
@@ -361,7 +361,7 @@ details.kind>summary{cursor:pointer}details.kind>p{margin:4px 0 2px}
   .map-pop{position:absolute;top:58px;left:10px;right:10px;z-index:1150;background:var(--panel);color:var(--fg);border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.3);padding:12px 14px 14px;font-size:15px;max-height:calc(100% - 70px);overflow:auto}
   .map-pop[hidden]{display:none}
   #lvl-pop{right:auto;width:min(340px,calc(100% - 20px))}
-  #layers-pop{top:58px;left:auto;right:10px;width:min(290px,calc(100% - 20px))}
+  #layers-pop{top:58px;left:auto;right:10px;width:max-content;max-width:calc(100% - 20px)}
   .layers-ctl{display:none}
   .map-pop .cp-head{margin-bottom:8px}
   .leaflet-bottom{bottom:calc(var(--peek) + env(safe-area-inset-bottom,0px))}
@@ -478,14 +478,14 @@ details.kind>summary{cursor:pointer}details.kind>p{margin:4px 0 2px}
   <div class="map-pop" id="layers-pop" role="dialog" aria-labelledby="ly-lab" hidden><div class="cp-head"><span class="lab" id="ly-lab">Map layers</span><button type="button" class="cp-close" id="ly-close" aria-label="Close">✕</button></div>
     <div class="layers">
       <label class="chk"><input type="checkbox" id="ly-zones" checked> Zones</label>
-      <label class="chk" id="ly-dist-row" hidden><input type="checkbox" id="ly-dist" checked> School district lines <i class="dk" aria-hidden="true"></i></label>
-      <label class="chk ly-nzrow"><input type="checkbox" id="ly-nz" checked> <span id="ly-nz-lab">Non-zoned schools</span> <i class="nzk" aria-hidden="true"></i></label>
-      <label class="chk ly-hsrow" hidden><input type="checkbox" id="ly-hsnz" checked> <span>Other high schools</span> <i class="nzk" aria-hidden="true"></i></label>
-      <label class="chk ly-es"><input type="checkbox" id="ly-gt" checked> <span id="ly-gt-lab">Citywide G&amp;T schools</span> <i class="gtk" aria-hidden="true"></i></label>
-      <label class="chk ly-chrow"><input type="checkbox" id="ly-ch" checked> <span>Charter schools</span> <i class="chs" aria-hidden="true"></i></label>
+      <label class="chk" id="ly-dist-row" hidden><input type="checkbox" id="ly-dist" checked> District lines <i class="dk" aria-hidden="true"></i></label>
+      <label class="chk ly-nzrow"><input type="checkbox" id="ly-nz" checked> <span>Non-zoned</span> <i class="nzk" aria-hidden="true"></i></label>
+      <label class="chk ly-hsrow" hidden><input type="checkbox" id="ly-hsnz" checked> <span>Non-zoned</span> <i class="nzk" aria-hidden="true"></i></label>
+      <label class="chk ly-es"><input type="checkbox" id="ly-gt" checked> <span id="ly-gt-lab">Citywide G&amp;T</span> <i class="gtk" aria-hidden="true"></i></label>
+      <label class="chk ly-chrow"><input type="checkbox" id="ly-ch" checked> <span>Charter</span> <i class="chs" aria-hidden="true"></i></label>
       <label class="chk"><input type="checkbox" id="ly-zs" checked> <span>Zoned schools</span> <i class="zsk" aria-hidden="true"></i></label>
-      <label class="chk"><input type="checkbox" id="ly-names" checked> Street &amp; place names</label>
-      <label class="chk" id="ly-parks-row"><input type="checkbox" id="ly-parks" checked> Parks &amp; water color</label>
+      <label class="chk"><input type="checkbox" id="ly-names" checked> Place names</label>
+      <label class="chk" id="ly-parks-row"><input type="checkbox" id="ly-parks" checked> Parks &amp; water</label>
     </div>
   </div>
   <div class="map-pop" id="search-dlg" role="dialog" aria-labelledby="sd-lab" hidden><div class="cp-head"><span class="lab" id="sd-lab">Search</span><button type="button" class="cp-close" id="sd-close" aria-label="Close search">✕</button></div></div>
@@ -509,7 +509,7 @@ details.kind>summary{cursor:pointer}details.kind>p{margin:4px 0 2px}
         <input type="radio" name="metric" id="m-ccr" value="ccr" hidden><label for="m-ccr" hidden>Readiness</label>
         <input type="radio" name="metric" id="m-sat" value="sat" hidden><label for="m-sat" hidden>SAT</label>
     </div>
-    <div class="grp-h" id="g-programs">Programs &amp; space</div>
+    <div class="grp-h" id="g-programs">Programs</div>
     <div class="seg" data-g="programs" role="radiogroup" aria-labelledby="g-programs">
         <input type="radio" name="metric" id="m-gt" value="gt"><label for="m-gt" id="lbl-gt">G&amp;T</label>
         <input type="radio" name="metric" id="m-dl" value="dl"><label for="m-dl">Dual language</label>
@@ -1497,8 +1497,7 @@ function showGroup(g){curGroup=g;
 let quietColor=false;
 document.querySelectorAll('input[name=metric]').forEach(r=>r.addEventListener('change',()=>{const s=r.closest('.seg[data-g]');if(s){lastPick[s.dataset.g]=r.value;showGroup(s.dataset.g)}
   if(!quietColor)markEngaged();metric=r.value;syncLegend();restyle();drawLabels();setColorParam();placePanel();
-  if(SEC_FOR[metric])card.querySelectorAll('.sec[data-sec^="'+SEC_FOR[metric]+'"]').forEach(x=>{x.open=true});
-  if(!quietColor&&phone.matches)setPanel(false)}));
+  if(SEC_FOR[metric])card.querySelectorAll('.sec[data-sec^="'+SEC_FOR[metric]+'"]').forEach(x=>{x.open=true})}));
 // the color choice rides along in the URL (?c=ela), so a shared link opens with the same coloring
 function setColorParam(){try{const u=new URL(location.href);if(metric==='comp')u.searchParams.delete('c');else u.searchParams.set('c',metric);history.replaceState(null,'',u.pathname+u.search+u.hash)}catch(e){}}
 function applyColorParam(){let c=null;try{c=new URLSearchParams(location.search).get('c')}catch(e){}if(!c||c===metric)return;
@@ -1639,7 +1638,7 @@ const LayersCtl=L.Control.extend({options:{position:'topleft'},onAdd(){const d=L
 new LayersCtl().addTo(map);
 document.getElementById('pb-layers').addEventListener('click',()=>setPop('layers',lypop.hidden));
 document.getElementById('ly-close').addEventListener('click',()=>{if(phone.matches)setPop('layers',false);else{lypop.hidden=true;document.getElementById('layers-btn').setAttribute('aria-expanded','false')}});
-function syncLayerBoxes(){Object.keys(LAY).forEach(k=>{const b=document.getElementById('ly-'+k);if(b)b.checked=!!LAY[k]});document.querySelectorAll('.ly-es').forEach(e=>e.hidden=!NZ.some(o=>o.gt));document.querySelectorAll('.ly-chrow').forEach(e=>e.hidden=!NZ.some(o=>o.ch));document.getElementById('ly-gt-lab').textContent=level==='hs'?'Specialized high schools':level==='ms'?'Citywide middle schools':'Citywide G&T schools';{const g=document.getElementById('gtk-item');if(g)g.lastChild.textContent=level==='hs'?'Specialized':level==='ms'?'Citywide':'Citywide G&T'}document.querySelectorAll('.ly-nzrow').forEach(e=>e.hidden=level==='hs'||!NZ.length);document.querySelectorAll('.ly-hsrow').forEach(e=>e.hidden=level!=='hs'||!NZ.some(o=>!o.gt));document.getElementById('ly-nz-lab').textContent=level==='ms'?'Middle schools without zones':'Non-zoned schools';const k=document.getElementById('nzk-item');if(k)k.lastChild.textContent=level==='es'?'Non-zoned':'No zone'}
+function syncLayerBoxes(){Object.keys(LAY).forEach(k=>{const b=document.getElementById('ly-'+k);if(b)b.checked=!!LAY[k]});document.querySelectorAll('.ly-es').forEach(e=>e.hidden=!NZ.some(o=>o.gt));document.querySelectorAll('.ly-chrow').forEach(e=>e.hidden=!NZ.some(o=>o.ch));document.getElementById('ly-gt-lab').textContent=level==='hs'?'Specialized':level==='ms'?'Citywide':'Citywide G&T';{const g=document.getElementById('gtk-item');if(g)g.lastChild.textContent=level==='hs'?'Specialized':level==='ms'?'Citywide':'Citywide G&T'}document.querySelectorAll('.ly-nzrow').forEach(e=>e.hidden=level==='hs'||!NZ.length);document.querySelectorAll('.ly-hsrow').forEach(e=>e.hidden=level!=='hs'||!NZ.some(o=>!o.gt))}
 function syncZoneLines(){byLayer.forEach(l=>{l.options.interactive=!!LAY.zones;if(!LAY.zones)l.closeTooltip()});if(!zoneLines)return;if(LAY.zones&&!map.hasLayer(zoneLines))zoneLines.addTo(map);if(!LAY.zones&&map.hasLayer(zoneLines))map.removeLayer(zoneLines)}
 function applyLayers(){syncZoneLines();restyle();if(typeof syncDistricts==='function')syncDistricts();buildNZ();drawLabels();syncNames();syncParks();if(typeof syncDistricts==='function')syncDistricts()}
 // hiding zones also drops a selected zone (its outline and card); a selected school marker stays
