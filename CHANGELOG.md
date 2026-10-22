@@ -11,6 +11,7 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 ### Changed
 - The Map layers box is narrower, so it covers less of the map on phones. Its names are shorter and match the map key: "District lines", "Non-zoned", "Citywide G&T", "Charter", "Place names", "Parks & water".
 - On phones, the Color by picker stays open after you pick, like on a computer, so you can see the map change and try another. Tap the map or ✕ to close it.
+- In the Color by picker, "Programs & space" is now just "Programs", since everything in it (G&T, dual language, pre-K, special ed) is a program.
 
 ## 1.50.0 (2026-10-21)
 
