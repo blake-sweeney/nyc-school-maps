@@ -1497,8 +1497,7 @@ function showGroup(g){curGroup=g;
 let quietColor=false;
 document.querySelectorAll('input[name=metric]').forEach(r=>r.addEventListener('change',()=>{const s=r.closest('.seg[data-g]');if(s){lastPick[s.dataset.g]=r.value;showGroup(s.dataset.g)}
   if(!quietColor)markEngaged();metric=r.value;syncLegend();restyle();drawLabels();setColorParam();placePanel();
-  if(SEC_FOR[metric])card.querySelectorAll('.sec[data-sec^="'+SEC_FOR[metric]+'"]').forEach(x=>{x.open=true});
-  if(!quietColor&&phone.matches)setPanel(false)}));
+  if(SEC_FOR[metric])card.querySelectorAll('.sec[data-sec^="'+SEC_FOR[metric]+'"]').forEach(x=>{x.open=true})}));
 // the color choice rides along in the URL (?c=ela), so a shared link opens with the same coloring
 function setColorParam(){try{const u=new URL(location.href);if(metric==='comp')u.searchParams.delete('c');else u.searchParams.set('c',metric);history.replaceState(null,'',u.pathname+u.search+u.hash)}catch(e){}}
 function applyColorParam(){let c=null;try{c=new URLSearchParams(location.search).get('c')}catch(e){}if(!c||c===metric)return;
