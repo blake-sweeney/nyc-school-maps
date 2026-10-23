@@ -540,9 +540,9 @@ def ms_progs(progs):
     return [p for p in progs or [] if p[1] not in SPECIAL and p[1] != "T" and (p[3] is not None or (len(p) > 6 and p[6]))]
 
 
-def ms_adm_html(dbn, lv, progs, ka, dist, eg=None):
+def ms_adm_html(dbn, lv, progs, eg=None):
     """Grade 6 or 9 admissions from MySchools: a table per program, special ed seats, District 75 and ASD/ACES
-    programs, and the Local Law 72 numbers in "About this data". "" when MySchools has nothing for the school.
+    programs. "" when MySchools has nothing for the school (then the Local Law 72 table, a year older, stands alone).
     eg: the grade a middle school takes new students in, when it isn't 6 (school_fixes.json "entry")."""
     R = ms_progs(progs)
     if not R:
@@ -551,45 +551,31 @@ def ms_adm_html(dbn, lv, progs, ka, dist, eg=None):
     solo = len(R) == 1
     G = f"Grade {eg}" if eg else {"ms": "Grade 6", "hs": "Grade 9"}[lv]
     h = f"<h2>{G} admissions, {settings.MYSCHOOLS_LABEL}</h2>"
-    tr = true_apps(ka)  # the school's, not a program's: under the table only when there's one program
-    # MySchools sometimes lists the priority groups with no seats or applicants: name the entry grade, or take the
-    # Local Law 72 numbers, or say there are none
+    # MySchools sometimes lists the priority groups with no seats or applicants: name the entry grade, or say there are none
     if all(p[2] is None and p[3] is None for p in R):
-        y = max(ka) if ka else None
         if eg:
             h += (f"<p>This school takes new students in grade {eg}, not grade 6, so families apply when their child is in "
                   f"grade {eg - 1}. MySchools lists the priority groups below but no seat counts.</p>")
-        elif y and ka[y] and ka[y][0] is not None:
-            h += f"<p>{ka[y][0]:,} seats · {ka[y][1] or 0:,} applied (fall {e(y)} DOE report)</p>"
         else:
             h += "<p>MySchools lists this school’s priority groups but no seat counts.</p>"
     else:
         h += (f"<p>{sum(p[2] or 0 for p in R):,} seats · {sum(p[3] or 0 for p in R):,} applied"
               + (f", across {len(R)} programs" if not solo else "") + "</p>")
-    tr_line = f'<p class="src">True applicants: {tr[1]:,} (fall {e(tr[0])} DOE report)</p>' if tr else ""
     for p in R:
         how = " · ".join(x for x in (N.get(p[1], p[1]), f"{p[2]} seats" + (", all filled" if p[4] else "") if p[2] is not None else "",
                                       "diversity set-aside" if p[5] else "") if x)
         h += (f'<h3 class="adm-p">{"" if solo else e(p[0] or "Main program") + " "}<small>{e(how)}</small></h3>'
-              + adm_table(dbn, lv, p[6] if len(p) > 6 else [], p[3], "students") + (tr_line if solo else ""))
+              + adm_table(dbn, lv, p[6] if len(p) > 6 else [], p[3], "students"))
         if len(p) > 7 and p[7]:
             h += (f'<p class="src">Special ed seats: {p[7]}' + (f" · {p[8]} applied" if p[8] is not None else "")
                   + (", all filled" if p[9] else "") + "</p>")
-    if not solo:
-        h += tr_line
     sp = [p for p in progs if p[1] in SPECIAL and ((len(p) > 7 and p[7]) or p[2])]
     if sp:
         h += ('<h3 class="adm-p">Special education programs</h3><ul class="adm-sp">' + "".join(
             f'<li>{e(p[0] or "Main program")} <small>· {e(N.get(p[1], p[1]))} · {(p[7] if len(p) > 7 and p[7] else p[2])} seats'
             + (f" · {p[8]} applied" if len(p) > 8 and p[8] is not None else "") + "</small></li>" for p in sp) + "</ul>")
     lunch = any(has_lunch(p[6] if len(p) > 6 else []) for p in R)
-    return h + about_html(ka, lv, dist, "students", lunch)
-
-
-def true_apps(ka):
-    """(year, true applicants) from the Local Law 72 report: who listed the school and didn't get a choice ranked higher."""
-    y = max(ka) if ka else None
-    return (y, ka[y][1]) if y and ka[y] and ka[y][1] is not None else None
+    return h + about_html("students", lunch)
 
 
 def has_lunch(steps):
@@ -597,17 +583,15 @@ def has_lunch(steps):
     return any(len(s) > 1 and isinstance(s[1], list) and s[1][0] == "f" for s in steps or [])
 
 
-def about_html(ka, lv, dist, who, lunch=False):
-    """"About this data" under the MySchools tables, with the Local Law 72 numbers that counted differently."""
+def about_html(who, lunch=False):
+    """"About this data" under the MySchools tables. The Local Law 72 numbers stay out: they're a year older."""
     return ('<details class="about"><summary>About this data</summary><p>Each priority group gets offers before the next. '
             f'From MySchools, {settings.MYSCHOOLS_LABEL}: general education seats, and every '
             f'{"family" if who == "families" else "student"} who listed the program anywhere on their application. '
             f'MySchools rounds group counts (“~” about, “&lt;10” fewer than 10), so the “All {who}” offers add up the groups.</p>'
             + ("<p>Lunch-eligible: students who qualify for free or reduced-price lunch. Programs with a diversity "
                "set-aside give them priority for a share of seats.</p>" if lunch else "")
-            + (f"<p>True applicants are the {who} who listed the school and didn’t get a choice they ranked higher, from "
-               "the DOE’s report below.</p>" if true_apps(ka) else "")
-            + k_adm_html(ka, lv, dist, bare=True) + "</details>")
+            + "</details>")
 
 
 def extras_html(ex, vocab):
@@ -701,10 +685,10 @@ def demo_html(m, city, ch, iep=None, ell=None):
             + ".</p>")
 
 
-def k_adm_html(ka, lv="es", dist=None, bare=False, zoned=False):
+def k_adm_html(ka, lv="es", dist=None, zoned=False):
     """Admissions for kindergarten, grade 6 or grade 9 from the DOE's Local Law 72 report: offers and applicants for all
-    students, and for middle schools by district, as the map card's table (src/template.html admHtml). bare: just the
-    table and its notes, for "About this data" under the MySchools tables. zoned: add how the zone gets priority."""
+    students, and for middle schools by district, as the map card's table (src/template.html admHtml).
+    zoned: add how the zone gets priority."""
     G = {"es": "Kindergarten", "ms": "Grade 6", "hs": "Grade 9"}[lv]
     y = max(ka) if ka else None
     r = ka[y] if ka else None
@@ -726,13 +710,10 @@ def k_adm_html(ka, lv="es", dist=None, bare=False, zoned=False):
     if lv != "hs" and len(r) > 4:  # high schools don't give district priority, so the split would mislead there
         rows += [row(f"District {dist}", r[6], r[7], r[4], r[5]), row("Other districts", r[10], r[11], r[8], r[9])]
     note = {"es": "Most zoned schools offer a seat to every zoned family who applies on time.",
-            "ms": "" if bare else f"Most middle school programs fill seats with District {dist} students and residents first, then consider other districts.",
+            "ms": f"Most middle school programs fill seats with District {dist} students and residents first, then consider other districts.",
             "hs": "Counts cover every program at the school."}[lv]
     src = (f'<p class="src">Applicants listed the school and didn’t get a choice they ranked higher. {e(note + " " if note else "")}'
            "“—” means the DOE hid the count for privacy. DOE Local Law 72 report.</p>")
-    if bare:
-        return (f"<p>The DOE’s fall {e(y)} report counts differently: every seat at the school ({r[0]:,}), and only "
-                "students who didn’t get a choice they ranked higher.</p>" + _table(rows) + src)
     return (f"<h2>{G} admissions, fall {e(y)}</h2><p>{r[0]:,} seats · {r[1]:,} applied</p>" + _table(rows)
             + ('<p class="src">Zoned schools offer seats to families in the zone first (siblings first), then to others if seats '
                'are left. <a href="https://www.schools.nyc.gov/enrollment/enroll-grade-by-grade/kindergarten">How kindergarten '
@@ -997,10 +978,8 @@ def page_html(d, dbn, streets, site_url, goat, nbi=None):
         if lv == "es":
             ka, kp = d.get("KA", {}).get(dbn), d.get("KP", {}).get(dbn)
             if kp:  # MySchools' groups once they're posted (December), as for grade 6 and 9
-                tr = true_apps(ka)
                 h = (f"<h2>Kindergarten admissions, {settings.MYSCHOOLS_LABEL}</h2>" + adm_table(dbn, "es", kp, None, "families")
-                     + (f'<p class="src">True applicants: {tr[1]:,} (fall {e(tr[0])} DOE report)</p>' if tr else "")
-                     + about_html(ka, "es", dist, "families", has_lunch(kp)))
+                     + about_html("families", has_lunch(kp)))
             else:
                 h = k_adm_html(ka, "es", dist, zoned=not nz and bool(feats))
             ky = max(ka) if ka else None
@@ -1039,7 +1018,7 @@ def page_html(d, dbn, streets, site_url, goat, nbi=None):
             progs = ((HS if lv == "hs" else MS).get("P") or {}).get(dbn) or []
             ka = ((HS if lv == "hs" else MS).get("A") or {}).get(dbn)
             eg = (MS.get("EG") or {}).get(dbn) if lv == "ms" else None
-            return ms_adm_html(dbn, lv, progs, ka, dist, eg) or (k_adm_html(ka, lv, dist) + programs_html(dbn, progs, lv == "hs"))
+            return ms_adm_html(dbn, lv, progs, eg) or (k_adm_html(ka, lv, dist) + programs_html(dbn, progs, lv == "hs"))
         if lv in ("ms", "hs"):
             h = admissions(lv)
             eg = (MS.get("EG") or {}).get(dbn) if lv == "ms" else None
