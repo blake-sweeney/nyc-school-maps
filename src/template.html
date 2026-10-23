@@ -1624,7 +1624,7 @@ document.getElementById('sheet-head').addEventListener('click',()=>{markEngaged(
 let sy=null,ss=0;
 aside.addEventListener('touchstart',e=>{sy=e.touches[0].clientY;ss=aside.scrollTop},{passive:true});
 aside.addEventListener('touchend',e=>{if(sy==null)return;const dy=e.changedTouches[0].clientY-sy;sy=null;if(!sheetOpen()&&dy<-30)setSheet(true);else if(sheetOpen()&&ss<=0&&dy>60)setSheet(false)},{passive:true});
-map.on('dragstart',()=>{setSheet(false);closePops()});
+map.on('dragstart',()=>{setSheet(false);closePops();if(phone.matches)setPanel(false)});  // phones: moving the map puts away the Color by picker too
 // map buttons and their pop-ups
 const PhoneBar=L.Control.extend({options:{position:'topleft'},onAdd(){const d=document.getElementById('phone-bar');d.classList.add('leaflet-control');L.DomEvent.disableClickPropagation(d);return d}});
 new PhoneBar().addTo(map);
@@ -1660,8 +1660,8 @@ document.getElementById('pb-info').addEventListener('click',()=>{closePops();set
   setSheet(true);const hd=aside.querySelector('header');setTimeout(()=>aside.scrollTo({top:card.classList.contains('empty')?0:hd.offsetTop-56,behavior:'smooth'}),50)});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closePops()});
 document.addEventListener('click',e=>{Object.values(POPS).forEach(([el,bid])=>{if(!el.hidden&&!el.contains(e.target)&&!document.getElementById(bid).contains(e.target)&&!(el===lypop&&document.getElementById('layers-btn').contains(e.target)))setPop(Object.keys(POPS).find(k=>POPS[k][0]===el),false)})});
-document.querySelectorAll('input[name=level]').forEach(r=>r.addEventListener('change',()=>{if(!r.checked)return;
-  setPop('level',false);if(phone.matches)setSheet(false)}));
+// the Grades pop-up stays open after a pick, so you can switch back and forth; ✕, the button or the map close it
+document.querySelectorAll('input[name=level]').forEach(r=>r.addEventListener('change',()=>{if(r.checked&&phone.matches)setSheet(false)}));
 // on phones the level switch and search move into their pop-ups; they move back for desktop
 const lvlSeg=document.querySelector('.seg.level'),searchSec=document.getElementById('search-sec'),lvlHome=document.createComment('level'),searchHome=document.createComment('search');
 lvlSeg.before(lvlHome);searchSec.before(searchHome);

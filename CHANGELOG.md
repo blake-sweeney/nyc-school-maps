@@ -6,6 +6,13 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
+## Unreleased
+
+### Changed
+- On phones, dragging the map closes the Color by picker, so it's out of the way while you look around.
+- On phones, the Grades pop-up stays open after you switch between elementary, middle and high school. Tap ✕, the Grades button or the map to close it.
+- Behind the scenes: every change in progress now comes with a link to try it out on a phone before it goes live.
+
 ## 1.51.0 (2026-10-22)
 
 ### Changed

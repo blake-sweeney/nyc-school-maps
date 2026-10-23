@@ -107,7 +107,7 @@ Commit `src/template.html`, the rebuilt `index.html` and `assets/`. The build al
 
 The site's version is in `VERSION` and shows in the footer next to the "Updated" date; `CHANGELOG.md` lists what changed in each one. Bump the major number for a new kind of view, the minor number for a new feature, and the patch number for fixes.
 
-1. Work on a branch, like `git checkout -b admissions-data`, and test locally (see "Run it locally"), including on your phone.
+1. Work on a branch, like `git checkout -b admissions-data`, and test locally (see "Run it locally"), including on your phone. To try a pushed branch on a phone, open `https://raw.githack.com/blake-sweeney/nyc-school-maps/<commit SHA>/index.html` (use the full commit SHA rather than the branch name); Claude sessions post this link after each push.
 2. As you go, describe the changes under a `## Unreleased` heading at the top of `CHANGELOG.md`. Leave `VERSION` alone.
 3. Merge to `main`, then release. From anywhere, including a phone: on GitHub open **Actions → Release → Run workflow**, pick patch, minor or major (tick "Dry run" to only preview) and run it. Only the `blake-sweeney` account can run it for now; anyone else's run is skipped. Or from a computer:
 
