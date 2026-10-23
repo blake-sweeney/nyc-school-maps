@@ -6,6 +6,11 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
+## Unreleased
+
+### Added
+- The card for a school without a zone now ends like a zone card: the district's other non-zoned schools and its charter schools, each in a list you can open, and a link to the district page. Tap a school in a list, then "← Back" to return to the school you started from. Citywide schools (citywide G&T, citywide middle schools and the specialized high schools) don't give priority by district, so their cards show just the district page link.
+
 ## 1.52.0 (2026-10-22)
 
 ### Changed

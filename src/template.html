@@ -689,12 +689,12 @@ function nzOptions(dist,skip,open){if(!dist)return '';const hs=level==='hs';
   const l=NZ.filter(o=>!o.ch&&(hs?+o.d.slice(0,2)===dist:!o.gt&&nzDistricts(o).includes(dist))&&!skip.includes(o.d));if(!l.length)return '';
   l.sort((a,b)=>(schoolRating(b.d,'comp')??0)-(schoolRating(a.d,'comp')??0));
   const boro=BORO[(l[0]||{}).d?.[2]]||'',nb=l.filter(o=>/riority to /.test(o.pz)).length;
-  if(hs)return (open?'':'<hr class="sep">')+'<details class="opts"'+(open?' open':'')+'><summary>'+l.length+' high school'+(l.length>1?'s':'')+' in District '+dist+'</summary><p class="opts-note">High schools don’t give priority by district. Any NYC student can apply'+(nb?'. '+nb+' of these give priority to '+esc(boro)+' students and residents in some or all programs':'')+'.</p><ul>'+
+  if(hs)return (open?'':'<hr class="sep">')+'<details class="opts"'+(open?' open':'')+'><summary>'+l.length+(skip.length?' other':'')+' high school'+(l.length>1?'s':'')+' in District '+dist+'</summary><p class="opts-note">High schools don’t give priority by district. Any NYC student can apply'+(nb?'. '+nb+' of these give priority to '+esc(boro)+' students and residents in some or all programs':'')+'.</p><ul>'+
     l.map(o=>'<li><button type="button" data-nz="'+o.d+'"><span class="on">'+esc(o.n)+'<small>'+esc((o.gt?'Specialized · ':'')+(nzDemand(o)||'No demand data'))+'</small></span>'+chip(schoolRating(o.d,'comp'),1)+'</button></li>').join('')+'</ul></details>';
   return (open?'':'<hr class="sep">')+'<details class="opts"'+(open?' open':'')+'><summary>'+(open?'':'Other options: ')+l.length+(level==='ms'?' middle school'+(l.length>1?'s':'')+' without zones <small>in District '+dist+'</small>':' non-zoned school'+(l.length>1?'s':'')+' <small>with District '+dist+' priority</small>')+'</summary><ul>'+
     l.map(o=>'<li><button type="button" data-nz="'+o.d+'"><span class="on">'+esc(o.n)+'<small>'+esc(nzDemand(o)||'No demand data')+'</small></span>'+chip(schoolRating(o.d,'comp'),1)+'</button></li>').join('')+'</ul></details>'}
 // the zone card's charter list: this level's charters whose lottery gives priority to the district, best rated first
-function chOptions(dist){if(!dist)return '';const l=NZ.filter(o=>o.ch&&o.pd[0]===dist);if(!l.length)return '';
+function chOptions(dist,skip=[]){if(!dist)return '';const l=NZ.filter(o=>o.ch&&o.pd[0]===dist&&!skip.includes(o.d));if(!l.length)return '';
   l.sort((a,b)=>(schoolRating(b.d,'comp')??0)-(schoolRating(a.d,'comp')??0));
   return '<details class="opts"><summary>Charter schools: '+l.length+' <small>with District '+dist+' priority</small></summary><p class="opts-note">Admission is by lottery only, with priority to siblings and then District '+dist+' families. Charter schools can’t screen. <a href="'+CH_APPLY+'" target="_blank" rel="noopener">How to apply ↗</a></p><ul>'+
     l.map(o=>'<li><button type="button" data-nz="'+o.d+'"><span class="on">'+esc(o.n)+'<small>'+esc(CHX[o.d]&&CHX[o.d][0]?'Grades '+grades(CHX[o.d][0]):'Charter school')+'</small></span>'+chip(schoolRating(o.d,'comp'),1)+'</button></li>').join('')+'</ul></details>'}
@@ -1136,6 +1136,9 @@ function selectNZ(d,fromClick,back){const o=nzGet(d);if(!o)return;markEngaged();
     :o.ms?'<div class="zt">'+(o.gt?'Citywide middle school':'Middle school · no zone')+' · District '+(+d.slice(0,2))+' · '+esc(BORO[d[2]]||'')+'</div>'+schoolBlock(d)
     :'<div class="zt">'+(o.gt?'Citywide G&amp;T school':'Non-zoned school')+' · District '+(+d.slice(0,2))+' · '+esc(BORO[d[2]]||'')+'</div><div class="kind nz"><b>'+(o.gt?'Citywide G&amp;T:':'No zone:')+'</b> '+esc(nzPriority(o))+(o.gt?' <a href="'+GT_URL+'" target="_blank" rel="noopener">How G&amp;T eligibility works ↗</a>':'')+jumpIn+'</div>'+schoolBlock(d,true);
   h+='<div class="card-actions"><button type="button" class="btn-sm" id="copy-link">Copy link to this school</button><button type="button" class="btn-sm to-map" id="to-map">↑ Back to map</button></div>';
+  // the district's other schools, as on a zone card; citywide schools don't give district priority, so only the district page
+  const dist=o.ch?o.pd[0]:+d.slice(0,2);
+  if(o.gt)h+='<hr class="sep">'+distPage(dist);else h+=(nzOptions(dist,[d])||'<hr class="sep">')+chOptions(dist,[d])+distPage(dist);
   if(backTo)h='<button type="button" class="back-link" id="back-link">← Back to '+esc(backTo.label)+'</button>'+h;
   card.className='card';card.innerHTML=h;setZoneHash(d);if(backTo)document.getElementById('back-link').onclick=()=>history.back();
   document.getElementById('copy-link').onclick=e=>copyLink(e.currentTarget,pageLink(d));
@@ -1143,17 +1146,20 @@ function selectNZ(d,fromClick,back){const o=nzGet(d);if(!o)return;markEngaged();
   const ll=o.lat==null?null:L.latLng(o.lat,o.lon);
   if(phone.matches){const ae=document.activeElement;if(ae&&ae.tagName==='INPUT')ae.blur();setPop('search',false);sheetLabel(o.n,o.ch?'Charter school · District '+o.pd[0]:o.hs?(o.gt?'Specialized high school':'High school')+' · '+(BORO[d[2]]||''):(o.ms&&o.gt?'Citywide middle school':o.ms?'Middle school, no zone':o.gt?'Citywide G&T':'Non-zoned')+' · District '+(+d.slice(0,2)));setSheet(true);aside.scrollTo({top:0});if(!fromClick&&ll)showLatLng(ll,15)}
   else if(!fromClick&&ll)map.setView(ll,Math.max(map.getZoom(),15))}
-// the zone card's "other options" list opens a non-zoned school
+// the "other options" lists on a zone card or a non-zoned school's card open a non-zoned school
 document.getElementById('card').addEventListener('click',e=>{const b=e.target.closest('button[data-nz]');if(!b)return;
-  const l=selected,p=l&&l.feature.properties,ds=p&&p.dbns||[];
-  drillIn(b.dataset.nz,l&&{kind:'zone',l,top:aside.scrollTop,di:[...card.querySelectorAll('details.opts')].indexOf(b.closest('details')),label:ds.length===1?prefixOf(ds[0])+' '+(+ds[0].slice(3))+'’s zone':ds.length?'this zone':'District '+(+p.dist)})});
+  const l=selected,p=l&&l.feature.properties,ds=p&&p.dbns||[],top=aside.scrollTop,di=[...card.querySelectorAll('details.opts')].indexOf(b.closest('details'));
+  // from a school, Back returns to it with its own Back link (prev) intact
+  drillIn(b.dataset.nz,l?{kind:'zone',l,top,di,label:ds.length===1?prefixOf(ds[0])+' '+(+ds[0].slice(3))+'’s zone':ds.length?'this zone':'District '+(+p.dist)}
+    :nzSel?{kind:'school',nz:nzSel,prev:backTo,top,di,label:nzGet(nzSel).n}:null)});
 // going back: a school opened from a zone's list or from search results gets a "← Back" link, and the browser's
 // Back button (or the phone's back gesture) does the same. Only these steps add a history entry; other clicks
 // replace the address, so Back doesn't replay every zone you tapped.
 let backTo=null;
 function drillIn(d,back){if(back){try{history.pushState({nsz:1},'','#'+level+'-'+d)}catch(e){back=null}}selectNZ(d,false,back)}
 function goBack(b){backTo=null;
-  if(b.kind==='zone'){select(b.l,false);const o=card.querySelectorAll('details.opts')[Math.max(0,b.di||0)];if(o)o.open=true;requestAnimationFrame(()=>{aside.scrollTop=b.top})}
+  if(b.kind==='zone'||b.kind==='school'){if(b.kind==='zone')select(b.l,false);else selectNZ(b.nz,false,b.prev);
+    const o=card.querySelectorAll('details.opts')[Math.max(0,b.di||0)];if(o)o.open=true;requestAnimationFrame(()=>{aside.scrollTop=b.top})}
   // search: what was selected before the search comes back, with the results open again
   else{if(b.l)select(b.l,false);else if(b.nz)selectNZ(b.nz,false);else{clearNZSel();card.className='card empty';card.textContent='Select a zone on the map, or search for a school, to see its zoned school.';sheetDefault()}
     if(phone.matches)setPop('search',true);document.getElementById('t-school').click();q.focus();q.dispatchEvent(new Event('input'))}}
