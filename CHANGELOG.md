@@ -6,7 +6,7 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
-## Unreleased
+## 1.54.0 (2026-10-23)
 
 ### Changed
 - Middle and high school admissions on school cards and school pages now show only this year's MySchools numbers. The "True applicants" count and the DOE table under "About this data" came from a report a year older, so they often didn't match the seats and applicants right above them. Kindergarten (until MySchools posts its priority groups in December), pre-K and 3-K still show the DOE report, labeled with its year.
