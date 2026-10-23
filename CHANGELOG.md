@@ -6,7 +6,7 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
-## Unreleased
+## 1.52.0 (2026-10-22)
 
 ### Changed
 - On phones, dragging the map closes the Color by picker, so it's out of the way while you look around.
