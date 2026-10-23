@@ -738,14 +738,10 @@ function msProgs(d,lv){const P=(LV[lv]&&LV[lv].P||{})[d]||[];return P.filter(p=>
 function msAdm(d,lv){const P=(LV[lv]&&LV[lv].P||{})[d]||[],R=msProgs(d,lv);if(!R.length)return '';const N=lv==='hs'?HNAME:MNAME,solo=R.length===1;
   const head=p=>'<div class="adm-p">'+(solo?'':esc(p[0]||'Main program')+' ')+'<small>'+[N[p[1]]||p[1],p[2]!=null?p[2]+' seats'+(p[4]?', all filled':''):'',p[5]?'diversity set-aside':''].filter(Boolean).join(' · ')+'</small></div>';
   const swdLine=p=>p[7]?'<p class="adm-note">Special ed seats: '+p[7]+(p[8]!=null?' · '+p[8]+' applied':'')+(p[9]?', all filled':'')+'</p>':'';
-  // true applicants (Local Law 72): the school's, not a program's, so under the table only when there's one program
-  const tr=trueApps(d,lv),trLine=tr?'<p class="adm-note">True applicants: '+tr[1].toLocaleString()+' <small>(fall '+tr[0]+' DOE report)</small></p>':'';
-  const one=p=>head(p)+admTable(d,lv,p[6]||[],p[3],'students')+(solo?trLine:'')+swdLine(p);
+  const one=p=>head(p)+admTable(d,lv,p[6]||[],p[3],'students')+swdLine(p);
   const top=R.slice(0,R.length>3?2:3),rest=R.slice(top.length),sp=P.filter(p=>SPECIAL(p[1])&&(p[7]||p[2]));
-  return top.map(one).join('')+(rest.length?'<details class="more-progs"><summary>'+rest.length+' more program'+(rest.length>1?'s':'')+'</summary>'+rest.map(one).join('')+'</details>':'')+(solo?'':trLine)+
+  return top.map(one).join('')+(rest.length?'<details class="more-progs"><summary>'+rest.length+' more program'+(rest.length>1?'s':'')+'</summary>'+rest.map(one).join('')+'</details>':'')+
     (sp.length?'<div class="adm-p">Special education programs</div><ul class="adm-sp">'+sp.map(p=>'<li>'+esc(p[0]||'Main program')+' <small>· '+esc(N[p[1]]||p[1])+' · '+(p[7]||p[2])+' seats'+(p[8]!=null?' · '+p[8]+' applied':'')+'</small></li>').join('')+'</ul>':'')}
-// [year, true applicants] from the Local Law 72 report: students who listed the school and didn't get a choice ranked higher
-function trueApps(d,lv){const k=(lv==='es'?KA:(LV[lv]&&LV[lv].A)||{})[d],y=k&&Object.keys(k).sort().pop();return y&&k[y]&&k[y][1]!=null?[y,k[y][1]]:null}
 // does any table split a group into lunch-eligible applicants and others?
 const hasLunch=steps=>(steps||[]).some(s=>Array.isArray(s[1])&&s[1][0]==='f');
 // a program's seats for students with disabilities, in the fallback program list: "64 seats · 42 listed it"
@@ -759,9 +755,8 @@ function progHtml(d,inSec){const lp=LV[level],P=lp&&lp.P&&lp.P[d];if(!P||!P.leng
 // specialized high schools: last two years' lowest SHSAT score offered a seat
 function cutHtml(d){const c=LV.hs&&LV.hs.CUT;if(level!=='hs'||!c||!c.c[d])return '';const v=c.c[d],y=+c.y;
   return '<div class="facts"><span>Lowest score offered a seat, fall '+y+'</span><b>'+v[0]+'</b><span>Fall '+(y-1)+'</span><b>'+v[1]+'</b><small>Scores run from about 200 to 800. Cutoffs shift each year with the applicant pool. As reported from DOE results by <a href="https://caddellprep.com/shsat/info/cut-off-scores/" target="_blank" rel="noopener">Caddell Prep</a>.</small></div>'}
-// grade 6 and grade 9 use the same Local Law 72 numbers as kindergarten (LV.ms.A, LV.hs.A). bare: just the table and
-// its notes, to sit inside the MySchools tables' "About this data"
-function admHtml(d,lv,noHead,bare){lv=lv||'es';const src=lv==='es'?KA:(LV[lv]&&LV[lv].A)||{},k=src[d];if(!k)return '';const y=Object.keys(k).sort().pop();const r=k[y];if(!r)return '';
+// grade 6 and grade 9 use the same Local Law 72 numbers as kindergarten (LV.ms.A, LV.hs.A)
+function admHtml(d,lv,noHead){lv=lv||'es';const src=lv==='es'?KA:(LV[lv]&&LV[lv].A)||{},k=src[d];if(!k)return '';const y=Object.keys(k).sort().pop();const r=k[y];if(!r)return '';
   const G={es:'Kindergarten',ms:'Grade 6',hs:'Grade 9'}[lv];
   const dist=+d.slice(0,2),fine=(a,b,t)=>b-a<=Math.max(4,.08*t);
   // one row: offers, applicants, share; a hidden count we can't pin to within a few shows as a dash
@@ -774,18 +769,18 @@ function admHtml(d,lv,noHead,bare){lv=lv||'es';const src=lv==='es'?KA:(LV[lv]&&L
     row('All '+who,r[2],r[3],r[1],r[1],'all')+
     (hasD?row('District '+dist,r[6],r[7],r[4],r[5])+row('Other districts',r[10],r[11],r[8],r[9]):'')+'</tbody></table>';
   if(lv==='es'&&hasD&&r[10]>0&&!nzGet(d))h+='<p class="adm-note">Some seats went to families from other districts, which usually means every zoned family who applied got one.</p>';
-  if(lv==='ms'&&hasD&&!bare)h+='<p class="adm-note">Most middle school programs fill seats with District '+dist+' students and residents first, then consider other districts.</p>';
+  if(lv==='ms'&&hasD)h+='<p class="adm-note">Most middle school programs fill seats with District '+dist+' students and residents first, then consider other districts.</p>';
   const about=(lv==='es'?'Applicants are families who listed the school and didn’t get a choice they ranked higher. Offers are seats offered. Offers can top applicants when the DOE places a child who didn’t list the school there, often at their zoned school. '
     :'Applicants are students who listed the school (any of its programs) and didn’t get a choice they ranked higher. Offers are seats offered; they can top applicants when the DOE places students who didn’t get any of their choices. '+(lv==='ms'?'A district row counts students who live or go to school in that district. ':'Counts cover every program at the school. '))+
     '“—” means the DOE hid the count for privacy. Source: <a href="https://infohub.nyced.org/reports/government-reports" target="_blank" rel="noopener">DOE Local Law 72 reports</a>.';
-  if(bare)return '<p>The DOE’s fall '+y+' report counts differently: every seat at the school ('+r[0].toLocaleString()+'), and only students who didn’t get a choice they ranked higher.</p>'+h+'<p>'+about+'</p>';
   return '<div class="adm">'+h+'<details class="adm-about"><summary>About this data</summary><p>'+about+'</p></details></div>'}
-// the MySchools tables with their "About this data", holding the Local Law 72 table too
+// the MySchools tables with their "About this data". The Local Law 72 numbers stay out: they're a year older than
+// MySchools', so they show only where MySchools has nothing for that grade.
 function msAdmHtml(d,lv,body,who){const lunch=lv==='es'?hasLunch(KP[d]):msProgs(d,lv).some(p=>hasLunch(p[6]));
   return '<div class="adm">'+body+'<details class="adm-about"><summary>About this data</summary><p>Each priority group gets offers before the next. '+
   'From MySchools, __MYSCHOOLS__: general education seats, and every '+(who==='families'?'family':'student')+' who listed the program anywhere on their application. MySchools rounds group counts (“~” about, “&lt;10” fewer than 10), so the “All '+who+'” offers add up the groups.</p>'+
   (lunch?'<p>Lunch-eligible: students who qualify for free or reduced-price lunch. Programs with a diversity set-aside give them priority for a share of seats.</p>':'')+
-  (trueApps(d,lv)?'<p>True applicants are the '+who+' who listed the school and didn’t get a choice they ranked higher, from the DOE’s report below.</p>':'')+admHtml(d,lv,true,true)+'</details></div>'}
+  '</details></div>'}
 function zoneProg(dbns,m){if(!dbns.some(d=>X[d]&&!(m==='dl'&&CHX[d]&&!dualLang(d))))return null;return dbns.some(d=>m==='gt'?hasGT(d):dualLang(d))}
 function schoolRating(d,m){const r=R[d];if(!r)return null;if(m==='comp'){const v=[r[2],r[3],r[4]].filter(x=>x!=null);return v.length?v.reduce((a,b)=>a+b,0)/v.length:null}return r[RK[m]]??null}
 function zoneRating(dbns,m){const v=dbns.map(d=>schoolRating(d,m)).filter(x=>x!=null);return v.length?v.reduce((a,b)=>a+b,0)/v.length:null}
@@ -1264,14 +1259,13 @@ function outSec(d){const o=O[d],g=o&&o[OUT.grad.i];if(g==null)return outHtml(d);
   return sec('out','<span class="st">Graduation rate<small>Graduates in 4 years · NYC __CITY_GRAD__%</small></span><span class="chip"><i style="'+bgBoth(()=>outColor('grad',g))+'"></i>'+Math.round(g)+'%</span>',outHtml(d))}
 // grade 6 or grade 9 admissions: the MySchools tables when the school has them (seats / applied up top, summed over its
 // programs), else the Local Law 72 table with its own year
-// MySchools sometimes lists a school's priority groups with no seats or applicants: then the summary takes the Local
-// Law 72 numbers, or names the grade it takes new students in (LV.ms.EG, school_fixes.json "entry"), or shows none
+// MySchools sometimes lists a school's priority groups with no seats or applicants: then the summary names the grade
+// it takes new students in (LV.ms.EG, school_fixes.json "entry"), or shows none
 function admSec(d){const eg=level==='ms'&&LV.ms.EG&&LV.ms.EG[d],g=eg?String(eg):level==='ms'?'6':'9',R=msProgs(d,level);
   const k=(LV[level]&&LV[level].A||{})[d],y=k&&Object.keys(k).sort().pop(),r=y&&k[y];
   if(R.length){const st=R.reduce((a,p)=>a+(p[2]||0),0),ap=R.reduce((a,p)=>a+(p[3]||0),0),none=R.every(p=>p[2]==null&&p[3]==null);
     const [sub,sa,note]=!none?['Seats / applied, __MYSCHOOLS__',st.toLocaleString()+' / '+ap.toLocaleString(),'']
       :eg?['Takes new students in grade '+eg,'','<p class="adm-note">This school takes new students in grade '+eg+', not grade 6, so families apply when their child is in grade '+(eg-1)+'. MySchools lists the priority groups below but no seat counts.</p>']
-      :r?['Seats / applied, fall '+y,r[0].toLocaleString()+' / '+r[1].toLocaleString(),'']
       :['Priority groups, __MYSCHOOLS__','','<p class="adm-note">MySchools lists this school’s priority groups but no seat counts.</p>'];
     return sec('adm-'+g,'<span class="st">Admissions, grade '+g+'<small>'+sub+'</small></span>'+(sa?'<span class="sa">'+sa+'</span>':''),msAdmHtml(d,level,note+msAdm(d,level),'students'))}
   if(!r)return '';
@@ -1307,8 +1301,7 @@ function esAdmHtml(d){const pk=PK[d],ka=KA[d],ky=ka&&Object.keys(ka).sort().pop(
   // kindergarten: MySchools' groups once they're posted (December), else the Local Law 72 table; zoned schools add how
   // the zone gets priority
   const zoned=!nzGet(d)?'<p class="adm-note">Zoned schools offer seats to families in the zone first (siblings first), then to others if seats are left. <a href="https://www.schools.nyc.gov/enrollment/enroll-grade-by-grade/kindergarten" target="_blank" rel="noopener">How kindergarten admissions work ↗</a></p>':'';
-  const ktr=trueApps(d,'es');
-  if(kp)parts.push(['adm-k','K','',null,null,msAdmHtml(d,'es',admTable(d,'es',kp,null,'families')+(ktr?'<p class="adm-note">True applicants: '+ktr[1].toLocaleString()+' <small>(fall '+ktr[0]+' DOE report)</small></p>':''),'families')]);
+  if(kp)parts.push(['adm-k','K','',null,null,msAdmHtml(d,'es',admTable(d,'es',kp,null,'families'),'families')]);
   else if(k)parts.push(['adm-k','K',ky,k[0],k[1],admHtml(d,'es',true).replace('<details class="adm-about">',zoned+'<details class="adm-about">')]);
   if(pk&&pk[0])parts.push(['adm-pk','Pre-K',py,pk[0],pk[1],early('pre-K',pk[0],pk[1],pk[4])]);
   if(pk&&pk[2])parts.push(['adm-3k','3-K',py,pk[2],pk[3],early('3-K',pk[2],pk[3],pk[5])]);
