@@ -10,6 +10,7 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 
 ### Added
 - The card for a school without a zone now ends like a zone card: the district's other non-zoned schools and its charter schools, each in a list you can open, and a link to the district page. Tap a school in a list, then "← Back" to return to the school you started from. Citywide schools (citywide G&T, citywide middle schools and the specialized high schools) don't give priority by district, so their cards show just the district page link.
+- The non-zoned and charter school lists on zone and school cards stay open or closed as you move from card to card, the way the card's other sections already do.
 
 ## 1.52.0 (2026-10-22)
 

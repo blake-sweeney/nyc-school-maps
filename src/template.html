@@ -689,14 +689,14 @@ function nzOptions(dist,skip,open){if(!dist)return '';const hs=level==='hs';
   const l=NZ.filter(o=>!o.ch&&(hs?+o.d.slice(0,2)===dist:!o.gt&&nzDistricts(o).includes(dist))&&!skip.includes(o.d));if(!l.length)return '';
   l.sort((a,b)=>(schoolRating(b.d,'comp')??0)-(schoolRating(a.d,'comp')??0));
   const boro=BORO[(l[0]||{}).d?.[2]]||'',nb=l.filter(o=>/riority to /.test(o.pz)).length;
-  if(hs)return (open?'':'<hr class="sep">')+'<details class="opts"'+(open?' open':'')+'><summary>'+l.length+(skip.length?' other':'')+' high school'+(l.length>1?'s':'')+' in District '+dist+'</summary><p class="opts-note">High schools don’t give priority by district. Any NYC student can apply'+(nb?'. '+nb+' of these give priority to '+esc(boro)+' students and residents in some or all programs':'')+'.</p><ul>'+
+  if(hs)return (open?'':'<hr class="sep">')+'<details class="opts" data-sec="opts-nz"'+(open||SEC['opts-nz']?' open':'')+'><summary>'+l.length+(skip.length?' other':'')+' high school'+(l.length>1?'s':'')+' in District '+dist+'</summary><p class="opts-note">High schools don’t give priority by district. Any NYC student can apply'+(nb?'. '+nb+' of these give priority to '+esc(boro)+' students and residents in some or all programs':'')+'.</p><ul>'+
     l.map(o=>'<li><button type="button" data-nz="'+o.d+'"><span class="on">'+esc(o.n)+'<small>'+esc((o.gt?'Specialized · ':'')+(nzDemand(o)||'No demand data'))+'</small></span>'+chip(schoolRating(o.d,'comp'),1)+'</button></li>').join('')+'</ul></details>';
-  return (open?'':'<hr class="sep">')+'<details class="opts"'+(open?' open':'')+'><summary>'+(open?'':'Other options: ')+l.length+(level==='ms'?' middle school'+(l.length>1?'s':'')+' without zones <small>in District '+dist+'</small>':' non-zoned school'+(l.length>1?'s':'')+' <small>with District '+dist+' priority</small>')+'</summary><ul>'+
+  return (open?'':'<hr class="sep">')+'<details class="opts" data-sec="opts-nz"'+(open||SEC['opts-nz']?' open':'')+'><summary>'+(open?'':'Other options: ')+l.length+(level==='ms'?' middle school'+(l.length>1?'s':'')+' without zones <small>in District '+dist+'</small>':' non-zoned school'+(l.length>1?'s':'')+' <small>with District '+dist+' priority</small>')+'</summary><ul>'+
     l.map(o=>'<li><button type="button" data-nz="'+o.d+'"><span class="on">'+esc(o.n)+'<small>'+esc(nzDemand(o)||'No demand data')+'</small></span>'+chip(schoolRating(o.d,'comp'),1)+'</button></li>').join('')+'</ul></details>'}
 // the zone card's charter list: this level's charters whose lottery gives priority to the district, best rated first
 function chOptions(dist,skip=[]){if(!dist)return '';const l=NZ.filter(o=>o.ch&&o.pd[0]===dist&&!skip.includes(o.d));if(!l.length)return '';
   l.sort((a,b)=>(schoolRating(b.d,'comp')??0)-(schoolRating(a.d,'comp')??0));
-  return '<details class="opts"><summary>Charter schools: '+l.length+' <small>with District '+dist+' priority</small></summary><p class="opts-note">Admission is by lottery only, with priority to siblings and then District '+dist+' families. Charter schools can’t screen. <a href="'+CH_APPLY+'" target="_blank" rel="noopener">How to apply ↗</a></p><ul>'+
+  return '<details class="opts" data-sec="opts-ch"'+(SEC['opts-ch']?' open':'')+'><summary>Charter schools: '+l.length+' <small>with District '+dist+' priority</small></summary><p class="opts-note">Admission is by lottery only, with priority to siblings and then District '+dist+' families. Charter schools can’t screen. <a href="'+CH_APPLY+'" target="_blank" rel="noopener">How to apply ↗</a></p><ul>'+
     l.map(o=>'<li><button type="button" data-nz="'+o.d+'"><span class="on">'+esc(o.n)+'<small>'+esc(CHX[o.d]&&CHX[o.d][0]?'Grades '+grades(CHX[o.d][0]):'Charter school')+'</small></span>'+chip(schoolRating(o.d,'comp'),1)+'</button></li>').join('')+'</ul></details>'}
 // middle school programs from the MySchools directory: how each admits students and last year's demand
 const MNAME={O:'Open',Z:'Zone priority',S:'Screened',SA:'Screened + assessment',A:'Audition',T:'Talent test',L:'Language program',D75:'District 75 special education',ASD:'Autism (ASD) or ACES program'};
@@ -1242,14 +1242,15 @@ function demoSec(d){const m=DM[d]&&DM[d][0]?DM[d]:null,x=X[d]||[],c=DMC,k=DEMO_G
     '<small>DOE Demographic Snapshot, __DEMOGRAPHICS__, counting every student, 3-K and pre-K included. IEPs and English learners as of the end of the school year; pre-K students aren’t tested for English, so the English learner share runs a little low at schools with pre-K. Low-income: families who qualify for free or reduced-price lunch (income up to about 185% of the poverty line) or get HRA benefits like SNAP'+(CHX[d]?'; it can be undercounted at charter schools that don’t use DOE school food':'')+'.</small></div>';
   return sec('demo','<span class="st">Demographics<small>'+[dmSex(m)].concat(top,pv!=null?[dmPov(pv).replace('Over','over').replace('Under','under')+' low-income']:[]).filter(Boolean).join(' · ')+'</small></span>',h)}
 // school card: sections that open and close. Each viewer's choice is remembered in this browser; the Color by
-// metric also opens the section that shows it (without changing what's remembered).
+// metric also opens the section that shows it (without changing what's remembered). The non-zoned and charter
+// lists on zone and school cards (opts-nz, opts-ch) are remembered the same way.
 const SEC_KEY='nsz-card-v1',SEC={},SEC_FOR={scr:'adm-',ip:'rate',ss:'rate',rf:'rate',ela:'tests',math:'tests',coll:'out',ccr:'out',sat:'out',iep:'demo'};
 try{Object.assign(SEC,JSON.parse(localStorage.getItem(SEC_KEY)||'{}'))}catch(e){}
 function sec(k,sum,body){return '<details class="sec" data-sec="'+k+'"'+(SEC[k]||SEC_FOR[metric]&&k.startsWith(SEC_FOR[metric])?' open':'')+'><summary>'+sum+'</summary><div class="sec-b">'+body+'</div></details>'}
 card.addEventListener('click',e=>{const a=e.target.closest('.to-adm');if(!a)return;e.preventDefault();
   const sec=card.querySelector('.school[data-d="'+a.dataset.d+'"] .sec[data-sec^="adm"]');if(!sec)return;sec.open=true;
   const go=()=>sec.scrollIntoView({behavior:'smooth',block:'start'});if(phone.matches&&!sheetOpen()){setSheet(true);setTimeout(go,350)}else go()});
-card.addEventListener('click',e=>{const s=e.target.closest('.sec>summary');if(!s)return;const k=s.parentNode.dataset.sec;
+card.addEventListener('click',e=>{const s=e.target.closest('[data-sec]>summary');if(!s)return;const k=s.parentNode.dataset.sec;
   SEC[k]=!s.parentNode.open;try{localStorage.setItem(SEC_KEY,JSON.stringify(SEC))}catch(err){}});
 function rateSec(d){const r=R[d];if(!r||r.slice(2,5).every(x=>x==null))return '<span class="meta">No __SNAPSHOT__ Snapshot ratings (often K–2 or new schools).</span>';
   return sec('rate','<span class="st">Overall rating</span>'+chip(schoolRating(d,'comp'),1),'<div class="rates"><span>Instruction</span>'+chip(r[2],1)+'<span>Safety &amp; climate</span>'+chip(r[3],1)+'<span>Families</span>'+chip(r[4],1)+'</div><a href="https://tools.nycenet.edu/snapshot/__SNAPSHOT_YEAR__/'+esc(d)+'/'+esc(r[5]||'EMS')+'/" target="_blank" rel="noopener">__SNAPSHOT__ School Quality Snapshot ↗</a>')}
