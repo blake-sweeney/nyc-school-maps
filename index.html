@@ -1127,10 +1127,11 @@ function nzOn(){return nzWanted()&&markersByZoom()}
 function nzFill(d){return fillFor({properties:{dbns:[d],c:0}})}
 const STAR='50,2 61.5,36 97,36 68,57.5 79,92 50,71 21,92 32,57.5 3,36 38.5,36';
 // dark outline, then the color; selected adds a blue outer ring (like the diamonds). The outline widths are in screen
-// pixels (non-scaling-stroke), 2px and 5px outside the star like the diamonds' rings, so they don't thin out when zoomed out
+// pixels (non-scaling-stroke), so they don't thin out when zoomed out: 1.5px and 4px outside the star, like the circles'
+// rings (the diamonds' 2px and 5px rings are scaled to .72 with the diamond, so they come out about the same)
 function gtStar(c,sel){return '<svg class="gtm" viewBox="-16 -16 132 132" aria-hidden="true">'+
-  (sel?'<polygon points="'+STAR+'" fill="none" stroke="var(--sel)" stroke-width="10" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>':'')+
-  '<polygon points="'+STAR+'" fill="var(--panel)" stroke="var(--dot)" stroke-width="4" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>'+
+  (sel?'<polygon points="'+STAR+'" fill="none" stroke="var(--sel)" stroke-width="8" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>':'')+
+  '<polygon points="'+STAR+'" fill="var(--panel)" stroke="var(--dot)" stroke-width="3" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>'+
   '<polygon points="'+STAR+'" fill="'+c+'"/></svg>'}
 // a marker label: up to ~24 characters of the name (charters 32, so the campus shows), "High School" shortened to "HS"
 function shortName(n,max=24){n=n.replace(/^The\s+/i,'').replace(/,\s*The$/i,'').replace(/\s*\bCharter (High )?Schools?\b(\s+(of|for)\b)?/i,(m,h)=>h?' HS':'').replace(/\s+[–-]\s+/g,' ').replace(/\bHigh School\b/gi,'HS');

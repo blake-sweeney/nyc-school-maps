@@ -12,7 +12,7 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - School markers now stay on the map one zoom step farther out, so you can see where schools are across a wider area. Their names still appear once you zoom in closer.
 
 ### Fixed
-- The stars for citywide G&T and specialized schools no longer shrink to specks when you zoom out. They keep the same dark outline as the other school markers and are a bit bigger, so they stand out as much as the diamonds.
+- The stars for citywide schools (citywide G&T, citywide middle schools and the specialized high schools) no longer shrink to specks when you zoom out. They keep the same thin dark outline as the other school markers and are a bit bigger, so they stand out as much as the diamonds.
 
 ## 1.54.0 (2026-10-23)
 
