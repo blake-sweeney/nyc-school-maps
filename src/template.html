@@ -845,7 +845,7 @@ function syncNames(){if(!useBase)return;if(LAY.names&&!map.hasLayer(labelTiles))
 function isDark(){const th=document.documentElement.dataset.theme;return th==='dark'||(th!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)}
 // a bit more solid in dark mode, where see-through colors over the dark basemap look muddy
 // zone fill: full color when zoomed all the way out (no markers), fading to a light wash by zoom 13 where the
-// markers appear, then a touch lighter as you zoom in. With "Zoned schools" switched off the zones keep more color.
+// markers get their labels, then a touch lighter as you zoom in. With "Zoned schools" switched off the zones keep more color.
 function zoneAlpha(){if(!useBase)return .78;const z=map.getZoom();
   if(!LAY.zs){const a=z<11.5?.8:z<12.5?.7:z<13.5?.6:.5;return isDark()?Math.min(a+.15,.9):a}
   const a=Math.min(.9,(z<=9?.8:z<13?.8-(z-9)*(.8-.36)/4:z<13.5?.36:z<14.5?.345:.33)*1.36);return isDark()?Math.min(a+.08,.9):a}
@@ -996,16 +996,17 @@ map.on('zoomend moveend',syncStreets);
 // school dots
 // marker sizes relative to nzSize(): zoned circles, diamonds (schools without a zone), and the selected one's extra
 // a star's box is a bit bigger than a diamond's so the two read as the same size on the map
-const ZS_SIZE=.73,NZ_SIZE=.8,STAR_SIZE=1.3,SEL_SIZE=1.3;
+const ZS_SIZE=.73,NZ_SIZE=.8,STAR_SIZE=1.5,SEL_SIZE=1.3;
 // the selected marker's size: 30% larger, and at least 3px larger so it shows on the smallest markers (sizes aren't
 // rounded to whole pixels, which would swallow the difference at small sizes)
 function selSize(sz){return Math.max(sz*SEL_SIZE,sz+3)}
 // zoned schools: a circle in the school's color at its building; click to open its zone (works with zones hidden too)
 map.createPane('zsPane').style.zIndex=461;
 const zsGroup=L.layerGroup().addTo(map);
-// school markers show from zoom 13 in (a few neighborhoods across); farther out the zones carry the colors, with their stronger fill.
-// The selected school's marker always shows.
-function markersByZoom(){return map.getZoom()>=13}  // a function, so the zone style can call it before this line runs
+// school markers show from zoom 12 in; farther out the zones carry the colors, with their stronger fill. Their name
+// labels wait for zoom 13 (a few neighborhoods across), where there's room for them. The selected school's marker always shows.
+function markersByZoom(){return map.getZoom()>=12}  // a function, so the zone style can call it before this line runs
+function labelsByZoom(){return map.getZoom()>=13}
 function zsOn(){return !!LAY.zs&&markersByZoom()}
 function zsTip(d){const v=schoolVal(d),val=v==null||isProg(metric)&&!v?'':' · '+(isProg(metric)?progTxt(d):fmtVal(v));
   return '<small class="tip-d">District '+(+d.slice(0,2))+' · Zoned</small><br>'+esc(short(d))+val}
@@ -1041,7 +1042,7 @@ function drawLabels(){labels.clearLayers();const z=map.getZoom();if(z<12)return;
   const put=(ll,html,cls,dy)=>{const pt=map.latLngToContainerPoint(ll),w=wOf(html),r={x:pt.x,y:pt.y-dy,w,h:15};
     if(placed.some(q=>Math.abs(q.x-r.x)<(q.w+r.w)/2&&Math.abs(q.y-r.y)<(q.h+r.h)/2))return;placed.push(r);
     L.marker(ll,{interactive:false,icon:L.divIcon({className:'',html:'<div class="'+cls+'">'+html+'</div>',iconSize:[60,12],iconAnchor:[30,6+dy]})}).addTo(labels)};
-  if(typeof nzOn==='function'&&nzOn()){const lift=o=>Math.round(o.gt?nzSize()+6:nzSize()/2+12),seen={};NZ.forEach(o=>{if(!nzShown(o))return;const ll=L.latLng(o.lat,o.lon);if(!b.contains(ll))return;
+  if(typeof nzOn==='function'&&nzOn()&&labelsByZoom()){const lift=o=>Math.round(o.gt?nzSize()+6:nzSize()/2+12),seen={};NZ.forEach(o=>{if(!nzShown(o))return;const ll=L.latLng(o.lat,o.lon);if(!b.contains(ll))return;
     const k=nzSpot(o);if(seen[k])return;seen[k]=1;const grp=nzAt(k);
     if(grp.length>1){put(ll,grp.length+' schools','zl nzl',lift(o)+nzSize()*.75+grp.length*1.5-6);return}
     const v=metric!=='none'&&!isProg(metric)?schoolVal(o.d):null;
@@ -1090,10 +1091,12 @@ function nzWanted(){return NZ.length>0&&(LAY[level==='hs'?'hsnz':'nz']||LAY.gt||
 function nzOn(){return nzWanted()&&markersByZoom()}
 function nzFill(d){return fillFor({properties:{dbns:[d],c:0}})}
 const STAR='50,2 61.5,36 97,36 68,57.5 79,92 50,71 21,92 32,57.5 3,36 38.5,36';
-// dark outline, white ring, then the color; selected adds a blue outer ring (like the diamonds)
+// dark outline, then the color; selected adds a blue outer ring (like the diamonds). The outline widths are in screen
+// pixels (non-scaling-stroke), so they don't thin out when zoomed out: 1.5px and 4px outside the star, like the circles'
+// rings (the diamonds' 2px and 5px rings are scaled to .72 with the diamond, so they come out about the same)
 function gtStar(c,sel){return '<svg class="gtm" viewBox="-16 -16 132 132" aria-hidden="true">'+
-  (sel?'<polygon points="'+STAR+'" fill="none" stroke="var(--sel)" stroke-width="30" stroke-linejoin="round"/>':'')+
-  '<polygon points="'+STAR+'" fill="var(--panel)" stroke="var(--dot)" stroke-width="16" stroke-linejoin="round"/>'+
+  (sel?'<polygon points="'+STAR+'" fill="none" stroke="var(--sel)" stroke-width="8" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>':'')+
+  '<polygon points="'+STAR+'" fill="var(--panel)" stroke="var(--dot)" stroke-width="3" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>'+
   '<polygon points="'+STAR+'" fill="'+c+'"/></svg>'}
 // a marker label: up to ~24 characters of the name (charters 32, so the campus shows), "High School" shortened to "HS"
 function shortName(n,max=24){n=n.replace(/^The\s+/i,'').replace(/,\s*The$/i,'').replace(/\s*\bCharter (High )?Schools?\b(\s+(of|for)\b)?/i,(m,h)=>h?' HS':'').replace(/\s+[–-]\s+/g,' ').replace(/\bHigh School\b/gi,'HS');
@@ -1103,7 +1106,7 @@ function nzAt(k){return NZ.filter(o=>nzShown(o)&&nzSpot(o)===k)}
 // small when zoomed out (the whole city), full size once you're looking at a neighborhood
 // zoomed all the way out, markers and zone lines shrink: half size at zoom 9, three quarters at 10, full from 11
 function farScale(){return Math.min(1,Math.max(.5,.5+(map.getZoom()-9)*.25))}
-// markers appear at zoom 13 at three-quarter size and reach full size at 14 (farther out only the selected school's shows)
+// markers appear at zoom 12 at half size and reach full size at 14 (farther out only the selected school's shows)
 function markerScale(){return Math.min(1,Math.max(.5,.5+(map.getZoom()-12)*.25))}
 function nzSize(){const z=map.getZoom();return (z<11.5?8:z<12.5?10:z<13.5?13:z<14.5?16:20)*markerScale()}
 function buildNZ(){nzGroup.clearLayers();document.getElementById('nz-key').hidden=!nzOn();buildZS();document.getElementById('nz-key').hidden=!nzOn()&&!zsOn();document.getElementById('zsk-item').hidden=!zsOn();document.getElementById('nzk-item').hidden=!(nzOn()&&LAY[level==='hs'?'hsnz':'nz']);document.getElementById('gtk-item').hidden=!(nzOn()&&LAY.gt&&NZ.some(o=>o.gt));document.getElementById('chk-item').hidden=!(nzOn()&&LAY.ch&&NZ.some(o=>o.ch));if(!nzWanted())return;const sz=nzSize(),near=markersByZoom();
