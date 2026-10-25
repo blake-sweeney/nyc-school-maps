@@ -6,6 +6,11 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
+## Unreleased
+
+### Changed
+- School markers now stay on the map one zoom step farther out, so you can see where schools are across a wider area. Their names still appear once you zoom in closer.
+
 ## 1.54.0 (2026-10-23)
 
 ### Changed
