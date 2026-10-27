@@ -10,6 +10,7 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 
 ### Added
 - A link to a quick video tour of the map on YouTube, in the "Before you start" notice and at the bottom of the side panel.
+- Behind the scenes: the YouTube channel icon, banner and description are kept in the repo, with a script that redraws the images from the zone data.
 
 ## 1.55.0 (2026-10-25)
 
