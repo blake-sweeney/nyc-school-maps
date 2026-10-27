@@ -9,7 +9,7 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 ## Unreleased
 
 ### Added
-- Behind the scenes: a cover image for the project's Facebook page, drawn by the same script as the YouTube art.
+- Behind the scenes: a cover image and short bio for the project's Facebook page, kept in the repo with the YouTube channel's links and description.
 
 ## 1.56.0 (2026-10-27)
 
