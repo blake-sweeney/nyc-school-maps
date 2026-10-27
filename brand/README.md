@@ -5,7 +5,7 @@ The project's social pages, and the text and images they use. The images are dra
 ## Links
 
 - YouTube: https://www.youtube.com/@NYCSchoolZones
-- Facebook: not set up yet (category: Education Website)
+- Facebook: https://www.facebook.com/profile.php?id=61595837075722 (category: Education Website)
 
 ## Images
 
