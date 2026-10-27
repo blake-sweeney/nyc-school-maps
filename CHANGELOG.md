@@ -6,11 +6,18 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
+## Unreleased
+
+### Added
+- Each tab of a district page now ends with the citywide schools any family in the district can apply to, wherever they are in the city: citywide G&T schools on Elementary, citywide middle schools on Middle and the specialized high schools on High.
+
+### Fixed
+- Behind the scenes: the notes for 1.57.0 no longer list the district page change above, which came out after it.
+
 ## 1.57.0 (2026-10-27)
 
 ### Added
 - Behind the scenes: a cover image and short bio for the project's Facebook page, kept in the repo with the YouTube channel's links and description.
-- Each tab of a district page now ends with the citywide schools any family in the district can apply to, wherever they are in the city: citywide G&T schools on Elementary, citywide middle schools on Middle and the specialized high schools on High.
 
 ### Changed
 - School markers have thinner outlines when you first zoom in far enough to see them, so a crowded neighborhood reads less busy. The outlines thicken as you zoom in, back to full width once the school names appear.
