@@ -1474,6 +1474,10 @@ def write_districts(d, root, site_url, goat, nbi=None):
         cd = charter_district(d, dbn) if "charter" in lvls.values() else None
         by_dist.setdefault(str(cd) if cd else str(int(dbn[:2])), []).append(dbn)
     R_hs = {**R, **(HS.get("CHR") or {})}  # K-12 charters: their high school report's ratings in the high school tab
+    # citywide schools (citywide G&T, citywide middle schools, specialized high schools) take students from every district,
+    # so each district page lists all of them at the bottom of each tab, wherever they are
+    cw = {lv: [x for x in info if info[x].get(lv) == "citywide"] for lv in ("es", "ms", "hs")}
+    cw_where = lambda x: f"{BORO.get(x[2], '')} · District {int(x[:2])}"
     dists = sorted((k for k in by_dist if k.isdigit() and 1 <= int(k) <= 32), key=int)
     with open(os.path.join(root, "schools", "style.css"), "a", encoding="utf-8") as f:
         f.write(DIST_CSS.strip() + "\n")
@@ -1500,6 +1504,9 @@ def write_districts(d, root, site_url, goat, nbi=None):
                    '<a href="' + CH_APPLY + '" target="_blank" rel="noopener">common charter application ↗</a>, not MySchools.</p>')
         def ch_table(lst, cols, lv, rr=R):
             return f'<section class="card"><h2>Charter schools</h2>{school_table(lst, names, rr, cols, lv=lv)}{ch_note}</section>' if lst else ""
+        def cw_table(lv, head, cols, how):
+            return (f'<section class="card"><h2>{head}</h2>{school_table(cw[lv], names, R, cols, cw_where, note_line=True, lv=lv)}'
+                    f'<p class="src">{how}</p></section>' if cw[lv] else "")
         boro = boro_of[k]
         es_note = lambda x: "citywide G&T" if info[x].get("es") == "citywide" else ""
         ms_note = lambda x: "citywide" if info[x].get("ms") == "citywide" else ""
@@ -1515,7 +1522,9 @@ def write_districts(d, root, site_url, goat, nbi=None):
              + (f'<h2>Elementary schools without a zone</h2>{school_table(es_n, names, R, es_cols, es_note, lv="es")}' if es_n else "")
              + '<p class="src">Rating is the DOE’s overall rating (out of 4). Tests is the share of students meeting state standards '
                'in ELA and math, grades 3–5. Zoned schools give priority to families in their zone; schools without a zone give '
-               'priority by district.</p></section>' + ch_table(es_c, es_cols, "es")),
+               'priority by district.</p></section>' + ch_table(es_c, es_cols, "es")
+             + cw_table("es", "Citywide G&amp;T schools", es_cols, f'Open to children found eligible for gifted and talented, from '
+                        f'anywhere in NYC, District {e(k)} included.')),
             ("ms", "Middle", f"{len(ms_z) + len(ms_n) + len(ms_c)}",
              go("ms", "middle")
              + '<section class="card">'
@@ -1523,7 +1532,9 @@ def write_districts(d, root, site_url, goat, nbi=None):
              + (f'<h2>Middle schools without a zone</h2>{school_table(ms_n, names, R, ms_cols, ms_note, lv="ms")}' if ms_n else "")
              + '<p class="src">Rating is the DOE’s overall rating (out of 4). Tests is the share of students meeting state standards '
                f'in ELA and math, grades 6–8. Most middle school programs fill seats with District {e(k)} students and residents first, '
-               'then consider other districts.</p></section>' + ch_table(ms_c, ms_cols, "ms")),
+               'then consider other districts.</p></section>' + ch_table(ms_c, ms_cols, "ms")
+             + cw_table("ms", "Citywide middle schools", ms_cols, f'Open to students from anywhere in NYC, District {e(k)} included. '
+                        'Each school’s page lists its programs’ priority groups.')),
             ("hs", "High", f"{len(hs) + len(hs_c)}",
              go("hs", "high")
              + (f'<section class="card"><h2>High schools in District {e(k)}</h2>{school_table(hs, names, R, hs_cols, hs_note, lv="hs")}'
@@ -1531,7 +1542,9 @@ def write_districts(d, root, site_url, goat, nbi=None):
                 f'and Readiness the DOE’s college readiness score (city average {settings.CITY_READINESS}). High schools don’t give priority by district: any NYC '
                 'student can apply, and many programs give priority to students in their borough.</p></section>' if hs else
                 '<section class="card"><p>No high schools are located in this district. High schools admit students from across the city.</p></section>'
-                if not hs_c else "") + ch_table(hs_c, hs_cols, "hs", R_hs)),
+                if not hs_c else "") + ch_table(hs_c, hs_cols, "hs", R_hs)
+             + cw_table("hs", "Specialized high schools", hs_cols, 'Admission is by SHSAT score, or by audition at LaGuardia. '
+                        'Any NYC student can apply.')),
         ]
         tabs = "".join(f'<button type="button" role="tab" id="tab-{lv}" aria-controls="p-{lv}" aria-selected="{"true" if lv == "es" else "false"}">'
                        f'{w}<small>{n} schools</small></button>' for lv, w, n, _ in panels)
