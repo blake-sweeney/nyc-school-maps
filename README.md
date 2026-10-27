@@ -111,7 +111,7 @@ The site's version is in `VERSION` and shows in the footer next to the "Updated"
 
 1. Work on a branch, like `git checkout -b admissions-data`, and test locally (see "Run it locally"), including on your phone. To try a pushed branch on a phone, open `https://raw.githack.com/nycschoolzones/nycschoolzones/<commit SHA>/index.html` (use the full commit SHA rather than the branch name); Claude sessions post this link after each push.
 2. As you go, describe the changes under a `## Unreleased` heading at the top of `CHANGELOG.md`. Leave `VERSION` alone.
-3. Merge to `main`, then release. From anywhere, including a phone: on GitHub open **Actions → Release → Run workflow**, pick patch, minor or major (tick "Dry run" to only preview) and run it. Only the account named in the `RELEASE_ACTOR` repository variable (Settings → Secrets and variables → Actions → Variables) can run it; anyone else's run is skipped, and so is every run while the variable is unset. Or from a computer:
+3. Merge to `main`, then release. From anywhere, including a phone: on GitHub open **Actions → Release → Run workflow**, pick patch, minor or major (tick "Dry run" to only preview) and run it. Only the `blake-sweeney` account can run it for now; anyone else's run is skipped. Or from a computer:
 
 ```sh
 scripts/release.sh minor     # or patch, or major
