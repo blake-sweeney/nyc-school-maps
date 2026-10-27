@@ -1,4 +1,4 @@
-# NYC School Zones · Copyright (C) 2026 Blake Sweeney · SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 NYC School Zones · SPDX-License-Identifier: AGPL-3.0-or-later
 """Settings shared by the map (src/template.html, filled in by build.py), the school, district and neighborhood
 pages (pages.py, neighborhoods.py) and fetch_data.py. Change a value here and rebuild; don't copy it elsewhere."""
 

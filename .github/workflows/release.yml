@@ -26,7 +26,7 @@ concurrency:
 jobs:
   release:
     runs-on: ubuntu-latest
-    # only from main, and for now only Blake can start or re-run a release (see issue #38 before adding collaborators)
+    # only from main, and for now only the maintainer can start or re-run a release (see issue #38 before adding collaborators)
     if: github.ref == 'refs/heads/main' && github.triggering_actor == 'blake-sweeney'
     env:
       TZ: America/New_York

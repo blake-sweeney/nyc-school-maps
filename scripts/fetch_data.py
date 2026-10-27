@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (C) 2026 Blake Sweeney
+# Copyright (C) 2026 NYC School Zones
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """Download fresh source data into data/. Standard library only.
 
@@ -39,7 +39,7 @@ PARKS_DATASET = "enfh-gkve"       # NYC Parks Properties (parks, playgrounds, ga
 
 
 def get_json(url):
-    req = urllib.request.Request(url, headers={"User-Agent": "nyc-school-maps"})
+    req = urllib.request.Request(url, headers={"User-Agent": "nycschoolzones"})
     with urllib.request.urlopen(req, timeout=120) as r:
         return json.load(r)
 
@@ -359,7 +359,7 @@ def fetch_class_size(path=None):
     of the averages. Pass a downloaded copy if the DOE site is blocked:  fetch_data.py classsize ~/Downloads/file.xlsx"""
     if not path:
         path = os.path.join(DATA, "_class_size.xlsx")
-        req = urllib.request.Request(CLASS_SIZE_URL, headers={"User-Agent": "nyc-school-maps"})
+        req = urllib.request.Request(CLASS_SIZE_URL, headers={"User-Agent": "nycschoolzones"})
         with urllib.request.urlopen(req, timeout=120) as r, open(path, "wb") as f:
             f.write(r.read())
     wb = read_xlsx(os.path.expanduser(path))
@@ -424,7 +424,7 @@ def read_lcgms(path=None):
         form["__EVENTTARGET"] = "ctl00$ContentPlaceHolder1$LCGMSDataDownload$Button1"
         form["__EVENTARGUMENT"] = ""
         req = urllib.request.Request(LCGMS_URL, data=urllib.parse.urlencode(form).encode(),
-                                     headers={"User-Agent": "nyc-school-maps"})
+                                     headers={"User-Agent": "nycschoolzones"})
         raw = opener.open(req, timeout=300).read()
     text = raw.decode("utf-16") if raw[:2] in (b"\xff\xfe", b"\xfe\xff") else raw.decode("utf-8", "replace")
     cell = lambda c: " ".join(html.unescape(re.sub(r"<[^>]+>", "", c)).split())
@@ -438,7 +438,7 @@ def read_demographics(path=None):
     pass a saved copy. Tabs: School, District, Citywide, Citywide with Charter Schools, ..."""
     if not path:
         path = os.path.join(DATA, "_demographics.xlsx")
-        req = urllib.request.Request(DEMOGRAPHICS_URL, headers={"User-Agent": "nyc-school-maps"})
+        req = urllib.request.Request(DEMOGRAPHICS_URL, headers={"User-Agent": "nycschoolzones"})
         with urllib.request.urlopen(req, timeout=300) as r, open(path, "wb") as f:
             f.write(r.read())
     return read_xlsx(os.path.expanduser(path))
