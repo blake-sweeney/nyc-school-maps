@@ -26,7 +26,7 @@ python3 -m http.server 8000           # preview at http://localhost:8000
 
 ## Changelog and versions
 
-- Every change, even an internal fix or a docs change, adds an entry under `## Unreleased` at the top of `CHANGELOG.md`, in `### Added` / `### Changed` / `### Fixed`. Create the heading above the newest version if it's missing: `scripts/release.sh` stops without it. For something parents won't see, write one short plain line ("Behind the scenes: school pages now come out the same on every computer that builds them.").
+- Every change, even an internal fix or a docs change, adds an entry under `## Unreleased` at the top of `CHANGELOG.md`, in `### Added` / `### Changed` / `### Fixed`. Create the heading above the newest version if it's missing: `scripts/release.sh` stops without it. After merging `main` into a branch, check that your entries are still under `## Unreleased`: a release in between can leave them filed under the released version. For something parents won't see, write one short plain line ("Behind the scenes: school pages now come out the same on every computer that builds them.").
 - Write entries for parents, not developers: what they'll see on the map or page, in plain English. Match the existing entries.
 - Never edit `VERSION`, rename the Unreleased heading, create tags or run `scripts/release.sh`. The maintainer releases after merging, from GitHub (Actions → Release) or their Mac.
 - Update README.md when a change affects the repo layout, the build, or the "Refresh the data" steps.

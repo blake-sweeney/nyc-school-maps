@@ -11,6 +11,9 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 ### Changed
 - The "Source code" link at the bottom of the side panel now goes to the project's new home on GitHub, github.com/nycschoolzones/nycschoolzones. Old links still work.
 
+### Fixed
+- Behind the scenes: releasing now stops if the notes for the last version picked up entries that weren't in it, which can happen when a change is merged right after a release.
+
 ## 1.58.0 (2026-10-27)
 
 ### Added

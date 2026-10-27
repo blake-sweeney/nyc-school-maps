@@ -48,6 +48,20 @@ esac
 tag="v$new"
 git rev-parse -q --verify "refs/tags/$tag" >/dev/null && die "tag $tag already exists."
 
+# The last release's notes should still be what it shipped with. Merging a branch after a release can file the
+# branch's Unreleased entries under that release instead (git sees the renamed heading as the same section). That
+# only adds lines, so stop then; an edit that also removes lines (a wording fix) is left alone.
+section() { awk -v h="## $1 (" 'index($0, h) == 1 {on=1; next} /^## /{if (on) exit} on' | grep -v '^[[:space:]]*$' || true; }
+if git rev-parse -q --verify "refs/tags/v$old" >/dev/null; then
+  notes_diff="$(diff <(git show "v$old:CHANGELOG.md" | section "$old") <(section "$old" < CHANGELOG.md) || true)"
+  if grep -q '^>' <<< "$notes_diff" && ! grep -q '^<' <<< "$notes_diff"; then
+    echo "release: CHANGELOG.md lists more under $old than v$old shipped with. A merge after that release probably" >&2
+    echo "filed these under it. Move them under '## Unreleased' (create it above $old), then run this again:" >&2
+    sed -n 's/^> /  /p' <<< "$notes_diff" >&2
+    exit 1
+  fi
+fi
+
 grep -q '^## Unreleased' CHANGELOG.md || die "CHANGELOG.md needs a '## Unreleased' section describing this release (put it above the newest version)."
 today="$(date +%Y-%m-%d)"
 
