@@ -6,13 +6,16 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
+## Unreleased
+
+### Fixed
+- Behind the scenes: releasing now stops if the notes for the last version picked up entries that weren't in it, which can happen when a change is merged right after a release.
+- Behind the scenes: the notes for 1.59.0 no longer list the release check above, which came out after it.
+
 ## 1.59.0 (2026-10-27)
 
 ### Changed
 - The "Source code" link at the bottom of the side panel now goes to the project's new home on GitHub, github.com/nycschoolzones/nycschoolzones. Old links still work.
-
-### Fixed
-- Behind the scenes: releasing now stops if the notes for the last version picked up entries that weren't in it, which can happen when a change is merged right after a release.
 
 ## 1.58.0 (2026-10-27)
 
