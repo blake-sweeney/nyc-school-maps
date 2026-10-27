@@ -6,7 +6,7 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
-## Unreleased
+## 1.58.0 (2026-10-27)
 
 ### Added
 - Each tab of a district page now ends with the citywide schools any family in the district can apply to, wherever they are in the city: citywide G&T schools on Elementary, citywide middle schools on Middle and the specialized high schools on High.
