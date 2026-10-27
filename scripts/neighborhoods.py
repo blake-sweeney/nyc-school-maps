@@ -1,4 +1,4 @@
-# NYC School Zones · Copyright (C) 2026 Blake Sweeney · SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 NYC School Zones · SPDX-License-Identifier: AGPL-3.0-or-later
 """One page per neighborhood at /neighborhoods/<name>/, for searches like "Park Slope school zones": the zoned
 schools whose zones cover the neighborhood, the other schools located in it, and a map of its zones.
 

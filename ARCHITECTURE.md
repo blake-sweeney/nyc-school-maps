@@ -30,7 +30,7 @@ fetch_data.py ──> data/*.json   (yearly refresh; MySchools + Snapshot go thr
 - `scripts/neighborhoods.py`: one page per neighborhood, listing the zones that cover it.
 - `scripts/fetch_data.py`: one command per source (`zones`, `myschools`, `snapshot-job`, `snapshot-raw`, `snapshot-counts`, `colocation`, `accessibility`, `admissions`, `charters`, `zips`, `demographics`, `charter-snapshot`, …).
   The README's "Refresh the data" section is the checklist.
-- `scripts/release.sh`: bumps `VERSION`, dates the changelog, rebuilds, commits, tags and pushes. `.github/workflows/release.yml` (Actions → Release) runs it on GitHub with a patch/minor/major choice; its push starts the Pages deploy like any other.
+- `scripts/release.sh`: bumps `VERSION`, dates the changelog, rebuilds, commits, tags and pushes. `.github/workflows/release.yml` (Actions → Release) runs it on GitHub with a patch/minor/major choice, only for the login in the `RELEASE_ACTOR` repository variable (none while it's unset); its push starts the Pages deploy like any other.
 
 ## src/template.html
 
