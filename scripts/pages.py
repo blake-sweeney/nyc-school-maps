@@ -1,4 +1,4 @@
-# NYC School Zones · Copyright (C) 2026 Blake Sweeney · SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 NYC School Zones · SPDX-License-Identifier: AGPL-3.0-or-later
 """One plain, fast web page per school at /schools/<DBN>/, so search engines (and people who search for
 "PS 321 zone" or "Midwood High School SAT") can find each school. Each page repeats the facts from the map's
 school card as text, draws the school's zone inside its district, and links into the map at that school.

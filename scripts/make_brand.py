@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (C) 2026 Blake Sweeney
+# Copyright (C) 2026 NYC School Zones
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """Draw the YouTube channel art in brand/ from the data in data/, in the map's light theme:
 
