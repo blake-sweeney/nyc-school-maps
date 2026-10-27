@@ -299,19 +299,19 @@ __RAMP_CSS__
 .gtm{display:block;width:100%;height:100%;overflow:visible;cursor:pointer;filter:drop-shadow(0 1px 2px rgba(0,0,0,.3))}
 .gtk{display:inline-block;width:12px;height:12px;flex:none;background:var(--fg);clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)}
 
-.nzm{width:100%;height:100%;box-sizing:border-box;transform:rotate(45deg) scale(.72);background:var(--c);border:0;box-shadow:0 0 0 2px var(--dot),0 1px 3px rgba(0,0,0,.35);cursor:pointer}
+.nzm{width:100%;height:100%;box-sizing:border-box;transform:rotate(45deg) scale(.72);background:var(--c);border:0;box-shadow:0 0 0 calc(2px*var(--ow,1)) var(--dot),0 1px 3px rgba(0,0,0,.35);cursor:pointer}
 /* fingers need a bigger target than the drawn marker: an invisible ring around each one on touch screens */
 @media (pointer:coarse){.leaflet-nz-pane .leaflet-marker-icon::after,.leaflet-zs-pane .leaflet-marker-icon::after{content:"";position:absolute;inset:-14px;border-radius:50%}}
-.zsm{width:100%;height:100%;box-sizing:border-box;border-radius:50%;background:var(--c);border:0;box-shadow:0 0 0 1.5px var(--dot),0 1px 3px rgba(0,0,0,.35);cursor:pointer}
+.zsm{width:100%;height:100%;box-sizing:border-box;border-radius:50%;background:var(--c);border:0;box-shadow:0 0 0 calc(1.5px*var(--ow,1)) var(--dot),0 1px 3px rgba(0,0,0,.35);cursor:pointer}
 .addr-pin{display:block;overflow:visible;filter:drop-shadow(0 1px 2px rgba(0,0,0,.4))}
 .addr-pin path{fill:#e0242c;stroke:#fff;stroke-width:1.6}.addr-pin circle{fill:#fff}
-/* selected: the usual outline stays, with a blue ring right outside it */
-.zsm.sel{box-shadow:0 0 0 1.5px var(--dot),0 0 0 4px var(--sel),0 1px 3px rgba(0,0,0,.35)}
+/* selected: the usual outline stays, with a blue ring right outside it. --ow (set on the map by zoom) thins the outlines when zoomed out */
+.zsm.sel{box-shadow:0 0 0 calc(1.5px*var(--ow,1)) var(--dot),0 0 0 calc(1.5px*var(--ow,1) + 2.5px) var(--sel),0 1px 3px rgba(0,0,0,.35)}
 .sw i.zsk,.zsk{display:inline-block;width:11px;height:11px;flex:none;border-radius:50%;background:var(--fg);margin:0 3px}
-.nzm.sel{box-shadow:0 0 0 2px var(--dot),0 0 0 5px var(--sel),0 1px 3px rgba(0,0,0,.35)}
+.nzm.sel{box-shadow:0 0 0 calc(2px*var(--ow,1)) var(--dot),0 0 0 calc(2px*var(--ow,1) + 3px) var(--sel),0 1px 3px rgba(0,0,0,.35)}
 /* charter schools: squares with about the zoned circles' area (the diamonds read bigger than their area: pointed corners) */
-.chm{width:100%;height:100%;box-sizing:border-box;transform:scale(.8);background:var(--c);border:0;box-shadow:0 0 0 2px var(--dot),0 1px 3px rgba(0,0,0,.35);cursor:pointer}
-.chm.sel{box-shadow:0 0 0 2px var(--dot),0 0 0 5px var(--sel),0 1px 3px rgba(0,0,0,.35)}
+.chm{width:100%;height:100%;box-sizing:border-box;transform:scale(.8);background:var(--c);border:0;box-shadow:0 0 0 calc(2px*var(--ow,1)) var(--dot),0 1px 3px rgba(0,0,0,.35);cursor:pointer}
+.chm.sel{box-shadow:0 0 0 calc(2px*var(--ow,1)) var(--dot),0 0 0 calc(2px*var(--ow,1) + 3px) var(--sel),0 1px 3px rgba(0,0,0,.35)}
 .chs{display:inline-block;width:10px;height:10px;flex:none;background:var(--fg);border:1.5px solid var(--panel);box-shadow:0 0 0 1px var(--fg);margin:0 3px}
 .sw i.chs{border-radius:0;width:9px;height:9px;margin:0 3px 0 2px}
 .zl.nzl{font-weight:600;font-style:italic}
@@ -483,7 +483,6 @@ details.kind>summary{cursor:pointer}details.kind>p{margin:4px 0 2px}
       <label class="chk"><input type="checkbox" id="ly-zones" checked> Zones</label>
       <label class="chk" id="ly-dist-row" hidden><input type="checkbox" id="ly-dist" checked> District lines <i class="dk" aria-hidden="true"></i></label>
       <label class="chk ly-nzrow"><input type="checkbox" id="ly-nz" checked> <span>Non-zoned</span> <i class="nzk" aria-hidden="true"></i></label>
-      <label class="chk ly-hsrow" hidden><input type="checkbox" id="ly-hsnz" checked> <span>Non-zoned</span> <i class="nzk" aria-hidden="true"></i></label>
       <label class="chk ly-es"><input type="checkbox" id="ly-gt" checked> <span id="ly-gt-lab">Citywide G&amp;T</span> <i class="gtk" aria-hidden="true"></i></label>
       <label class="chk ly-chrow"><input type="checkbox" id="ly-ch" checked> <span>Charter</span> <i class="chs" aria-hidden="true"></i></label>
       <label class="chk"><input type="checkbox" id="ly-zs" checked> <span>Zoned schools</span> <i class="zsk" aria-hidden="true"></i></label>
@@ -657,8 +656,9 @@ const PK=D.PK||{};
 const KA=D.KA||{};
 // non-zoned elementary schools (MySchools kindergarten directory): no zone, priority by district
 // map layers the viewer can turn off; remembered in this browser
-const LAY_KEY='nsz-layers-v1',LAY={zones:true,dist:true,zs:true,nz:true,hsnz:true,gt:true,ch:true,names:true,parks:true};
-try{Object.assign(LAY,JSON.parse(localStorage.getItem(LAY_KEY)||'{}'))}catch(e){}
+// one setting per layer for all grades (high school's non-zoned schools used to have their own, hsnz: off in either stays off)
+const LAY_KEY='nsz-layers-v1',LAY={zones:true,dist:true,zs:true,nz:true,gt:true,ch:true,names:true,parks:true};
+try{const v=JSON.parse(localStorage.getItem(LAY_KEY)||'{}');if('hsnz' in v){v.nz=v.nz!==false&&v.hsnz!==false;delete v.hsnz}Object.assign(LAY,v)}catch(e){}
 function saveLay(){try{localStorage.setItem(LAY_KEY,JSON.stringify(LAY))}catch(e){}}
 const mkNZ=(r,lv,ch)=>({d:r[0],n:r[1],a:r[2],lat:r[3],lon:r[4],pd:r[5]||[],only:r[6],pr:r[7]||[],gt:!!r[8],ms:lv==='ms',hs:lv==='hs',pz:r[9]||'',ch:!!ch});
 // charter schools (CH rows, the NZ shape) share the marker list, flagged ch; CHX: {dbn: [grades now, grades when fully
@@ -1088,18 +1088,18 @@ map.on('zoomend',()=>{if(LAY.dist&&distLines.length){buildDistricts();drawDistNu
 // non-zoned schools: small diamonds in the current color, drawn above the zone dots
 map.createPane('nzPane').style.zIndex=462;
 const nzGroup=L.layerGroup().addTo(map);let nzSel=null;
-const nzKey=o=>o.ch?'ch':o.gt?'gt':o.hs?'hsnz':'nz';
+const nzKey=o=>o.ch?'ch':o.gt?'gt':'nz';
 function nzShown(o){return o.lat!=null&&LAY[nzKey(o)]}  // a virtual school has no point, so no marker
-function nzWanted(){return NZ.length>0&&(LAY[level==='hs'?'hsnz':'nz']||LAY.gt||LAY.ch)}
+function nzWanted(){return NZ.length>0&&(LAY.nz||LAY.gt||LAY.ch)}
 function nzOn(){return nzWanted()&&markersByZoom()}
 function nzFill(d){return fillFor({properties:{dbns:[d],c:0}})}
 const STAR='50,2 61.5,36 97,36 68,57.5 79,92 50,71 21,92 32,57.5 3,36 38.5,36';
 // dark outline, then the color; selected adds a blue outer ring (like the diamonds). The outline widths are in screen
 // pixels (non-scaling-stroke), so they don't thin out when zoomed out: 1.5px and 4px outside the star, like the circles'
-// rings (the diamonds' 2px and 5px rings are scaled to .72 with the diamond, so they come out about the same)
+// rings (the diamonds' 2px and 5px rings are scaled to .72 with the diamond, so they come out about the same). --ow thins all of them when zoomed out (see outlineScale)
 function gtStar(c,sel){return '<svg class="gtm" viewBox="-16 -16 132 132" aria-hidden="true">'+
-  (sel?'<polygon points="'+STAR+'" fill="none" stroke="var(--sel)" stroke-width="8" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>':'')+
-  '<polygon points="'+STAR+'" fill="var(--panel)" stroke="var(--dot)" stroke-width="3" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>'+
+  (sel?'<polygon points="'+STAR+'" fill="none" stroke="var(--sel)" style="stroke-width:calc(3px*var(--ow,1) + 5px)" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>':'')+
+  '<polygon points="'+STAR+'" fill="var(--panel)" stroke="var(--dot)" style="stroke-width:calc(3px*var(--ow,1))" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>'+
   '<polygon points="'+STAR+'" fill="'+c+'"/></svg>'}
 // a marker label: up to ~24 characters of the name (charters 32, so the campus shows), "High School" shortened to "HS"
 function shortName(n,max=24){n=n.replace(/^The\s+/i,'').replace(/,\s*The$/i,'').replace(/\s*\bCharter (High )?Schools?\b(\s+(of|for)\b)?/i,(m,h)=>h?' HS':'').replace(/\s+[–-]\s+/g,' ').replace(/\bHigh School\b/gi,'HS');
@@ -1110,9 +1110,14 @@ function nzAt(k){return NZ.filter(o=>nzShown(o)&&nzSpot(o)===k)}
 // zoomed all the way out, markers and zone lines shrink: half size at zoom 9, three quarters at 10, full from 11
 function farScale(){return Math.min(1,Math.max(.5,.5+(map.getZoom()-9)*.25))}
 // markers appear at zoom 12 at half size and reach full size at 14 (farther out only the selected school's shows)
+// marker outlines: half width at zoom 12, where the markers first show, ramping to full at 13, where the labels start
+// (--ow on the map container, used by the .zsm/.nzm/.chm box-shadows and the stars' strokes; elsewhere it's 1)
+function outlineScale(){return Math.min(1,Math.max(.5,.5+(map.getZoom()-12)*.5))}
+function setOutline(){map.getContainer().style.setProperty('--ow',outlineScale())}
+map.on('zoomend',setOutline);setOutline();
 function markerScale(){return Math.min(1,Math.max(.5,.5+(map.getZoom()-12)*.25))}
 function nzSize(){const z=map.getZoom();return (z<11.5?8:z<12.5?10:z<13.5?13:z<14.5?16:20)*markerScale()}
-function buildNZ(){nzGroup.clearLayers();document.getElementById('nz-key').hidden=!nzOn();buildZS();document.getElementById('nz-key').hidden=!nzOn()&&!zsOn();document.getElementById('zsk-item').hidden=!zsOn();document.getElementById('nzk-item').hidden=!(nzOn()&&LAY[level==='hs'?'hsnz':'nz']);document.getElementById('gtk-item').hidden=!(nzOn()&&LAY.gt&&NZ.some(o=>o.gt));document.getElementById('chk-item').hidden=!(nzOn()&&LAY.ch&&NZ.some(o=>o.ch));if(!nzWanted())return;const sz=nzSize(),near=markersByZoom();
+function buildNZ(){nzGroup.clearLayers();document.getElementById('nz-key').hidden=!nzOn();buildZS();document.getElementById('nz-key').hidden=!nzOn()&&!zsOn();document.getElementById('zsk-item').hidden=!zsOn();document.getElementById('nzk-item').hidden=!(nzOn()&&LAY.nz);document.getElementById('gtk-item').hidden=!(nzOn()&&LAY.gt&&NZ.some(o=>o.gt));document.getElementById('chk-item').hidden=!(nzOn()&&LAY.ch&&NZ.some(o=>o.ch));if(!nzWanted())return;const sz=nzSize(),near=markersByZoom();
   const groups={};NZ.forEach(o=>{if(nzShown(o)&&(near||nzSel===o.d))(groups[nzSpot(o)]=groups[nzSpot(o)]||[]).push(o)});
   NZ.forEach(o=>{if(!nzShown(o)||!near&&nzSel!==o.d)return;const b=nzSize()*(o.gt?STAR_SIZE:NZ_SIZE),sz=nzSel===o.d?selSize(b):b;
     const g=groups[nzSpot(o)],i=g.indexOf(o),r=g.length>1&&map.getZoom()>=12?nzSize()*.75+g.length*1.5:0,ang=2*Math.PI*i/g.length-Math.PI/2,dy=r*Math.sin(ang),
@@ -1644,7 +1649,7 @@ const LayersCtl=L.Control.extend({options:{position:'topleft'},onAdd(){const d=L
 new LayersCtl().addTo(map);
 document.getElementById('pb-layers').addEventListener('click',()=>setPop('layers',lypop.hidden));
 document.getElementById('ly-close').addEventListener('click',()=>{if(phone.matches)setPop('layers',false);else{lypop.hidden=true;document.getElementById('layers-btn').setAttribute('aria-expanded','false')}});
-function syncLayerBoxes(){Object.keys(LAY).forEach(k=>{const b=document.getElementById('ly-'+k);if(b)b.checked=!!LAY[k]});document.querySelectorAll('.ly-es').forEach(e=>e.hidden=!NZ.some(o=>o.gt));document.querySelectorAll('.ly-chrow').forEach(e=>e.hidden=!NZ.some(o=>o.ch));document.getElementById('ly-gt-lab').textContent=level==='hs'?'Specialized':level==='ms'?'Citywide':'Citywide G&T';{const g=document.getElementById('gtk-item');if(g)g.lastChild.textContent=level==='hs'?'Specialized':level==='ms'?'Citywide':'Citywide G&T'}document.querySelectorAll('.ly-nzrow').forEach(e=>e.hidden=level==='hs'||!NZ.length);document.querySelectorAll('.ly-hsrow').forEach(e=>e.hidden=level!=='hs'||!NZ.some(o=>!o.gt))}
+function syncLayerBoxes(){Object.keys(LAY).forEach(k=>{const b=document.getElementById('ly-'+k);if(b)b.checked=!!LAY[k]});document.querySelectorAll('.ly-es').forEach(e=>e.hidden=!NZ.some(o=>o.gt));document.querySelectorAll('.ly-chrow').forEach(e=>e.hidden=!NZ.some(o=>o.ch));document.getElementById('ly-gt-lab').textContent=level==='hs'?'Specialized':level==='ms'?'Citywide':'Citywide G&T';{const g=document.getElementById('gtk-item');if(g)g.lastChild.textContent=level==='hs'?'Specialized':level==='ms'?'Citywide':'Citywide G&T'}document.querySelectorAll('.ly-nzrow').forEach(e=>e.hidden=level==='hs'?!NZ.some(o=>!o.gt):!NZ.length)}
 function syncZoneLines(){byLayer.forEach(l=>{l.options.interactive=!!LAY.zones;if(!LAY.zones)l.closeTooltip()});if(!zoneLines)return;if(LAY.zones&&!map.hasLayer(zoneLines))zoneLines.addTo(map);if(!LAY.zones&&map.hasLayer(zoneLines))map.removeLayer(zoneLines)}
 function applyLayers(){syncZoneLines();restyle();if(typeof syncDistricts==='function')syncDistricts();buildNZ();drawLabels();syncNames();syncParks();if(typeof syncDistricts==='function')syncDistricts()}
 // hiding zones also drops a selected zone (its outline and card); a selected school marker stays
