@@ -8,11 +8,13 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 
 ## Unreleased
 
-### Added
-- Each tab of a district page now ends with the citywide schools any family in the district can apply to, wherever they are in the city: citywide G&T schools on Elementary, citywide middle schools on Middle and the specialized high schools on High.
-
 ### Changed
 - The "Source code" link at the bottom of the side panel now goes to the project's new home on GitHub, github.com/nycschoolzones/nycschoolzones. Old links still work.
+
+## 1.58.0 (2026-10-27)
+
+### Added
+- Each tab of a district page now ends with the citywide schools any family in the district can apply to, wherever they are in the city: citywide G&T schools on Elementary, citywide middle schools on Middle and the specialized high schools on High.
 
 ### Fixed
 - Behind the scenes: the notes for 1.57.0 no longer list the district page change above, which came out after it.
