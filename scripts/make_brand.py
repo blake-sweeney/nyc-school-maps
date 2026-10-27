@@ -6,6 +6,8 @@
     brand/youtube-icon.png    800x800, a close-up of Manhattan, Brooklyn and western Queens with the red address pin
     brand/youtube-banner.png  2560x1440, the city's zones behind the title; the text stays inside the
                               1546x423 middle strip that YouTube shows on every device
+    brand/facebook-cover.png  1640x924, the same banner for the Facebook page; phones show all of it and
+                              computers crop it to the middle 1640x607, so the title fits inside that
 
     python3 scripts/make_brand.py
 
@@ -108,8 +110,9 @@ def icon_svg(polys, size=800, center=(-73.955 * K, 40.715), radius=0.085):
             f'<g stroke="{WHITE}" stroke-width="2" stroke-linejoin="round">{"".join(paths)}</g>{pin}</svg>')
 
 
-def banner_html(polys, W=2560, H=1440):
-    cx, cy, span = -73.935 * K, 40.705, 0.34 * K   # projected center and the width the map covers
+def banner_html(polys, W=2560, H=1440, span=0.34, zoom=1):
+    """The zones behind the title panel. span: the map's width in degrees of longitude; zoom scales the panel."""
+    cx, cy, span = -73.935 * K, 40.705, span * K   # projected center and the width the map covers
     s = W / span
     P = lambda x, y: (W / 2 + (x - cx) * s, H / 2 - (y - cy) * s)
     paths = []
@@ -126,7 +129,7 @@ def banner_html(polys, W=2560, H=1440):
     return f"""<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="{FONTS}"><style>
 html,body{{margin:0;width:{W}px;height:{H}px;overflow:hidden;background:{WATER}}}
 .map{{position:absolute;inset:0}}
-.panel{{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:1440px;height:360px;box-sizing:border-box;
+.panel{{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale({zoom});width:1440px;height:360px;box-sizing:border-box;
   display:flex;align-items:center;justify-content:center;gap:56px;padding:0 64px;background:rgba(255,255,255,.95);border-radius:36px;
   box-shadow:0 12px 40px rgba(20,25,23,.28)}}
 h1{{font:700 120px/1 'IBM Plex Sans Condensed',sans-serif;color:{FG};margin:0;letter-spacing:-.5px}}
@@ -158,6 +161,7 @@ def main():
         browser = p.chromium.launch()
         render(browser, icon, 800, 800, os.path.join(OUT, "youtube-icon.png"))
         render(browser, banner_html(polys), 2560, 1440, os.path.join(OUT, "youtube-banner.png"))
+        render(browser, banner_html(polys, 1640, 924, span=0.3, zoom=0.85), 1640, 924, os.path.join(OUT, "facebook-cover.png"))
         browser.close()
 
 

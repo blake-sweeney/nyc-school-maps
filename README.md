@@ -63,7 +63,7 @@ districts/              one page per district + an index — built by build.py
 neighborhoods/          one page per neighborhood + an index — built by build.py (scripts/neighborhoods.py)
 sitemap.xml, robots.txt  for search engines — built by build.py (a page's lastmod is the day a build last changed it)
 src/template.html       page source: layout, styles and map code
-brand/                  YouTube channel art: youtube-icon.png (800×800) and youtube-banner.png (2560×1440), drawn from the zone data by scripts/make_brand.py; youtube-description.txt is the channel description
+brand/                  Channel art: youtube-icon.png (800×800), youtube-banner.png (2560×1440) and facebook-cover.png (1640×924), drawn from the zone data by scripts/make_brand.py; README.md has the channel links, bio and description
 data/
   elem_zones.json       zone boundaries + school names/locations
   ms_zones.json         middle school zone boundaries + school names/locations
@@ -90,7 +90,7 @@ scripts/
   browser/              scripts to paste into a browser console for MySchools and the Snapshot (see "Refresh the data")
   streets.py            merges and simplifies street centerlines (used by fetch_data.py)
   make_preview.py       draws preview.png (needs matplotlib)
-  make_brand.py         draws the YouTube icon and banner in brand/ (needs Playwright)
+  make_brand.py         draws the YouTube icon and banner and the Facebook cover in brand/ (needs Playwright)
 ```
 
 Apart from make_preview.py (matplotlib), make_brand.py (Playwright) and the Blue Book step (pdftotext), the scripts need nothing beyond Python 3.
@@ -121,7 +121,7 @@ Both do the same thing (the workflow, `.github/workflows/release.yml`, runs this
 
 ## Link previews
 
-`scripts/build.py` adds preview tags (title, description, `preview.png`) so links shared in texts and social posts show a card. Edit `SITE_URL`, `SITE_NAME` and `SITE_DESCRIPTION` at the top of `build.py`. To redraw `preview.png` after a data refresh, run `python3 scripts/make_preview.py`, which needs `pip install matplotlib`. The YouTube channel art in `brand/` is redrawn the same way with `python3 scripts/make_brand.py`, which needs `pip install playwright && playwright install chromium` and a network connection for the fonts.
+`scripts/build.py` adds preview tags (title, description, `preview.png`) so links shared in texts and social posts show a card. Edit `SITE_URL`, `SITE_NAME` and `SITE_DESCRIPTION` at the top of `build.py`. To redraw `preview.png` after a data refresh, run `python3 scripts/make_preview.py`, which needs `pip install matplotlib`. The YouTube and Facebook art in `brand/` is redrawn the same way with `python3 scripts/make_brand.py`, which needs `pip install playwright && playwright install chromium` and a network connection for the fonts.
 
 ## Visitor counts
 
@@ -229,7 +229,7 @@ Download the Classic Edition PDF from the [SCA](https://www.nycsca.org/Community
 ```sh
 python3 scripts/build.py          # site, school, district and neighborhood pages, and sitemap
 python3 scripts/make_preview.py   # optional: redraw preview.png
-python3 scripts/make_brand.py     # optional: redraw the YouTube icon and banner
+python3 scripts/make_brand.py     # optional: redraw the YouTube and Facebook images
 ```
 
 The school, district and neighborhood pages, including the neighborhood zone maps, are rebuilt from `data/`, so they need nothing by hand. Every year shown on the map and the pages comes from the dates of the data files or from `scripts/settings.py`: check that `SNAPSHOT_YEAR`, `CITY_GRAD`, `CITY_READINESS`, `PREK_LABEL`, `BLUE_BOOK_LABEL` and `DEMOGRAPHICS_LABEL` match what you refreshed. Also update the years in "Data sources" below.
