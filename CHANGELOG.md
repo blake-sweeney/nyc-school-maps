@@ -11,6 +11,9 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 ### Added
 - Behind the scenes: a cover image and short bio for the project's Facebook page, kept in the repo with the YouTube channel's links and description.
 
+### Changed
+- School markers have thinner outlines when you first zoom in far enough to see them, so a crowded neighborhood reads less busy. The outlines thicken as you zoom in, back to full width once the school names appear.
+
 ### Fixed
 - Turning off "Non-zoned" in Map layers now applies to every grade. Before, high school kept its own setting, so non-zoned schools you'd hidden on the middle school map came back on the high school map.
 

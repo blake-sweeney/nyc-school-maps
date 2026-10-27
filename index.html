@@ -332,19 +332,19 @@ aside>*{flex-shrink:0}
 .gtm{display:block;width:100%;height:100%;overflow:visible;cursor:pointer;filter:drop-shadow(0 1px 2px rgba(0,0,0,.3))}
 .gtk{display:inline-block;width:12px;height:12px;flex:none;background:var(--fg);clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)}
 
-.nzm{width:100%;height:100%;box-sizing:border-box;transform:rotate(45deg) scale(.72);background:var(--c);border:0;box-shadow:0 0 0 2px var(--dot),0 1px 3px rgba(0,0,0,.35);cursor:pointer}
+.nzm{width:100%;height:100%;box-sizing:border-box;transform:rotate(45deg) scale(.72);background:var(--c);border:0;box-shadow:0 0 0 calc(2px*var(--ow,1)) var(--dot),0 1px 3px rgba(0,0,0,.35);cursor:pointer}
 /* fingers need a bigger target than the drawn marker: an invisible ring around each one on touch screens */
 @media (pointer:coarse){.leaflet-nz-pane .leaflet-marker-icon::after,.leaflet-zs-pane .leaflet-marker-icon::after{content:"";position:absolute;inset:-14px;border-radius:50%}}
-.zsm{width:100%;height:100%;box-sizing:border-box;border-radius:50%;background:var(--c);border:0;box-shadow:0 0 0 1.5px var(--dot),0 1px 3px rgba(0,0,0,.35);cursor:pointer}
+.zsm{width:100%;height:100%;box-sizing:border-box;border-radius:50%;background:var(--c);border:0;box-shadow:0 0 0 calc(1.5px*var(--ow,1)) var(--dot),0 1px 3px rgba(0,0,0,.35);cursor:pointer}
 .addr-pin{display:block;overflow:visible;filter:drop-shadow(0 1px 2px rgba(0,0,0,.4))}
 .addr-pin path{fill:#e0242c;stroke:#fff;stroke-width:1.6}.addr-pin circle{fill:#fff}
-/* selected: the usual outline stays, with a blue ring right outside it */
-.zsm.sel{box-shadow:0 0 0 1.5px var(--dot),0 0 0 4px var(--sel),0 1px 3px rgba(0,0,0,.35)}
+/* selected: the usual outline stays, with a blue ring right outside it. --ow (set on the map by zoom) thins the outlines when zoomed out */
+.zsm.sel{box-shadow:0 0 0 calc(1.5px*var(--ow,1)) var(--dot),0 0 0 calc(1.5px*var(--ow,1) + 2.5px) var(--sel),0 1px 3px rgba(0,0,0,.35)}
 .sw i.zsk,.zsk{display:inline-block;width:11px;height:11px;flex:none;border-radius:50%;background:var(--fg);margin:0 3px}
-.nzm.sel{box-shadow:0 0 0 2px var(--dot),0 0 0 5px var(--sel),0 1px 3px rgba(0,0,0,.35)}
+.nzm.sel{box-shadow:0 0 0 calc(2px*var(--ow,1)) var(--dot),0 0 0 calc(2px*var(--ow,1) + 3px) var(--sel),0 1px 3px rgba(0,0,0,.35)}
 /* charter schools: squares with about the zoned circles' area (the diamonds read bigger than their area: pointed corners) */
-.chm{width:100%;height:100%;box-sizing:border-box;transform:scale(.8);background:var(--c);border:0;box-shadow:0 0 0 2px var(--dot),0 1px 3px rgba(0,0,0,.35);cursor:pointer}
-.chm.sel{box-shadow:0 0 0 2px var(--dot),0 0 0 5px var(--sel),0 1px 3px rgba(0,0,0,.35)}
+.chm{width:100%;height:100%;box-sizing:border-box;transform:scale(.8);background:var(--c);border:0;box-shadow:0 0 0 calc(2px*var(--ow,1)) var(--dot),0 1px 3px rgba(0,0,0,.35);cursor:pointer}
+.chm.sel{box-shadow:0 0 0 calc(2px*var(--ow,1)) var(--dot),0 0 0 calc(2px*var(--ow,1) + 3px) var(--sel),0 1px 3px rgba(0,0,0,.35)}
 .chs{display:inline-block;width:10px;height:10px;flex:none;background:var(--fg);border:1.5px solid var(--panel);box-shadow:0 0 0 1px var(--fg);margin:0 3px}
 .sw i.chs{border-radius:0;width:9px;height:9px;margin:0 3px 0 2px}
 .zl.nzl{font-weight:600;font-style:italic}
@@ -1131,10 +1131,10 @@ function nzFill(d){return fillFor({properties:{dbns:[d],c:0}})}
 const STAR='50,2 61.5,36 97,36 68,57.5 79,92 50,71 21,92 32,57.5 3,36 38.5,36';
 // dark outline, then the color; selected adds a blue outer ring (like the diamonds). The outline widths are in screen
 // pixels (non-scaling-stroke), so they don't thin out when zoomed out: 1.5px and 4px outside the star, like the circles'
-// rings (the diamonds' 2px and 5px rings are scaled to .72 with the diamond, so they come out about the same)
+// rings (the diamonds' 2px and 5px rings are scaled to .72 with the diamond, so they come out about the same). --ow thins all of them when zoomed out (see outlineScale)
 function gtStar(c,sel){return '<svg class="gtm" viewBox="-16 -16 132 132" aria-hidden="true">'+
-  (sel?'<polygon points="'+STAR+'" fill="none" stroke="var(--sel)" stroke-width="8" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>':'')+
-  '<polygon points="'+STAR+'" fill="var(--panel)" stroke="var(--dot)" stroke-width="3" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>'+
+  (sel?'<polygon points="'+STAR+'" fill="none" stroke="var(--sel)" style="stroke-width:calc(3px*var(--ow,1) + 5px)" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>':'')+
+  '<polygon points="'+STAR+'" fill="var(--panel)" stroke="var(--dot)" style="stroke-width:calc(3px*var(--ow,1))" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>'+
   '<polygon points="'+STAR+'" fill="'+c+'"/></svg>'}
 // a marker label: up to ~24 characters of the name (charters 32, so the campus shows), "High School" shortened to "HS"
 function shortName(n,max=24){n=n.replace(/^The\s+/i,'').replace(/,\s*The$/i,'').replace(/\s*\bCharter (High )?Schools?\b(\s+(of|for)\b)?/i,(m,h)=>h?' HS':'').replace(/\s+[–-]\s+/g,' ').replace(/\bHigh School\b/gi,'HS');
@@ -1145,6 +1145,11 @@ function nzAt(k){return NZ.filter(o=>nzShown(o)&&nzSpot(o)===k)}
 // zoomed all the way out, markers and zone lines shrink: half size at zoom 9, three quarters at 10, full from 11
 function farScale(){return Math.min(1,Math.max(.5,.5+(map.getZoom()-9)*.25))}
 // markers appear at zoom 12 at half size and reach full size at 14 (farther out only the selected school's shows)
+// marker outlines: half width at zoom 12, where the markers first show, ramping to full at 13, where the labels start
+// (--ow on the map container, used by the .zsm/.nzm/.chm box-shadows and the stars' strokes; elsewhere it's 1)
+function outlineScale(){return Math.min(1,Math.max(.5,.5+(map.getZoom()-12)*.5))}
+function setOutline(){map.getContainer().style.setProperty('--ow',outlineScale())}
+map.on('zoomend',setOutline);setOutline();
 function markerScale(){return Math.min(1,Math.max(.5,.5+(map.getZoom()-12)*.25))}
 function nzSize(){const z=map.getZoom();return (z<11.5?8:z<12.5?10:z<13.5?13:z<14.5?16:20)*markerScale()}
 function buildNZ(){nzGroup.clearLayers();document.getElementById('nz-key').hidden=!nzOn();buildZS();document.getElementById('nz-key').hidden=!nzOn()&&!zsOn();document.getElementById('zsk-item').hidden=!zsOn();document.getElementById('nzk-item').hidden=!(nzOn()&&LAY.nz);document.getElementById('gtk-item').hidden=!(nzOn()&&LAY.gt&&NZ.some(o=>o.gt));document.getElementById('chk-item').hidden=!(nzOn()&&LAY.ch&&NZ.some(o=>o.ch));if(!nzWanted())return;const sz=nzSize(),near=markersByZoom();
