@@ -63,7 +63,7 @@ districts/              one page per district + an index — built by build.py
 neighborhoods/          one page per neighborhood + an index — built by build.py (scripts/neighborhoods.py)
 sitemap.xml, robots.txt  for search engines — built by build.py (a page's lastmod is the day a build last changed it)
 src/template.html       page source: layout, styles and map code
-brand/                  YouTube channel art: youtube-icon.png (800×800) and youtube-banner.png (2560×1440), drawn from the zone data by scripts/make_brand.py
+brand/                  YouTube channel art: youtube-icon.png (800×800) and youtube-banner.png (2560×1440), drawn from the zone data by scripts/make_brand.py; youtube-description.txt is the channel description
 data/
   elem_zones.json       zone boundaries + school names/locations
   ms_zones.json         middle school zone boundaries + school names/locations
