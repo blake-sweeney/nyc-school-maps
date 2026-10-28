@@ -6,7 +6,7 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
-## Unreleased
+## 1.62.0 (2026-10-28)
 
 ### Changed
 - Dark mode: water is now a muted navy, darker than the land, which is a slightly lighter gray with a touch of blue, so the shoreline is easier to read. Zone borders are a softer neutral gray, and district borders a lighter blue-gray instead of near-white.
