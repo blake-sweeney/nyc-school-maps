@@ -1,7 +1,7 @@
 # Code map
 
 Where things live, so you can find them without reading all of `src/template.html`. Names below are functions and
-constants to search for. Line numbers drift, so search by name instead. Keep this file current (see CLAUDE.md).
+constants to search for. Line numbers drift, so search by name instead. Keep this file current (see AGENTS.md).
 
 ## How a build works
 
