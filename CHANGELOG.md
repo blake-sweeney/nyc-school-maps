@@ -6,6 +6,11 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
+## Unreleased
+
+### Changed
+- Behind the scenes: the project's instructions for coding assistants now live in AGENTS.md, so Claude, Gemini and other tools all read the same file.
+
 ## 1.62.0 (2026-10-28)
 
 ### Changed
