@@ -49,12 +49,12 @@ body{margin:0}
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#141917; --panel:#1c2220; --fg:#e7ebe8; --muted:#9aa5a0; --line:#2f3835;
-  --water:#0b1730; --land:#26292d; --nodata:#5d6461; --off:#262d2a; --accent:#f2b705; --accent-ink:#141917;
+  --water:#111a2a; --land:#252932; --nodata:#5d6461; --off:#262d2a; --accent:#f2b705; --accent-ink:#141917;
   --hl:#7fb8ec; --dot:#e7ebe8; --road:#e3e8e5; --road-case:#0d1110; --zone-line:#a9adb0; --dist-line:#c6c9c8; --sel:#7fb8ec; --nz-stripe:45%; --sw-edge:#2f3835; --zl-halo:0 0 3px var(--land),0 0 3px var(--land),0 0 2px var(--land); --warn-bg:#3a3014; --warn-fg:#f3d98a;
   --z0:#3d5536; --z1:#5c4430; --z2:#33456a; --z3:#5e3a45; --z4:#545026; --z5:#45395e; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#141917; --panel:#1c2220; --fg:#e7ebe8; --muted:#9aa5a0; --line:#2f3835;
-  --water:#0b1730; --land:#26292d; --nodata:#5d6461; --off:#262d2a; --accent:#f2b705; --accent-ink:#141917;
+  --water:#111a2a; --land:#252932; --nodata:#5d6461; --off:#262d2a; --accent:#f2b705; --accent-ink:#141917;
   --hl:#7fb8ec; --dot:#e7ebe8; --road:#e3e8e5; --road-case:#0d1110; --zone-line:#a9adb0; --dist-line:#c6c9c8; --sel:#7fb8ec; --nz-stripe:45%; --sw-edge:#2f3835; --zl-halo:0 0 3px var(--land),0 0 3px var(--land),0 0 2px var(--land); --warn-bg:#3a3014; --warn-fg:#f3d98a;
   --z0:#3d5536; --z1:#5c4430; --z2:#33456a; --z3:#5e3a45; --z4:#545026; --z5:#45395e; color-scheme:dark}
 html,body{height:100%}
@@ -851,11 +851,11 @@ function dropBase(){if(!useBase)return;useBase=false;map.removeLayer(baseTiles);
 // One color for every shade drops the tiles' dark shading along the shore. With the "Parks & water color" layer off,
 // water is one flat gray. baseLut builds a table per look, from each pixel's gray: the water color, then light mode's
 // contrast .85 and brightness 1.06. Dark mode inverts the land (brightness .78 and contrast .9, what the CSS filters did
-// before), lifted a little toward blue-gray, and draws water a flat navy (dark gray with the layer off), darker than the land. Parks: NYC Parks outlines (assets/parks.js), drawn green in a pane that blends as "color" into
+// before), lifted a little toward blue, and draws water a flat navy (dark gray with the layer off), darker than the land. Parks: NYC Parks outlines (assets/parks.js), drawn green in a pane that blends as "color" into
 // the tiles, so paths and lakes inside a park still show. Both follow the "Parks & water color" layer.
 const LUTS={};let baseLook='';
 function baseLut(look){if(LUTS[look])return LUTS[look];const dark=look[0]==='d',w=look[1]==='w',t=new Uint8ClampedArray(768);
-  const k=(c,a)=>(c-127.5)*a+127.5,water=dark?(w?[11,23,48]:[18,19,21]):(w?[176,198,224]:[200,200,200]),LIFT=[12,15,19];
+  const k=(c,a)=>(c-127.5)*a+127.5,water=dark?(w?[17,26,42]:[18,19,21]):(w?[176,198,224]:[200,200,200]),LIFT=[11,15,24];
   for(let v=0;v<256;v++){const wet=v>=150&&v<=217;let c=wet?water.slice():[v,v,v];
     if(dark){if(!wet)c=c.map((x,i)=>k(Math.min(255,(255-x)*.78),.9)+LIFT[i])}
     else c=c.map(x=>Math.min(255,k(x,.85)*1.06));

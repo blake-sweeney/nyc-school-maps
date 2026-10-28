@@ -9,7 +9,7 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 ## Unreleased
 
 ### Changed
-- Dark mode: water is now a deep navy, darker than the land, which is a slightly lighter blue-gray, so the shoreline is easier to read. Zone borders are a softer neutral gray, and district borders a lighter gray instead of near-white.
+- Dark mode: water is now a muted navy, darker than the land, which is a slightly lighter gray with a touch of blue, so the shoreline is easier to read. Zone borders are a softer neutral gray, and district borders a lighter gray instead of near-white.
 
 ## 1.61.0 (2026-10-27)
 
