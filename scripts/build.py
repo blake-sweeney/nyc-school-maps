@@ -285,8 +285,76 @@ def fix_addresses(d):
         print(f"addresses: {len(far)} schools' map points are over 300 m from their LCGMS tax lot: {', '.join(far)}")
 
 
+def dissolve(polygons):
+    """One zone's polygons as one, without the edges two pieces share (the city's files split some zones along a
+    street, like 02M297's). Edges cancel only where both pieces have the same vertices; pieces that don't touch stay
+    separate parts. Returns the polygon list, or None if the leftover edges don't close into rings."""
+    edges = collections.Counter()
+    for p in polygons:
+        for k, ring in enumerate(p):
+            pts = [tuple(c) for c in ring]
+            if (area_centroid(ring)[0] > 0) != (k == 0):  # outer rings counterclockwise, holes clockwise
+                pts.reverse()
+            for a, b in zip(pts, pts[1:]):
+                if a != b:
+                    edges[(a, b)] += 1
+    for (a, b) in list(edges):
+        n = min(edges[(a, b)], edges.get((b, a), 0))
+        if n > 0:
+            edges[(a, b)] -= n
+            edges[(b, a)] -= n
+    nxt = collections.defaultdict(list)
+    for (a, b), n in sorted(edges.items()):
+        if n > 0:
+            nxt[a] += [b] * n
+    rings = []
+    while nxt:
+        start = min(nxt)
+        ring, a = [start], start
+        while nxt.get(a):
+            b = nxt[a].pop()
+            if not nxt[a]:
+                del nxt[a]
+            ring.append(b)
+            a = b
+            if a == start:
+                break
+        if ring[-1] != start or len(ring) < 4:
+            return None
+        rings.append([list(c) for c in ring])
+    outers = [r for r in rings if area_centroid(r)[0] > 0]
+    out = [[r] for r in outers]
+    for h in (r for r in rings if area_centroid(r)[0] <= 0):
+        home = next((p for p in out if point_in_ring(h[0], p[0]) or point_in_ring(h[1], p[0])), None)
+        if home is None:
+            return None
+        home.append(h)
+    return out
+
+
+def merge_split_zones(z):
+    """Join the pieces the city's file lists as separate zones with the same school(s) and the same note, so the
+    map selects, outlines and labels the zone as one. Pieces with their own note ("Zoned to IS 96, located in
+    District 21.") stay separate, since the card shows the note."""
+    groups = collections.defaultdict(list)
+    for f in z["features"]:
+        if f["properties"]["dbns"]:
+            groups[json.dumps(f["properties"], sort_keys=True)].append(f)
+    gone = set()
+    for fs in groups.values():
+        if len(fs) < 2:
+            continue
+        parts = [p for f in fs for p in polys(f["geometry"])]
+        parts = dissolve(parts) or parts
+        fs[0]["geometry"] = {"type": "Polygon", "coordinates": parts[0]} if len(parts) == 1 else \
+            {"type": "MultiPolygon", "coordinates": parts}
+        gone |= {id(f) for f in fs[1:]}
+    z["features"] = [f for f in z["features"] if id(f) not in gone]
+
+
 def prepare_zones(d):
     drop_closed(d)
+    merge_split_zones(d)
     feats = d["features"]
 
     # Zones are neighbors if they share boundary vertices.

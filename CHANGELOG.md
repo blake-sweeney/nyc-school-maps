@@ -8,6 +8,9 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 
 ## Unreleased
 
+### Fixed
+- Zones the city's map splits into pieces are now one zone. Clicking anywhere in MS 297's zone, for example, now outlines the whole zone from Battery Park to 59th Street, with no line across the middle, and it has one label. The same goes for 68 other elementary, middle and high school zones.
+
 ### Changed
 - Behind the scenes: the project's instructions for coding assistants now live in AGENTS.md, so Claude, Gemini and other tools all read the same file.
 
