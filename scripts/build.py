@@ -332,14 +332,28 @@ def dissolve(polygons):
     return out
 
 
+LOCATED_IN = re.compile(r"Zoned to (?:IS|JHS|MS|PS) \d+, located in Dist?rict \d+\.")
+
+
+def note_key(remarks):
+    """What a zone note says, for telling pieces apart: "Zoned to IS 96, located in District 21." (on the piece of a
+    zone that crosses into the next district, and true of the whole zone) counts as no note, and wording differences
+    ("P.S 122" and "PS 122", "IS 347 and IS 349, located in District 32, share a zone") don't count."""
+    if not remarks or LOCATED_IN.fullmatch(remarks.strip()):
+        return ""
+    return re.sub(r"[^a-z0-9]", "", re.sub(r", located in Dist?rict \d+", "", remarks).lower())
+
+
 def merge_split_zones(z):
-    """Join the pieces the city's file lists as separate zones with the same school(s) and the same note, so the
-    map selects, outlines and labels the zone as one. Pieces with their own note ("Zoned to IS 96, located in
-    District 21.") stay separate, since the card shows the note."""
+    """Join the pieces the city's file lists as separate zones with the same school(s) and the same note (by
+    note_key), so the map selects, outlines and labels the zone as one. The joined zone keeps a piece's note (the shortest
+    wording), so "located in District 21" still shows. Pieces whose note says something of their own ("also receive priority
+    to PS 344", "Zoned by address: 41-04 10th Street ...") stay separate, since the card shows the note."""
     groups = collections.defaultdict(list)
     for f in z["features"]:
-        if f["properties"]["dbns"]:
-            groups[json.dumps(f["properties"], sort_keys=True)].append(f)
+        p = f["properties"]
+        if p["dbns"]:
+            groups[json.dumps({**p, "remarks": note_key(p.get("remarks"))}, sort_keys=True)].append(f)
     gone = set()
     for fs in groups.values():
         if len(fs) < 2:
@@ -348,6 +362,9 @@ def merge_split_zones(z):
         parts = dissolve(parts) or parts
         fs[0]["geometry"] = {"type": "Polygon", "coordinates": parts[0]} if len(parts) == 1 else \
             {"type": "MultiPolygon", "coordinates": parts}
+        notes = [f["properties"].get("remarks") for f in fs if f["properties"].get("remarks")]
+        if notes:
+            fs[0]["properties"]["remarks"] = min(notes, key=lambda r: ("Disrict" in r, len(r)))
         gone |= {id(f) for f in fs[1:]}
     z["features"] = [f for f in z["features"] if id(f) not in gone]
 
