@@ -139,7 +139,7 @@ Two sources, MySchools and the School Quality Snapshot, block scripts from outsi
 python3 scripts/fetch_data.py zones
 ```
 
-If the DOE servers block you, download the three layers in a browser (URLs in `fetch_data.py`, `DOE_ZONES`) and run `python3 scripts/fetch_data.py zones ~/Downloads`. Spot-check a few addresses against [schoolsearch.schools.nyc](https://schoolsearch.schools.nyc/).
+If the DOE servers block you, download the three layers in a browser (URLs in `fetch_data.py`, `DOE_ZONES`) and run `python3 scripts/fetch_data.py zones ~/Downloads`. Spot-check a few addresses against [schoolsearch.schools.nyc](https://schoolsearch.schools.nyc/). The city's files split some zones into pieces; the build joins them, and prints a `zones:` line for each zone it leaves in pieces because their notes differ. Check any new ones: a note that only rewords another, or is true of the whole zone, belongs in `note_key()` in `scripts/build.py`.
 
 ### 2. MySchools directories (each fall, once applications open: high and middle school in October, kindergarten in December)
 

@@ -359,7 +359,11 @@ def merge_split_zones(z):
         if len(fs) < 2:
             continue
         parts = [p for f in fs for p in polys(f["geometry"])]
-        parts = dissolve(parts) or parts
+        joined = dissolve(parts)
+        if joined is None:
+            print(f"zones: {'/'.join(fs[0]['properties']['dbns'])} joined, but its pieces' shared edges stay drawn "
+                  "(dissolve() couldn't close the rings)")
+        parts = joined or parts
         fs[0]["geometry"] = {"type": "Polygon", "coordinates": parts[0]} if len(parts) == 1 else \
             {"type": "MultiPolygon", "coordinates": parts}
         notes = [f["properties"].get("remarks") for f in fs if f["properties"].get("remarks")]
@@ -367,6 +371,15 @@ def merge_split_zones(z):
             fs[0]["properties"]["remarks"] = min(notes, key=lambda r: ("Disrict" in r, len(r)))
         gone |= {id(f) for f in fs[1:]}
     z["features"] = [f for f in z["features"] if id(f) not in gone]
+    # what's left split: pieces whose notes differ. Check new ones each year; a note that only rewords another
+    # (or is true of the whole zone) belongs in note_key().
+    split = collections.defaultdict(list)
+    for f in z["features"]:
+        if f["properties"]["dbns"]:
+            split["/".join(sorted(f["properties"]["dbns"]))].append(f["properties"].get("remarks") or "(no note)")
+    for k, notes in sorted(split.items()):
+        if len(notes) > 1:
+            print(f"zones: {k} stays in {len(notes)} pieces with different notes: " + " | ".join(notes))
 
 
 def prepare_zones(d):
