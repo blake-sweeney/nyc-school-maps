@@ -285,8 +285,106 @@ def fix_addresses(d):
         print(f"addresses: {len(far)} schools' map points are over 300 m from their LCGMS tax lot: {', '.join(far)}")
 
 
+def dissolve(polygons):
+    """One zone's polygons as one, without the edges two pieces share (the city's files split some zones along a
+    street, like 02M297's). Edges cancel only where both pieces have the same vertices; pieces that don't touch stay
+    separate parts. Returns the polygon list, or None if the leftover edges don't close into rings."""
+    edges = collections.Counter()
+    for p in polygons:
+        for k, ring in enumerate(p):
+            pts = [tuple(c) for c in ring]
+            if (area_centroid(ring)[0] > 0) != (k == 0):  # outer rings counterclockwise, holes clockwise
+                pts.reverse()
+            for a, b in zip(pts, pts[1:]):
+                if a != b:
+                    edges[(a, b)] += 1
+    for (a, b) in list(edges):
+        n = min(edges[(a, b)], edges.get((b, a), 0))
+        if n > 0:
+            edges[(a, b)] -= n
+            edges[(b, a)] -= n
+    nxt = collections.defaultdict(list)
+    for (a, b), n in sorted(edges.items()):
+        if n > 0:
+            nxt[a] += [b] * n
+    rings = []
+    while nxt:
+        start = min(nxt)
+        ring, a = [start], start
+        while nxt.get(a):
+            b = nxt[a].pop()
+            if not nxt[a]:
+                del nxt[a]
+            ring.append(b)
+            a = b
+            if a == start:
+                break
+        if ring[-1] != start or len(ring) < 4:
+            return None
+        rings.append([list(c) for c in ring])
+    outers = [r for r in rings if area_centroid(r)[0] > 0]
+    out = [[r] for r in outers]
+    for h in (r for r in rings if area_centroid(r)[0] <= 0):
+        home = next((p for p in out if point_in_ring(h[0], p[0]) or point_in_ring(h[1], p[0])), None)
+        if home is None:
+            return None
+        home.append(h)
+    return out
+
+
+LOCATED_IN = re.compile(r"Zoned to (?:IS|JHS|MS|PS) \d+, located in Dist?rict \d+\.")
+
+
+def note_key(remarks):
+    """What a zone note says, for telling pieces apart: "Zoned to IS 96, located in District 21." (on the piece of a
+    zone that crosses into the next district, and true of the whole zone) counts as no note, and wording differences
+    ("P.S 122" and "PS 122", "IS 347 and IS 349, located in District 32, share a zone") don't count."""
+    if not remarks or LOCATED_IN.fullmatch(remarks.strip()):
+        return ""
+    return re.sub(r"[^a-z0-9]", "", re.sub(r", located in Dist?rict \d+", "", remarks).lower())
+
+
+def merge_split_zones(z):
+    """Join the pieces the city's file lists as separate zones with the same school(s) and the same note (by
+    note_key), so the map selects, outlines and labels the zone as one. The joined zone keeps a piece's note (the shortest
+    wording), so "located in District 21" still shows. Pieces whose note says something of their own ("also receive priority
+    to PS 344", "Zoned by address: 41-04 10th Street ...") stay separate, since the card shows the note."""
+    groups = collections.defaultdict(list)
+    for f in z["features"]:
+        p = f["properties"]
+        if p["dbns"]:
+            groups[json.dumps({**p, "remarks": note_key(p.get("remarks"))}, sort_keys=True)].append(f)
+    gone = set()
+    for fs in groups.values():
+        if len(fs) < 2:
+            continue
+        parts = [p for f in fs for p in polys(f["geometry"])]
+        joined = dissolve(parts)
+        if joined is None:
+            print(f"zones: {'/'.join(fs[0]['properties']['dbns'])} joined, but its pieces' shared edges stay drawn "
+                  "(dissolve() couldn't close the rings)")
+        parts = joined or parts
+        fs[0]["geometry"] = {"type": "Polygon", "coordinates": parts[0]} if len(parts) == 1 else \
+            {"type": "MultiPolygon", "coordinates": parts}
+        notes = [f["properties"].get("remarks") for f in fs if f["properties"].get("remarks")]
+        if notes:
+            fs[0]["properties"]["remarks"] = min(notes, key=lambda r: ("Disrict" in r, len(r)))
+        gone |= {id(f) for f in fs[1:]}
+    z["features"] = [f for f in z["features"] if id(f) not in gone]
+    # what's left split: pieces whose notes differ. Check new ones each year; a note that only rewords another
+    # (or is true of the whole zone) belongs in note_key().
+    split = collections.defaultdict(list)
+    for f in z["features"]:
+        if f["properties"]["dbns"]:
+            split["/".join(sorted(f["properties"]["dbns"]))].append(f["properties"].get("remarks") or "(no note)")
+    for k, notes in sorted(split.items()):
+        if len(notes) > 1:
+            print(f"zones: {k} stays in {len(notes)} pieces with different notes: " + " | ".join(notes))
+
+
 def prepare_zones(d):
     drop_closed(d)
+    merge_split_zones(d)
     feats = d["features"]
 
     # Zones are neighbors if they share boundary vertices.

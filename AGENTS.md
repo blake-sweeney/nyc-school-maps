@@ -38,6 +38,7 @@ python3 -m http.server 8000           # preview at http://localhost:8000
 - The cloud environment allows the city and state data hosts (tools.nycenet.edu, myschools.nyc, nycenet.edu, maps.schools.nyc, data.nysed.gov, data.ny.gov, schools.nyc.gov). As of October 2026, MySchools and the School Quality Snapshot answer scripted requests from a session (`fetch_data.py snapshot`, `charter-snapshot`), but they have blocked non-browser requests before. If a request is refused, don't work around it: use the browser steps in `scripts/browser/` (the maintainer runs them) and say so.
 - Some sources only work in a real browser: nyccharterschools.org and suny.edu sit behind Cloudflare's bot check, and www.nysed.gov serves an incomplete certificate chain. Ask the maintainer to look there rather than trying to get around it.
 - `data/*_raw.json` is gitignored; don't commit raw downloads.
+- After refreshing the zones, read the build's `zones:` lines: each is a zone it left in pieces. A note that only rewords another belongs in `note_key()` (ARCHITECTURE.md gotchas).
 
 ## Testing
 
