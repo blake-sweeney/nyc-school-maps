@@ -6,7 +6,7 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
-## Unreleased
+## 1.63.0 (2026-10-29)
 
 ### Fixed
 - Zones the city's map splits into pieces are now one zone. Clicking anywhere in MS 297's zone, for example, now outlines the whole zone from Battery Park to 59th Street, with no line across the middle, and it has one label. The same goes for 78 other zones, among them middle school zones that cross into the next district, like IS 281's in Bath Beach and IS 5's in Elmhurst. Parts of a zone with their own rule, like the blocks that also get priority to PS 344 or MS 379, still show as their own area.
