@@ -6,6 +6,11 @@ What changed in each version of [nycschoolzones.com](https://nycschoolzones.com)
 - **Minor** (1.1.0): a new feature, like admissions data in the zone card
 - **Patch** (1.0.1): fixes and wording changes
 
+## Unreleased
+
+### Fixed
+- Areas with no zoned school are now one area where the city's map splits them into pieces. Clicking anywhere in District 1's elementary "no zoned school" area, for example, now outlines all of it, with no lines across it. Areas in different districts, and parks and cemeteries, stay separate.
+
 ## 1.63.0 (2026-10-29)
 
 ### Fixed

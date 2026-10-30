@@ -322,9 +322,10 @@ def dissolve(polygons):
         if ring[-1] != start or len(ring) < 4:
             return None
         rings.append([list(c) for c in ring])
-    outers = [r for r in rings if area_centroid(r)[0] > 0]
+    # slivers under ~50 m² (1e-6 square degrees is ~9,300 m²) where the city's pieces overlap or miss by a hair
+    outers = [r for r in rings if area_centroid(r)[0] > 5e-9] or [r for r in rings if area_centroid(r)[0] > 0]
     out = [[r] for r in outers]
-    for h in (r for r in rings if area_centroid(r)[0] <= 0):
+    for h in (r for r in rings if area_centroid(r)[0] < -5e-9):
         home = next((p for p in out if point_in_ring(h[0], p[0]) or point_in_ring(h[1], p[0])), None)
         if home is None:
             return None
@@ -344,24 +345,45 @@ def note_key(remarks):
     return re.sub(r"[^a-z0-9]", "", re.sub(r", located in Dist?rict \d+", "", remarks).lower())
 
 
+def touching(fs):
+    """Split features into groups that touch: a chain of pieces sharing at least two boundary points."""
+    pts = [{(round(c[0], 5), round(c[1], 5)) for p in polys(f["geometry"]) for r in p for c in r} for f in fs]
+    group = list(range(len(fs)))
+
+    def root(i):
+        while group[i] != i:
+            i = group[i]
+        return i
+    for i in range(len(fs)):
+        for j in range(i + 1, len(fs)):
+            if len(pts[i] & pts[j]) >= 2:
+                group[root(j)] = root(i)
+    out = collections.defaultdict(list)
+    for i, f in enumerate(fs):
+        out[root(i)].append(f)
+    return list(out.values())
+
+
 def merge_split_zones(z):
     """Join the pieces the city's file lists as separate zones with the same school(s) and the same note (by
     note_key), so the map selects, outlines and labels the zone as one. The joined zone keeps a piece's note (the shortest
     wording), so "located in District 21" still shows. Pieces whose note says something of their own ("also receive priority
-    to PS 344", "Zoned by address: 41-04 10th Street ...") stay separate, since the card shows the note."""
+    to PS 344", "Zoned by address: 41-04 10th Street ...") stay separate, since the card shows the note. Areas with no
+    zoned school ("Elementary School Choice in District 1", a park) join only the pieces they touch, so two parks across
+    the borough stay two."""
     groups = collections.defaultdict(list)
     for f in z["features"]:
         p = f["properties"]
-        if p["dbns"]:
-            groups[json.dumps({**p, "remarks": note_key(p.get("remarks"))}, sort_keys=True)].append(f)
+        groups[json.dumps({**p, "remarks": note_key(p.get("remarks"))}, sort_keys=True)].append(f)
+    groups = [g for fs in groups.values() for g in (touching(fs) if not fs[0]["properties"]["dbns"] else [fs])]
     gone = set()
-    for fs in groups.values():
+    for fs in groups:
         if len(fs) < 2:
             continue
         parts = [p for f in fs for p in polys(f["geometry"])]
         joined = dissolve(parts)
         if joined is None:
-            print(f"zones: {'/'.join(fs[0]['properties']['dbns'])} joined, but its pieces' shared edges stay drawn "
+            print(f"zones: {'/'.join(fs[0]['properties']['dbns']) or fs[0]['properties'].get('remarks')} joined, but its pieces' shared edges stay drawn "
                   "(dissolve() couldn't close the rings)")
         parts = joined or parts
         fs[0]["geometry"] = {"type": "Polygon", "coordinates": parts[0]} if len(parts) == 1 else \
